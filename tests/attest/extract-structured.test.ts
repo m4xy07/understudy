@@ -106,7 +106,10 @@ describe("structured claims: calendar", () => {
     );
     const drafts = structuredClaims([e], pack);
     const deadline = drafts.find((d) => d.attribute === "deadline")!;
-    expect(drafts.filter((d) => d.attribute === "deadline")).toHaveLength(1);
+    // The cadence, plus the next occurrence as a plain ISO date (a separate single-date claim).
+    expect(drafts.filter((d) => d.attribute === "deadline").map((d) => d.value)).toEqual([
+      "monthly on day 1, next 2026-11-01", "2026-11-01",
+    ]);
     expect(deadline.citations[0].quote).toBe("RRULE:FREQ=MONTHLY;BYMONTHDAY=1");
     expect(deadline.value).toBe("monthly on day 1, next 2026-11-01");
     expect(deadline.statement).toBe('"Book the workshop lab" repeats monthly on day 1; the next date is 2026-11-01.');

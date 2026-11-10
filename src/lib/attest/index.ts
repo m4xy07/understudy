@@ -143,6 +143,8 @@ async function entityKindsFor(ws: string, pack: Pack): Promise<Map<string, Respo
 // ---------------------------------------------------------------------------------------------
 // reconstruct
 
+const DONE_STATUS = /^(done|closed|complete|completed|cancelled|canceled|resolved)$/i;
+
 /** Normalise deadline values to ISO dates where the value is one date; slug unknown task entities. */
 function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): DraftClaim[] {
   return drafts.map((d) => {
@@ -152,8 +154,12 @@ function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): 
       const iso = toIsoDate(d.value, ref);
       if (iso && iso !== d.value) out = { ...out, value: iso };
     }
+    // An open board card about nothing in the pack gets its own entity (the same slug Lacuna's
+    // inventory uses for it); finished cards about nothing in the pack stay "other" (history).
     if (d.origin === "structured" && d.entity === OTHER_ENTITY && d.entityRaw) {
-      out = { ...out, entity: slugOf(d.entityRaw) };
+      const seg = segsById.get(d.citations[0]?.segmentId ?? "");
+      const done = seg?.kind === "task" && DONE_STATUS.test(String(seg.meta?.status ?? "").trim());
+      if (!done) out = { ...out, entity: slugOf(d.entityRaw) };
     }
     return out;
   });
