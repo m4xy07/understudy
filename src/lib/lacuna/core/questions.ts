@@ -121,6 +121,17 @@ const MISSING_TEMPLATES: Record<string, string> = {
   next_step: "What is the next concrete step on {resp}, and what does someone need to take it?",
   reviewer: "Who should review or sign off {resp}?",
 };
+// The setting pack (packs/club.json) names some checks differently; give them the same plain text
+// instead of the generic "How exactly is {check} done for {resp}" fallback.
+Object.assign(MISSING_TEMPLATES, {
+  how_to_verify: MISSING_TEMPLATES.verify,
+  next_due_date: MISSING_TEMPLATES.next_due,
+  how_to_do_it: MISSING_TEMPLATES.how_to,
+  consequence_if_missed: MISSING_TEMPLATES.consequence,
+  options_considered: MISSING_TEMPLATES.options,
+  next_concrete_step: MISSING_TEMPLATES.next_step,
+  who_reviews_it: MISSING_TEMPLATES.reviewer,
+});
 
 const WTAG_FALLBACK: Record<CheckDef["wTag"], string> = {
   WHO: "Who is responsible for {check} on {resp}?",
