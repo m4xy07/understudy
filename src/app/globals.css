@@ -1,26 +1,157 @@
 @import "tailwindcss";
 
+/* Ink on paper. Module accents match the Round 1 documents:
+   Tether (Connect), Attest (Reconstruct, Verify), Lacuna (Test, Ask), Relay (Review, Handover). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #161616;
+  --ink-2: #3b3833;
+  --muted: #5c574f;
+  --paper: #f7f5f0;
+  --paper-2: #efebe2;
+  --card: #fffdf9;
+  --rule: #d8d2c4;
+  --rule-strong: #b9b1a0;
+  --tether: #5e4520;
+  --attest: #1f3a5f;
+  --lacuna: #6b2737;
+  --relay: #24493d;
+  --mark: #f3e2a6;
+  --ok: #24493d;
+  --warn: #7a5410;
+  --bad: #8a1f2e;
+  --hold: #4a4f57;
+  --focus: #1f3a5f;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-tether: var(--tether);
+  --color-attest: var(--attest);
+  --color-lacuna: var(--lacuna);
+  --color-relay: var(--relay);
+  --color-mark: var(--mark);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-hold: var(--hold);
+  --font-serif: var(--font-display);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+mark {
+  background: var(--mark);
+  color: var(--ink);
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+/* Small shared primitives kept as classes so pages stay readable. */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .btn:hover { background: var(--ink-2); }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+  .btn-quiet {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--rule-strong);
+  }
+  .btn-quiet:hover { background: var(--paper-2); }
+  .btn-sm { min-height: 2rem; padding: 0.25rem 0.75rem; font-size: 0.875rem; }
+  .field {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+  }
+  .eyebrow {
+    font-family: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .mono { font-family: var(--font-code), ui-monospace, monospace; font-size: 0.85em; }
+  .table-wrap { width: 100%; overflow-x: auto; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .data-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
 }

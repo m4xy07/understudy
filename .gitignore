@@ -51,3 +51,5 @@ next-env.d.ts
 # agent worktrees
 /.claude/
 
+.vercel
+.env*
