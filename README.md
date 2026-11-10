@@ -17,7 +17,7 @@ Team DRACONIX (CodersInPune) · Knowledge Handover challenge · Round 2 build
 The demo is a fictional college robotics club. Priya, the outgoing tech lead, graduates. The incoming tech lead has to take over. You switch between people with the **Viewing as** menu in the header; there is no sign-up.
 
 1. Open the [live app](https://understudy-lyart.vercel.app) and press **Open the robotics-club demo**. You get a private copy of the workspace, and the run starts by itself.
-2. **Connect.** Eight sources (WhatsApp, three Slack channels, a GitHub repo, the task board, meeting notes, a calendar) with segment counts, masked secrets and contacts, rejected rows and the data level reached. The run panel shows each step until it says Done.
+2. **Connect.** Eight sources (WhatsApp, three Slack channels, a GitHub repo, the task board, meeting notes, a calendar) with segment counts, masked secrets and contacts, rejected rows and the data level reached. The run panel shows each step until it says Done. The demo replays precomputed model answers, so it finishes in a few seconds; your own uploads call the model live and can take a few minutes.
 3. **Claims.** Every claim has an attribute, a trust label and citations. Click a citation: the source opens with the exact quote highlighted. Superseded and Conflicting claims say which rule fired.
 4. **Test.** For the Incoming tech lead, read **B · C · K** (blocking gaps, coverage, record-backed share) and the grid of Covered, Partial, Missing and Restricted checks per responsibility.
 5. Switch **Viewing as** to **Priya (outgoing tech lead)** and open **Ask**. Answer one or two of the ranked questions. Answers come back labelled "Leaver said", and the re-test line shows how B, C and K moved.

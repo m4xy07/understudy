@@ -15,7 +15,7 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 **Look for:** you land on Connect in a private copy of the workspace. Nobody else sees your approvals, and the run starts by itself.
 
 ### 2. Connect (role: Club President)
-**Do:** wait for the **Run Understudy** panel to show every step as Done. On a fresh copy this can take a few minutes; the panel updates by itself.
+**Do:** wait for the **Run Understudy** panel to show every step as Done. The demo replays precomputed model answers, so a fresh copy finishes in a few seconds. Your own uploads call the model live and can take a few minutes; the panel updates by itself.
 **Look for:**
 - Eight sources: a WhatsApp chat, three Slack channels (#events, #infra, #finance), a GitHub repo, the task board, meeting notes, a calendar.
 - Per source: segments, **Masked** secrets and contacts, and **Rejected** rows with the reason.

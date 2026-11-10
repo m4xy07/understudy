@@ -97,7 +97,7 @@ export function RunPanel({ ws, initial, hasSources }: { ws: string; initial: Run
       {!hasSources && <p className="mt-3 text-sm text-muted">Add at least one source first.</p>}
       {running && (
         <p className="mt-3 text-sm text-muted" role="status">
-          This can take a few minutes on a fresh workspace. The steps below update by themselves; you can stay on this page.
+          The demo replays precomputed model answers and finishes in a few seconds. Your own uploads call the model live and can take a few minutes. The steps below update by themselves; you can stay on this page.
         </p>
       )}
       {error && (

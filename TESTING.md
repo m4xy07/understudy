@@ -83,7 +83,7 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 | Step | Expected | Result |
 |---|---|---|
 | Landing: press "Open the robotics-club demo" | A private workspace opens on Connect; the run starts by itself | Pass (2026-11-11). Workspace opened on Connect in about 3 s; the run started by itself. |
-| Connect | Eight sources with segment, masked-secret, masked-contact and rejected counts; data level shown; run panel reaches Done for every step | Pass (2026-11-11). Eight sources (139, 50, 50, 25, 77, 40, 22 and 9 segments), masked secrets and contacts, no rejected rows, L3 shown; every step reached Done. Slow: about 4.5 min per fresh demo copy, because the model cache was not hit ("Read 23 batches (0 from the cache)"); see Known limits. |
+| Connect | Eight sources with segment, masked-secret, masked-contact and rejected counts; data level shown; run panel reaches Done for every step | Pass (2026-11-11). Eight sources (139, 50, 50, 25, 77, 40, 22 and 9 segments), masked secrets and contacts, no rejected rows, L3 shown; every step reached Done. That run took about 4.5 min, because the model cache was not hit ("Read 23 batches (0 from the cache)"), so the B, C and K values in this table come from a live, uncached run. Fixed the same day (our seed script stored every cached answer double-encoded); a fresh demo now reads 23 of 23 batches from the cache and finishes in about 3 to 4 s. |
 | Claims: open a citation | Source segment opens with the exact quote highlighted; back link returns to the claim | Pass (2026-11-11). The source page opened in about 1 s with the exact quote highlighted; "Back to claims" link present. |
 | Claims: Superseded and Conflicting | Each shows the rule that fired; dropped-claim counter per source | Pass (2026-11-11). Superseded and Conflicting claims name the rule (for example "the task board owns deadlines"); dropped-per-source counter shown (0). |
 | Test as Incoming tech lead | B, then C, then K; grid of Covered, Partial, Missing, Restricted with evidence links | Pass (2026-11-11). B 7 · C 70% · K 94%; blocking-gap list and a Covered / Partial / Missing / Restricted grid with evidence links. |
@@ -102,8 +102,7 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 
 ## Known limits
 
-- **A fresh demo copy takes about 4 to 5 minutes on the live link.** On 2026-11-11 the run read 0 of 23 extraction batches from the model cache and called the model live, so Connect shows "Running" for several minutes. The run panel says so and updates by itself.
-
+- **Your own uploads call the model live.** The demo replays precomputed model answers (23 of 23 extraction batches from the cache) and finishes in a few seconds. A run on files you upload has no cached answers, so it can take a few minutes; the run panel says so and updates by itself.
 - **No automated browser suite yet.** Playwright is installed, but the end-to-end checks on the live link are the manual table above.
 - **No CI.** We run the suites locally before pushing; there is no CI workflow in the repository yet.
 - **Model quality is measured, not unit-tested.** The suites fake or disable the model, so they test the rules around it. Extraction quality comes from the evaluation harness. Extraction misses some planted facts and produces extra claims, and supersession and conflict detection miss some planted cases; [docs/EVALUATION.md](docs/EVALUATION.md) has the current numbers.
