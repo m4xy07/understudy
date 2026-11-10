@@ -43,8 +43,8 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-  console.log(`\n[lacuna integration]\n${log.join("\n")}\n`);
-  if (ws) {
+  console.log(`\n[lacuna integration] workspace ${ws}\n${log.join("\n")}\n`);
+  if (ws && !process.env.LACUNA_KEEP_WS) {
     await sql.begin(async (tx) => {
       await tx`SELECT set_config('us.allow_purge', 'on', true)`;
       await tx`DELETE FROM workspaces WHERE id = ${ws}`;
