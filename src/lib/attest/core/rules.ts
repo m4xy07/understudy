@@ -130,13 +130,22 @@ export function isDateValue(v: string): boolean {
  * - deadline: both values are single dates (a cadence such as "once per term" is another fact);
  * - owner, location: always;
  * - procedure, status, decision: only a restatement, i.e. the same author, a reply / quote link
- *   between the cited segments, or two structured records (board row vs board row);
+ *   between the cited segments;
+ * - never: two structured rows (two board cards are two items), claims sharing a cited segment,
+ *   or one person's statements made at the same moment;
  * - risk, access: never (several risks or credential names per entity are normal).
  */
 export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
   const va = norm(a.value);
   const vb = norm(b.value);
   if (!va || !vb || va === vb || va.includes(vb) || vb.includes(va)) return false;
+  // Two board rows / calendar events are two different items, not two versions of one.
+  if (a.origin === "structured" && b.origin === "structured") return false;
+  // One segment listing several facts (chosen and rejected options) does not contradict itself,
+  // nor does one person's two statements made at the same moment.
+  const segsA = new Set(a.citations.filter((c) => c.accepted).map((c) => c.segmentId));
+  if (b.citations.some((c) => c.accepted && segsA.has(c.segmentId))) return false;
+  if (sameAuthor(a, b) && timeOf(a.validFrom) === timeOf(b.validFrom)) return false;
   switch (a.attribute) {
     case "deadline":
       return isDateValue(a.value) && isDateValue(b.value);
@@ -146,7 +155,7 @@ export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segmen
     case "procedure":
     case "status":
     case "decision":
-      return sameAuthor(a, b) || linked(a, b, segmentsById) || (a.origin === "structured" && b.origin === "structured");
+      return sameAuthor(a, b) || linked(a, b, segmentsById);
     default:
       return false;
   }

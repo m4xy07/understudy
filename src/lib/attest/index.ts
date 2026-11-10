@@ -155,12 +155,15 @@ function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): 
       const iso = toIsoDate(d.value, ref);
       if (iso && iso !== d.value) out = { ...out, value: iso };
     }
-    // An open board card about nothing in the pack gets its own entity (the same slug Lacuna's
-    // inventory uses for it); finished cards about nothing in the pack stay "other" (history).
-    if (d.origin === "structured" && d.entity === OTHER_ENTITY && d.entityRaw) {
+    // Finished board cards are history: their claims stay under "other", never on a live
+    // responsibility (Lacuna's inventory skips them too). An open card about nothing in the pack
+    // gets its own entity, the same slug Lacuna's inventory uses for it.
+    if (d.origin === "structured") {
       const seg = segsById.get(d.citations[0]?.segmentId ?? "");
       const done = seg?.kind === "task" && DONE_STATUS.test(String(seg.meta?.status ?? "").trim());
-      if (!done) out = { ...out, entity: slugOf(d.entityRaw) };
+      const title = String(seg?.meta?.title ?? d.entityRaw ?? "");
+      if (done && d.entity !== OTHER_ENTITY) out = { ...out, entity: OTHER_ENTITY, entityRaw: title || null };
+      else if (!done && d.entity === OTHER_ENTITY && d.entityRaw) out = { ...out, entity: slugOf(d.entityRaw) };
     }
     return out;
   });
@@ -190,13 +193,14 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
     const up = opts.call ? true : await modelAvailable();
     const stats = newStats();
     const call = opts.call ?? attestModelCall({ cacheOnly: !up, stats });
-    const res = await extractClaims(segments, xpack, call, {
+    const xopts = {
       concurrency: opts.concurrency ?? 4,
       // ~2,700 tokens of segments per call: a long chat splits into several calls that each
       // answer well inside the client's 90 s timeout.
       maxChars: EXTRACT_MAX_CHARS,
-      authorLabel: (id) => (id ? (names[id] ?? id) : "unknown"),
-    });
+      authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
+    };
+    const res = await extractClaims(segments, xpack, call, xopts);
     batches = res.batches;
     modelDrafts = res.drafts;
     offList = res.offListClaims;

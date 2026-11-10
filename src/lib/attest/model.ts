@@ -30,19 +30,30 @@ export function newStats(): CallStats {
   return { calls: 0, cached: 0, failed: 0, errors: [] };
 }
 
+const RETRIES = 2;
+const TRANSIENT = /timed out|timeout|HTTP 429|HTTP 5\d\d|fetch failed|ECONNRESET|empty model response/i;
+
 /** A ModelCall over callJson. `cacheOnly` skips the network (model unavailable). */
 export function attestModelCall(opts: { cacheOnly: boolean; stats?: CallStats }): ModelCall {
   return async (o) => {
     const user = o.user.trimEnd().endsWith("/no_think") ? o.user : `${o.user.trimEnd()}\n/no_think`;
     g.__attestKeys?.add(cacheKey(modelTag(), o.system, user, o.jsonSchemaName));
-    const res = await callJson({
-      system: o.system,
-      user: o.user,
-      schema: o.schema,
-      jsonSchemaName: o.jsonSchemaName,
-      jsonSchema: o.jsonSchema,
-      cacheOnly: opts.cacheOnly,
-    });
+    const ask = () =>
+      callJson({
+        system: o.system,
+        user: o.user,
+        schema: o.schema,
+        jsonSchemaName: o.jsonSchemaName,
+        jsonSchema: o.jsonSchema,
+        cacheOnly: opts.cacheOnly,
+      });
+    let res = await ask();
+    // Transient failures (timeouts under load, rate limits, 5xx) are retried with the SAME
+    // prompt, so a later success lands under the same cache key.
+    for (let attempt = 0; !opts.cacheOnly && !res.ok && attempt < RETRIES && TRANSIENT.test(res.error); attempt++) {
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      res = await ask();
+    }
     if (opts.stats) {
       opts.stats.calls++;
       if (res.ok && res.cached) opts.stats.cached++;
