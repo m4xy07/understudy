@@ -1,0 +1,57 @@
+{
+  "claims": [
+    {
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "value": "run make flash, then power-cycle",
+      "statement": "To deploy, run make flash and then power-cycle the robot.",
+      "citations": [{ "segment_id": "seg_fw01", "quote": "run make flash and then power-cycle the robot" }]
+    },
+    {
+      "entity": "flash",
+      "attribute": "risk",
+      "value": "laptop USB port drops mid-flash",
+      "statement": "The laptop USB port drops mid-flash, so use the powered hub.",
+      "citations": [
+        { "segment_id": "seg_fw01", "quote": "the laptop port drops mid-flash" },
+        { "segment_id": "seg_fw01", "quote": "the laptop port drops mid-flash" }
+      ]
+    },
+    {
+      "entity": "Firmware deploy to the robot",
+      "attribute": "access",
+      "value": "DEPLOY_TOKEN repo secret",
+      "statement": "Deploys need the DEPLOY_TOKEN secret in the repo.",
+      "citations": [{ "segment_id": "seg_fw03", "quote": "DEPLOY_TOKEN is in the repo secrets" }]
+    },
+    {
+      "entity": "firmware-deploy",
+      "attribute": "Owner",
+      "value": "Priya",
+      "statement": "Priya owns the deploy token until she graduates.",
+      "citations": [{ "segment_id": "seg_fw03", "quote": "I own it until I graduate" }]
+    },
+    {
+      "entity": "firmware-deploy",
+      "attribute": "budget",
+      "value": "free",
+      "statement": "Deploys cost nothing.",
+      "citations": [{ "segment_id": "seg_fw01", "quote": "run make flash" }]
+    },
+    {
+      "entity": "firmware-deploy",
+      "attribute": "cadence",
+      "value": "every match day",
+      "statement": "The robot is flashed every match day.",
+      "citations": [{ "segment_id": "seg_fw01", "quote": "run make flash" }]
+    },
+    {
+      "entity": "pizza party",
+      "attribute": "decision",
+      "value": "pizza tonight",
+      "statement": "The team is getting pizza tonight.",
+      "citations": [{ "segment_id": "seg_fw04", "quote": null }]
+    },
+    { "entity": "firmware-deploy", "attribute": "owner" }
+  ]
+}
