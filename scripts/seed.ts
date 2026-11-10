@@ -22,7 +22,14 @@ async function main() {
   }
   const raw = JSON.parse(fs.readFileSync(file, "utf8")) as CacheRow[] | { rows: CacheRow[] };
   const rows = Array.isArray(raw) ? raw : raw.rows;
-  const sql = postgres(url, { prepare: false, max: 1, onnotice: () => {} });
+  const sql = postgres(url, {
+    prepare: false,
+    max: 1,
+    // One query in flight per connection: safe on Supabase's transaction pooler (port 6543) too.
+    max_pipeline: 1,
+    ssl: /@(localhost|127\.0\.0\.1)[:/]/.test(url) ? false : "require",
+    onnotice: () => {},
+  });
   try {
     let n = 0;
     for (const r of rows) {

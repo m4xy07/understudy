@@ -8,7 +8,14 @@ import postgres from "postgres";
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set (see .env.example)");
-  const sql = postgres(url, { prepare: false, max: 1, onnotice: () => {} });
+  const sql = postgres(url, {
+    prepare: false,
+    max: 1,
+    // One query in flight per connection: safe on Supabase's transaction pooler (port 6543) too.
+    max_pipeline: 1,
+    ssl: /@(localhost|127\.0\.0\.1)[:/]/.test(url) ? false : "require",
+    onnotice: () => {},
+  });
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS schema_migrations (
