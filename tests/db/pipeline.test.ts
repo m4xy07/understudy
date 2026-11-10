@@ -68,7 +68,15 @@ describe("walking skeleton pipeline", () => {
 
   it("release rule, hash and per-role compile with a restricted stub", async () => {
     expect((await bulkApprove(ws, "president", ["A", "B"])).ok).toBe(true);
-    const tierC = (await listClaims(ws)).filter((c) => c.tier === "C" && c.review === "pending");
+    const pendingC = (await listClaims(ws)).filter((c) => c.tier === "C" && c.review === "pending");
+    // A superseded claim can only be rejected, never approved, whatever its tier.
+    for (const c of pendingC.filter((x) => x.state === "superseded")) {
+      const res = await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence.", evidenceOpened: true });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.code).toBe("not_reviewable");
+    }
+    const tierC = pendingC.filter((c) => c.state === "active" || c.state === "conflicting");
+    expect(tierC.length).toBeGreaterThan(0);
     for (const c of tierC) {
       expect((await reviewClaim(ws, c.id, "approved", "president")).ok).toBe(false); // needs a reason
       expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence." })).ok).toBe(false); // evidence not opened

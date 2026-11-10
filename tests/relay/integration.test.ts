@@ -120,15 +120,25 @@ describe("Relay review", () => {
   it("bulk approve takes pending tier A claims only", async () => {
     const pending = (await listClaims(ws)).filter((c) =>
       c.review === "pending" && c.state === "active" && !c.id.startsWith("clm_test") && effectiveTier({ ...c, tier: "A" }) === "A");
-    const asA = pending.slice(0, 2).map((c) => c.id);
-    await sql`UPDATE claims SET tier = 'A' WHERE workspace_id = ${ws} AND id = ANY(${asA}::text[])`;
-    const tierBBefore = (await listClaims(ws)).filter((c) => c.review === "pending" && c.tier === "B").length;
+    const promoted = pending.filter((c) => c.tier !== "A").slice(0, 2).map((c) => c.id);
+    expect(promoted.length).toBe(2);
+    await sql`UPDATE claims SET tier = 'A' WHERE workspace_id = ${ws} AND id = ANY(${promoted}::text[])`;
+    // Real extraction already yields tier A claims (corroborated, normal, no flags): the expected set
+    // is every pending active claim whose effective tier is A, including the two promoted above.
+    const before = await listClaims(ws);
+    const expectedA = before
+      .filter((c) => c.review === "pending" && c.state === "active" && effectiveTier(c) === "A")
+      .map((c) => c.id).sort();
+    expect(expectedA).toEqual(expect.arrayContaining(promoted));
+    const otherPending = before.filter((c) => c.review === "pending" && !expectedA.includes(c.id)).map((c) => c.id).sort();
+    expect(otherPending.length).toBeGreaterThan(0);
     const res = await bulkApprove(ws, "president", ["A", "B"]);
     expect(res.ok).toBe(true);
-    expect(res.approved).toBe(asA.length);
+    expect(res.approved).toBe(expectedA.length);
     const claims = await listClaims(ws);
-    for (const id of asA) expect(claims.find((c) => c.id === id)!.review).toBe("approved");
-    expect(claims.filter((c) => c.review === "pending" && c.tier === "B").length).toBe(tierBBefore);
+    for (const id of expectedA) expect(claims.find((c) => c.id === id)!.review).toBe("approved");
+    // Tiers B and C (and non-active claims) are never bulk-approved: all of them are still pending.
+    expect(claims.filter((c) => c.review === "pending").map((c) => c.id).sort()).toEqual(otherPending);
   });
 });
 
@@ -248,9 +258,20 @@ describe("Relay handover", () => {
     expect(a.ok).toBe(true);
     const b = await acknowledgeHandover(ws, "tech_lead", { ...typed, domain_renewal_date: "2026-12-09" });
     expect(b.ok).toBe(true);
+    if (!a.ok || !b.ok) return;
     const rows = await listAcknowledgements(ws);
     expect(rows.length).toBe(2);
-    expect(rows[0].mismatch).toBe(1);
+    // Newest first. Read-back items left blank but visible to the tech lead count as mismatches in
+    // both rows (real claims answer them); the second ack adds exactly the wrong renewal date.
+    type Verdicts = { verdicts: { key: string; verdict: string }[] };
+    const verdict = (ack: Verdicts, key: string) => ack.verdicts.find((v) => v.key === key)!.verdict;
+    expect(verdict(a.ack, "domain_renewal_date")).toBe("match");
+    expect(verdict(b.ack, "domain_renewal_date")).toBe("mismatch");
+    const mismatches = (ack: Verdicts) => ack.verdicts.filter((v) => v.verdict === "mismatch").length;
+    expect(rows[1].mismatch).toBe(mismatches(a.ack));
+    expect(rows[0].mismatch).toBe(mismatches(b.ack));
+    expect(rows[0].mismatch).toBe(rows[1].mismatch + 1);
+    expect(rows[0].match).toBe(rows[1].match - 1);
     expect(rows.every((r) => r.snapshotHash.length === 64)).toBe(true);
     await expect(sql`UPDATE acknowledgements SET role = 'president' WHERE workspace_id = ${ws}`).rejects.toThrow(/append-only/);
     await expect(sql`DELETE FROM acknowledgements WHERE workspace_id = ${ws}`).rejects.toThrow(/append-only/);
