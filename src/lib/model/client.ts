@@ -16,6 +16,8 @@ export interface CallOpts<T> {
   user: string;
   schema: ZodType<T>;
   jsonSchemaName: string;
+  /** Hand-written JSON Schema sent as response_format json_schema; when absent one is derived from `schema`. */
+  jsonSchema?: Record<string, unknown>;
   temperature?: 0;
   /** Skip the network: return a cached answer or { ok: false } (used for replay-only runs). */
   cacheOnly?: boolean;
@@ -56,8 +58,17 @@ async function readCache(key: string): Promise<unknown | undefined> {
   try {
     const rows = await db()`SELECT output FROM model_cache WHERE input_hash = ${key}`;
     if (rows[0]) {
-      memory.set(key, rows[0].output);
-      return rows[0].output;
+      // writeCache/seed store JSON.stringify(output) as a jsonb *string*; decode it back.
+      let output: unknown = rows[0].output;
+      if (typeof output === "string") {
+        try {
+          output = JSON.parse(output);
+        } catch {
+          // a plain string answer: keep as is
+        }
+      }
+      memory.set(key, output);
+      return output;
     }
   } catch {
     // cache table unavailable: behave as a miss
@@ -163,11 +174,13 @@ export async function callJson<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
     if (opts.cacheOnly) return { ok: false, error: "not in cache" };
     if (!cfg().baseUrl || !cfg().name) return { ok: false, error: "model not configured" };
 
-    let jsonSchema: unknown = undefined;
-    try {
-      jsonSchema = z.toJSONSchema(opts.schema as ZodType);
-    } catch {
-      jsonSchema = { type: "object" };
+    let jsonSchema: unknown = opts.jsonSchema;
+    if (!jsonSchema) {
+      try {
+        jsonSchema = z.toJSONSchema(opts.schema as ZodType);
+      } catch {
+        jsonSchema = { type: "object" };
+      }
     }
 
     let lastError = "invalid JSON";

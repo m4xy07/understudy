@@ -105,6 +105,86 @@ export function repliesTo(newer: Claim, older: Claim, segmentsById?: Map<string,
   return false;
 }
 
+/** True when either claim's cited segments reply to / quote the other's. */
+function linked(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
+  return repliesTo(a, b, segmentsById) || repliesTo(b, a, segmentsById);
+}
+
+const MONTH = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*";
+const DATE_LIKE = new RegExp(
+  `^\\d{4}-\\d{2}-\\d{2}|\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\b|\\b${MONTH}\\s+\\d{1,2}\\b|\\b\\d{1,2}[/.]\\d{1,2}[/.]\\d{2,4}\\b`,
+  "i",
+);
+const CADENCE = /\b(every|each|once|weekly|monthly|yearly|annually|daily|per (?:term|year|month|week)|repeats?)\b/i;
+
+const MONTHS3 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/** "YYYY-MM-DD" for an ISO value, "MM-DD" for "8 Aug ..." / "Aug 8 ...", else null. */
+function dayOf(v: string): string | null {
+  const iso = /^(\d{4}-\d{2}-\d{2})/.exec(v.trim());
+  if (iso) return iso[1];
+  const pad = (n: string) => n.padStart(2, "0");
+  let m = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTH})`, "i").exec(v);
+  if (m) return `${pad(String(MONTHS3.indexOf(m[2].slice(0, 3).toLowerCase()) + 1))}-${pad(m[1])}`;
+  m = new RegExp(`\\b(${MONTH})\\s+(\\d{1,2})\\b`, "i").exec(v);
+  if (m) return `${pad(String(MONTHS3.indexOf(m[1].slice(0, 3).toLowerCase()) + 1))}-${pad(m[2])}`;
+  return null;
+}
+
+/** A single calendar day ("2026-12-19", "19 Dec", "Dec 19"), not a cadence ("every year, next ..."). */
+export function isDateValue(v: string): boolean {
+  return DATE_LIKE.test(v) && !CADENCE.test(v);
+}
+
+/**
+ * Two claims on the same entity and single-valued attribute are only compared when their
+ * values are the same KIND of fact, so that a cadence never "conflicts" with a due date and a
+ * verify step never "supersedes" the deploy steps:
+ * - values where one contains the other agree (e.g. "Priya Nair" and "Priya Nair (lead)");
+ * - deadline: both values are single dates (a cadence such as "once per term" is another fact);
+ * - owner, location: always;
+ * - procedure, status, decision: only a restatement, i.e. the same author, a reply / quote link
+ *   between the cited segments;
+ * - never: two structured rows (two board cards are two items), claims sharing a cited segment,
+ *   or one person's statements made at the same moment;
+ * - risk, access: never (several risks or credential names per entity are normal).
+ */
+export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
+  const strip = (v: string) => norm(v).replace(/\b(the|a|an)\b/g, " ").replace(/\s+/g, " ").trim();
+  const va = strip(a.value);
+  const vb = strip(b.value);
+  if (!va || !vb || va === vb || va.includes(vb) || vb.includes(va)) return false;
+  // Two board rows / calendar events are two different items, not two versions of one.
+  if (a.origin === "structured" && b.origin === "structured") return false;
+  // One segment listing several facts (chosen and rejected options) does not contradict itself,
+  // nor does one person's two statements made at the same moment.
+  const segsA = new Set(a.citations.filter((c) => c.accepted).map((c) => c.segmentId));
+  if (b.citations.some((c) => c.accepted && segsA.has(c.segmentId))) return false;
+  if (sameAuthor(a, b) && timeOf(a.validFrom) === timeOf(b.validFrom)) return false;
+  switch (a.attribute) {
+    case "deadline": {
+      if (!isDateValue(a.value) || !isDateValue(b.value)) return false;
+      const da = dayOf(a.value);
+      const db = dayOf(b.value);
+      const md = (d: string) => (d.length === 10 ? d.slice(5) : d);
+      if (da && db && md(da) === md(db) && (da.length === 5 || db.length === 5 || da === db)) return false; // same day
+      // A date already past when the other claim was made is an earlier occurrence, not a rival.
+      if (da?.length === 10 && da < b.validFrom.slice(0, 10)) return false;
+      if (db?.length === 10 && db < a.validFrom.slice(0, 10)) return false;
+      return true;
+    }
+    case "owner":
+    case "location":
+      return true;
+    case "procedure":
+    case "status":
+    case "decision":
+      return sameAuthor(a, b) || linked(a, b, segmentsById);
+    default:
+      return false;
+  }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Supersession and conflicts (single-valued attributes only)
 
@@ -134,6 +214,7 @@ export function applySupersession(
   const groups = new Map<string, Claim[]>();
   for (const c of candidates) {
     if (MULTI_VALUED.includes(c.attribute)) continue;
+    if (c.entity === "other") continue; // "other" is not one entity: never compare across it
     const key = `${c.entity}\u0000${c.attribute}`;
     const g = groups.get(key);
     if (g) g.push(c);
@@ -160,6 +241,7 @@ export function applySupersession(
         const a = sorted[i]; // older (or same time)
         const b = sorted[j]; // newer (or same time)
         if (norm(a.value) === norm(b.value)) continue;
+        if (!comparable(a, b, segmentsById)) continue;
         const aa = authorityOf(a, pack);
         const ab = authorityOf(b, pack);
         if (timeOf(a.validFrom) === timeOf(b.validFrom)) {

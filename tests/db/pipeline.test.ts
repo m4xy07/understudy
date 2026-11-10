@@ -87,9 +87,14 @@ describe("walking skeleton pipeline", () => {
 
     const lead = await compileHandover(ws, "tech_lead");
     const member = await compileHandover(ws, "new_member");
+    const president = await compileHandover(ws, "president");
+    const allItems = president.groups.flatMap((g) => g.items).length; // the president sees every role set in the demo
     const leadItems = lead.groups.flatMap((g) => g.items).length;
     const memberItems = member.groups.flatMap((g) => g.items).length;
-    expect(member.withheld).toBe(leadItems - memberItems);
+    // Withheld counts every approved claim the role may not see, including ones the tech lead
+    // cannot see either (e.g. #finance), so compare with the president's view, not the tech lead's.
+    expect(member.withheld).toBe(allItems - memberItems);
+    expect(lead.withheld).toBe(allItems - leadItems);
     expect(member.withheld).toBeGreaterThan(0);
     expect(member.stubLine).toBe(member.withheld === 1
       ? "1 restricted item. Ask the approver (Club President)."

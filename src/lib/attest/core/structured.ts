@@ -72,7 +72,18 @@ export function eventClaims(seg: Segment, pack: ExtractionPack, opts: Structured
     const statement = next
       ? `"${summary}" repeats ${cadence}; the next date is ${next}.`
       : `"${summary}" repeats ${cadence}.`;
-    out.push(make("deadline", value, statement, findQuote(seg.text, ["rrule", "repeats", "recurs"], [rrule])));
+    const repeatsQuote =
+      findQuote(seg.text, ["rrule", "repeats", "recurs"], [rrule]) ?? labelSpan(seg.text, ["repeats", "rrule", "recurs"]);
+    out.push(make("deadline", value, statement, repeatsQuote));
+    // The next occurrence as a plain ISO date: a separate single-date deadline claim, so the
+    // read-back and the date rules see a date (the cadence claim above is a different kind of fact).
+    if (next && /^\d{4}-\d{2}-\d{2}$/.test(next)) {
+      const quote =
+        findQuote(seg.text, ["start", "starts", "when", "date", "dtstart"], nextRaw ? dateForms(nextRaw) : []) ??
+        repeatsQuote ??
+        labelSpan(seg.text, ["when", "start", "dtstart"]);
+      out.push(make("deadline", next, `The next "${summary}" is on ${next}.`, quote));
+    }
   } else if (start) {
     const value = isoDate(start) ?? start;
     out.push(make("deadline", value, `"${summary}" is on ${value}.`,
@@ -150,7 +161,16 @@ export function findQuote(text: string, labels: string[], values: string[]): str
   return null;
 }
 
-const DAY: Record<string, string> = { MO: "Monday", TU: "Tuesday", WE: "Wednesday", TH: "Thursday", FR: "Friday", SA: "Saturday", SU: "Sunday" };
+/** The exact `label: value` span (up to the next " | " or line end) for the first label present. */
+export function labelSpan(text: string, labels: string[]): string | null {
+  for (const l of labels) {
+    const m = new RegExp(`(?<![A-Za-z0-9])${loosePattern(l)}[ \\t]*:[ \\t]*[^|\\n]*[^|\\s]`, "i").exec(text);
+    if (m) return m[0];
+  }
+  return null;
+}
+
+const DAY: Record<string, string> ={ MO: "Monday", TU: "Tuesday", WE: "Wednesday", TH: "Thursday", FR: "Friday", SA: "Saturday", SU: "Sunday" };
 const FREQ: Record<string, [string, string]> = {
   DAILY: ["daily", "days"], WEEKLY: ["weekly", "weeks"], MONTHLY: ["monthly", "months"], YEARLY: ["yearly", "years"],
 };
