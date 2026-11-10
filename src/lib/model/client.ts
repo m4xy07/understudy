@@ -27,6 +27,15 @@ const TIMEOUT_MS = 90_000;
 const PROBE_TIMEOUT_MS = 3_000;
 const PROBE_TTL_MS = 30_000;
 
+/**
+ * MODEL_DISABLED=1 (set for every vitest run): never touch the network. callJson answers from the
+ * cache or returns { ok: false, error: "model disabled in tests" }; modelAvailable() is false.
+ */
+export function modelDisabled(): boolean {
+  const v = (process.env.MODEL_DISABLED ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 function cfg() {
   return {
     baseUrl: (process.env.MODEL_BASE_URL ?? "").replace(/\/+$/, ""),
@@ -172,6 +181,7 @@ export async function callJson<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
       if (parsed.success) return { ok: true, data: parsed.data, cached: true };
     }
     if (opts.cacheOnly) return { ok: false, error: "not in cache" };
+    if (modelDisabled()) return { ok: false, error: "model disabled in tests" };
     if (!cfg().baseUrl || !cfg().name) return { ok: false, error: "model not configured" };
 
     let jsonSchema: unknown = opts.jsonSchema;
@@ -214,6 +224,7 @@ let probe: { at: number; ok: boolean } | null = null;
 
 /** Quick reachability probe of the model endpoint (3 s timeout), memoised for 30 s. */
 export async function modelAvailable(): Promise<boolean> {
+  if (modelDisabled()) return false;
   if (probe && Date.now() - probe.at < PROBE_TTL_MS) return probe.ok;
   const { baseUrl, apiKey } = cfg();
   let ok = false;
