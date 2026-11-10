@@ -95,20 +95,37 @@ function noteCall(key: string, outcome: "cached" | "live" | "failed", error?: st
   if (error && r.errors.length < 10 && !r.errors.includes(error)) r.errors.push(error);
 }
 
+/**
+ * The text a cache row holds for `output`: writeCache stores JSON.stringify(output) as a jsonb
+ * *string*, and data/demo/model_cache.json exports that string as read back. A string output is
+ * therefore already this text and is not encoded again (scripts/seed.ts uses this).
+ */
+export function cacheOutputText(output: unknown): string {
+  return typeof output === "string" ? output : JSON.stringify(output);
+}
+
+/**
+ * Decode a model_cache.output value back to the answer. Unwraps JSON text up to three levels:
+ * rows seeded before the seed used cacheOutputText() were encoded twice and never matched a schema.
+ */
+export function decodeCacheOutput(value: unknown): unknown {
+  let output = value;
+  for (let i = 0; i < 3 && typeof output === "string"; i++) {
+    try {
+      output = JSON.parse(output);
+    } catch {
+      break; // a plain string answer: keep as is
+    }
+  }
+  return output;
+}
+
 async function readCache(key: string): Promise<unknown | undefined> {
   if (memory.has(key)) return memory.get(key);
   try {
     const rows = await db()`SELECT output FROM model_cache WHERE input_hash = ${key}`;
     if (rows[0]) {
-      // writeCache/seed store JSON.stringify(output) as a jsonb *string*; decode it back.
-      let output: unknown = rows[0].output;
-      if (typeof output === "string") {
-        try {
-          output = JSON.parse(output);
-        } catch {
-          // a plain string answer: keep as is
-        }
-      }
+      const output = decodeCacheOutput(rows[0].output);
       memory.set(key, output);
       return output;
     }
