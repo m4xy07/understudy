@@ -1,0 +1,806 @@
+[
+  {
+    "sha": "769e0c48ed562cab52a61dc4ee18d86c642edd74",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-06-02T19:12:00+05:30",
+    "message": "Initial import of the Arduino Mega firmware",
+    "files": [
+      {
+        "path": "firmware/src/main.ino",
+        "status": "added"
+      },
+      {
+        "path": "firmware/src/motors.h",
+        "status": "added"
+      },
+      {
+        "path": "README.md",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "74e2171eceaf343c664e360de46e8cd6076c60a3",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-06-05T18:40:00+05:30",
+    "message": "website: base layout for the club site",
+    "files": [
+      {
+        "path": "website/index.html",
+        "status": "added"
+      },
+      {
+        "path": "website/style.css",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "c640c1fa5ca0f66fb133e26dd9a908f8a3942989",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-06-09T21:05:00+05:30",
+    "message": "firmware: clean up motor PWM constants",
+    "files": [
+      {
+        "path": "firmware/src/motors.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "b7aa30ce7e14009dda686fa3e34d67c422d625aa",
+    "author_name": "Tanvi Deshpande",
+    "author_email": "tanvi.deshpande@westbrook.example",
+    "date": "2026-06-11T17:30:00+05:30",
+    "message": "website: club colours and logo",
+    "files": [
+      {
+        "path": "website/style.css",
+        "status": "modified"
+      },
+      {
+        "path": "website/logo.svg",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "f2c71d2bd90f0ea0013fc34498a32adf163590b4",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-06-16T19:25:00+05:30",
+    "message": "dns: add zone file for witroboclub.example",
+    "files": [
+      {
+        "path": "dns/witroboclub.zone",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "dd3efff71d0560e9c8bf9a0b0b08fbb28a4cf826",
+    "author_name": "Kabir Sethi",
+    "author_email": "kabir.codes@mailbox.example",
+    "date": "2026-06-18T22:10:00+05:30",
+    "message": "firmware: add line sensor read loop",
+    "files": [
+      {
+        "path": "firmware/src/sensors.h",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "3f96440c1d7dcfd6c19805309371e82a2cee6bf6",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-06-23T20:45:00+05:30",
+    "message": "firmware: PID loop for the drive motors",
+    "files": [
+      {
+        "path": "firmware/src/pid.h",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "412d84ceaca3ecfa1b95769c9a9f2858600cef82",
+    "author_name": "Dev Malhotra",
+    "author_email": "dev.malhotra@westbrook.example",
+    "date": "2026-06-26T16:20:00+05:30",
+    "message": "website: team page",
+    "files": [
+      {
+        "path": "website/team.html",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "44dafa943c5d64ae213327df47c833c370ee5b5d",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-06-30T19:50:00+05:30",
+    "message": "firmware: PID tuning from the Saturday build",
+    "files": [
+      {
+        "path": "firmware/src/pid.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "ca8ffe2e396c0bbcc413c6ded986dc9bacd7cf9b",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-07-04T17:55:00+05:30",
+    "message": "firmware: start the ESP32 port (the Arduino Mega runs out of RAM for the PID loop)",
+    "files": [
+      {
+        "path": "firmware/platformio.ini",
+        "status": "added"
+      },
+      {
+        "path": "firmware/src/main.cpp",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "5aba3ece97040c97d432e7e88538596644cc045c",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-07-07T21:30:00+05:30",
+    "message": "firmware: move motor driver pins to ESP32 GPIOs",
+    "files": [
+      {
+        "path": "firmware/src/motors.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "dacfcecd35ad5a83aa00dce000e0e406c7b5ab1f",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-07-09T15:10:00+05:30",
+    "message": "website: events page",
+    "files": [
+      {
+        "path": "website/events.html",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "59a59ce725809ad796fc354eab6dd4f3e1222dc7",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-07-12T16:55:00+05:30",
+    "message": "firmware: remove the Arduino Mega sketch",
+    "files": [
+      {
+        "path": "firmware/src/main.ino",
+        "status": "removed"
+      }
+    ]
+  },
+  {
+    "sha": "fe4982b504af494e443f7c2c18fafa2fb9fd5dea",
+    "author_name": "Arjun Rao",
+    "author_email": "arjun.rao@westbrook.example",
+    "date": "2026-07-15T20:15:00+05:30",
+    "message": "firmware: fix typo in the sensor threshold",
+    "files": [
+      {
+        "path": "firmware/src/sensors.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "8363fd512ef1112a527ed38d2a19c6bd9944ea39",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-07-18T20:50:00+05:30",
+    "message": "firmware: add ArduinoOTA support",
+    "files": [
+      {
+        "path": "firmware/src/ota.cpp",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "43e37763e46610084c1c7c0fc106b3218176c9ff",
+    "author_name": "Dev Malhotra",
+    "author_email": "dev.malhotra@westbrook.example",
+    "date": "2026-07-21T18:05:00+05:30",
+    "message": "website: photo gallery",
+    "files": [
+      {
+        "path": "website/gallery.html",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "ea3aeaa96bef6628d0d32c9fa16639a1f6a748b3",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-07-24T19:20:00+05:30",
+    "message": "scripts: add flash.sh for USB and OTA flashing",
+    "files": [
+      {
+        "path": "scripts/flash.sh",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "dca74cd2bdf2e4d3bd1ee6059a4fcac5291d31eb",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-07-28T17:40:00+05:30",
+    "message": "website: fix mobile nav",
+    "files": [
+      {
+        "path": "website/style.css",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "243cfebde1dd26290f2cb1b1029edb2917829557",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-01T19:45:00+05:30",
+    "message": "firmware: OTA reads OTA_PASSWORD from the environment at build time",
+    "files": [
+      {
+        "path": "firmware/src/ota.cpp",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "41d576a69cd027304bcea4597db10a2c2b3432ab",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-04T17:50:00+05:30",
+    "message": "dns: point www to the new host",
+    "files": [
+      {
+        "path": "dns/witroboclub.zone",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "2988ea1cabaaf731e08f36fc5022ea13694d9dc1",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-11T20:55:00+05:30",
+    "message": "ci: add GitHub Actions workflow to build firmware on every push to main",
+    "files": [
+      {
+        "path": ".github/workflows/deploy.yml",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "0187a99471b023f2da08cb624cc7d4873cce7c0d",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-12T21:40:00+05:30",
+    "message": "ci: cache PlatformIO packages",
+    "files": [
+      {
+        "path": ".github/workflows/deploy.yml",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "f8928d4c88aab766b861c08d0cc92f46de26560d",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-14T20:30:00+05:30",
+    "message": "docs: add DEPLOY.md",
+    "files": [
+      {
+        "path": "docs/DEPLOY.md",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "ceb1df492ba0a7f9418b29d4fd6ac55027b085d5",
+    "author_name": "Tanvi Deshpande",
+    "author_email": "tanvi.deshpande@westbrook.example",
+    "date": "2026-08-17T16:15:00+05:30",
+    "message": "website: footer and contact section",
+    "files": [
+      {
+        "path": "website/index.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "7a6cab860f7f7b3f992cc803bc98b69e40c27519",
+    "author_name": "Dev Malhotra",
+    "author_email": "dev.malhotra@westbrook.example",
+    "date": "2026-08-19T22:20:00+05:30",
+    "message": "website: add S3 upload for team photos",
+    "files": [
+      {
+        "path": "website/upload-config.js",
+        "status": "added"
+      },
+      {
+        "path": "website/register.js",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "471bef1b9c387416ed1d4084caa079b9447b958f",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-21T19:55:00+05:30",
+    "message": "ci: attach firmware.bin to each GitHub release",
+    "files": [
+      {
+        "path": ".github/workflows/deploy.yml",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "45c4f87a302892c9d909e9c274b378a386a521e8",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-25T18:50:00+05:30",
+    "message": "firmware: battery voltage monitor",
+    "files": [
+      {
+        "path": "firmware/src/battery.h",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "a67fb8fd8588dcda6d5bdb1905c8abcff07145bf",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-08-27T21:10:00+05:30",
+    "message": "website: start the registration form",
+    "files": [
+      {
+        "path": "website/register.html",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "536026066f6c5a1398db0297632c5c2315247dd3",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-29T20:25:00+05:30",
+    "message": "firmware: soft-start for the drive motors",
+    "files": [
+      {
+        "path": "firmware/src/motors.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "cfd32d3a0a09334222cd1fa86ae6659deacaf168",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-01T20:50:00+05:30",
+    "message": "scripts: flash.sh defaults to OTA",
+    "files": [
+      {
+        "path": "scripts/flash.sh",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "16e14fcb12fe7d8a658972881bcd39299d169a7a",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-02T21:40:00+05:30",
+    "message": "docs: DEPLOY.md now uses OTA flashing",
+    "files": [
+      {
+        "path": "docs/DEPLOY.md",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "159c4f530667f3176307f521704612a8561410c2",
+    "author_name": "Kabir Sethi",
+    "author_email": "kabir.codes@mailbox.example",
+    "date": "2026-09-04T17:55:00+05:30",
+    "message": "firmware: debounce the start button",
+    "files": [
+      {
+        "path": "firmware/src/main.cpp",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "616ee1f87e51c64abc09bbde72ed5ae0abc1737d",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-09-07T19:30:00+05:30",
+    "message": "website: registration form fields",
+    "files": [
+      {
+        "path": "website/register.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "13164232e6bf26e2aad43fde760eca1311196419",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-10T21:55:00+05:30",
+    "message": "firmware: v2.3.0 trial build",
+    "files": [
+      {
+        "path": "firmware/src/version.h",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "3798334b0f6e550db3f188e1c2d01aea3a83dcdc",
+    "author_name": "Dev Malhotra",
+    "author_email": "dev.malhotra@westbrook.example",
+    "date": "2026-09-12T18:25:00+05:30",
+    "message": "website: form validation",
+    "files": [
+      {
+        "path": "website/register.js",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "7ff0eb3a9a5a6410b922867b6fbead496b4930d6",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-15T19:55:00+05:30",
+    "message": "dns: add A record for the register subdomain",
+    "files": [
+      {
+        "path": "dns/witroboclub.zone",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "7fc9057b4b2a0c183c99c3a6ddd74e99b9cc905c",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-18T21:20:00+05:30",
+    "message": "firmware: fix PID windup on long straights",
+    "files": [
+      {
+        "path": "firmware/src/pid.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "af98d032dce8e4b0d7805011b3a48b4e1c31866b",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-20T22:05:00+05:30",
+    "message": "firmware: v2.3.1 known-good build used in the trial run",
+    "files": [
+      {
+        "path": "firmware/src/version.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "8eb9a4e2f2dc6f20b0efce5d9535044339186535",
+    "author_name": "Tanvi Deshpande",
+    "author_email": "tanvi.deshpande@westbrook.example",
+    "date": "2026-09-23T17:35:00+05:30",
+    "message": "website: sponsor logos on the homepage",
+    "files": [
+      {
+        "path": "website/index.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "976b502230594265d5b86486e2b3e6bc7fc51cfe",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-09-26T17:50:00+05:30",
+    "message": "dns: update.sh reads DNS_API_TOKEN from the repo secrets",
+    "files": [
+      {
+        "path": "dns/update.sh",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "21bc28ef3c905eeee926bba59e63445e4b6d725f",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-09-29T20:10:00+05:30",
+    "message": "website: registration form posts to the Google Sheet",
+    "files": [
+      {
+        "path": "website/register.js",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "84e2e588fb80792790253a00ed417904dc66a9cc",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-03T19:50:00+05:30",
+    "message": "scripts: flash.sh argument parsing",
+    "files": [
+      {
+        "path": "scripts/flash.sh",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "2b08d36ad321fa01f609305fa07dc96a5219ca85",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-06T18:45:00+05:30",
+    "message": "firmware: gearbox current limit",
+    "files": [
+      {
+        "path": "firmware/src/motors.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "f112c782d6eae33e4eeb55c9711a36f25dd6fdb3",
+    "author_name": "Dev Malhotra",
+    "author_email": "dev.malhotra@westbrook.example",
+    "date": "2026-10-08T18:30:00+05:30",
+    "message": "website: staging deploy of the registration page",
+    "files": [
+      {
+        "path": "website/register.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "fe4410be0807c4e7070013f897db553c17d01415",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-10T19:45:00+05:30",
+    "message": "ci: run unit tests before the build",
+    "files": [
+      {
+        "path": ".github/workflows/deploy.yml",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "6c5a4c049dec9e0bb57721f88518e4e34af871e3",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-13T20:50:00+05:30",
+    "message": "firmware: v2.4.0-rc1",
+    "files": [
+      {
+        "path": "firmware/src/version.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "72766f0ad97933d9c94ee283a05862463c746512",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-10-16T17:20:00+05:30",
+    "message": "website: loading spinner on submit",
+    "files": [
+      {
+        "path": "website/register.js",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "0c90fb0c3866d2b9b4cc175683c239d42020119f",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-19T21:50:00+05:30",
+    "message": "firmware: telemetry over Wi-Fi",
+    "files": [
+      {
+        "path": "firmware/src/telemetry.cpp",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "0004eb3fe823380d114f1834fa6dbfc04384cc10",
+    "author_name": "Arjun Rao",
+    "author_email": "arjun.rao@westbrook.example",
+    "date": "2026-10-21T15:30:00+05:30",
+    "message": "docs: fix README typos",
+    "files": [
+      {
+        "path": "README.md",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "af30b9cecc94c71eb9b4b3ffaecf5ed958ec130a",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-10-23T18:40:00+05:30",
+    "message": "website: privacy note on the form",
+    "files": [
+      {
+        "path": "website/register.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "506f5eb6d5bc0c19b909884703142080e14640b8",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-26T20:45:00+05:30",
+    "message": "firmware: v2.4.0",
+    "files": [
+      {
+        "path": "firmware/src/version.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "c343a5952998f0279ed3b54c27026d5579e51c3d",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-29T20:20:00+05:30",
+    "message": "ci: build matrix for the bench and competition robots",
+    "files": [
+      {
+        "path": ".github/workflows/deploy.yml",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "72b8fff3c6c31c4e6e01d390d71e1a0cbe63fb2e",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-10-30T16:10:00+05:30",
+    "message": "docs: add the drivetrain BOM",
+    "files": [
+      {
+        "path": "docs/BOM.md",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "dc79573d570457961485224a4f7ec84743a89b74",
+    "author_name": "Dev Malhotra",
+    "author_email": "dev.malhotra@westbrook.example",
+    "date": "2026-11-02T17:15:00+05:30",
+    "message": "website: compress gallery images",
+    "files": [
+      {
+        "path": "website/gallery.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "64986c45f5335ac92ca27a159a135e2973d30af1",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-11-03T18:50:00+05:30",
+    "message": "dns: lower the TTL before the renewal",
+    "files": [
+      {
+        "path": "dns/witroboclub.zone",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "41425541193124d4e6651136768a30f15b74456c",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-11-05T21:45:00+05:30",
+    "message": "firmware: new encoder filter (testing)",
+    "files": [
+      {
+        "path": "firmware/src/sensors.h",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "447c3067378a55073c73819236e78e61064581c3",
+    "author_name": "Sneha Joshi",
+    "author_email": "sneha.joshi@westbrook.example",
+    "date": "2026-11-07T19:05:00+05:30",
+    "message": "website: WIP confirmation email template, not wired yet",
+    "files": [
+      {
+        "path": "website/register.js",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "2438da69f29b6def41d74398ba5d46e89593fd03",
+    "author_name": "Tanvi Deshpande",
+    "author_email": "tanvi.deshpande@westbrook.example",
+    "date": "2026-11-08T18:20:00+05:30",
+    "message": "website: competition date on the homepage",
+    "files": [
+      {
+        "path": "website/index.html",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "33ae6d56d40f4eeb656f9d538ab752b80b3842c5",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-11-09T20:30:00+05:30",
+    "message": "README: setup steps for new members",
+    "files": [
+      {
+        "path": "README.md",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "3a22bcf1e22b533e54d071d029caef516fc6160a",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-11-10T20:55:00+05:30",
+    "message": "firmware: encoder filter tuned",
+    "files": [
+      {
+        "path": "firmware/src/sensors.h",
+        "status": "modified"
+      }
+    ]
+  }
+]

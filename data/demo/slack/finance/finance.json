@@ -1,0 +1,131 @@
+[
+  {
+    "ts": "1782109800.000100",
+    "user": "U03ANANYA",
+    "text": "Opening balance for the season is ₹42,300, ledger ref CANARY-7Q2X."
+  },
+  {
+    "ts": "1782390600.000200",
+    "user": "U01PRIYA",
+    "text": "Vertex Motors title sponsorship is ₹60,000 for this season, agreement ref CANARY-W3ZP."
+  },
+  {
+    "ts": "1782391200.000300",
+    "user": "U02ROHAN",
+    "text": "Approved. Ananya, please file the agreement (CANARY-W3ZP)."
+  },
+  {
+    "ts": "1782883800.000400",
+    "user": "U03ANANYA",
+    "text": "Vertex sponsorship received in full, ₹60,000, receipt CANARY-W3ZP."
+  },
+  {
+    "ts": "1782988200.000500",
+    "user": "U01PRIYA",
+    "text": "Sponsorship commitments in the Vertex agreement (CANARY-W3ZP): Vertex logo on the robot shell, a Vertex banner at the competition, and a sponsorship report with photos after the competition."
+  },
+  {
+    "ts": "1783578600.000600",
+    "user": "U03ANANYA",
+    "text": "ESP32 boards reimbursed to Priya, ₹2,850, voucher CANARY-K4M9."
+  },
+  {
+    "ts": "1785396600.000700",
+    "user": "U03ANANYA",
+    "text": "Filament reimbursed to Kabir, ₹640, voucher CANARY-K4M9."
+  },
+  {
+    "ts": "1786509000.000800",
+    "user": "U03ANANYA",
+    "text": "Lab consumables bill of ₹1,980 paid, voucher CANARY-K4M9."
+  },
+  {
+    "ts": "1787218200.000900",
+    "user": "U03ANANYA",
+    "text": "Last December the domain lapsed for three days and the website was down, invoice ref CANARY-7Q2X."
+  },
+  {
+    "ts": "1789536600.001000",
+    "user": "U03ANANYA",
+    "text": "We pay the RoboLeague entry fee every year when we register the team, organiser ref CANARY-R8T1."
+  },
+  {
+    "ts": "1790346600.001100",
+    "user": "U03ANANYA",
+    "text": "Domain renewal for witroboclub.example is due on 2 Dec 2026, ₹1,150 at NameHarbor, invoice ref CANARY-7Q2X."
+  },
+  {
+    "ts": "1790346900.001200",
+    "user": "U03ANANYA",
+    "text": "If the domain lapses again, the registration form goes offline before the competition (invoice ref CANARY-7Q2X)."
+  },
+  {
+    "ts": "1791181800.001300",
+    "user": "U03ANANYA",
+    "text": "T-shirt order paid, ₹9,600, voucher CANARY-K4M9."
+  },
+  {
+    "ts": "1792063800.001400",
+    "user": "U03ANANYA",
+    "text": "Deccan RoboLeague entry fee is ₹6,000 and must be paid by 25 Nov 2026, organiser invoice CANARY-R8T1."
+  },
+  {
+    "ts": "1792064400.001500",
+    "user": "U03ANANYA",
+    "text": "The entry fee is paid through the college accounts office from the club cost centre; attach the organiser invoice CANARY-R8T1 to the payment request.",
+    "thread_ts": "1792063800.001400"
+  },
+  {
+    "ts": "1792065000.001600",
+    "user": "U01PRIYA",
+    "text": "Thanks Ananya, I'll send you the team list for the invoice (CANARY-R8T1).",
+    "thread_ts": "1792063800.001400"
+  },
+  {
+    "ts": "1793363400.001700",
+    "user": "U01PRIYA",
+    "text": "Kothrud Robotics Supply quote for the drivetrain parts is ₹18,400, quote ref CANARY-K4M9."
+  },
+  {
+    "ts": "1793424600.001800",
+    "user": "U03ANANYA",
+    "text": "Next step for the drivetrain order: Dr. Kulkarni signs the purchase request, then I raise the PO with accounts, quote ref CANARY-K4M9."
+  },
+  {
+    "ts": "1793424900.001900",
+    "user": "U02ROHAN",
+    "text": "Approved from my side (CANARY-K4M9).",
+    "thread_ts": "1793424600.001800"
+  },
+  {
+    "ts": "1793615400.002000",
+    "user": "U03ANANYA",
+    "text": "Budget left after the drivetrain order will be about ₹31,000, ledger ref CANARY-7Q2X."
+  },
+  {
+    "ts": "1793773800.002100",
+    "user": "U03ANANYA",
+    "text": "Vertex banner print quote is ₹2,200, quote ref CANARY-W3ZP."
+  },
+  {
+    "ts": "1793939400.002200",
+    "user": "U03ANANYA",
+    "text": "Reminder: the sponsorship report for Vertex is part of the agreement (CANARY-W3ZP). Priya, please hand over the photo folder."
+  },
+  {
+    "ts": "1793941200.002300",
+    "user": "U01PRIYA",
+    "text": "Will do before I leave (CANARY-W3ZP).",
+    "thread_ts": "1793939400.002200"
+  },
+  {
+    "ts": "1794130200.002400",
+    "user": "U03ANANYA",
+    "text": "Practice arena plywood reimbursed to Arjun, ₹1,450, voucher CANARY-K4M9."
+  },
+  {
+    "ts": "1794283200.002500",
+    "user": "U03ANANYA",
+    "text": "Entry fee payment request is drafted, waiting for the team list (CANARY-R8T1)."
+  }
+]

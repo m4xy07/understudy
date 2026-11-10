@@ -1,0 +1,2534 @@
+{
+  "today": "2026-11-11",
+  "responsibilities": [
+    {
+      "key": "R01",
+      "title": "Firmware deploy to the robot",
+      "kind": "deploy_operate",
+      "origin": "footprint",
+      "originDetail": "ownership share: Priya authored 20 of 23 commits touching firmware/ (87%) and 5 of 5 touching .github/workflows/deploy.yml since June 2026",
+      "entities": [
+        "firmware-deploy",
+        "firmware-rollback"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R02",
+      "title": "Title sponsor relationship (Vertex Motors)",
+      "kind": "external_relationship",
+      "origin": "role_template",
+      "originDetail": "role template tech_lead.R02; also footprint: Priya is the only club member in touch with Vertex Motors (Meera Shah, then Rahul Desai)",
+      "entities": [
+        "title-sponsor"
+      ],
+      "dueDate": "2026-11-27"
+    },
+    {
+      "key": "R03",
+      "title": "Book the workshop lab each term",
+      "kind": "recurring_obligation",
+      "origin": "role_template",
+      "originDetail": "role template tech_lead.R03; also calendar: 3 'Book Workshop Lab 3' events on 2026-06-08, 2026-07-27 and 2026-10-12 (3 distinct weeks), organizer Priya",
+      "entities": [
+        "lab-booking"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R04",
+      "title": "Domain and DNS renewal",
+      "kind": "recurring_obligation",
+      "origin": "footprint",
+      "originDetail": "schedule: yearly calendar event 'Renew the witroboclub.example domain at NameHarbor' (next 2026-12-02); Priya authored 5 of 5 commits to dns/; credential name DNS_API_TOKEN",
+      "entities": [
+        "domain-dns"
+      ],
+      "dueDate": "2026-12-02"
+    },
+    {
+      "key": "R05",
+      "title": "Competition venue and date",
+      "kind": "open_decision",
+      "origin": "task_board",
+      "originDetail": "card T-031 (In progress, owner Priya Nair)",
+      "entities": [
+        "competition"
+      ],
+      "dueDate": "2026-12-19"
+    },
+    {
+      "key": "R06",
+      "title": "Website registration form",
+      "kind": "unfinished_work",
+      "origin": "task_board",
+      "originDetail": "card T-018 (In progress, owner Priya Nair)",
+      "entities": [
+        "website-registration"
+      ],
+      "dueDate": "2026-11-20"
+    },
+    {
+      "key": "R07",
+      "title": "Parts order for the drivetrain",
+      "kind": "unfinished_work",
+      "origin": "task_board",
+      "originDetail": "card T-024 (In progress, owner Priya Nair)",
+      "entities": [
+        "drivetrain-parts"
+      ],
+      "dueDate": "2026-11-18"
+    },
+    {
+      "key": "R08",
+      "title": "Competition entry fee",
+      "kind": "recurring_obligation",
+      "origin": "task_board",
+      "originDetail": "card T-036 (Open, owner Priya Nair, no due date on the card; the due date 2026-11-25 is only in #finance)",
+      "entities": [
+        "entry-fee"
+      ],
+      "dueDate": "2026-11-25"
+    },
+    {
+      "key": "R09",
+      "title": "Late-night lab access",
+      "kind": "recurring_obligation",
+      "origin": "footprint",
+      "originDetail": "repeat: Priya asked Mr. Pawar for late access to Lab 3 on 2026-08-20, 09-03, 09-24, 10-15 and 11-05 (5 times in 5 distinct weeks)",
+      "entities": [
+        "lab-late-access"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R10",
+      "title": "Drive team selection",
+      "kind": "open_decision",
+      "origin": "role_template",
+      "originDetail": "role template tech_lead.R10",
+      "entities": [
+        "team-selection"
+      ],
+      "dueDate": null
+    }
+  ],
+  "claims": [
+    {
+      "id": "gt-001",
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "value": "Plug the lab laptop into the robot over USB and upload from the Arduino IDE",
+      "keywords": [
+        "usb",
+        "arduino ide"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "plug the lab laptop into the robot over USB and upload the firmware from the Arduino IDE"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-002",
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "value": "./scripts/flash.sh --ota 192.168.4.1",
+      "keywords": [
+        "flash.sh",
+        "--ota",
+        "192.168.4.1"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "Update: deploy is now over the air. Run `./scripts/flash.sh --ota 192.168.4.1` from the lab laptop on the RoboClub-AP Wi-Fi."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-003",
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "value": "./scripts/flash.sh --ota 192.168.4.1",
+      "keywords": [
+        "flash.sh",
+        "--ota"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/files/docs/DEPLOY.md",
+        "contains": "Run `./scripts/flash.sh --ota 192.168.4.1` from the lab laptop."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-004",
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "value": "GitHub Actions builds the firmware on every push to main and attaches firmware.bin to a release",
+      "keywords": [
+        "github actions",
+        "firmware.bin"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/files/docs/DEPLOY.md",
+        "contains": "GitHub Actions builds the ESP32 firmware with PlatformIO and attaches `firmware.bin` to a GitHub release."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-005",
+      "entity": "firmware-deploy",
+      "attribute": "location",
+      "value": "Lab laptop connected to the robot's RoboClub-AP Wi-Fi",
+      "keywords": [
+        "lab laptop",
+        "roboclub-ap"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/files/docs/DEPLOY.md",
+        "contains": "Flash from the lab laptop while it is connected to the robot's Wi-Fi access point `RoboClub-AP`."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "access_path"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-006",
+      "entity": "firmware-deploy",
+      "attribute": "access",
+      "value": "OTA_PASSWORD",
+      "keywords": [
+        "ota_password"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/files/docs/DEPLOY.md",
+        "contains": "`flash.sh` reads the `OTA_PASSWORD` environment variable before it uploads."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "access_path"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-007",
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "value": "Check the boot banner version on the serial monitor at 115200 baud, then run the 30-second motor test",
+      "keywords": [
+        "serial monitor",
+        "boot banner"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/files/docs/DEPLOY.md",
+        "contains": "Open the serial monitor at 115200 baud and check that the boot banner shows the new version number, then run the 30-second motor test from the bench menu."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "how_to_verify"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-008",
+      "entity": "firmware-rollback",
+      "attribute": "procedure",
+      "value": "./scripts/flash.sh --rollback v2.3.1",
+      "keywords": [
+        "flash.sh",
+        "--rollback",
+        "v2.3.1"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "If a new build misbehaves, roll back with `./scripts/flash.sh --rollback v2.3.1`. v2.3.1 is the last known-good build."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "rollback"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-009",
+      "entity": "firmware-rollback",
+      "attribute": "status",
+      "value": "v2.3.1 stays the rollback target until after the competition",
+      "keywords": [
+        "v2.3.1",
+        "rollback target"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "Keep v2.3.1 as the rollback target until after the competition."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-010",
+      "entity": "firmware-rollback",
+      "attribute": "status",
+      "value": "v2.3.1 is the known-good build used in the trial run",
+      "keywords": [
+        "v2.3.1",
+        "known-good"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/commits.json",
+        "contains": "firmware: v2.3.1 known-good build used in the trial run"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-011",
+      "entity": "firmware-deploy",
+      "attribute": "decision",
+      "value": "Firmware builds run on GitHub Actions on every push to main",
+      "keywords": [
+        "github actions"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-08-14-deploy-pipeline.md",
+        "contains": "Firmware builds run on GitHub Actions (`.github/workflows/deploy.yml`) on every push to `main`."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-012",
+      "entity": "firmware-deploy",
+      "attribute": "reason",
+      "value": "Everyone gets the same binary",
+      "keywords": [
+        "same binary"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-08-14-deploy-pipeline.md",
+        "contains": "Everyone gets the same binary, so there are no more builds that only work on one laptop."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-013",
+      "entity": "firmware-deploy",
+      "attribute": "reason",
+      "value": "Each build is kept as a GitHub release so an older version can be flashed again",
+      "keywords": [
+        "release",
+        "older version"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-08-14-deploy-pipeline.md",
+        "contains": "Each build is attached to a GitHub release, so an older version can be flashed again if a new one misbehaves."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-014",
+      "entity": "controller-board",
+      "attribute": "decision",
+      "value": "Move the robot controller from the Arduino Mega to the ESP32",
+      "keywords": [
+        "esp32",
+        "arduino mega"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-07-03-controller-decision.md",
+        "contains": "We are moving the robot controller from the Arduino Mega to the ESP32."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-015",
+      "entity": "controller-board",
+      "attribute": "reason",
+      "value": "The ESP32 has built-in Wi-Fi for over-the-air flashing",
+      "keywords": [
+        "wi-fi",
+        "over the air"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-07-03-controller-decision.md",
+        "contains": "The ESP32 has built-in Wi-Fi, so we can flash firmware over the air instead of plugging in a USB cable."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-016",
+      "entity": "controller-board",
+      "attribute": "reason",
+      "value": "The Arduino Mega ran out of RAM for the PID loop",
+      "keywords": [
+        "ram",
+        "pid"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-07-03-controller-decision.md",
+        "contains": "The Arduino Mega ran out of RAM for the PID loop."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-017",
+      "entity": "title-sponsor",
+      "attribute": "contact",
+      "value": "Meera Shah",
+      "keywords": [
+        "meera shah"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Meera Shah at Vertex Motors is our sponsor contact."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "contact_person"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-018",
+      "entity": "title-sponsor",
+      "attribute": "contact",
+      "value": "Rahul Desai",
+      "keywords": [
+        "rahul desai"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Our sponsor contact at Vertex Motors is now Rahul Desai"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "contact_person"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-019",
+      "entity": "title-sponsor",
+      "attribute": "contact",
+      "value": "Rahul Desai",
+      "keywords": [
+        "rahul desai"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-10-05-sponsor-sync.md",
+        "contains": "Our sponsor contact at Vertex Motors is now Rahul Desai."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "contact_person"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-020",
+      "entity": "title-sponsor",
+      "attribute": "status",
+      "value": "Vertex Motors is the title sponsor for this season",
+      "keywords": [
+        "vertex",
+        "title sponsor"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Vertex Motors confirmed they are our title sponsor for this season"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-021",
+      "entity": "title-sponsor",
+      "attribute": "owner",
+      "value": "Priya Nair (only club member in touch with Vertex)",
+      "keywords": [
+        "priya"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Priya is the only one in touch with Vertex, so send sponsor questions to her."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-022",
+      "entity": "title-sponsor",
+      "attribute": "dependency",
+      "value": "Vertex logo on the robot shell",
+      "keywords": [
+        "logo",
+        "robot shell"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "We promised Vertex their logo on the robot shell this season."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "open_commitments"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-023",
+      "entity": "title-sponsor",
+      "attribute": "dependency",
+      "value": "Logo on the robot shell, a Vertex banner at the competition, and a sponsorship report with photos",
+      "keywords": [
+        "logo",
+        "banner",
+        "sponsorship report"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "Sponsorship commitments in the Vertex agreement (CANARY-W3ZP): Vertex logo on the robot shell, a Vertex banner at the competition, and a sponsorship report with photos after the competition."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "open_commitments"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-024",
+      "entity": "title-sponsor",
+      "attribute": "deadline",
+      "value": "2026-11-20",
+      "keywords": [
+        "2026-11-20"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Next check-in with Rahul at Vertex is on 20 Nov."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "next_date"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-025",
+      "entity": "title-sponsor",
+      "attribute": "deadline",
+      "value": "2026-11-27",
+      "keywords": [
+        "2026-11-27"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Update: Vertex moved our check-in with Rahul to 27 Nov."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "next_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-026",
+      "entity": "title-sponsor",
+      "attribute": "status",
+      "value": "Handover call with Rahul Desai held on 14 Oct 2026",
+      "keywords": [
+        "handover call",
+        "rahul"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Had the handover call with Rahul Desai at Vertex today, all good."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "last_interaction"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-027",
+      "entity": "title-sponsor",
+      "attribute": "decision",
+      "value": "Title sponsorship of ₹60,000 for this season",
+      "keywords": [
+        "60,000"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "Vertex Motors title sponsorship is ₹60,000 for this season, agreement ref CANARY-W3ZP."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-028",
+      "entity": "title-sponsor",
+      "attribute": "risk",
+      "value": "Vertex may cut the sponsorship to ₹40,000 if the sponsorship report is late",
+      "keywords": [
+        "40,000",
+        "report"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-10-30-handover-prep.md",
+        "contains": "Vertex Motors may cut the sponsorship to ₹40,000 next season if the sponsorship report is late"
+      },
+      "roleSet": [
+        "president",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-029",
+      "entity": "lab-booking",
+      "attribute": "procedure",
+      "value": "Fill the lab booking form, get Dr. Kulkarni's signature, hand it to Mr. Pawar",
+      "keywords": [
+        "lab booking form",
+        "signature",
+        "pawar"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "To book Workshop Lab 3 for a term: fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "how_to_do_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-030",
+      "entity": "lab-booking",
+      "attribute": "deadline",
+      "value": "Once every term",
+      "keywords": [
+        "term"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Reminder: booking Workshop Lab 3 is a once-a-term job."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-031",
+      "entity": "lab-booking",
+      "attribute": "deadline",
+      "value": "Once per term",
+      "keywords": [
+        "term"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-06-20-season-kickoff.md",
+        "contains": "Workshop Lab 3 has to be booked once per term with Mr. Pawar"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-032",
+      "entity": "lab-booking",
+      "attribute": "risk",
+      "value": "If the booking is missed, the Saturday slot goes to another club",
+      "keywords": [
+        "saturday slot",
+        "another club"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "If we miss the booking, the Saturday slot goes to another club and we lose our build day."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-033",
+      "entity": "lab-booking",
+      "attribute": "deadline",
+      "value": "2026-12-01",
+      "keywords": [
+        "2026-12-01"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Lab booking for next term has to reach Mr. Pawar by 1 Dec."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "next_due_date"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-034",
+      "entity": "lab-booking",
+      "attribute": "deadline",
+      "value": "2026-12-05",
+      "keywords": [
+        "2026-12-05"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Pawar sir told me the lab booking deadline for next term is 5 Dec."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "next_due_date"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-035",
+      "entity": "lab-slot",
+      "attribute": "deadline",
+      "value": "Saturday",
+      "keywords": [
+        "saturday"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "The workshop lab is booked for the club every Saturday, 10:00 to 17:00."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-036",
+      "entity": "lab-slot",
+      "attribute": "deadline",
+      "value": "Saturday",
+      "keywords": [
+        "saturday"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-06-20-season-kickoff.md",
+        "contains": "The club's workshop lab slot is every Saturday, 10:00 to 17:00, in Workshop Lab 3."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-037",
+      "entity": "domain-dns",
+      "attribute": "deadline",
+      "value": "2026-12-02",
+      "keywords": [
+        "2026-12-02"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/demo/calendar/roboclub.ics",
+        "contains": "DTSTART;VALUE=DATE:20261202"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-038",
+      "entity": "domain-dns",
+      "attribute": "deadline",
+      "value": "Every year on 2 December",
+      "keywords": [
+        "year"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/demo/calendar/roboclub.ics",
+        "contains": "Renew the witroboclub.example domain at NameHarbor (yearly)"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-039",
+      "entity": "domain-dns",
+      "attribute": "deadline",
+      "value": "2026-12-02",
+      "keywords": [
+        "2026-12-02"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "The domain witroboclub.example is due for renewal on 2 Dec 2026 at NameHarbor, and it renews every year."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-040",
+      "entity": "domain-dns",
+      "attribute": "deadline",
+      "value": "2026-12-02",
+      "keywords": [
+        "2026-12-02"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "Domain renewal for witroboclub.example is due on 2 Dec 2026, ₹1,150 at NameHarbor, invoice ref CANARY-7Q2X."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-041",
+      "entity": "domain-dns",
+      "attribute": "procedure",
+      "value": "Renew on the NameHarbor dashboard (steps not written down)",
+      "keywords": [
+        "nameharbor",
+        "dashboard"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "Renewal is a few clicks on the NameHarbor dashboard, I'll show whoever takes over."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "how_to_do_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-042",
+      "entity": "domain-dns",
+      "attribute": "access",
+      "value": "DNS_API_TOKEN",
+      "keywords": [
+        "dns_api_token"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "dns/update.sh pushes them and needs the DNS_API_TOKEN secret."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-043",
+      "entity": "domain-dns",
+      "attribute": "access",
+      "value": "DNS_API_TOKEN",
+      "keywords": [
+        "dns_api_token"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/demo/github/commits.json",
+        "contains": "dns: update.sh reads DNS_API_TOKEN from the repo secrets"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-044",
+      "entity": "domain-dns",
+      "attribute": "risk",
+      "value": "If the domain lapses, the registration form goes offline before the competition",
+      "keywords": [
+        "lapse",
+        "offline"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "If the domain lapses again, the registration form goes offline before the competition (invoice ref CANARY-7Q2X)."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-045",
+      "entity": "competition",
+      "attribute": "deadline",
+      "value": "2026-12-12",
+      "keywords": [
+        "2026-12-12"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Big news: Deccan RoboLeague 2026 is on 12 Dec 2026, and our college is hosting it!"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "deadline"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-046",
+      "entity": "competition",
+      "attribute": "deadline",
+      "value": "2026-12-12",
+      "keywords": [
+        "2026-12-12"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Deccan RoboLeague 2026 is on 12 Dec 2026, hosted at our college!"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "deadline"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-047",
+      "entity": "competition",
+      "attribute": "deadline",
+      "value": "2026-12-19",
+      "keywords": [
+        "2026-12-19"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/demo/tasks/board.csv",
+        "contains": "priya.nair@westbrook.example,2026-12-19,competition"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "deadline"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-048",
+      "entity": "competition",
+      "attribute": "deadline",
+      "value": "2026-12-19",
+      "keywords": [
+        "2026-12-19"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Organisers moved Deccan RoboLeague 2026 to 19 Dec 2026."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "deadline"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-049",
+      "entity": "competition",
+      "attribute": "status",
+      "value": "In progress",
+      "keywords": [
+        "in progress"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/demo/tasks/board.csv",
+        "contains": "T-031,Competition venue and date,In progress"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "current_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-050",
+      "entity": "competition",
+      "attribute": "status",
+      "value": "Venue not final; Hall B preferred",
+      "keywords": [
+        "not final",
+        "hall b"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Venue is still not final. Hall B is preferred because it has 3-phase power and room for the arena."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "current_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-051",
+      "entity": "competition",
+      "attribute": "decision",
+      "value": "Venue options: Sports Complex Hall B or the Main Auditorium",
+      "keywords": [
+        "hall b",
+        "main auditorium"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "The options are Sports Complex Hall B or the Main Auditorium."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "options_considered"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-052",
+      "entity": "competition",
+      "attribute": "reason",
+      "value": "Hall B has 3-phase power for the arena lights; the auditorium does not",
+      "keywords": [
+        "3-phase",
+        "hall b"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Hall B has 3-phase power for the arena lights. The auditorium does not."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "options_considered"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-053",
+      "entity": "competition",
+      "attribute": "owner",
+      "value": "Priya Nair",
+      "keywords": [
+        "priya nair"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/demo/tasks/board.csv",
+        "contains": "T-031,Competition venue and date,In progress,Priya Nair"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "owner"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-054",
+      "entity": "website-registration",
+      "attribute": "location",
+      "value": "website/register.html on the feature/registration-form branch",
+      "keywords": [
+        "register.html",
+        "feature/registration-form"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "The registration form lives in website/register.html on the feature/registration-form branch."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "where_it_lives"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-055",
+      "entity": "website-registration",
+      "attribute": "status",
+      "value": "Submits to the Google Sheet; confirmation email not wired yet",
+      "keywords": [
+        "google sheet",
+        "confirmation email"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Registration form status: it submits to the Google Sheet, but the confirmation email is not wired yet."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-056",
+      "entity": "website-registration",
+      "attribute": "status",
+      "value": "In progress",
+      "keywords": [
+        "in progress"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/demo/tasks/board.csv",
+        "contains": "T-018,Website registration form,In progress,Priya Nair"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-057",
+      "entity": "website-registration",
+      "attribute": "contact",
+      "value": "Sneha Joshi reviews website PRs",
+      "keywords": [
+        "sneha"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "I review all website PRs, tag me on the registration form PR."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "who_reviews_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-058",
+      "entity": "website-registration",
+      "attribute": "decision",
+      "value": "Team registration on the club website instead of a Google Form",
+      "keywords": [
+        "own website",
+        "google form"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "We are building team registration on our own website instead of a Google Form, so team details and photos land in one place."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-059",
+      "entity": "website-registration",
+      "attribute": "status",
+      "value": "One thing is pending before launch (not written down)",
+      "keywords": [
+        "pending",
+        "launch"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "The registration form still has one thing pending before launch, I'll write it down."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-060",
+      "entity": "drivetrain-parts",
+      "attribute": "location",
+      "value": "docs/BOM.md in the repo",
+      "keywords": [
+        "docs/bom.md"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Drivetrain BOM is in docs/BOM.md in the repo."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "where_it_lives"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-061",
+      "entity": "drivetrain-parts",
+      "attribute": "status",
+      "value": "Quote received from Kothrud Robotics Supply on 30 Oct",
+      "keywords": [
+        "quote",
+        "kothrud robotics supply"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Got the quote from Kothrud Robotics Supply today."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-062",
+      "entity": "drivetrain-parts",
+      "attribute": "status",
+      "value": "In progress",
+      "keywords": [
+        "in progress"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/demo/tasks/board.csv",
+        "contains": "T-024,Order drivetrain parts,In progress,Priya Nair"
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-063",
+      "entity": "drivetrain-parts",
+      "attribute": "contact",
+      "value": "Dr. Kulkarni approves the order before it is placed",
+      "keywords": [
+        "kulkarni",
+        "approve"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Dr. Kulkarni has to approve the drivetrain order before we place it."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "who_reviews_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-064",
+      "entity": "drivetrain-parts",
+      "attribute": "procedure",
+      "value": "Dr. Kulkarni signs the purchase request, then the Treasurer raises the PO with accounts",
+      "keywords": [
+        "purchase request",
+        "po"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "Next step for the drivetrain order: Dr. Kulkarni signs the purchase request, then I raise the PO with accounts, quote ref CANARY-K4M9."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "next_concrete_step"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-065",
+      "entity": "entry-fee",
+      "attribute": "deadline",
+      "value": "Every year",
+      "keywords": [
+        "year"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "The competition entry fee is a yearly payment, I'll handle it with Priya."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-066",
+      "entity": "entry-fee",
+      "attribute": "deadline",
+      "value": "2026-11-25",
+      "keywords": [
+        "2026-11-25"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "Deccan RoboLeague entry fee is ₹6,000 and must be paid by 25 Nov 2026, organiser invoice CANARY-R8T1."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-067",
+      "entity": "entry-fee",
+      "attribute": "procedure",
+      "value": "Pay through the college accounts office from the club cost centre with the organiser invoice attached",
+      "keywords": [
+        "accounts office",
+        "cost centre"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/finance/finance.json",
+        "contains": "The entry fee is paid through the college accounts office from the club cost centre; attach the organiser invoice CANARY-R8T1 to the payment request."
+      },
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "how_to_do_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-068",
+      "entity": "entry-fee",
+      "attribute": "risk",
+      "value": "Late registration costs double",
+      "keywords": [
+        "late",
+        "double"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Late registration for RoboLeague costs double, so let's not miss the entry fee deadline."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-069",
+      "entity": "lab-late-access",
+      "attribute": "deadline",
+      "value": "Almost every week in build season",
+      "keywords": [
+        "every week"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "I ask Pawar sir for late lab access almost every week in build season."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-070",
+      "entity": "lab-late-access",
+      "attribute": "risk",
+      "value": "Security locks Lab 3 at 8 pm; without Mr. Pawar's OK there is no evening testing",
+      "keywords": [
+        "8 pm",
+        "evening testing"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Security locks Lab 3 at 8 pm, so without his OK there is no evening testing."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-071",
+      "entity": "lab-late-access",
+      "attribute": "contact",
+      "value": "Mr. Pawar (lab in-charge)",
+      "keywords": [
+        "pawar"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Mr. Pawar is the lab in-charge for Workshop Lab 3."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-072",
+      "entity": "team-selection",
+      "attribute": "decision",
+      "value": "Drive team picked by trial lap times, not seniority",
+      "keywords": [
+        "lap times",
+        "seniority"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Drive team will be picked by trial lap times, not by seniority."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "options_considered"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-073",
+      "entity": "team-selection",
+      "attribute": "reason",
+      "value": "Last year's seniority pick cost the semi-final",
+      "keywords": [
+        "semi-final"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Reason: last year's seniority pick cost us the semi-final."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "options_considered"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-074",
+      "entity": "team-selection",
+      "attribute": "deadline",
+      "value": "2026-11-22",
+      "keywords": [
+        "2026-11-22"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Drive team trials are on 22 Nov."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "deadline"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-075",
+      "entity": "team-selection",
+      "attribute": "deadline",
+      "value": "2026-11-29",
+      "keywords": [
+        "2026-11-29"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Drive team selection trials will be held on 29 Nov."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "deadline"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-076",
+      "entity": "team-selection",
+      "attribute": "status",
+      "value": "6 members signed up for trials",
+      "keywords": [
+        "6 members",
+        "trials"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "6 members have signed up for drive team trials so far."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "current_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-077",
+      "entity": "team-selection",
+      "attribute": "status",
+      "value": "No owner after Priya leaves; to be decided at the next meeting",
+      "keywords": [
+        "own",
+        "after priya leaves"
+      ],
+      "source": {
+        "kind": "whatsapp",
+        "path": "data/demo/whatsapp/RoboClub Core.txt",
+        "contains": "Someone has to own drive team selection after Priya leaves."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-078",
+      "entity": "team-selection",
+      "attribute": "risk",
+      "value": "Kabir has missed four Saturday builds and should not be the main driver",
+      "keywords": [
+        "kabir",
+        "main driver"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/demo/notes/2026-10-30-handover-prep.md",
+        "contains": "Kabir is fast but has missed four Saturday builds, so he should not be the main driver."
+      },
+      "roleSet": [
+        "president",
+        "leaver"
+      ],
+      "check": null,
+      "state": "active"
+    }
+  ],
+  "gaps": [
+    {
+      "responsibility": "R01",
+      "checkKey": "credential_owner",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "OTA_PASSWORD is named in docs/DEPLOY.md and Arjun asked in #infra on 4 Nov who has it; nobody answered. No record says who holds the OTA password."
+    },
+    {
+      "responsibility": "R02",
+      "checkKey": "open_commitments",
+      "coverage": "partial",
+      "blocking": false,
+      "why": "The tech lead can see only the logo on the robot shell; the banner and the sponsorship report are listed only in #finance."
+    },
+    {
+      "responsibility": "R03",
+      "checkKey": "next_due_date",
+      "coverage": "conflicting",
+      "blocking": true,
+      "why": "Kabir says the next-term lab booking must reach Mr. Pawar by 1 Dec; Sneha says 5 Dec. Same channel, different authors, no reply link."
+    },
+    {
+      "responsibility": "R04",
+      "checkKey": "how_to_do_it",
+      "coverage": "partial",
+      "blocking": false,
+      "why": "#infra only says renewal is a few clicks on the NameHarbor dashboard; no steps, login or payment method are written down."
+    },
+    {
+      "responsibility": "R04",
+      "checkKey": "consequence_if_missed",
+      "coverage": "restricted",
+      "blocking": false,
+      "why": "The consequence (registration form offline, last year's three-day lapse) is stated only in #finance."
+    },
+    {
+      "responsibility": "R06",
+      "checkKey": "next_concrete_step",
+      "coverage": "partial",
+      "blocking": true,
+      "why": "Priya says one thing is pending before launch but never writes it down; only a WIP commit hints at the confirmation email."
+    },
+    {
+      "responsibility": "R07",
+      "checkKey": "next_concrete_step",
+      "coverage": "restricted",
+      "blocking": true,
+      "why": "The next step (Dr. Kulkarni signs the purchase request, then the Treasurer raises the PO) is stated only in #finance."
+    },
+    {
+      "responsibility": "R08",
+      "checkKey": "next_due_date",
+      "coverage": "restricted",
+      "blocking": true,
+      "why": "The card has no due date; 25 Nov 2026 is stated only in #finance."
+    },
+    {
+      "responsibility": "R08",
+      "checkKey": "how_to_do_it",
+      "coverage": "restricted",
+      "blocking": false,
+      "why": "Payment through the college accounts office from the club cost centre is stated only in #finance."
+    },
+    {
+      "responsibility": "R09",
+      "checkKey": "next_due_date",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "Past late-access requests are in the chat, but no upcoming late-access date is recorded anywhere."
+    },
+    {
+      "responsibility": "R09",
+      "checkKey": "how_to_do_it",
+      "coverage": "missing",
+      "blocking": false,
+      "why": "The chat only shows Priya asking Mr. Pawar; whether a form, a security sign-in or faculty approval is needed is never written (may show as partial)."
+    },
+    {
+      "responsibility": "R10",
+      "checkKey": "owner",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "Rohan says someone has to own drive team selection after Priya leaves; nobody is named."
+    },
+    {
+      "responsibility": "R10",
+      "checkKey": "deadline",
+      "coverage": "conflicting",
+      "blocking": false,
+      "why": "Dev says trials are on 22 Nov (WhatsApp); Tanvi says 29 Nov (#events). Equal authority, different authors, no link."
+    }
+  ],
+  "restrictedChecks": [
+    {
+      "responsibility": "R04",
+      "checkKey": "consequence_if_missed",
+      "visibleTo": [
+        "president",
+        "treasurer",
+        "leaver"
+      ]
+    },
+    {
+      "responsibility": "R07",
+      "checkKey": "next_concrete_step",
+      "visibleTo": [
+        "president",
+        "treasurer",
+        "leaver"
+      ]
+    },
+    {
+      "responsibility": "R08",
+      "checkKey": "next_due_date",
+      "visibleTo": [
+        "president",
+        "treasurer",
+        "leaver"
+      ]
+    },
+    {
+      "responsibility": "R08",
+      "checkKey": "how_to_do_it",
+      "visibleTo": [
+        "president",
+        "treasurer",
+        "leaver"
+      ]
+    },
+    {
+      "responsibility": "R01",
+      "checkKey": "rollback",
+      "visibleTo": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ]
+    },
+    {
+      "responsibility": "R04",
+      "checkKey": "how_to_do_it",
+      "visibleTo": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ]
+    }
+  ],
+  "supersessions": [
+    {
+      "entity": "competition",
+      "attribute": "deadline",
+      "old": "2026-12-12",
+      "new": "2026-12-19",
+      "rule": 1,
+      "claims": {
+        "old": [
+          "gt-045",
+          "gt-046"
+        ],
+        "new": [
+          "gt-047",
+          "gt-048"
+        ]
+      },
+      "note": "WhatsApp and #events said 12 Dec (8 Sep); the task board (authority 3 for deadline) says 19 Dec (updated 28 Oct)."
+    },
+    {
+      "entity": "firmware-deploy",
+      "attribute": "procedure",
+      "old": "Plug the lab laptop into the robot over USB and upload from the Arduino IDE",
+      "new": "./scripts/flash.sh --ota 192.168.4.1",
+      "rule": 2,
+      "claims": {
+        "old": [
+          "gt-001"
+        ],
+        "new": [
+          "gt-002"
+        ]
+      },
+      "note": "Same author (Priya) in #infra, and the update is a thread reply (thread_ts) to the original message."
+    },
+    {
+      "entity": "title-sponsor",
+      "attribute": "deadline",
+      "old": "2026-11-20",
+      "new": "2026-11-27",
+      "rule": 2,
+      "claims": {
+        "old": [
+          "gt-024"
+        ],
+        "new": [
+          "gt-025"
+        ]
+      },
+      "note": "Same author (Priya), same WhatsApp chat: next Vertex check-in moved from 20 Nov to 27 Nov."
+    },
+    {
+      "entity": "title-sponsor",
+      "attribute": "contact",
+      "old": "Meera Shah",
+      "new": "Rahul Desai",
+      "rule": 2,
+      "claims": {
+        "old": [
+          "gt-017"
+        ],
+        "new": [
+          "gt-018",
+          "gt-019"
+        ]
+      },
+      "note": "Same author (Priya) in WhatsApp, confirmed by Meera's own email quoted in the 5 Oct note. 'contact' is multi-valued in the contract, so the rules collect both values; the newest (Rahul Desai) is the current contact."
+    }
+  ],
+  "conflicts": [
+    {
+      "entity": "lab-booking",
+      "attribute": "deadline",
+      "values": [
+        "2026-12-01",
+        "2026-12-05"
+      ],
+      "rule": 3,
+      "claims": [
+        "gt-033",
+        "gt-034"
+      ],
+      "note": "Kabir (21 Oct) and Sneha (29 Oct) in WhatsApp, no reply link."
+    },
+    {
+      "entity": "team-selection",
+      "attribute": "deadline",
+      "values": [
+        "2026-11-22",
+        "2026-11-29"
+      ],
+      "rule": 3,
+      "claims": [
+        "gt-074",
+        "gt-075"
+      ],
+      "note": "Dev in WhatsApp (20 Oct) and Tanvi in #events (24 Oct); whatsapp and slack have equal deadline authority."
+    }
+  ],
+  "restricted": [
+    {
+      "token": "CANARY-7Q2X",
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "where": "data/demo/slack/finance/finance.json"
+    },
+    {
+      "token": "CANARY-K4M9",
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "where": "data/demo/slack/finance/finance.json"
+    },
+    {
+      "token": "CANARY-R8T1",
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "where": "data/demo/slack/finance/finance.json"
+    },
+    {
+      "token": "CANARY-W3ZP",
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "where": "data/demo/slack/finance/finance.json"
+    },
+    {
+      "token": "CANARY-B6HN",
+      "roleSet": [
+        "president",
+        "leaver"
+      ],
+      "where": "data/demo/notes/2026-10-30-handover-prep.md"
+    },
+    {
+      "token": "CANARY-J5LD",
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "where": "data/demo/slack/infra/infra.json"
+    }
+  ],
+  "secrets": [
+    {
+      "where": "data/demo/slack/infra/infra.json",
+      "type": "github_token",
+      "value": "ghp_R7kLm2Qx9Vt4Wb8Yn3Zc6Hd1Js5Pa0Ue2GiF"
+    },
+    {
+      "where": "data/demo/github/files/docs/DEPLOY.md",
+      "type": "password",
+      "value": "RoboAP#Lab3-2026"
+    },
+    {
+      "where": "data/demo/github/files/website/upload-config.js",
+      "type": "aws_access_key_id",
+      "value": "AKIAZ3QW7RB2QXNM4TLP"
+    },
+    {
+      "where": "data/demo/github/files/website/upload-config.js",
+      "type": "aws_secret_access_key",
+      "value": "q8Vt2LmX9pR4sK7wN1zB6cH3jF5gD0aY2eU8iO4r"
+    },
+    {
+      "where": "data/demo/notes/2026-10-05-sponsor-sync.md",
+      "type": "contact_email",
+      "value": "meera.shah@vertexmotors.example"
+    },
+    {
+      "where": "data/demo/notes/2026-10-05-sponsor-sync.md",
+      "type": "contact_phone",
+      "value": "+91 90110 00042"
+    },
+    {
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "type": "contact_email",
+      "value": "rahul.desai@vertexmotors.example"
+    },
+    {
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "type": "contact_phone",
+      "value": "+91 90110 00588"
+    },
+    {
+      "where": "data/demo/notes/2026-06-20-season-kickoff.md",
+      "type": "contact_email",
+      "value": "pawar.lab@westbrook.example"
+    },
+    {
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "type": "contact_phone",
+      "value": "+91 90110 00317"
+    }
+  ],
+  "offBoard": [
+    {
+      "responsibility": "R01",
+      "rule": "ownership_share",
+      "evidence": "Priya authored 20 of 23 commits touching firmware/ (87%) and 5 of 5 touching .github/workflows/deploy.yml in the last 6 months."
+    },
+    {
+      "responsibility": "R02",
+      "rule": "sole_external_contact",
+      "evidence": "Only Priya talks to Vertex Motors: Meera Shah until 1 Oct 2026, then Rahul Desai (WhatsApp, 5 Oct note). Also a tech_lead role-template duty."
+    },
+    {
+      "responsibility": "R03",
+      "rule": "schedule",
+      "evidence": "Three 'Book Workshop Lab 3' calendar events on 2026-06-08, 2026-07-27 and 2026-10-12 (3 distinct weeks), organizer Priya. Also a tech_lead role-template duty."
+    },
+    {
+      "responsibility": "R04",
+      "rule": "schedule",
+      "evidence": "Yearly RRULE 'Renew the witroboclub.example domain at NameHarbor' (next 2026-12-02); Priya authored 5 of 5 commits to dns/; credential name DNS_API_TOKEN in #infra and a commit message."
+    },
+    {
+      "responsibility": "R09",
+      "rule": "repeat",
+      "evidence": "Priya asked Mr. Pawar for late access to Lab 3 on 20 Aug, 3 Sep, 24 Sep, 15 Oct and 5 Nov 2026 (5 times in 5 distinct weeks)."
+    },
+    {
+      "responsibility": "R10",
+      "rule": "role_template",
+      "evidence": "No card on the board; tech_lead role-template duty; discussed in #events and WhatsApp with no owner."
+    }
+  ],
+  "readback": [
+    {
+      "key": "competition_date",
+      "expected": "2026-12-19",
+      "claims": [
+        "gt-047",
+        "gt-048"
+      ]
+    },
+    {
+      "key": "firmware_rollback",
+      "expected": "./scripts/flash.sh --rollback v2.3.1",
+      "claims": [
+        "gt-008"
+      ]
+    },
+    {
+      "key": "sponsor_contact",
+      "expected": "Rahul Desai",
+      "claims": [
+        "gt-018",
+        "gt-019"
+      ]
+    },
+    {
+      "key": "domain_renewal_date",
+      "expected": "2026-12-02",
+      "claims": [
+        "gt-037",
+        "gt-039",
+        "gt-040"
+      ]
+    },
+    {
+      "key": "lab_booking_day",
+      "expected": "Saturday",
+      "claims": [
+        "gt-035",
+        "gt-036"
+      ]
+    }
+  ],
+  "footprintNoise": [
+    {
+      "entity": "controller-board",
+      "rule": "repeat",
+      "why": "Finished work: the ESP32 port and the Arduino Mega decision are done (T-005, T-007 Done)."
+    },
+    {
+      "entity": "firmware-rollback",
+      "rule": "repeat|ownership",
+      "why": "Part of R01 (Firmware deploy to the robot); merge into R01, not a separate responsibility."
+    }
+  ],
+  "expectedTechLeadBlockingGaps": 7
+}

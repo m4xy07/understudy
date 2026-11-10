@@ -1,0 +1,65 @@
+[
+  {
+    "id": "U01PRIYA",
+    "real_name": "Priya Nair",
+    "profile": {
+      "email": "priya.nair@westbrook.example"
+    }
+  },
+  {
+    "id": "U02ROHAN",
+    "real_name": "Rohan Mehta",
+    "profile": {
+      "email": "rohan.mehta@westbrook.example"
+    }
+  },
+  {
+    "id": "U03ANANYA",
+    "real_name": "Ananya Iyer",
+    "profile": {
+      "email": "ananya.iyer@westbrook.example"
+    }
+  },
+  {
+    "id": "U04ARJUN",
+    "real_name": "Arjun Rao",
+    "profile": {
+      "email": "arjun.rao@westbrook.example"
+    }
+  },
+  {
+    "id": "U05KABIR",
+    "real_name": "Kabir Sethi",
+    "profile": {
+      "email": "kabir.sethi@westbrook.example"
+    }
+  },
+  {
+    "id": "U06SNEHA",
+    "real_name": "Sneha Joshi",
+    "profile": {
+      "email": "sneha.joshi@westbrook.example"
+    }
+  },
+  {
+    "id": "U07DEV",
+    "real_name": "Dev Malhotra",
+    "profile": {
+      "email": "dev.malhotra@westbrook.example"
+    }
+  },
+  {
+    "id": "U08TANVI",
+    "real_name": "Tanvi Deshpande",
+    "profile": {
+      "email": "tanvi.deshpande@westbrook.example"
+    }
+  },
+  {
+    "id": "U09KULKARNI",
+    "real_name": "Dr. S. Kulkarni",
+    "profile": {
+      "email": "s.kulkarni@westbrook.example"
+    }
+  }
+]

@@ -1,0 +1,259 @@
+[
+  {
+    "ts": "1782019800.000100",
+    "user": "U02ROHAN",
+    "text": "Season plan: we compete at Deccan RoboLeague this year. The organisers will announce the date later."
+  },
+  {
+    "ts": "1782020100.000200",
+    "user": "U08TANVI",
+    "text": "Can we do a club T-shirt this year?"
+  },
+  {
+    "ts": "1782020220.000300",
+    "user": "U02ROHAN",
+    "text": "Yes, Tanvi please own the T-shirt design."
+  },
+  {
+    "ts": "1782385200.000400",
+    "user": "U09KULKARNI",
+    "text": "Welcome back everyone. Please share the season plan with me by the end of June."
+  },
+  {
+    "ts": "1782448200.000500",
+    "user": "U02ROHAN",
+    "text": "Sent the season plan to Dr. Kulkarni."
+  },
+  {
+    "ts": "1782995400.000600",
+    "user": "U07DEV",
+    "text": "Poster for the recruitment drive, feedback?"
+  },
+  {
+    "ts": "1782996000.000700",
+    "user": "U06SNEHA",
+    "text": "font is too small at the bottom",
+    "thread_ts": "1782995400.000600"
+  },
+  {
+    "ts": "1782996600.000800",
+    "user": "U07DEV",
+    "text": "fixed, new version uploaded",
+    "thread_ts": "1782995400.000600"
+  },
+  {
+    "ts": "1783665000.000900",
+    "user": "U08TANVI",
+    "text": "Outreach idea: a robotics workshop at a local school in August"
+  },
+  {
+    "ts": "1783666800.001000",
+    "user": "U05KABIR",
+    "text": "I can help with the line follower kits"
+  },
+  {
+    "ts": "1784554200.001100",
+    "user": "U06SNEHA",
+    "text": "Photos from the Saturday build are in the drive"
+  },
+  {
+    "ts": "1785558600.001200",
+    "user": "U08TANVI",
+    "text": "Recruitment drive on 8 Aug, stall near the canteen"
+  },
+  {
+    "ts": "1786181400.001300",
+    "user": "U08TANVI",
+    "text": "14 first years signed up today"
+  },
+  {
+    "ts": "1786181700.001400",
+    "user": "U03ANANYA",
+    "text": "nice!"
+  },
+  {
+    "ts": "1787063400.001500",
+    "user": "U01PRIYA",
+    "text": "We are building team registration on our own website instead of a Google Form, so team details and photos land in one place."
+  },
+  {
+    "ts": "1787063520.001600",
+    "user": "U01PRIYA",
+    "text": "The registration form lives in website/register.html on the feature/registration-form branch.",
+    "thread_ts": "1787063400.001500"
+  },
+  {
+    "ts": "1787064000.001700",
+    "user": "U06SNEHA",
+    "text": "I review all website PRs, tag me on the registration form PR.",
+    "thread_ts": "1787063400.001500"
+  },
+  {
+    "ts": "1787398200.001800",
+    "user": "U07DEV",
+    "text": "School outreach workshop done, 40 kids, total chaos, 10/10"
+  },
+  {
+    "ts": "1788006600.001900",
+    "user": "U08TANVI",
+    "text": "T-shirt design v1 posted, vote by Monday"
+  },
+  {
+    "ts": "1788233400.002000",
+    "user": "U08TANVI",
+    "text": "T-shirt vote: design 2 wins"
+  },
+  {
+    "ts": "1788853200.002100",
+    "user": "U02ROHAN",
+    "text": "Deccan RoboLeague 2026 is on 12 Dec 2026, hosted at our college!"
+  },
+  {
+    "ts": "1788853500.002200",
+    "user": "U09KULKARNI",
+    "text": "Congratulations. Please plan the venue and logistics carefully."
+  },
+  {
+    "ts": "1789479000.002300",
+    "user": "U01PRIYA",
+    "text": "Drive team will be picked by trial lap times, not by seniority. Reason: last year's seniority pick cost us the semi-final."
+  },
+  {
+    "ts": "1789479300.002400",
+    "user": "U05KABIR",
+    "text": "fair",
+    "thread_ts": "1789479000.002300"
+  },
+  {
+    "ts": "1789479360.002500",
+    "user": "U06SNEHA",
+    "text": "+1",
+    "thread_ts": "1789479000.002300"
+  },
+  {
+    "ts": "1790055000.002600",
+    "user": "U09KULKARNI",
+    "text": "Please send me the venue proposal before it goes to the organisers."
+  },
+  {
+    "ts": "1790056800.002700",
+    "user": "U01PRIYA",
+    "text": "Will do, I'll send it this week."
+  },
+  {
+    "ts": "1790771400.002800",
+    "user": "U06SNEHA",
+    "text": "Sponsor logos are on the homepage now"
+  },
+  {
+    "ts": "1790953200.002900",
+    "user": "U01PRIYA",
+    "text": "Registration form status: it submits to the Google Sheet, but the confirmation email is not wired yet."
+  },
+  {
+    "ts": "1791199800.003000",
+    "user": "U08TANVI",
+    "text": "T-shirts arrive next week"
+  },
+  {
+    "ts": "1791801000.003100",
+    "user": "U08TANVI",
+    "text": "Late registration for RoboLeague costs double, so let's not miss the entry fee deadline."
+  },
+  {
+    "ts": "1791801600.003200",
+    "user": "U03ANANYA",
+    "text": "I'm on it with Priya"
+  },
+  {
+    "ts": "1791981000.003300",
+    "user": "U08TANVI",
+    "text": "T-shirts are here! Collect them from Lab 3 on Saturday"
+  },
+  {
+    "ts": "1792305000.003400",
+    "user": "U07DEV",
+    "text": "Promo video rough cut is in the drive"
+  },
+  {
+    "ts": "1792848600.003500",
+    "user": "U08TANVI",
+    "text": "Drive team selection trials will be held on 29 Nov."
+  },
+  {
+    "ts": "1793019600.003600",
+    "user": "U04ARJUN",
+    "text": "6 members have signed up for drive team trials so far."
+  },
+  {
+    "ts": "1793195400.003700",
+    "user": "U02ROHAN",
+    "text": "Organisers moved Deccan RoboLeague 2026 to 19 Dec 2026. The task board is updated."
+  },
+  {
+    "ts": "1793195700.003800",
+    "user": "U05KABIR",
+    "text": "one more week of testing then 😅"
+  },
+  {
+    "ts": "1793248200.003900",
+    "user": "U09KULKARNI",
+    "text": "Noted the new date. The venue proposal is still pending."
+  },
+  {
+    "ts": "1793250000.004000",
+    "user": "U01PRIYA",
+    "text": "Venue is still not final. Hall B is preferred because it has 3-phase power and room for the arena."
+  },
+  {
+    "ts": "1793514600.004100",
+    "user": "U06SNEHA",
+    "text": "Registration form PR is waiting on Priya"
+  },
+  {
+    "ts": "1793622600.004200",
+    "user": "U08TANVI",
+    "text": "Poster for the competition is ready"
+  },
+  {
+    "ts": "1793707200.004300",
+    "user": "U07DEV",
+    "text": "Can we livestream the competition?"
+  },
+  {
+    "ts": "1793708100.004400",
+    "user": "U02ROHAN",
+    "text": "Let's ask the organisers",
+    "thread_ts": "1793707200.004300"
+  },
+  {
+    "ts": "1793889000.004500",
+    "user": "U04ARJUN",
+    "text": "Practice arena is set up in Lab 3"
+  },
+  {
+    "ts": "1794055200.004600",
+    "user": "U06SNEHA",
+    "text": "Photos from today's build are up"
+  },
+  {
+    "ts": "1794202200.004700",
+    "user": "U08TANVI",
+    "text": "Volunteers needed for competition day, sign up in the sheet"
+  },
+  {
+    "ts": "1794203400.004800",
+    "user": "U05KABIR",
+    "text": "me"
+  },
+  {
+    "ts": "1794203700.004900",
+    "user": "U07DEV",
+    "text": "me too"
+  },
+  {
+    "ts": "1794317400.005000",
+    "user": "U02ROHAN",
+    "text": "Reminder: core meeting on Wednesday"
+  }
+]

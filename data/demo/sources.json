@@ -1,0 +1,50 @@
+[
+  {
+    "kind": "whatsapp",
+    "name": "RoboClub Core (WhatsApp)",
+    "path": "data/demo/whatsapp/RoboClub Core.txt",
+    "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"]
+  },
+  {
+    "kind": "slack",
+    "name": "Slack #events",
+    "path": "data/demo/slack/events",
+    "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"]
+  },
+  {
+    "kind": "slack",
+    "name": "Slack #infra",
+    "path": "data/demo/slack/infra",
+    "roleSet": ["president", "tech_lead", "leaver"]
+  },
+  {
+    "kind": "slack",
+    "name": "Slack #finance",
+    "path": "data/demo/slack/finance",
+    "roleSet": ["president", "treasurer", "leaver"]
+  },
+  {
+    "kind": "github",
+    "name": "GitHub roboclub-robot",
+    "path": "data/demo/github",
+    "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"]
+  },
+  {
+    "kind": "tasks_csv",
+    "name": "Task board",
+    "path": "data/demo/tasks/board.csv",
+    "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"]
+  },
+  {
+    "kind": "markdown",
+    "name": "Meeting notes",
+    "path": "data/demo/notes",
+    "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"]
+  },
+  {
+    "kind": "ics",
+    "name": "Club calendar",
+    "path": "data/demo/calendar/roboclub.ics",
+    "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"]
+  }
+]

@@ -1,0 +1,116 @@
+{
+  "id": "club",
+  "name": "College robotics club",
+  "roles": [
+    { "key": "president", "label": "Club President" },
+    { "key": "tech_lead", "label": "Incoming tech lead" },
+    { "key": "new_member", "label": "New member" },
+    { "key": "treasurer", "label": "Treasurer" },
+    { "key": "leaver", "label": "Priya (outgoing tech lead)" }
+  ],
+  "approverRole": "president",
+  "successorRole": "tech_lead",
+  "leaverRole": "leaver",
+  "contactsRoles": ["president", "tech_lead", "treasurer", "leaver"],
+  "entities": [
+    { "key": "firmware-deploy", "label": "Firmware deploy to the robot",
+      "aliases": ["deploy", "flash", "firmware", "flash.sh", "OTA", "deploy.yml", "GitHub Actions"] },
+    { "key": "firmware-rollback", "label": "Firmware rollback",
+      "aliases": ["rollback", "roll back", "known-good build", "v2.3.1"] },
+    { "key": "controller-board", "label": "Robot controller board (ESP32)",
+      "aliases": ["ESP32", "Arduino Mega", "controller", "microcontroller"] },
+    { "key": "title-sponsor", "label": "Title sponsor relationship (Vertex Motors)",
+      "aliases": ["sponsor", "Vertex Motors", "Vertex", "sponsorship", "Meera Shah", "Rahul Desai"] },
+    { "key": "lab-booking", "label": "Workshop lab booking each term",
+      "aliases": ["lab booking", "book the lab", "lab booking form", "booking form"] },
+    { "key": "lab-slot", "label": "Weekly workshop lab slot",
+      "aliases": ["build day", "build session", "Saturday build", "lab slot"] },
+    { "key": "domain-dns", "label": "Domain and DNS renewal",
+      "aliases": ["domain", "DNS", "witroboclub.example", "NameHarbor", "zone file", "DNS_API_TOKEN"] },
+    { "key": "competition", "label": "Deccan RoboLeague 2026 (date and venue)",
+      "aliases": ["competition", "RoboLeague", "Deccan RoboLeague", "venue", "Hall B", "Main Auditorium"] },
+    { "key": "website-registration", "label": "Website registration form",
+      "aliases": ["registration form", "register.html", "registration page", "team registration"] },
+    { "key": "drivetrain-parts", "label": "Drivetrain parts order",
+      "aliases": ["drivetrain", "parts order", "BOM", "Kothrud Robotics Supply", "drivetrain order"] },
+    { "key": "entry-fee", "label": "Competition entry fee",
+      "aliases": ["entry fee", "registration fee", "fee payment"] },
+    { "key": "lab-late-access", "label": "Late-night lab access (weekly in build season)",
+      "aliases": ["late access", "stay late", "late-night", "after 8 pm"] },
+    { "key": "team-selection", "label": "Drive team selection",
+      "aliases": ["drive team", "trials", "driver selection", "team selection"] },
+    { "key": "club-budget", "label": "Club budget and reimbursements",
+      "aliases": ["budget", "reimbursement", "voucher", "ledger"] },
+    { "key": "faculty-approval", "label": "Faculty advisor approvals (Dr. Kulkarni)",
+      "aliases": ["Dr. Kulkarni", "faculty advisor", "approval", "season plan"] },
+    { "key": "recruitment", "label": "First-year recruitment and outreach",
+      "aliases": ["recruitment", "first years", "outreach", "orientation"] }
+  ],
+  "sourceAuthority": {
+    "owner":      { "tasks_csv": 3, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
+    "status":     { "tasks_csv": 3, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
+    "deadline":   { "tasks_csv": 3, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 1, "interview": 1 },
+    "location":   { "tasks_csv": 2, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
+    "procedure":  { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 3, "interview": 1 },
+    "access":     { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 3, "interview": 1 },
+    "decision":   { "tasks_csv": 2, "ics": 1, "markdown": 3, "slack": 3, "whatsapp": 3, "github": 2, "interview": 1 },
+    "reason":     { "tasks_csv": 1, "ics": 1, "markdown": 3, "slack": 3, "whatsapp": 3, "github": 2, "interview": 1 },
+    "dependency": { "tasks_csv": 2, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
+    "contact":    { "tasks_csv": 2, "ics": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "github": 1, "interview": 1 },
+    "risk":       { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "github": 1, "interview": 1 }
+  },
+  "checklists": {
+    "deploy_operate": [
+      { "key": "access_path", "label": "Access path", "wTag": "WHERE", "weight": 3, "attributes": ["location", "access"] },
+      { "key": "steps", "label": "Steps", "wTag": "HOW", "weight": 3, "attributes": ["procedure"] },
+      { "key": "how_to_verify", "label": "How to verify", "wTag": "HOW", "weight": 3, "attributes": ["procedure", "status"] },
+      { "key": "rollback", "label": "Rollback", "wTag": "HOW", "weight": 5, "attributes": ["procedure"] },
+      { "key": "credential_owner", "label": "Credential owner", "wTag": "WHO", "weight": 5, "attributes": ["owner", "access"] }
+    ],
+    "external_relationship": [
+      { "key": "contact_person", "label": "Contact person", "wTag": "WHO", "weight": 5, "attributes": ["contact", "owner"] },
+      { "key": "last_interaction", "label": "Last interaction", "wTag": "WHEN", "weight": 1, "attributes": ["status", "deadline"] },
+      { "key": "open_commitments", "label": "Open commitments", "wTag": "WHY", "weight": 3, "attributes": ["dependency", "decision", "risk"] },
+      { "key": "next_date", "label": "Next date", "wTag": "WHEN", "weight": 3, "attributes": ["deadline"] }
+    ],
+    "recurring_obligation": [
+      { "key": "cadence", "label": "Cadence", "wTag": "WHEN", "weight": 3, "attributes": ["deadline", "procedure"] },
+      { "key": "next_due_date", "label": "Next due date", "wTag": "WHEN", "weight": 5, "attributes": ["deadline"] },
+      { "key": "how_to_do_it", "label": "How to do it", "wTag": "HOW", "weight": 3, "attributes": ["procedure"] },
+      { "key": "consequence_if_missed", "label": "Consequence if missed", "wTag": "WHY", "weight": 1, "attributes": ["risk", "reason"] }
+    ],
+    "open_decision": [
+      { "key": "current_state", "label": "Current state", "wTag": "WHERE", "weight": 3, "attributes": ["status", "decision"] },
+      { "key": "options_considered", "label": "Options considered", "wTag": "WHY", "weight": 1, "attributes": ["decision", "reason"] },
+      { "key": "owner", "label": "Owner", "wTag": "WHO", "weight": 5, "attributes": ["owner"] },
+      { "key": "deadline", "label": "Deadline", "wTag": "WHEN", "weight": 3, "attributes": ["deadline"] }
+    ],
+    "unfinished_work": [
+      { "key": "where_it_lives", "label": "Where it lives", "wTag": "WHERE", "weight": 3, "attributes": ["location"] },
+      { "key": "last_state", "label": "Last state", "wTag": "WHERE", "weight": 3, "attributes": ["status"] },
+      { "key": "next_concrete_step", "label": "Next concrete step", "wTag": "HOW", "weight": 5, "attributes": ["procedure"] },
+      { "key": "who_reviews_it", "label": "Who reviews it", "wTag": "WHO", "weight": 1, "attributes": ["owner", "contact"] }
+    ]
+  },
+  "roleTemplates": {
+    "tech_lead": [
+      { "key": "R02", "title": "Title sponsor relationship (Vertex Motors)", "kind": "external_relationship", "entities": ["title-sponsor"] },
+      { "key": "R03", "title": "Book the workshop lab each term", "kind": "recurring_obligation", "entities": ["lab-booking"] },
+      { "key": "R10", "title": "Drive team selection", "kind": "open_decision", "entities": ["team-selection"] }
+    ]
+  },
+  "footprint": { "repeatMin": 3, "distinctWeeksMin": 2, "ownershipShare": 0.8, "windowMonths": 6 },
+  "readback": [
+    { "key": "competition_date", "label": "Competition date", "type": "date",
+      "entity": "competition", "attribute": "deadline" },
+    { "key": "firmware_rollback", "label": "Firmware rollback command", "type": "command",
+      "entity": "firmware-rollback", "attribute": "procedure" },
+    { "key": "sponsor_contact", "label": "Sponsor contact at Vertex Motors", "type": "contact",
+      "entity": "title-sponsor", "attribute": "contact" },
+    { "key": "domain_renewal_date", "label": "Domain renewal date", "type": "date",
+      "entity": "domain-dns", "attribute": "deadline" },
+    { "key": "lab_booking_day", "label": "Day the workshop lab is booked for the club each week", "type": "text",
+      "entity": "lab-slot", "attribute": "deadline" }
+  ],
+  "uploadDefaults": { "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"] }
+}

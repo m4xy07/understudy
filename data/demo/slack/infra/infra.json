@@ -1,0 +1,257 @@
+[
+  {
+    "ts": "1781616600.000100",
+    "user": "U01PRIYA",
+    "text": "Setting up #infra for firmware, CI and DNS."
+  },
+  {
+    "ts": "1781616900.000200",
+    "user": "U04ARJUN",
+    "text": "👍"
+  },
+  {
+    "ts": "1781618400.000300",
+    "user": "U01PRIYA",
+    "text": "Added the dns/ folder with the zone file for witroboclub.example."
+  },
+  {
+    "ts": "1782228600.000400",
+    "user": "U01PRIYA",
+    "text": "PID loop is in firmware/src/pid.h, tuning on Saturday"
+  },
+  {
+    "ts": "1782829800.000500",
+    "user": "U05KABIR",
+    "text": "Line sensor thresholds need recalibrating under the new lights"
+  },
+  {
+    "ts": "1783168200.000600",
+    "user": "U01PRIYA",
+    "text": "Started the ESP32 port. The Arduino Mega runs out of RAM once the PID loop and the sensor filter both run."
+  },
+  {
+    "ts": "1783348200.000700",
+    "user": "U01PRIYA",
+    "text": "Deploy steps for now: plug the lab laptop into the robot over USB and upload the firmware from the Arduino IDE."
+  },
+  {
+    "ts": "1783348800.000800",
+    "user": "U04ARJUN",
+    "text": "ok"
+  },
+  {
+    "ts": "1783855800.000900",
+    "user": "U01PRIYA",
+    "text": "Removed the old Mega sketch from the repo"
+  },
+  {
+    "ts": "1784388600.001000",
+    "user": "U01PRIYA",
+    "text": "ArduinoOTA works on the dev board"
+  },
+  {
+    "ts": "1784901600.001100",
+    "user": "U01PRIYA",
+    "text": "Added scripts/flash.sh"
+  },
+  {
+    "ts": "1785594600.001200",
+    "user": "U05KABIR",
+    "text": "build fails on my machine, missing esp32 platform"
+  },
+  {
+    "ts": "1785594900.001300",
+    "user": "U01PRIYA",
+    "text": "run pio pkg install first",
+    "thread_ts": "1785594600.001200"
+  },
+  {
+    "ts": "1785846600.001400",
+    "user": "U01PRIYA",
+    "text": "Pointed www at the new host in dns/witroboclub.zone"
+  },
+  {
+    "ts": "1786462200.001500",
+    "user": "U01PRIYA",
+    "text": "GitHub Actions workflow added in .github/workflows/deploy.yml"
+  },
+  {
+    "ts": "1786722000.001600",
+    "user": "U01PRIYA",
+    "text": "Decision: firmware builds move to GitHub Actions. Reason: every push to main builds the same binary, and each release is kept so we can roll back."
+  },
+  {
+    "ts": "1786722300.001700",
+    "user": "U04ARJUN",
+    "text": "nice"
+  },
+  {
+    "ts": "1787229000.001800",
+    "user": "U05KABIR",
+    "text": "CI bot token for the release step: ghp_R7kLm2Qx9Vt4Wb8Yn3Zc6Hd1Js5Pa0Ue2GiF"
+  },
+  {
+    "ts": "1787229300.001900",
+    "user": "U01PRIYA",
+    "text": "Kabir, never paste tokens in Slack. I revoked that one.",
+    "thread_ts": "1787229000.001800"
+  },
+  {
+    "ts": "1787229360.002000",
+    "user": "U05KABIR",
+    "text": "sorry 🙈",
+    "thread_ts": "1787229000.001800"
+  },
+  {
+    "ts": "1787322600.002100",
+    "user": "U01PRIYA",
+    "text": "Every build now attaches firmware.bin to a GitHub release"
+  },
+  {
+    "ts": "1787664600.002200",
+    "user": "U07DEV",
+    "text": "is the battery monitor merged?"
+  },
+  {
+    "ts": "1787665200.002300",
+    "user": "U01PRIYA",
+    "text": "yes, it is in firmware/src/battery.h"
+  },
+  {
+    "ts": "1788276600.002400",
+    "user": "U01PRIYA",
+    "text": "flash.sh now defaults to OTA"
+  },
+  {
+    "ts": "1788363900.002500",
+    "user": "U01PRIYA",
+    "text": "Update: deploy is now over the air. Run `./scripts/flash.sh --ota 192.168.4.1` from the lab laptop on the RoboClub-AP Wi-Fi. USB upload is no longer used.",
+    "thread_ts": "1783348200.000700"
+  },
+  {
+    "ts": "1788364200.002600",
+    "user": "U04ARJUN",
+    "text": "got it",
+    "thread_ts": "1783348200.000700"
+  },
+  {
+    "ts": "1788525000.002700",
+    "user": "U05KABIR",
+    "text": "start button debounce pushed"
+  },
+  {
+    "ts": "1789057800.002800",
+    "user": "U01PRIYA",
+    "text": "v2.3.0 tagged for the trial run"
+  },
+  {
+    "ts": "1789482600.002900",
+    "user": "U01PRIYA",
+    "text": "Added an A record for register.witroboclub.example"
+  },
+  {
+    "ts": "1789747200.003000",
+    "user": "U01PRIYA",
+    "text": "Fixed PID windup on long straights"
+  },
+  {
+    "ts": "1789923000.003100",
+    "user": "U01PRIYA",
+    "text": "If a new build misbehaves, roll back with `./scripts/flash.sh --rollback v2.3.1`. v2.3.1 is the last known-good build."
+  },
+  {
+    "ts": "1789923300.003200",
+    "user": "U04ARJUN",
+    "text": "saving this"
+  },
+  {
+    "ts": "1790343000.003300",
+    "user": "U01PRIYA",
+    "text": "The domain witroboclub.example is due for renewal on 2 Dec 2026 at NameHarbor, and it renews every year."
+  },
+  {
+    "ts": "1790343300.003400",
+    "user": "U01PRIYA",
+    "text": "Renewal is a few clicks on the NameHarbor dashboard, I'll show whoever takes over."
+  },
+  {
+    "ts": "1790425800.003500",
+    "user": "U01PRIYA",
+    "text": "DNS records live in dns/ in the repo. dns/update.sh pushes them and needs the DNS_API_TOKEN secret."
+  },
+  {
+    "ts": "1791037800.003600",
+    "user": "U01PRIYA",
+    "text": "flash.sh argument parsing cleaned up"
+  },
+  {
+    "ts": "1791293400.003700",
+    "user": "U01PRIYA",
+    "text": "Gearbox current limit added to the motor driver"
+  },
+  {
+    "ts": "1791545400.003800",
+    "user": "U05KABIR",
+    "text": "Filed the IT request to whitelist the robot's MAC on campus Wi-Fi, ticket CANARY-J5LD."
+  },
+  {
+    "ts": "1791545700.003900",
+    "user": "U01PRIYA",
+    "text": "thanks Kabir"
+  },
+  {
+    "ts": "1791642600.004000",
+    "user": "U01PRIYA",
+    "text": "CI now runs unit tests before the build"
+  },
+  {
+    "ts": "1791905400.004100",
+    "user": "U01PRIYA",
+    "text": "v2.4.0-rc1 is out, please test on the bench robot only"
+  },
+  {
+    "ts": "1792427400.004200",
+    "user": "U01PRIYA",
+    "text": "Telemetry over Wi-Fi is in, dashboard later"
+  },
+  {
+    "ts": "1793028600.004300",
+    "user": "U01PRIYA",
+    "text": "v2.4.0 released. Keep v2.3.1 as the rollback target until after the competition."
+  },
+  {
+    "ts": "1793104200.004400",
+    "user": "U04ARJUN",
+    "text": "v2.4.0 feels smoother on turns"
+  },
+  {
+    "ts": "1793286000.004500",
+    "user": "U01PRIYA",
+    "text": "CI builds both the bench robot and the competition robot now"
+  },
+  {
+    "ts": "1793712600.004600",
+    "user": "U01PRIYA",
+    "text": "Lowered the DNS TTL before the renewal"
+  },
+  {
+    "ts": "1793797200.004700",
+    "user": "U04ARJUN",
+    "text": "Who has the OTA password? flash.sh asks for OTA_PASSWORD."
+  },
+  {
+    "ts": "1793896200.004800",
+    "user": "U01PRIYA",
+    "text": "New encoder filter is on the bench robot, testing tonight"
+  },
+  {
+    "ts": "1794137400.004900",
+    "user": "U05KABIR",
+    "text": "encoder filter looks good on the straights"
+  },
+  {
+    "ts": "1794324600.005000",
+    "user": "U01PRIYA",
+    "text": "Encoder filter tuned and merged"
+  }
+]

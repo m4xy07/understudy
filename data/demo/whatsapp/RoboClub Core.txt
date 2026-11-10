@@ -1,0 +1,146 @@
+12/06/26, 10:02 - Rohan Mehta created group "RoboClub Core"
+12/06/26, 10:02 - Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Tap to learn more.
+12/06/26, 10:03 - Rohan Mehta added Priya Nair, Ananya Iyer, Arjun Rao, Kabir Sethi, Sneha Joshi, Dev Malhotra and Tanvi Deshpande
+12/06/26, 10:05 - Rohan Mehta: Welcome to the core group for this season! Kickoff meeting on 20 June in Workshop Lab 3 at 4 pm.
+12/06/26, 10:07 - Kabir Sethi: 🔥🔥
+12/06/26, 10:09 - Sneha Joshi: finally, season shuru 😄
+12/06/26, 10:11 - Priya Nair: Thanks Rohan. I'll bring the old robot so the new folks can see the drivetrain.
+13/06/26, 18:40 - Dev Malhotra: does anyone have the lab key today?
+13/06/26, 18:52 - Tanvi Deshpande: Pawar sir has it, he's in the workshop till 6:30
+13/06/26, 18:53 - Dev Malhotra: ok thanks
+15/06/26, 09:30 - Priya Nair: The workshop lab is booked for the club every Saturday, 10:00 to 17:00. That is our build day.
+15/06/26, 09:34 - Arjun Rao: noted 👍
+15/06/26, 09:41 - Kabir Sethi: Saturday it is
+17/06/26, 20:15 - Rohan Mehta: Mr. Pawar is the lab in-charge for Workshop Lab 3. His number for lab matters is +91 90110 00317.
+17/06/26, 20:16 - Tanvi Deshpande: saved
+19/06/26, 22:05 - Sneha Joshi: kal kickoff hai, sab aa rahe ho na?
+19/06/26, 22:07 - Dev Malhotra: haan 4 baje
+20/06/26, 17:40 - Rohan Mehta: Kickoff notes are in the drive. Thanks everyone for coming!
+20/06/26, 17:45 - Ananya Iyer: Reminder: all reimbursements go through me, please keep the bills 🙏
+20/06/26, 17:46 - Kabir Sethi: 🫡
+22/06/26, 11:20 - Priya Nair: Meera Shah at Vertex Motors is our sponsor contact.
+22/06/26, 11:24 - Rohan Mehta: Priya is the only one in touch with Vertex, so send sponsor questions to her.
+24/06/26, 19:02 - Priya Nair: Vertex Motors confirmed they are our title sponsor for this season 🎉
+24/06/26, 19:03 - Sneha Joshi: woohoo!!
+24/06/26, 19:05 - Kabir Sethi: party when? 😂
+24/06/26, 19:06 - Ananya Iyer: after the competition 😛
+27/06/26, 17:30 - Sneha Joshi: Saturday build was productive, chassis v2 is cut
+27/06/26, 17:31 - Tanvi Deshpande: pics pls
+27/06/26, 17:40 - Sneha Joshi: <Media omitted>
+29/06/26, 21:10 - Priya Nair: Thinking of moving from the Arduino Mega to an ESP32. Will bring it to the tech review on 3 July.
+29/06/26, 21:12 - Dev Malhotra: ESP32 ftw
+29/06/26, 21:15 - Kabir Sethi: finally no more USB cable drama
+03/07/26, 18:20 - Priya Nair: Decision from today's tech review: we are moving the robot controller from the Arduino Mega to the ESP32. Reason: built-in Wi-Fi lets us flash over the air, and it has more RAM for the PID loop.
+03/07/26, 18:25 - Arjun Rao: makes sense, the Mega was maxed out anyway
+05/07/26, 10:15 - Tanvi Deshpande: who's coming Saturday?
+05/07/26, 10:20 - Kabir Sethi: me, 11 ke baad
+05/07/26, 10:21 - Arjun Rao: me too
+08/07/26, 16:45 - Priya Nair: ESP32 dev boards ordered, 3 pcs
+11/07/26, 15:10 - Sneha Joshi: motor driver got hot again 😬
+11/07/26, 15:14 - Priya Nair: Use the 12V bench supply, not the 14.8V pack, for bench tests please
+11/07/26, 15:15 - Sneha Joshi: ok ok
+14/07/26, 12:00 - Rohan Mehta: Dr. Kulkarni wants a status update by Friday, can someone send me 3 lines?
+14/07/26, 12:30 - Priya Nair: Will send tonight
+18/07/26, 14:05 - Dev Malhotra: lab ka AC band hai kya aaj?
+18/07/26, 14:07 - Tanvi Deshpande: haan, fan le aao 😅
+22/07/26, 13:00 - Ananya Iyer: All the Vertex sponsorship paperwork is with me now, thanks Priya
+25/07/26, 20:30 - Priya Nair: To book Workshop Lab 3 for a term: fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar.
+25/07/26, 20:31 - Arjun Rao: 👍
+27/07/26, 11:15 - Priya Nair: Lab booking for the odd semester submitted to Mr. Pawar ✅
+27/07/26, 11:20 - Rohan Mehta: 👏
+30/07/26, 19:40 - Kabir Sethi: anyone has the 3D printer filament?
+30/07/26, 19:45 - Sneha Joshi: last spool in the cupboard, grey one
+02/08/26, 18:00 - Tanvi Deshpande: recruitment drive for first years on 8 Aug, need 3 volunteers
+stall near the canteen
+10 am to 1 pm
+02/08/26, 18:05 - Dev Malhotra: me
+02/08/26, 18:06 - Sneha Joshi: me
+02/08/26, 18:10 - Arjun Rao: count me in
+05/08/26, 22:30 - Priya Nair: First OTA flash worked on the bench robot!! 🎉
+05/08/26, 22:31 - Kabir Sethi: lessgooo
+06/08/26, 09:10 - Rohan Mehta: Reminder: booking Workshop Lab 3 is a once-a-term job. If we miss the booking, the Saturday slot goes to another club and we lose our build day.
+08/08/26, 17:30 - Tanvi Deshpande: 14 first years signed up at the stall 🙌
+09/08/26, 18:20 - Dev Malhotra: Saturday attendance was low, exams?
+09/08/26, 18:25 - Tanvi Deshpande: unit tests next week ya
+12/08/26, 19:00 - Sneha Joshi: anyone free to help with sanding the shell on Saturday?
+12/08/26, 19:04 - Tanvi Deshpande: me, after lunch
+14/08/26, 21:00 - Priya Nair: Decision: firmware builds now run on GitHub Actions on every push to main. Reason: everyone gets the same binary and every release is kept for rollback.
+16/08/26, 13:10 - Arjun Rao: so no more flashing from Priya's laptop? 😂
+16/08/26, 13:12 - Priya Nair: Haha, not from my laptop any more
+18/08/26, 10:00 - Rohan Mehta added Mr. Pawar
+18/08/26, 10:01 - Rohan Mehta: Added Pawar sir to the group for lab coordination.
+18/08/26, 10:05 - Mr. Pawar: Good morning all.
+20/08/26, 21:10 - Priya Nair: Pawar sir, can we get late access to Lab 3 tonight till 11 pm? We are testing the drivetrain.
+20/08/26, 21:25 - Mr. Pawar: Ok. Till 11 pm only.
+23/08/26, 12:00 - Sneha Joshi: drivetrain test video uploaded to the drive
+26/08/26, 19:30 - Kabir Sethi: bhai the left motor is drawing too much current
+26/08/26, 19:35 - Priya Nair: Probably the gearbox, will check on Saturday
+30/08/26, 20:00 - Rohan Mehta: Good work this month everyone 👏
+03/09/26, 21:05 - Priya Nair: Pawar sir, requesting late access to Lab 3 tonight till 11 pm for sensor calibration.
+03/09/26, 21:20 - Mr. Pawar: Ok beta.
+05/09/26, 16:40 - Dev Malhotra: registration form ka design final?
+05/09/26, 16:45 - Sneha Joshi: almost, Tanvi is doing colours
+08/09/26, 13:00 - Rohan Mehta: Big news: Deccan RoboLeague 2026 is on 12 Dec 2026, and our college is hosting it!
+08/09/26, 13:01 - Kabir Sethi: LETS GOOO
+08/09/26, 13:02 - Tanvi Deshpande: home ground 😎
+08/09/26, 13:05 - Dev Malhotra: 🔥🔥🔥
+10/09/26, 19:15 - Priya Nair: The organisers want us to propose a venue on campus. The options are Sports Complex Hall B or the Main Auditorium.
+12/09/26, 10:30 - Arjun Rao: Hall B is bigger na?
+12/09/26, 10:34 - Priya Nair: Yes, and Hall B has 3-phase power for the arena lights. The auditorium does not.
+15/09/26, 18:00 - Ananya Iyer: The competition entry fee is a yearly payment, I'll handle it with Priya.
+17/09/26, 20:20 - Sneha Joshi: who's getting samosas on Saturday
+17/09/26, 20:21 - Dev Malhotra: me
+19/09/26, 17:00 - Arjun Rao: practice run went well today
+20/09/26, 22:10 - Priya Nair: Pushed v2.3.1, this is the build we used in the trial run. Stable.
+21/09/26, 09:00 - Tanvi Deshpande: mid-sems this week, Saturday build still on?
+21/09/26, 09:05 - Rohan Mehta: yes, but come after your paper
+24/09/26, 21:30 - Priya Nair: Pawar sir, can we stay late in Lab 3 tonight till 11 pm? Full run test before the demo.
+24/09/26, 21:41 - Mr. Pawar: Ok. Till 11.
+26/09/26, 11:00 - Priya Nair: I ask Pawar sir for late lab access almost every week in build season. Security locks Lab 3 at 8 pm, so without his OK there is no evening testing.
+26/09/26, 11:05 - Kabir Sethi: true, last time we got locked out 😅
+28/09/26, 15:00 - Tanvi Deshpande: Navratri week, Saturday off?
+28/09/26, 15:04 - Rohan Mehta: no, build is on 🙂
+01/10/26, 10:30 - Priya Nair: Heads up: Meera Shah has moved to Vertex's Bengaluru plant. Our sponsor contact at Vertex Motors is now Rahul Desai (rahul.desai@vertexmotors.example, +91 90110 00588).
+01/10/26, 10:35 - Ananya Iyer: noted, I'll update the sponsor sheet
+04/10/26, 17:45 - Priya Nair: We promised Vertex their logo on the robot shell this season.
+04/10/26, 17:50 - Tanvi Deshpande: I'll make the vinyl sticker
+06/10/26, 12:10 - Priya Nair: Next check-in with Rahul at Vertex is on 20 Nov.
+08/10/26, 19:00 - Dev Malhotra: website registration page is live on staging
+08/10/26, 19:05 - Sneha Joshi: nice, looks clean
+10/10/26, 14:00 - Kabir Sethi: lab mein coffee machine kisne todi 😭
+10/10/26, 14:02 - Arjun Rao: not me
+12/10/26, 11:00 - Priya Nair: Lab booking for the Diwali block submitted ✅
+14/10/26, 18:30 - Priya Nair: Had the handover call with Rahul Desai at Vertex today, all good.
+15/10/26, 21:15 - Priya Nair: Pawar sir, late access to Lab 3 tonight till 11 pm please? Gearbox swap on the drivetrain.
+15/10/26, 21:22 - Mr. Pawar: Ok. Till 11 pm.
+17/10/26, 23:40 - Kabir Sethi: gearbox swap done, way less current now
+17/10/26, 23:41 - Priya Nair: 🙌
+18/10/26, 12:00 - Tanvi Deshpande: T-shirts distributed, ping me if you did not get one
+20/10/26, 20:00 - Dev Malhotra: Drive team trials are on 22 Nov.
+20/10/26, 20:03 - Tanvi Deshpande: what's the format?
+20/10/26, 20:05 - Arjun Rao: lap times I think
+21/10/26, 18:15 - Kabir Sethi: Lab booking for next term has to reach Mr. Pawar by 1 Dec.
+22/10/26, 09:45 - Priya Nair: Update: Vertex moved our check-in with Rahul to 27 Nov.
+24/10/26, 21:00 - Sneha Joshi: Diwali break plans? 🪔
+24/10/26, 21:05 - Dev Malhotra: ghar ja raha hu 25th se
+24/10/26, 21:06 - Tanvi Deshpande: same
+28/10/26, 19:30 - Rohan Mehta: Organisers moved the competition. The board has the new date, check it.
+29/10/26, 13:20 - Sneha Joshi: Pawar sir told me the lab booking deadline for next term is 5 Dec.
+30/10/26, 16:00 - Priya Nair: Drivetrain BOM is in docs/BOM.md in the repo. Got the quote from Kothrud Robotics Supply today.
+30/10/26, 16:02 - Priya Nair: Dr. Kulkarni has to approve the drivetrain order before we place it.
+30/10/26, 20:10 - Priya Nair: Graduation formalities done, I'm around till 30 Nov 😢
+30/10/26, 20:12 - Rohan Mehta: we'll miss you Priya 🥲
+30/10/26, 20:13 - Kabir Sethi: 😭😭
+31/10/26, 10:00 - Ananya Iyer: Entry fee details are in #finance, ping me if you need anything.
+02/11/26, 18:00 - Arjun Rao: Priya, can you walk me through the firmware deploy this week?
+02/11/26, 18:05 - Priya Nair: Sure, Saturday after build
+05/11/26, 21:05 - Priya Nair: Pawar sir, can we get late access to Lab 3 tonight till 11 pm? Testing the new firmware.
+05/11/26, 21:30 - Mr. Pawar: Ok, till 11 pm.
+06/11/26, 12:00 - Rohan Mehta: Someone has to own drive team selection after Priya leaves. Let's decide at the next meeting.
+06/11/26, 12:05 - Arjun Rao: 👍
+07/11/26, 17:00 - Kabir Sethi: who has the spare ESP32?
+07/11/26, 17:02 - Sneha Joshi: drawer 2
+08/11/26, 16:00 - Sneha Joshi: build pics are up on the drive
+09/11/26, 21:00 - Priya Nair: The registration form still has one thing pending before launch, I'll write it down.
+10/11/26, 18:30 - Tanvi Deshpande: see you all on Saturday!
+10/11/26, 18:31 - Dev Malhotra: 👋

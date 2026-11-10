@@ -1,0 +1,112 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RoboClub//Club Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:RoboClub calendar
+X-WR-TIMEZONE:Asia/Kolkata
+BEGIN:VEVENT
+UID:build-session-2026@witroboclub.example
+DTSTAMP:20261101T120000Z
+CREATED:20260612T043000Z
+LAST-MODIFIED:20261101T120000Z
+DTSTART:20260613T043000Z
+DTEND:20260613T113000Z
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:RoboClub weekly build (Workshop Lab 3\, Saturdays)
+LOCATION:Workshop Lab 3
+DESCRIPTION:Weekly build day. The workshop lab is booked for the club every Saturday\, 10:00 to 17:00.
+ORGANIZER;CN=Rohan Mehta:mailto:rohan.mehta@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:core-meeting-2026@witroboclub.example
+DTSTAMP:20260612T050000Z
+CREATED:20260612T050000Z
+LAST-MODIFIED:20260612T050000Z
+DTSTART:20260617T133000Z
+DTEND:20260617T143000Z
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:RoboClub core team meeting (weekly)
+LOCATION:Google Meet
+ORGANIZER;CN=Rohan Mehta:mailto:rohan.mehta@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:faculty-review-2026@witroboclub.example
+DTSTAMP:20260626T050000Z
+CREATED:20260626T050000Z
+LAST-MODIFIED:20260626T050000Z
+DTSTART:20260706T103000Z
+DTEND:20260706T110000Z
+RRULE:FREQ=MONTHLY;BYDAY=1MO
+SUMMARY:Monthly review with Dr. Kulkarni (faculty advisor)
+LOCATION:Dr. Kulkarni's office\, Block C
+ORGANIZER;CN=Rohan Mehta:mailto:rohan.mehta@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:lab-booking-summer-2026@witroboclub.example
+DTSTAMP:20260608T060000Z
+CREATED:20260608T060000Z
+LAST-MODIFIED:20260608T060000Z
+DTSTART;VALUE=DATE:20260608
+DTEND;VALUE=DATE:20260609
+SUMMARY:Book Workshop Lab 3 for the summer term (lab booking form to Mr. Pawar)
+LOCATION:Workshop Lab 3
+ORGANIZER;CN=Priya Nair:mailto:priya.nair@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:lab-booking-odd-sem-2026@witroboclub.example
+DTSTAMP:20260727T060000Z
+CREATED:20260727T060000Z
+LAST-MODIFIED:20260727T060000Z
+DTSTART;VALUE=DATE:20260727
+DTEND;VALUE=DATE:20260728
+SUMMARY:Book Workshop Lab 3 for the odd semester (lab booking form to Mr. Pawar)
+LOCATION:Workshop Lab 3
+ORGANIZER;CN=Priya Nair:mailto:priya.nair@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:lab-booking-diwali-2026@witroboclub.example
+DTSTAMP:20261012T060000Z
+CREATED:20261012T060000Z
+LAST-MODIFIED:20261012T060000Z
+DTSTART;VALUE=DATE:20261012
+DTEND;VALUE=DATE:20261013
+SUMMARY:Book Workshop Lab 3 for the Diwali block (lab booking form to Mr. Pawar)
+LOCATION:Workshop Lab 3
+ORGANIZER;CN=Priya Nair:mailto:priya.nair@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:domain-renewal@witroboclub.example
+DTSTAMP:20261101T120000Z
+CREATED:20260616T140000Z
+LAST-MODIFIED:20261101T120000Z
+DTSTART;VALUE=DATE:20261202
+DTEND;VALUE=DATE:20261203
+RRULE:FREQ=YEARLY
+SUMMARY:Renew the witroboclub.example domain at NameHarbor (yearly)
+LOCATION:NameHarbor (online)
+DESCRIPTION:Domain renewal for witroboclub.example. Due on 2 Dec 2026 and every year on 2 December.
+ORGANIZER;CN=Priya Nair:mailto:priya.nair@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:recruitment-drive-2026@witroboclub.example
+DTSTAMP:20260801T050000Z
+CREATED:20260801T050000Z
+LAST-MODIFIED:20260801T050000Z
+DTSTART:20260808T043000Z
+DTEND:20260808T073000Z
+SUMMARY:First-year recruitment drive stall
+LOCATION:Near the canteen
+ORGANIZER;CN=Tanvi Deshpande:mailto:tanvi.deshpande@westbrook.example
+END:VEVENT
+BEGIN:VEVENT
+UID:midsem-2026@witroboclub.example
+DTSTAMP:20260901T050000Z
+CREATED:20260901T050000Z
+LAST-MODIFIED:20260901T050000Z
+DTSTART;VALUE=DATE:20260921
+DTEND;VALUE=DATE:20260927
+SUMMARY:Mid-semester exams
+ORGANIZER;CN=Rohan Mehta:mailto:rohan.mehta@westbrook.example
+END:VEVENT
+END:VCALENDAR
