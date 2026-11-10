@@ -109,8 +109,10 @@ deterministically (no model). Verifier:
 - trust `from_record` iff accepted AND quote given AND `norm(quote)` is a substring of `norm(segment)`.
 - accepted without a valid quote: at most `inferred` until a reviewer confirms.
 - no accepted citation: claim `dropped` and counted per source.
-- `corroborated` when two claims from different sources and different authors agree on entity +
-  attribute + normalised value.
+- `corroborated` when two claims agree on entity + attribute + normalised value and are independent
+  (different source kinds OR different authors), and at least one side is backed by a record
+  (from_record or corroborated). This lets a record confirm a leaver's answer even when the leaver
+  wrote the record.
 - support check (model, yes / partly / no) can only lower trust, never raise it.
 - claim role set = intersection of its cited segments' role sets (most restrictive).
 Supersession, for two claims on the same entity and single-valued attribute with different values,
