@@ -15,7 +15,7 @@
   "entities": [
     { "key": "firmware-deploy", "label": "Firmware deploy to the robot",
       "aliases": ["deploy", "flash", "firmware", "flash.sh", "OTA", "deploy.yml", "GitHub Actions"] },
-    { "key": "firmware-rollback", "label": "Firmware rollback",
+    { "key": "firmware-rollback", "label": "Firmware rollback", "partOf": "firmware-deploy",
       "aliases": ["rollback", "roll back", "known-good build", "v2.3.1"] },
     { "key": "controller-board", "label": "Robot controller board (ESP32)",
       "aliases": ["ESP32", "Arduino Mega", "controller", "microcontroller"] },

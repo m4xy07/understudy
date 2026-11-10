@@ -47,6 +47,7 @@ function toCheck(p: PackCheck): LacunaCheck {
   };
   if (p.keywords && p.keywords.length > 0) c.keywords = [...p.keywords];
   if (p.question) c.question = { ...p.question };
+  if (p.needsDate) c.needsDate = true;
   return c;
 }
 

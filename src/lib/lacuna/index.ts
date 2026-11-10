@@ -1,100 +1,299 @@
-// WALKING-SKELETON STUB: replaced by the Lacuna builder.
-//
-// Public entry points (keep these names and shapes):
-//   buildInventory(ws)                          -> { responsibilities }  responsibilities from template + board
-//   runTest(ws, role)                           -> TestRun               coverage per check, B/C/K, stored
-//   buildQuestions(ws)                          -> GapQuestion[]         top 10 ranked gap questions
-//   answerQuestion(ws, questionId, text, actor, narrowRoles?) -> AnswerResult   leaver answers, re-test
-//   listBlockingGaps(ws, role?)                 -> BlockingGap[]         open blocking checks (+ plan item)
-//   savePlanItem(ws, item, actor)               -> { ok } | { ok:false, error }
-//   scoreResults(results, checks)               -> Scores                section 4 formulas (pure)
-//
-// What this stub really does (deterministic, no model):
-//   * inventory = pack.roleTemplates[successorRole] + open task-board cards, merged by entity.
-//   * test = the deterministic fallback of section 4 over claims read through withRole(role):
-//     covered (from_record / corroborated / leaver_said), partial (other trust), conflicting,
-//     restricted (no visible evidence but some exists for other roles; counted with an admin
-//     count query, never shown), else missing. B, C, K from the section 4 formulas.
-//   * questions = rank by weight x uncertainty x urgency, top 10, template text per wTag and
-//     gap type. Text only names the responsibility and the check, never a claim value.
+// Lacuna: Test and Ask (docs/ARCHITECTURE.md section 4). Database and model glue around the
+// pure core in ./core. Public entry points (names and shapes used by the pipeline, pages and Relay):
+//   buildInventory(ws)                                   -> { responsibilities, items, dropped }
+//   confirmInventory(ws, actor)                          -> president confirms the inventory
+//   runTest(ws, role, opts?)                             -> TestRun (stored; provisional until a snapshot)
+//   buildQuestions(ws)                                   -> GapQuestion[] (top 10 open + answered)
+//   answerQuestion(ws, qid, text, actor, narrowRoles?)   -> { ok, claimId, before, after, delta }
+//   listBlockingGaps(ws, role?)                          -> BlockingGap[] (open blocking checks + plan)
+//   savePlanItem(ws, item, actor)                        -> president only
+//   planComplete(p), releaseInfo(ws), scoreResults(results, weightOf)
 import { db } from "@/lib/db/client";
-import { toClaim, toGapQuestion, toPlanItem, toResponsibility, toSegment, toTestRun } from "@/lib/db/mappers";
-import { listClaims, listResponsibilities, getLatestTestRun, audit } from "@/lib/db/queries";
-import { getPack, checklistFor, entityLabel, type Pack } from "@/lib/pack";
-import { matchEntity, claimId } from "@/lib/attest";
-import { segmentId, textHash } from "@/lib/tether/ids";
-import { maskText } from "@/lib/tether/mask";
+import { toClaim, toGapQuestion, toResponsibility, toTestRun } from "@/lib/db/mappers";
 import { sha256Hex } from "@/lib/text/norm";
+import { audit, getLatestTestRun, getWorkspace, listPeople, listPlanItems, listResponsibilities, listSegments } from "@/lib/db/queries";
+import { withRole } from "@/lib/db/withRole";
+import { getPack, entityLabel, type Pack } from "@/lib/pack";
+import { claimId as makeClaimId, tierFor } from "@/lib/attest";
+import { computeFootprint } from "@/lib/tether/footprint";
+import { maskText } from "@/lib/tether/mask";
+import { callJson, modelAvailable } from "@/lib/model/client";
 import type {
-  CheckDef, CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey,
-  Scores, TestRun, Trust,
+  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun,
 } from "@/lib/types";
+import { buildInventory as coreInventory } from "./core/inventory";
+import { checksByResp, checksFor, findCheck } from "./core/checks";
+import { RECORD_TRUST, gapKey, type LacunaCheck, type LacunaPack } from "./core/pack";
+import { computeScores, scoreDelta } from "./core/scores";
+import {
+  runStandin, STANDIN_JSON_SCHEMA, type ClaimMeta, type VisibleClaim,
+} from "./core/standin";
+import type { ModelCall } from "./core/model";
+import { answerToDrafts, questionText, rankGaps } from "./core/questions";
+import { namedOwnersFromPlan, openBlockingGaps, releaseState, type ReleaseState } from "./core/plan";
+import { dropFinishedFootprint, leaverName, leaverPersonIds, markPartlyRestricted, mergeJudgements, toLacunaPack } from "./adapt";
 
-const STRONG: Trust[] = ["from_record", "corroborated", "leaver_said"];
-const RECORD: Trust[] = ["from_record", "corroborated"];
-const DONE_STATUS = /^(done|closed|complete|completed|cancelled|canceled|resolved)$/i;
+export { toLacunaPack, leaverPersonIds, leaverName } from "./adapt";
+export type { ReleaseState } from "./core/plan";
 
-function isoDate(v: unknown): string | null {
-  const s = v === null || v === undefined ? "" : String(v).trim();
-  const m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
-  return m ? m[1] : null;
+/** Fixed "today" for the demo pack: the data is written as of 11 Nov 2026 (IST). */
+export const DEMO_NOW = "2026-11-11T12:00:00+05:30";
+
+const MODEL_CONCURRENCY = 4;
+
+function lacunaPack(pack: Pack = getPack()): LacunaPack {
+  return toLacunaPack(pack);
 }
 
-/** Build (or refresh) the responsibility inventory. Idempotent; keeps `confirmed`. */
-export async function buildInventory(ws: string): Promise<{ responsibilities: number }> {
+/** "Today" for inventory, urgency and recency: fixed for demo workspaces, real time otherwise. */
+export async function workspaceNow(ws: string): Promise<string> {
+  const w = await getWorkspace(ws);
+  return w?.kind === "demo" ? DEMO_NOW : new Date().toISOString();
+}
+
+function importanceOf(weight: number): Importance {
+  return weight === 5 ? "blocking" : weight === 3 ? "important" : "normal";
+}
+
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+
+export interface InventoryResult {
+  responsibilities: number;
+  items: Responsibility[];
+  /** Footprint hits left out, with the reason (e.g. finished work only). */
+  dropped: { entityKey: string; reason: string }[];
+  leaverIds: string[];
+}
+
+/**
+ * Build (or refresh) the responsibility inventory: task board + leaver footprint + role template,
+ * merged by entity. Keeps `confirmed` for responsibilities that survive; removes stale ones.
+ */
+export async function buildInventory(ws: string): Promise<InventoryResult> {
   const sql = db();
   const pack = getPack();
-  const items: Omit<Responsibility, "workspaceId">[] = [];
-  const byEntity = new Map<string, Omit<Responsibility, "workspaceId">>();
+  const lpack = lacunaPack(pack);
+  const now = await workspaceNow(ws);
+  const [segments, people] = await Promise.all([listSegments(ws), listPeople(ws)]);
+  // Tether's task cards carry taskId/updatedAt; core reads id/updated_at.
+  const tasks = segments.filter((s) => s.kind === "task").map((t) => ({
+    ...t,
+    meta: { ...t.meta, id: t.meta.id ?? t.meta.taskId, updated_at: t.meta.updated_at ?? t.meta.updatedAt },
+  }));
+  const leaverIds = leaverPersonIds(people, leaverName(pack));
+  const raw = leaverIds.length
+    ? computeFootprint(segments, people, leaverIds, pack.footprint, pack.entities, { now })
+    : [];
+  const segById = new Map(segments.map((s) => [s.id, s]));
+  const { kept, dropped } = dropFinishedFootprint(raw, tasks, segById, lpack, now);
+  const items = coreInventory({
+    workspaceId: ws, tasks, footprint: kept, pack: lpack, successorRole: pack.successorRole as RoleKey, today: now,
+  });
 
-  for (const t of pack.roleTemplates[pack.successorRole] ?? []) {
-    const r = {
-      id: `rsp_${t.key}`, key: t.key, title: t.title, kind: t.kind, entities: [...t.entities],
-      origin: "role_template" as const, originDetail: `Role template for ${pack.successorRole}`,
-      dueDate: null, confirmed: false,
-    };
-    items.push(r);
-    for (const e of t.entities) byEntity.set(e, r);
+  // A recurring duty found from a calendar schedule takes its next occurrence as due date, when
+  // that calendar entry is visible to every role (the inventory is shown to all of them).
+  const allRoles = pack.roles.map((r) => r.key as RoleKey);
+  for (const item of items) {
+    if (item.dueDate) continue;
+    const next = kept
+      .filter((c) => c.rule === "schedule" && item.entities.includes(c.entityKey))
+      .flatMap((c) => c.evidenceSegmentIds)
+      .map((id) => segById.get(id))
+      .filter((sg): sg is NonNullable<typeof sg> => !!sg && sg.kind === "event" && allRoles.every((r) => sg.roleSet.includes(r)))
+      .flatMap((sg) => [...((sg.meta.occurrences as string[] | undefined) ?? []), String(sg.meta.start ?? "")])
+      .map((d) => d.slice(0, 10))
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= now.slice(0, 10))
+      .sort()[0];
+    if (next) item.dueDate = next;
   }
 
-  const taskRows = await sql`
-    SELECT DISTINCT ON (id) * FROM segments WHERE workspace_id = ${ws} AND kind = 'task'
-    ORDER BY id, version DESC`;
-  let n = items.length;
-  for (const seg of taskRows.map(toSegment)) {
-    const m = seg.meta ?? {};
-    if (DONE_STATUS.test(String(m.status ?? ""))) continue;
-    const title = String(m.title ?? seg.text.split("\n")[0]);
-    const ent = matchEntity(`${title} ${m.labels ?? ""} ${m.description ?? ""}`, title, pack);
-    const due = isoDate(m.due);
-    const existing = byEntity.get(ent.key);
-    if (existing) {
-      if (!existing.originDetail.includes(String(m.id ?? ""))) existing.originDetail += `; board card ${m.id ?? seg.id}`;
-      if (due && (!existing.dueDate || due < existing.dueDate)) existing.dueDate = due;
-      continue;
+  const existing = new Map((await listResponsibilities(ws)).map((r) => [r.id, r]));
+  await sql.begin(async (tx) => {
+    const ids = items.map((r) => r.id);
+    await tx`DELETE FROM responsibilities WHERE workspace_id = ${ws} AND NOT (id = ANY(${ids}::text[]))`;
+    for (const r of items) {
+      const prev = existing.get(r.id);
+      const same = prev && prev.kind === r.kind && prev.title === r.title && prev.dueDate === r.dueDate
+        && prev.entities.join(",") === r.entities.join(",");
+      await tx`
+        INSERT INTO responsibilities (workspace_id, id, key, title, kind, entities, origin, origin_detail, due_date, confirmed)
+        VALUES (${ws}, ${r.id}, ${r.key}, ${r.title}, ${r.kind}, ${r.entities}::text[], ${r.origin}, ${r.originDetail},
+          ${r.dueDate}::date, ${Boolean(same && prev?.confirmed)})
+        ON CONFLICT (workspace_id, id) DO UPDATE SET
+          key = EXCLUDED.key, title = EXCLUDED.title, kind = EXCLUDED.kind, entities = EXCLUDED.entities,
+          origin = EXCLUDED.origin, origin_detail = EXCLUDED.origin_detail, due_date = EXCLUDED.due_date,
+          confirmed = EXCLUDED.confirmed`;
     }
-    n++;
-    const r = {
-      id: `rsp_task_${ent.key}`, key: `R${String(n).padStart(2, "0")}`, title, kind: "unfinished_work" as const,
-      entities: [ent.key], origin: "task_board" as const, originDetail: `Board card ${m.id ?? seg.id}`,
-      dueDate: due, confirmed: false,
-    };
-    items.push(r);
-    byEntity.set(ent.key, r);
-  }
-
-  for (const r of items) {
-    await sql`
-      INSERT INTO responsibilities (workspace_id, id, key, title, kind, entities, origin, origin_detail, due_date)
-      VALUES (${ws}, ${r.id}, ${r.key}, ${r.title}, ${r.kind}, ${r.entities}::text[], ${r.origin}, ${r.originDetail}, ${r.dueDate}::date)
-      ON CONFLICT (workspace_id, id) DO UPDATE SET
-        title = EXCLUDED.title, kind = EXCLUDED.kind, entities = EXCLUDED.entities,
-        origin_detail = EXCLUDED.origin_detail, due_date = EXCLUDED.due_date`;
-  }
-  return { responsibilities: items.length };
+  });
+  return { responsibilities: items.length, items, dropped, leaverIds };
 }
 
-/** Section 4 scores from check results (pure). */
+/** The approver confirms the inventory (logged). */
+export async function confirmInventory(ws: string, actor: RoleKey): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  const pack = getPack();
+  if (actor !== pack.approverRole) return { ok: false, error: "Only the Club President can confirm the inventory." };
+  const rows = await db()`
+    UPDATE responsibilities SET confirmed = true, confirmed_at = now()
+    WHERE workspace_id = ${ws} RETURNING key`;
+  await audit(ws, actor, "confirm_inventory", { responsibilities: rows.map((r) => String(r.key)) });
+  return { ok: true, count: rows.length };
+}
+
+// ---------------------------------------------------------------------------
+// Successor test
+// ---------------------------------------------------------------------------
+
+/** Claim metadata for the Restricted decision (SECURITY DEFINER function; never statement or value). */
+export async function claimMeta(ws: string, role?: RoleKey): Promise<Map<string, ClaimMeta>> {
+  const rows = role
+    ? await withRole(ws, role, (tx) => tx`SELECT * FROM claim_meta(${ws}::uuid)`)
+    : await db()`SELECT * FROM claim_meta(${ws}::uuid)`;
+  const out = new Map<string, ClaimMeta>();
+  for (const r of rows) {
+    out.set(String(r.id), {
+      entity: String(r.entity),
+      attribute: r.attribute as ClaimMeta["attribute"],
+      state: r.state as ClaimMeta["state"],
+      trust: r.trust as ClaimMeta["trust"],
+      roleSet: (r.role_set as RoleKey[]) ?? [],
+    });
+  }
+  return out;
+}
+
+/** Claims `role` may see, read under RLS. */
+export async function visibleClaims(ws: string, role: RoleKey): Promise<Claim[]> {
+  const rows = await withRole(ws, role, (tx) =>
+    tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from`);
+  return rows.map(toClaim);
+}
+
+const standinCall: ModelCall = (opts) => {
+  // jsonSchema: the core's JSON schema for endpoints with structured output (ignored if unsupported).
+  const withSchema = { ...opts, jsonSchema: STANDIN_JSON_SCHEMA };
+  return callJson(withSchema);
+};
+
+const cachedStandinCall: ModelCall = (opts) => {
+  const withSchema = { ...opts, jsonSchema: STANDIN_JSON_SCHEMA, cacheOnly: true };
+  return callJson(withSchema);
+};
+
+async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+export interface RunTestOptions {
+  /** "auto" (default): model when reachable, else cached answers, else deterministic. */
+  model?: "auto" | "off" | "cache";
+  /** What triggered the run, stored with it (e.g. "pipeline", "re-run", "answer gq_…"). */
+  trigger?: string;
+}
+
+/** Is the workspace's current state covered by an approved snapshot? */
+async function isProvisional(ws: string): Promise<boolean> {
+  const [row] = await db()`
+    SELECT
+      (SELECT max(approved_at) FROM snapshots WHERE workspace_id = ${ws}) AS approved,
+      (SELECT max(updated_at) FROM claims WHERE workspace_id = ${ws}) AS changed`;
+  if (!row?.approved) return true;
+  return Boolean(row.changed && new Date(String(row.changed)) > new Date(String(row.approved)));
+}
+
+/**
+ * Run the stand-in successor for `role`: visible claims read under RLS, restricted decided from
+ * claim_meta() (metadata only), model judgement merged with the deterministic reading (the model
+ * can only lower coverage), named owners from the plan, B/C/K in code. Stores the run.
+ */
+export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = {}): Promise<TestRun> {
+  const pack = getPack();
+  const lpack = lacunaPack(pack);
+  const [resps, visible, meta, plan] = await Promise.all([
+    listResponsibilities(ws),
+    visibleClaims(ws, role),
+    claimMeta(ws, role),
+    listPlanItems(ws),
+  ]);
+  const usable: VisibleClaim[] = visible.filter((c) => c.state === "active" || c.state === "conflicting");
+  const checks = checksByResp(resps, lpack);
+
+  const today = await workspaceNow(ws);
+  const det = await runStandin({ resps, role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, today });
+  let results = det.results;
+  let modelUsed = false;
+  let modelNote: string | null = null;
+
+  const envMode = process.env.LACUNA_MODEL;
+  const mode = opts.model ?? (envMode === "off" || envMode === "cache" ? envMode : "auto");
+  if (mode !== "off" && usable.length > 0) {
+    let call: ModelCall | undefined;
+    if (mode === "cache") call = cachedStandinCall;
+    else call = (await modelAvailable()) ? standinCall : cachedStandinCall;
+    const perResp = await mapLimit(resps, MODEL_CONCURRENCY, (r) =>
+      runStandin({ resps: [r], role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, call, today }));
+    const modelResults = perResp.filter((p) => p.modelUsed).flatMap((p) => p.results);
+    const errors = perResp.flatMap((p) => p.errors);
+    modelUsed = modelResults.length > 0;
+    results = mergeJudgements(modelResults, det.results);
+    if (errors.length) {
+      const unavailable = errors.filter((e) => /not in cache|not configured|timed out|HTTP|fetch/i.test(e.error)).length;
+      modelNote = unavailable === errors.length
+        ? `Model unavailable for ${errors.length} responsibilit${errors.length === 1 ? "y" : "ies"}: deterministic reading used.`
+        : `Model answer unusable for ${errors.map((e) => e.responsibilityKey).join(", ")}: deterministic reading used.`;
+    }
+  }
+
+  results = markPartlyRestricted(results, resps, checks, meta, role);
+  const named = namedOwnersFromPlan(openBlockingGaps(results, checks), plan);
+  const scores = computeScores(results, checks, named);
+  const provisional = await isProvisional(ws);
+  const id = `trn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}_${role}`;
+  const [row] = await db()`
+    INSERT INTO test_runs (workspace_id, id, role, scores, results, provisional, model_used, trigger, model_note)
+    VALUES (${ws}, ${id}, ${role}, ${JSON.stringify(scores)}::jsonb, ${JSON.stringify(results)}::jsonb,
+      ${provisional}, ${modelUsed}, ${opts.trigger ?? "run"}, ${modelNote})
+    RETURNING *`;
+  return toTestRun(row);
+}
+
+export interface TestRunSummary {
+  id: string;
+  createdAt: string;
+  scores: Scores;
+  provisional: boolean;
+  modelUsed: boolean;
+  trigger: string;
+  modelNote: string | null;
+}
+
+/** Score history for a role, oldest first (for "score over time"). */
+export async function testHistory(ws: string, role: RoleKey, limit = 30): Promise<TestRunSummary[]> {
+  const rows = await db()`
+    SELECT id, created_at, scores, provisional, model_used, trigger, model_note FROM test_runs
+    WHERE workspace_id = ${ws} AND role = ${role} ORDER BY created_at DESC LIMIT ${limit}`;
+  return rows.reverse().map((r) => ({
+    id: String(r.id),
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+    scores: (typeof r.scores === "string" ? JSON.parse(r.scores) : r.scores) as Scores,
+    provisional: Boolean(r.provisional),
+    modelUsed: Boolean(r.model_used),
+    trigger: String(r.trigger ?? "run"),
+    modelNote: (r.model_note as string | null) ?? null,
+  }));
+}
+
+/** Section 4 scores from check results (pure; kept for callers that weigh results themselves). */
 export function scoreResults(results: CheckResult[], weightOf: (r: CheckResult) => number): Scores {
   let b = 0;
   let sumW = 0;
@@ -102,271 +301,327 @@ export function scoreResults(results: CheckResult[], weightOf: (r: CheckResult) 
   let sumWSRecord = 0;
   for (const r of results) {
     const w = weightOf(r);
-    if (w === 5 && r.coverage !== "covered") b++; // restricted blocking counts until an owner is named
+    if (w === 5 && r.coverage !== "covered") b++;
     if (r.coverage === "restricted") continue;
     const s = r.coverage === "covered" ? 1 : r.coverage === "partial" ? 0.5 : 0;
     sumW += w;
     sumWS += w * s;
-    if (s > 0 && r.bestTrust && RECORD.includes(r.bestTrust)) sumWSRecord += w * s;
+    if (s > 0 && r.bestTrust && RECORD_TRUST.has(r.bestTrust)) sumWSRecord += w * s;
   }
   return { b, c: sumW ? sumWS / sumW : 0, k: sumWS ? sumWSRecord / sumWS : null };
 }
 
-function rankTrust(t: Trust): number {
-  return ["from_record", "corroborated", "leaver_said", "second_hand", "inferred", "ranked_options"].indexOf(t);
+// ---------------------------------------------------------------------------
+// Gap questions
+// ---------------------------------------------------------------------------
+
+export interface QuestionView extends GapQuestion {
+  weight: number | null;
+  urgency: number | null;
+  claimIds: string[];
+  scoreDelta: string | null;
+  answeredAt: string | null;
 }
 
-/** Run the successor test for `role` (claims read under RLS) and store the run. */
-export async function runTest(ws: string, role: RoleKey): Promise<TestRun> {
-  const pack = getPack();
-  const visible = (await listClaims(ws, { role })).filter((c) => c.state !== "dropped" && c.state !== "superseded");
-  const visibleIds = new Set(visible.map((c) => c.id));
-  const all = (await db()`SELECT * FROM claims WHERE workspace_id = ${ws} AND state NOT IN ('dropped', 'superseded')`).map(toClaim);
-  const responsibilities = await listResponsibilities(ws);
-  const results: CheckResult[] = [];
-  const weights = new Map<string, number>();
-
-  for (const r of responsibilities) {
-    for (const check of checklistFor(r.kind, pack)) {
-      const match = (c: Claim) => r.entities.includes(c.entity) && check.attributes.includes(c.attribute);
-      const mine = visible.filter(match);
-      const active = mine.filter((c) => c.state === "active");
-      const conflicting = mine.filter((c) => c.state === "conflicting");
-      let coverage: Coverage;
-      let note = "";
-      let used: Claim[] = [];
-      if (active.some((c) => STRONG.includes(c.trust))) {
-        coverage = "covered";
-        used = active.filter((c) => STRONG.includes(c.trust));
-      } else if (active.length) {
-        coverage = "partial";
-        used = active;
-        note = "Only inferred evidence.";
-      } else if (conflicting.length) {
-        coverage = "conflicting";
-        used = conflicting;
-        note = "Sources disagree.";
-      } else if (all.some((c) => match(c) && !visibleIds.has(c.id))) {
-        coverage = "restricted";
-        note = "Evidence exists but is not visible to this role.";
-      } else {
-        coverage = "missing";
-        note = `Nothing in the record says this (${check.label.toLowerCase()}).`;
-      }
-      used.sort((a, b) => rankTrust(a.trust) - rankTrust(b.trust));
-      const res: CheckResult = {
-        responsibilityId: r.id,
-        checkKey: check.key,
-        coverage,
-        claimIds: used.map((c) => c.id),
-        bestTrust: used[0]?.trust ?? null,
-        note,
-      };
-      weights.set(`${r.id}|${check.key}`, check.weight);
-      results.push(res);
-    }
-  }
-
-  const scores = scoreResults(results, (x) => weights.get(`${x.responsibilityId}|${x.checkKey}`) ?? 1);
-  const id = `trn_${Date.now().toString(36)}_${role}`;
-  await db()`
-    INSERT INTO test_runs (workspace_id, id, role, scores, results, provisional, model_used)
-    VALUES (${ws}, ${id}, ${role}, ${JSON.stringify(scores)}::jsonb, ${JSON.stringify(results)}::jsonb, true, false)`;
-  const [row] = await db()`SELECT * FROM test_runs WHERE workspace_id = ${ws} AND id = ${id}`;
-  return toTestRun(row);
+function toQuestionView(r: Record<string, unknown>): QuestionView {
+  return {
+    ...toGapQuestion(r),
+    weight: r.weight === null || r.weight === undefined ? null : Number(r.weight),
+    urgency: r.urgency === null || r.urgency === undefined ? null : Number(r.urgency),
+    claimIds: Array.isArray(r.claim_ids) ? (r.claim_ids as string[]) : [],
+    scoreDelta: (r.score_delta as string | null) ?? null,
+    answeredAt: r.answered_at instanceof Date ? r.answered_at.toISOString() : (r.answered_at as string | null) ?? null,
+  };
 }
 
-const WTAG_TEMPLATE: Record<string, (label: string, title: string) => string> = {
-  WHO: (l, t) => `Who is the ${l.toLowerCase()} for "${t}"?`,
-  WHERE: (l, t) => `Where does "${t}" stand: ${l.toLowerCase()}?`,
-  HOW: (l, t) => `For "${t}", what are the ${l.toLowerCase()}, step by step?`,
-  WHEN: (l, t) => `For "${t}", what is the ${l.toLowerCase()}?`,
-  WHY: (l, t) => `For "${t}", what should the successor know about ${l.toLowerCase()}?`,
-};
-const GAP_SUFFIX: Record<GapQuestion["gapType"], string> = {
-  missing: "The record has nothing on this.",
-  partial: "The record only hints at this.",
-  conflicting: "Two sources disagree; which one is right?",
-};
-const UNCERTAINTY: Record<GapQuestion["gapType"], number> = { missing: 1, conflicting: 0.8, partial: 0.5 };
-
-/** Rank the successor's gaps and keep the top 10 as questions for the leaver. */
-export async function buildQuestions(ws: string): Promise<GapQuestion[]> {
-  const sql = db();
-  const pack = getPack();
-  const run = await getLatestTestRun(ws, pack.successorRole);
-  if (!run) return [];
-  const responsibilities = new Map((await listResponsibilities(ws)).map((r) => [r.id, r]));
-  const now = Date.now();
-  const candidates: Omit<GapQuestion, "rank" | "id" | "workspaceId" | "answeredClaimId">[] = [];
-  for (const res of run.results) {
-    if (res.coverage !== "missing" && res.coverage !== "partial" && res.coverage !== "conflicting") continue;
-    const r = responsibilities.get(res.responsibilityId);
-    if (!r) continue;
-    const check = checklistFor(r.kind, pack).find((c) => c.key === res.checkKey);
-    if (!check) continue;
-    const gapType = res.coverage;
-    const due = r.dueDate ? Date.parse(r.dueDate) : NaN;
-    const urgency = Number.isFinite(due) && due - now <= 14 * 86_400_000 ? 1.5 : 1;
-    const score = check.weight * UNCERTAINTY[gapType] * urgency;
-    const text = `${(WTAG_TEMPLATE[check.wTag] ?? WTAG_TEMPLATE.HOW)(check.label, r.title)} ${GAP_SUFFIX[gapType]}`;
-    candidates.push({ responsibilityId: r.id, checkKey: check.key, gapType, text, score });
-  }
-  candidates.sort((a, b) => b.score - a.score || a.responsibilityId.localeCompare(b.responsibilityId));
-  const top = candidates.slice(0, 10);
-
-  const answered = await sql`SELECT responsibility_id, check_key FROM gap_questions WHERE workspace_id = ${ws} AND answered_claim_id IS NOT NULL`;
-  const answeredKeys = new Set(answered.map((a) => `${a.responsibility_id}|${a.check_key}`));
-  await sql`DELETE FROM gap_questions WHERE workspace_id = ${ws} AND answered_claim_id IS NULL`;
-  let rank = 0;
-  for (const q of top) {
-    if (answeredKeys.has(`${q.responsibilityId}|${q.checkKey}`)) continue;
-    rank++;
-    const id = `gq_${sha256Hex(`${q.responsibilityId}|${q.checkKey}`).slice(0, 12)}`;
-    await sql`
-      INSERT INTO gap_questions (workspace_id, id, rank, responsibility_id, check_key, gap_type, text, score)
-      VALUES (${ws}, ${id}, ${rank}, ${q.responsibilityId}, ${q.checkKey}, ${q.gapType}, ${q.text}, ${q.score})
-      ON CONFLICT (workspace_id, id) DO UPDATE SET rank = EXCLUDED.rank, gap_type = EXCLUDED.gap_type,
-        text = EXCLUDED.text, score = EXCLUDED.score`;
-  }
-  return (await sql`SELECT * FROM gap_questions WHERE workspace_id = ${ws} ORDER BY answered_claim_id IS NOT NULL, rank`).map(toGapQuestion);
-}
-
-export type AnswerResult =
-  | { ok: true; claimId: string; before: Scores | null; after: Scores }
-  | { ok: false; error: string };
-
-function importanceOf(check: CheckDef): Importance {
-  return check.weight === 5 ? "blocking" : check.weight === 3 ? "important" : "normal";
+/** Open questions by rank, then answered ones (newest first). */
+export async function listQuestions(ws: string): Promise<QuestionView[]> {
+  const rows = await db()`
+    SELECT * FROM gap_questions WHERE workspace_id = ${ws}
+    ORDER BY answered_claim_id IS NOT NULL, CASE WHEN answered_claim_id IS NULL THEN rank END, answered_at DESC NULLS LAST`;
+  return rows.map(toQuestionView);
 }
 
 /**
- * The leaver answers a gap question. The answer becomes an `interview` segment (author = leaver)
- * and a claim with trust leaver_said; then the successor test re-runs. Only the leaver may answer;
- * the leaver may narrow the answer's role set, never widen it.
+ * Rank the successor's gaps (weight × uncertainty × urgency), keep the top 10 as questions for the
+ * leaver. Text is built only from claims the leaver may see. Unanswered questions are replaced;
+ * answered ones are kept and their checks are not asked again.
+ */
+export async function buildQuestions(ws: string): Promise<GapQuestion[]> {
+  const sql = db();
+  const pack = getPack();
+  const lpack = lacunaPack(pack);
+  const successor = pack.successorRole as RoleKey;
+  const run = (await getLatestTestRun(ws, successor)) ?? (await runTest(ws, successor, { trigger: "questions" }));
+  const resps = await listResponsibilities(ws);
+  const respById = new Map(resps.map((r) => [r.id, r]));
+  const checks = checksByResp(resps, lpack);
+  const now = await workspaceNow(ws);
+
+  const answered = await sql`SELECT responsibility_id, check_key FROM gap_questions WHERE workspace_id = ${ws} AND answered_claim_id IS NOT NULL`;
+  const answeredKeys = new Set(answered.map((a) => gapKey(String(a.responsibility_id), String(a.check_key))));
+  const open = run.results.filter((r) => !answeredKeys.has(gapKey(r.responsibilityId, r.checkKey)));
+  const ranked = rankGaps(open, resps, checks, now);
+  const leaverClaims = await visibleClaims(ws, pack.leaverRole as RoleKey);
+
+  await sql.begin(async (tx) => {
+    await tx`DELETE FROM gap_questions WHERE workspace_id = ${ws} AND answered_claim_id IS NULL`;
+    for (const g of ranked) {
+      const resp = respById.get(g.responsibilityId)!;
+      const check = findCheck(checks, g.responsibilityId, g.checkKey)!;
+      const text = questionText(g, resp, check, resp.kind, leaverClaims, pack.leaverRole as RoleKey);
+      const id = `gq_${sha256Hex(`${g.responsibilityId}|${g.checkKey}`).slice(0, 12)}`;
+      await tx`
+        INSERT INTO gap_questions (workspace_id, id, rank, responsibility_id, check_key, gap_type, text, score, weight, urgency, claim_ids)
+        VALUES (${ws}, ${id}, ${g.rank}, ${g.responsibilityId}, ${g.checkKey}, ${g.gapType}, ${text}, ${g.score},
+          ${g.weight}, ${g.urgency}, ${g.claimIds}::text[])
+        ON CONFLICT (workspace_id, id) DO UPDATE SET rank = EXCLUDED.rank, gap_type = EXCLUDED.gap_type, text = EXCLUDED.text,
+          score = EXCLUDED.score, weight = EXCLUDED.weight, urgency = EXCLUDED.urgency, claim_ids = EXCLUDED.claim_ids`;
+    }
+  });
+  return (await listQuestions(ws));
+}
+
+// ---------------------------------------------------------------------------
+// Answers
+// ---------------------------------------------------------------------------
+
+export type AnswerResult =
+  | { ok: true; claimId: string; before: Scores | null; after: Scores; delta: string }
+  | { ok: false; error: string };
+
+const INTERVIEW_SOURCE = "src_interview";
+
+/**
+ * The leaver answers a gap question. The answer is masked (Tether), stored as an `interview`
+ * segment and a `leaver_said` claim whose role set is the default narrowed by the leaver (never
+ * widened; the leaver and the approver always keep it). Then the successor test re-runs and the
+ * score change is stored with the question.
  */
 export async function answerQuestion(
   ws: string, questionId: string, answer: string, actor: RoleKey, narrowRoles?: RoleKey[],
 ): Promise<AnswerResult> {
   const sql = db();
   const pack = getPack();
-  if (actor !== pack.leaverRole) return { ok: false, error: "Only the leaver can answer gap questions." };
-  const text = answer.trim();
+  const lpack = lacunaPack(pack);
+  const leaverRole = pack.leaverRole as RoleKey;
+  const successor = pack.successorRole as RoleKey;
+  if (actor !== leaverRole) return { ok: false, error: "Only the leaver can answer gap questions." };
+  const text = (answer ?? "").trim();
   if (text.length < 2) return { ok: false, error: "Write an answer first." };
   if (text.length > 4000) return { ok: false, error: "Keep the answer under 4000 characters." };
+
   const [qRow] = await sql`SELECT * FROM gap_questions WHERE workspace_id = ${ws} AND id = ${questionId}`;
   if (!qRow) return { ok: false, error: "Question not found." };
   const q = toGapQuestion(qRow);
   if (q.answeredClaimId) return { ok: false, error: "This question is already answered." };
   const [rRow] = await sql`SELECT * FROM responsibilities WHERE workspace_id = ${ws} AND id = ${q.responsibilityId}`;
   if (!rRow) return { ok: false, error: "Responsibility not found." };
-  const r = toResponsibility(rRow);
-  const check = checklistFor(r.kind, pack).find((c) => c.key === q.checkKey);
+  const resp = toResponsibility(rRow);
+  const check: LacunaCheck | undefined = checksFor(resp, lpack).find((c) => c.key === q.checkKey);
   if (!check) return { ok: false, error: "Check not found in the setting pack." };
 
+  // Role set: the pack default narrowed by the leaver; leaver and approver always keep it.
   const base = pack.uploadDefaults.roleSet as RoleKey[];
-  let roleSet = narrowRoles?.length ? base.filter((x) => narrowRoles.includes(x)) : [...base];
-  for (const must of [pack.leaverRole, pack.approverRole] as RoleKey[]) if (!roleSet.includes(must)) roleSet.push(must);
-  roleSet = base.filter((x) => roleSet.includes(x)); // never wider than the default
+  const keep = new Set<RoleKey>([leaverRole, pack.approverRole as RoleKey]);
+  const narrowTo = narrowRoles && narrowRoles.length > 0
+    ? base.filter((r) => narrowRoles.includes(r) || keep.has(r))
+    : null;
 
+  // Mask before storage. Contact placeholders get workspace-unique numbers.
   const masked = maskText(text, { contactsKey: process.env.CONTACTS_KEY ?? "", people: null });
-  const leaverWord = (pack.roles.find((x) => x.key === pack.leaverRole)?.label ?? "").split(/[\s(]/)[0];
-  const [leaver] = leaverWord
-    ? await sql`SELECT id FROM people WHERE workspace_id = ${ws} AND display_name ILIKE ${leaverWord + "%"} ORDER BY id LIMIT 1`
-    : [];
-  const authorId = leaver ? String(leaver.id) : null;
+  let maskedText = masked.text;
+  const contacts = [] as { token: string; kind: "email" | "phone"; valueEnc: string }[];
+  if (masked.contacts.length) {
+    const [{ n }] = await sql`SELECT count(*)::int AS n FROM contacts WHERE workspace_id = ${ws}`;
+    const renum = new Map<string, string>();
+    for (const c of masked.contacts) {
+      if (!renum.has(c.token)) renum.set(c.token, `[CONTACT:c-${9000 + Number(n) + renum.size + 1}]`);
+      contacts.push({ token: renum.get(c.token)!, kind: c.kind, valueEnc: c.valueEnc });
+    }
+    for (const [from, to] of renum) maskedText = maskedText.split(from).join(to);
+  }
 
-  await sql`
-    INSERT INTO sources (workspace_id, id, kind, name, role_set, origin)
-    VALUES (${ws}, 'src_interview', 'interview', 'Leaver answers', ${base}::text[], 'interview')
-    ON CONFLICT (workspace_id, id) DO NOTHING`;
+  const people = await listPeople(ws);
+  const leaverIds = leaverPersonIds(people, leaverName(pack));
+  const leaverId = people.find((p) => leaverIds.includes(p.id) && p.emailHmac)?.id ?? leaverIds[0] ?? "leaver";
   const ts = new Date().toISOString();
-  const [{ n: pos }] = await sql`SELECT count(*)::int AS n FROM segments WHERE workspace_id = ${ws} AND source_id = 'src_interview'`;
-  const segId = segmentId("interview", ts, "interview", Number(pos), masked.text);
-  await sql`
-    INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta)
-    VALUES (${ws}, ${segId}, 1, 'src_interview', 'interview', 'answer', ${ts}, ${authorId}, 'interview', ${Number(pos)},
-      ${masked.text}, ${textHash(masked.text)}, ${roleSet}::text[], ${JSON.stringify({ questionId })}::jsonb)`;
-  await sql`UPDATE sources SET segment_count = segment_count + 1, masked_secrets = masked_secrets + ${masked.secrets}
-    WHERE workspace_id = ${ws} AND id = 'src_interview'`;
-
-  const entity = r.entities[0] ?? r.key.toLowerCase();
-  const attribute = check.attributes[0];
-  const id = claimId(entity, attribute, masked.text, [segId]);
+  const { segment, claim: draft } = answerToDrafts(
+    maskedText,
+    { id: q.id, text: q.text, resp, check, roleSet: base, entityLabel: entityLabel(resp.entities[0] ?? "", pack) || resp.title },
+    leaverId,
+    { leaverName: leaverName(pack) || "The leaver", ts, sourceId: INTERVIEW_SOURCE, workspaceId: ws, narrowTo },
+  );
+  const roleSet = draft.roleSet;
+  const id = makeClaimId(draft.entity, draft.attribute, draft.value, [segment.id]);
   const claim: Claim = {
-    id, workspaceId: ws, entity, entityLabel: entityLabel(entity, pack) || r.title, attribute,
-    value: masked.text.slice(0, 300), statement: masked.text,
-    citations: [{ segmentId: segId, quote: masked.text, accepted: true, exact: true }],
-    trust: "leaver_said", state: "active", stateNote: null, supersededBy: null, roleSet,
-    validFrom: ts, authorId, sourceKinds: ["interview"], importance: importanceOf(check),
-    tier: roleSet.includes("new_member") && check.weight !== 5 ? "B" : "C",
-    review: "pending", reviewNote: null, origin: "leaver_answer", supportCheck: null,
+    id, workspaceId: ws, entity: draft.entity, entityLabel: draft.entityLabel, attribute: draft.attribute,
+    value: draft.value.slice(0, 1000), statement: draft.statement, citations: draft.citations, trust: "leaver_said",
+    state: "active", stateNote: null, supersededBy: null, roleSet, validFrom: ts, authorId: leaverId,
+    sourceKinds: ["interview"], importance: importanceOf(check.weight), tier: "B", review: "pending",
+    reviewNote: null, origin: "leaver_answer", supportCheck: null,
   };
-  await sql`
-    INSERT INTO claims (workspace_id, id, entity, entity_label, attribute, value, statement, citations, trust, state,
-      role_set, valid_from, author_id, source_kinds, importance, tier, review, origin, source_ids)
-    VALUES (${ws}, ${claim.id}, ${claim.entity}, ${claim.entityLabel}, ${claim.attribute}, ${claim.value}, ${claim.statement},
-      ${JSON.stringify(claim.citations)}::jsonb, ${claim.trust}, 'active', ${roleSet}::text[], ${ts}, ${authorId},
-      ${["interview"]}::text[], ${claim.importance}, ${claim.tier}, 'pending', 'leaver_answer', ${["src_interview"]}::text[])
-    ON CONFLICT (workspace_id, id) DO NOTHING`;
-  await sql`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
-    VALUES (${ws}, ${claim.id}, 'created', ${JSON.stringify({ origin: "leaver_answer", questionId })}::jsonb, ${actor})`;
-  await sql`UPDATE gap_questions SET answered_claim_id = ${claim.id} WHERE workspace_id = ${ws} AND id = ${questionId}`;
+  claim.tier = tierFor(claim);
+
+  const before = await getLatestTestRun(ws, successor);
+  await sql.begin(async (tx) => {
+    await tx`
+      INSERT INTO sources (workspace_id, id, kind, name, role_set, origin)
+      VALUES (${ws}, ${INTERVIEW_SOURCE}, 'interview', 'Gap interview', ${base}::text[], 'interview')
+      ON CONFLICT (workspace_id, id) DO NOTHING`;
+    await tx`
+      INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta)
+      VALUES (${ws}, ${segment.id}, 1, ${INTERVIEW_SOURCE}, 'interview', 'answer', ${ts}, ${leaverId}, ${segment.thread}, 0,
+        ${segment.text}, ${segment.textHash}, ${roleSet}::text[], ${JSON.stringify(segment.meta)}::jsonb)
+      ON CONFLICT DO NOTHING`;
+    await tx`UPDATE sources SET segment_count = segment_count + 1, masked_secrets = masked_secrets + ${masked.secrets},
+      masked_contacts = masked_contacts + ${contacts.length} WHERE workspace_id = ${ws} AND id = ${INTERVIEW_SOURCE}`;
+    const contactRoles = (pack.contactsRoles as RoleKey[]).filter((r) => roleSet.includes(r));
+    for (const c of contacts) {
+      await tx`
+        INSERT INTO contacts (workspace_id, token, kind, person_id, value_enc, role_set, source_id)
+        VALUES (${ws}, ${c.token}, ${c.kind}, ${null}, ${c.valueEnc}, ${contactRoles}::text[], ${INTERVIEW_SOURCE})
+        ON CONFLICT DO NOTHING`;
+    }
+    await tx`
+      INSERT INTO claims (workspace_id, id, entity, entity_label, attribute, value, statement, citations, trust, state,
+        role_set, valid_from, author_id, source_kinds, importance, tier, review, origin, source_ids)
+      VALUES (${ws}, ${claim.id}, ${claim.entity}, ${claim.entityLabel}, ${claim.attribute}, ${claim.value}, ${claim.statement},
+        ${JSON.stringify(claim.citations)}::jsonb, 'leaver_said', 'active', ${roleSet}::text[], ${ts}, ${leaverId},
+        ${["interview"]}::text[], ${claim.importance}, ${claim.tier}, 'pending', 'leaver_answer', ${[INTERVIEW_SOURCE]}::text[])
+      ON CONFLICT (workspace_id, id) DO NOTHING`;
+    await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
+      VALUES (${ws}, ${claim.id}, 'created', ${JSON.stringify({
+        origin: "leaver_answer", questionId, segmentId: segment.id, trust: "leaver_said", roleSet,
+        narrowed: roleSet.length < base.length,
+      })}::jsonb, ${actor})`;
+    await tx`UPDATE gap_questions SET answered_claim_id = ${claim.id}, answered_at = now()
+      WHERE workspace_id = ${ws} AND id = ${questionId}`;
+  });
   await audit(ws, actor, "answer_question", { questionId, claimId: claim.id, roleSet });
 
-  const before = (await getLatestTestRun(ws, pack.successorRole))?.scores ?? null;
-  const after = (await runTest(ws, pack.successorRole)).scores;
-  await runTest(ws, "new_member");
-  return { ok: true, claimId: claim.id, before, after };
+  const trigger = `answer ${questionId}`;
+  const [after] = await Promise.all([
+    runTest(ws, successor, { trigger }),
+    runTest(ws, "new_member", { trigger }),
+  ]);
+  const checks = checksByResp(await listResponsibilities(ws), lpack);
+  const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
+  await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
+  return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta };
 }
+
+// ---------------------------------------------------------------------------
+// Continuation plan and release
+// ---------------------------------------------------------------------------
 
 export interface BlockingGap {
   responsibilityId: string;
+  responsibilityKey: string;
   responsibilityTitle: string;
   checkKey: string;
   checkLabel: string;
-  coverage: Coverage;
+  coverage: Exclude<Coverage, "covered">;
+  note: string;
   plan: PlanItem | null;
 }
 
 /** Blocking checks (weight 5) not covered in the latest test for `role` (default successor). */
 export async function listBlockingGaps(ws: string, role?: RoleKey): Promise<BlockingGap[]> {
-  const pack: Pack = getPack();
-  const run = await getLatestTestRun(ws, role ?? pack.successorRole);
+  const pack = getPack();
+  const lpack = lacunaPack(pack);
+  const run = await getLatestTestRun(ws, role ?? (pack.successorRole as RoleKey));
   if (!run) return [];
-  const responsibilities = new Map((await listResponsibilities(ws)).map((r) => [r.id, r]));
-  const plans = new Map(
-    (await db()`SELECT * FROM plan_items WHERE workspace_id = ${ws}`).map(toPlanItem).map((p) => [`${p.responsibilityId}|${p.checkKey}`, p]),
-  );
-  const out: BlockingGap[] = [];
-  for (const res of run.results) {
-    if (res.coverage === "covered") continue;
-    const r = responsibilities.get(res.responsibilityId);
-    if (!r) continue;
-    const check = checklistFor(r.kind, pack).find((c) => c.key === res.checkKey);
-    if (!check || check.weight !== 5) continue;
-    out.push({
-      responsibilityId: r.id, responsibilityTitle: r.title, checkKey: check.key, checkLabel: check.label,
-      coverage: res.coverage, plan: plans.get(`${r.id}|${check.key}`) ?? null,
-    });
-  }
-  return out;
+  const resps = await listResponsibilities(ws);
+  const byId = new Map(resps.map((r) => [r.id, r]));
+  const checks = checksByResp(resps, lpack);
+  const plans = new Map((await listPlanItems(ws)).map((p) => [gapKey(p.responsibilityId, p.checkKey), p]));
+  const notes = new Map(run.results.map((r) => [gapKey(r.responsibilityId, r.checkKey), r.note]));
+  return openBlockingGaps(run.results, checks).flatMap((g) => {
+    const r = byId.get(g.responsibilityId);
+    const check = findCheck(checks, g.responsibilityId, g.checkKey);
+    if (!r || !check) return [];
+    return [{
+      responsibilityId: r.id, responsibilityKey: r.key, responsibilityTitle: r.title, checkKey: check.key,
+      checkLabel: check.label, coverage: g.coverage, note: notes.get(gapKey(r.id, check.key)) ?? "",
+      plan: plans.get(gapKey(r.id, check.key)) ?? null,
+    }];
+  });
 }
 
 export function planComplete(p: PlanItem | null): boolean {
-  return Boolean(p && p.owner.trim() && p.dueDate && p.riskNote.trim());
+  return Boolean(p && p.owner.trim() && /^\d{4}-\d{2}-\d{2}/.test(p.dueDate ?? "") && p.riskNote.trim());
 }
 
-/** Continuation plan entry for an open blocking gap (owner, due date, approver's risk note). */
+/** Continuation plan entry for an open blocking gap (owner, due date, approver's risk note). President only. */
 export async function savePlanItem(ws: string, item: PlanItem, actor: RoleKey): Promise<{ ok: true } | { ok: false; error: string }> {
   const pack = getPack();
-  if (actor !== pack.approverRole) return { ok: false, error: "Only the approver can set the continuation plan." };
-  const due = isoDate(item.dueDate);
+  if (actor !== pack.approverRole) return { ok: false, error: "Only the Club President can set the continuation plan." };
+  const owner = (item.owner ?? "").trim().slice(0, 200);
+  const riskNote = (item.riskNote ?? "").trim().slice(0, 2000);
+  const due = /^(\d{4}-\d{2}-\d{2})/.exec((item.dueDate ?? "").trim())?.[1] ?? null;
+  if (item.dueDate?.trim() && !due) return { ok: false, error: "Use a date like 2026-11-30." };
+  const [r] = await db()`SELECT * FROM responsibilities WHERE workspace_id = ${ws} AND id = ${item.responsibilityId}`;
+  if (!r) return { ok: false, error: "Responsibility not found." };
+  const resp = toResponsibility(r);
+  if (!checksFor(resp, lacunaPack(pack)).some((c) => c.key === item.checkKey)) return { ok: false, error: "Check not found." };
   await db()`
     INSERT INTO plan_items (workspace_id, responsibility_id, check_key, owner, due_date, risk_note)
-    VALUES (${ws}, ${item.responsibilityId}, ${item.checkKey}, ${item.owner.trim()}, ${due}::date, ${item.riskNote.trim()})
+    VALUES (${ws}, ${item.responsibilityId}, ${item.checkKey}, ${owner}, ${due}::date, ${riskNote})
     ON CONFLICT (workspace_id, responsibility_id, check_key) DO UPDATE SET
       owner = EXCLUDED.owner, due_date = EXCLUDED.due_date, risk_note = EXCLUDED.risk_note, updated_at = now()`;
-  await audit(ws, actor, "plan_item", { responsibilityId: item.responsibilityId, checkKey: item.checkKey });
+  await audit(ws, actor, "plan_item", { responsibilityId: item.responsibilityId, checkKey: item.checkKey, owner, due });
+  // A named owner on a restricted blocking check changes B: re-score from the latest run (no model call).
+  await rescoreLatest(ws, pack.successorRole as RoleKey, "plan item");
   return { ok: true };
+}
+
+/** Recompute B/C/K of the latest run with the current plan (named owners) and store it as a new run. */
+async function rescoreLatest(ws: string, role: RoleKey, trigger: string): Promise<TestRun | null> {
+  const run = await getLatestTestRun(ws, role);
+  if (!run) return null;
+  const checks = checksByResp(await listResponsibilities(ws), lacunaPack());
+  const named = namedOwnersFromPlan(openBlockingGaps(run.results, checks), await listPlanItems(ws));
+  const scores = computeScores(run.results, checks, named);
+  if (scores.b === run.scores.b && scores.c === run.scores.c && scores.k === run.scores.k) return run;
+  const id = `trn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}_${role}`;
+  const [row] = await db()`
+    INSERT INTO test_runs (workspace_id, id, role, scores, results, provisional, model_used, trigger)
+    VALUES (${ws}, ${id}, ${role}, ${JSON.stringify(scores)}::jsonb, ${JSON.stringify(run.results)}::jsonb,
+      ${run.provisional}, ${run.modelUsed}, ${trigger})
+    RETURNING *`;
+  return toTestRun(row);
+}
+
+export interface ReleaseInfo extends ReleaseState {
+  scores: Scores | null;
+  gaps: BlockingGap[];
+}
+
+/** Release state for Relay: the core release rule over the latest successor run and the plan. */
+export async function releaseInfo(ws: string): Promise<ReleaseInfo> {
+  const pack = getPack();
+  const run = await getLatestTestRun(ws, pack.successorRole as RoleKey);
+  const gaps = await listBlockingGaps(ws);
+  const plan = await listPlanItems(ws);
+  const scores = run?.scores ?? null;
+  const state = releaseState(
+    scores ?? { b: 0, c: 0, k: null },
+    gaps.map((g) => ({ responsibilityId: g.responsibilityId, checkKey: g.checkKey, coverage: g.coverage })),
+    plan,
+  );
+  return { ...state, scores, gaps };
+}
+
+/** Segment view helper for pages: responsibility ids -> claim ids -> first cited segment. */
+export async function citedSegments(ws: string, role: RoleKey, claimIds: string[]): Promise<Record<string, string | null>> {
+  if (claimIds.length === 0) return {};
+  const rows = await withRole(ws, role, (tx) =>
+    tx`SELECT id, citations FROM claims WHERE workspace_id = ${ws} AND id = ANY(${claimIds}::text[])`);
+  const out: Record<string, string | null> = {};
+  for (const r of rows) {
+    const cits = (typeof r.citations === "string" ? JSON.parse(r.citations) : r.citations) as { segmentId: string; accepted?: boolean }[];
+    out[String(r.id)] = cits.find((c) => c.accepted !== false)?.segmentId ?? cits[0]?.segmentId ?? null;
+  }
+  return out;
 }
