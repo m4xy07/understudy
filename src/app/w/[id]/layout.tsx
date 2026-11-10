@@ -59,7 +59,16 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
           <RoleSwitcher ws={id} role={role} roles={roleOptions(pack)} />
         </div>
         <div className="mt-3">
-          <Stepper ws={id} steps={progress.steps} next={progress.next} />
+          <Stepper
+            ws={id}
+            steps={progress.steps}
+            next={
+              // Already viewing as the leaver: drop the "Switch to Priya" part of the hint.
+              progress.next?.key === "ask" && role === "leaver"
+                ? { ...progress.next, hint: "Answer a gap question." }
+                : progress.next
+            }
+          />
         </div>
       </div>
     </header>

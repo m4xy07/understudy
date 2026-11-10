@@ -22,7 +22,7 @@ interface Result {
 function summary(r: Result): string {
   const s = r.sources?.[0];
   if (!s) return "Imported.";
-  return `Imported "${s.name}": ${s.segments} segments (${s.newSegments} new), ${s.rejected} rejected, ${s.maskedSecrets} secrets and ${s.maskedContacts} contacts masked. Press Run Understudy to update claims.`;
+  return `Imported "${s.name}": ${s.segments} segments (${s.newSegments} new), ${s.rejected} rejected, ${s.maskedSecrets} ${s.maskedSecrets === 1 ? "secret" : "secrets"} and ${s.maskedContacts} ${s.maskedContacts === 1 ? "contact" : "contacts"} masked. Press Run Understudy to update claims.`;
 }
 
 export function UploadForm({ ws, roles }: { ws: string; roles: { key: RoleKey; label: string }[] }) {

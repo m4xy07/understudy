@@ -101,8 +101,8 @@ async function Connect({ params }: { params: WsParams }) {
                         </td>
                         <td className="mono text-right">{s.segmentCount}</td>
                         <td className="whitespace-nowrap text-right text-xs">
-                          <span className="block">{s.maskedSecrets} secrets</span>
-                          <span className="block text-muted">{s.maskedContacts} contacts</span>
+                          <span className="block">{s.maskedSecrets} {s.maskedSecrets === 1 ? "secret" : "secrets"}</span>
+                          <span className="block text-muted">{s.maskedContacts} {s.maskedContacts === 1 ? "contact" : "contacts"}</span>
                         </td>
                         <td className="min-w-[8rem] text-xs">
                           {s.rejected.length === 0 ? (

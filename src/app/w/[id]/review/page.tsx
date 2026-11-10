@@ -352,8 +352,8 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
         )}
         {latest && (
           <p className="mt-3 text-sm">
-            <Link className="underline" href={`/w/${id}/handover`}>Open the handover</Link>{" "}
-            <span className="text-muted">— switch &ldquo;Viewing as&rdquo; to see what each role receives.</span>
+            <Link className="underline" href={`/w/${id}/handover`}>Open the handover</Link>.{" "}
+            <span className="text-muted">Switch &ldquo;Viewing as&rdquo; to see what each role receives.</span>
           </p>
         )}
       </section>
