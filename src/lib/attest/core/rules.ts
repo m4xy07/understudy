@@ -105,6 +105,53 @@ export function repliesTo(newer: Claim, older: Claim, segmentsById?: Map<string,
   return false;
 }
 
+/** True when either claim's cited segments reply to / quote the other's. */
+function linked(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
+  return repliesTo(a, b, segmentsById) || repliesTo(b, a, segmentsById);
+}
+
+const MONTH = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*";
+const DATE_LIKE = new RegExp(
+  `^\\d{4}-\\d{2}-\\d{2}|\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\b|\\b${MONTH}\\s+\\d{1,2}\\b|\\b\\d{1,2}[/.]\\d{1,2}[/.]\\d{2,4}\\b`,
+  "i",
+);
+const CADENCE = /\b(every|each|once|weekly|monthly|yearly|annually|daily|per (?:term|year|month|week)|repeats?)\b/i;
+
+/** A single calendar day ("2026-12-19", "19 Dec", "Dec 19"), not a cadence ("every year, next ..."). */
+export function isDateValue(v: string): boolean {
+  return DATE_LIKE.test(v) && !CADENCE.test(v);
+}
+
+/**
+ * Two claims on the same entity and single-valued attribute are only compared when their
+ * values are the same KIND of fact, so that a cadence never "conflicts" with a due date and a
+ * verify step never "supersedes" the deploy steps:
+ * - values where one contains the other agree (e.g. "Priya Nair" and "Priya Nair (lead)");
+ * - deadline: both values are single dates (a cadence such as "once per term" is another fact);
+ * - owner, location: always;
+ * - procedure, status, decision: only a restatement, i.e. the same author, a reply / quote link
+ *   between the cited segments, or two structured records (board row vs board row);
+ * - risk, access: never (several risks or credential names per entity are normal).
+ */
+export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
+  const va = norm(a.value);
+  const vb = norm(b.value);
+  if (!va || !vb || va === vb || va.includes(vb) || vb.includes(va)) return false;
+  switch (a.attribute) {
+    case "deadline":
+      return isDateValue(a.value) && isDateValue(b.value);
+    case "owner":
+    case "location":
+      return true;
+    case "procedure":
+    case "status":
+    case "decision":
+      return sameAuthor(a, b) || linked(a, b, segmentsById) || (a.origin === "structured" && b.origin === "structured");
+    default:
+      return false;
+  }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Supersession and conflicts (single-valued attributes only)
 
@@ -134,6 +181,7 @@ export function applySupersession(
   const groups = new Map<string, Claim[]>();
   for (const c of candidates) {
     if (MULTI_VALUED.includes(c.attribute)) continue;
+    if (c.entity === "other") continue; // "other" is not one entity: never compare across it
     const key = `${c.entity}\u0000${c.attribute}`;
     const g = groups.get(key);
     if (g) g.push(c);
@@ -160,6 +208,7 @@ export function applySupersession(
         const a = sorted[i]; // older (or same time)
         const b = sorted[j]; // newer (or same time)
         if (norm(a.value) === norm(b.value)) continue;
+        if (!comparable(a, b, segmentsById)) continue;
         const aa = authorityOf(a, pack);
         const ab = authorityOf(b, pack);
         if (timeOf(a.validFrom) === timeOf(b.validFrom)) {

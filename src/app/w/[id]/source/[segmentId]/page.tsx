@@ -7,6 +7,7 @@ import { PageHead, PageLoading } from "@/components/PageHead";
 import { RoleChip, TrustChip } from "@/components/chips";
 import { Notice } from "@/components/Notice";
 import { SegmentText } from "@/components/SegmentText";
+import { QuoteText } from "./QuoteText";
 
 type Params = Promise<{ id: string; segmentId: string }>;
 
@@ -31,7 +32,13 @@ async function Source({ params, searchParams }: { params: Params; searchParams: 
   const claimId = first(sp.claim);
   const view = await getSegment(id, p.segmentId, role);
   const claim = claimId ? (await listClaims(id, { role })).find((c) => c.id === claimId) ?? null : null;
-  const quote = claim?.citations.find((c) => c.segmentId === p.segmentId)?.quote ?? null;
+  const citeIndex = Number(first(sp.cite));
+  const byIndex = Number.isInteger(citeIndex) ? claim?.citations[citeIndex] : undefined;
+  const citation =
+    (byIndex && byIndex.segmentId === p.segmentId ? byIndex : null) ??
+    claim?.citations.find((c) => c.segmentId === p.segmentId) ??
+    null;
+  const quote = citation?.quote ?? null;
   const back = (
     <Link href={`/w/${id}/claims`} className="btn btn-quiet btn-sm">
       <span aria-hidden="true">←</span> Back to claims
@@ -65,13 +72,25 @@ async function Source({ params, searchParams }: { params: Params; searchParams: 
             <p className="text-ink">{claim.statement}</p>
             <TrustChip trust={claim.trust} />
           </div>
-          {quote && <p className="mt-1 text-xs text-muted">The highlighted text below is the quote this claim relies on.</p>}
+          {citation && !citation.accepted && (
+            <p className="mt-1 text-xs text-bad">
+              <span aria-hidden="true">✕ </span>Citation not accepted: this segment was not in the batch the model was shown.
+            </p>
+          )}
+          {quote && citation?.exact && (
+            <p className="mt-1 text-xs text-muted">The highlighted text below is the exact quote this claim relies on.</p>
+          )}
+          {claim.stateNote && <p className="mt-1 text-xs text-ink-2">{claim.stateNote}</p>}
         </section>
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <article className="card min-w-0 p-4 sm:p-6">
-          <SegmentText text={s.text} quote={quote} />
+          {citation ? (
+            <QuoteText text={s.text} quote={quote} exact={Boolean(citation.exact && citation.accepted)} />
+          ) : (
+            <SegmentText text={s.text} quote={null} />
+          )}
         </article>
         <aside className="card grid content-start gap-3 p-4 text-sm">
           <div>
