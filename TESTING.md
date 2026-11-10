@@ -78,29 +78,31 @@ These are the tests behind "shows each role only what it may see".
 
 ## Manual end-to-end checks on the live link
 
-Run in a fresh private browser window on https://understudy-lyart.vercel.app, following [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). We fill in the Result column at feature freeze.
+Run in a fresh private browser window on https://understudy-lyart.vercel.app, following [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). The results below come from a fresh browser context (Playwright, Chromium) on 2026-11-11 at 1440×900; every page was also checked at 375 px wide (no horizontal scroll) and no console errors were logged.
 
 | Step | Expected | Result |
 |---|---|---|
-| Landing: press "Open the robotics-club demo" | A private workspace opens on Connect; the run starts by itself | to be filled at freeze |
-| Connect | Eight sources with segment, masked-secret, masked-contact and rejected counts; data level shown; run panel reaches Done for every step | to be filled at freeze |
-| Claims: open a citation | Source segment opens with the exact quote highlighted; back link returns to the claim | to be filled at freeze |
-| Claims: Superseded and Conflicting | Each shows the rule that fired; dropped-claim counter per source | to be filled at freeze |
-| Test as Incoming tech lead | B, then C, then K; grid of Covered, Partial, Missing, Restricted with evidence links | to be filled at freeze |
-| Test as New member | More Restricted checks; no restricted values shown | to be filled at freeze |
-| Ask as Priya | Up to ten ranked questions with a reason each; an answer is labelled "Leaver said"; re-test line shows the B, C, K change | to be filled at freeze |
-| Ask as anyone else | Questions are read only; only Priya can answer | to be filled at freeze |
-| Review as Priya | "The leaver can never approve."; no approve controls | to be filled at freeze |
-| Review as Club President: approve without a plan | Approval blocked, with the list of missing owners, dates or risk notes | to be filled at freeze |
-| Review as Club President: plan every gap, approve | Snapshot v1 with a SHA-256 hash; "Released with N open blocking gaps" if B > 0 | to be filled at freeze |
-| Handover as Incoming tech lead | I-PASS sections, decision timeline, open items, stub "N restricted items. Ask the approver (Club President)." | to be filled at freeze |
-| Read-back and acknowledge | Per-item verdicts; acknowledgement row with role, time and snapshot hash | to be filled at freeze |
-| Handover as New member | Fewer items, larger stub, no topic or value of restricted items | to be filled at freeze |
-| Leak check grid | Every role and surface passes | to be filled at freeze |
-| Download handover (Markdown) | File matches the role's view; no canary outside that role's visibility | to be filled at freeze |
-| Start empty and upload a file | Upload accepted (5 MB max per file) or rejected with a reason; run works on the upload | to be filled at freeze |
+| Landing: press "Open the robotics-club demo" | A private workspace opens on Connect; the run starts by itself | Pass (2026-11-11). Workspace opened on Connect in about 3 s; the run started by itself. |
+| Connect | Eight sources with segment, masked-secret, masked-contact and rejected counts; data level shown; run panel reaches Done for every step | Pass (2026-11-11). Eight sources (139, 50, 50, 25, 77, 40, 22 and 9 segments), masked secrets and contacts, no rejected rows, L3 shown; every step reached Done. Slow: about 4.5 min per fresh demo copy, because the model cache was not hit ("Read 23 batches (0 from the cache)"); see Known limits. |
+| Claims: open a citation | Source segment opens with the exact quote highlighted; back link returns to the claim | Pass (2026-11-11). The source page opened in about 1 s with the exact quote highlighted; "Back to claims" link present. |
+| Claims: Superseded and Conflicting | Each shows the rule that fired; dropped-claim counter per source | Pass (2026-11-11). Superseded and Conflicting claims name the rule (for example "the task board owns deadlines"); dropped-per-source counter shown (0). |
+| Test as Incoming tech lead | B, then C, then K; grid of Covered, Partial, Missing, Restricted with evidence links | Pass (2026-11-11). B 7 · C 70% · K 94%; blocking-gap list and a Covered / Partial / Missing / Restricted grid with evidence links. |
+| Test as New member | More Restricted checks; no restricted values shown | Pass (2026-11-11). B 8 · C 66%; restricted checks say "Evidence exists for other roles" and show no values. |
+| Ask as Priya | Up to ten ranked questions with a reason each; an answer is labelled "Leaver said"; re-test line shows the B, C, K change | Pass (2026-11-11). Ten ranked questions, each with "Why asked"; two answers labelled Leaver said; B 7 · C 70% · K 94% became B 5 · C 79% · K 84%. Each save took 10 to 16 s (live re-test) while "Saving and re-testing…" showed. |
+| Ask as anyone else | Questions are read only; only Priya can answer | Pass (2026-11-11). As Incoming tech lead: "Only Priya (outgoing tech lead) answers these.", no answer boxes. |
+| Review as Priya | "The leaver can never approve."; no approve controls | Pass (2026-11-11). "The leaver can never approve." and no approve buttons. |
+| Review as Club President: approve without a plan | Approval blocked, with the list of missing owners, dates or risk notes | Pass (2026-11-11). "Approval is blocked:" lists every gap that needs an owner, a due date and a risk note. |
+| Review as Club President: plan every gap, approve | Snapshot v1 with a SHA-256 hash; "Released with N open blocking gaps" if B > 0 | Pass (2026-11-11). Bulk tier A, one tier B, one tier C (evidence opened, reason written), five plan items; snapshot v1, SHA-256 0fed7ece9236…, "Released with 5 open blocking gaps". |
+| Handover as Incoming tech lead | I-PASS sections, decision timeline, open items, stub "N restricted items. Ask the approver (Club President)." | Pass (2026-11-11). I-PASS sections with trust labels and [n] citations, decision timeline, open items, stub "3 restricted items. Ask the approver (Club President)." |
+| Read-back and acknowledge | Per-item verdicts; acknowledgement row with role, time and snapshot hash | Pass (2026-11-11). Sponsor contact, domain renewal date and lab day matched; competition date and rollback showed "Nothing to check" (their claims were not approved in this run); acknowledgement row with role, time, v1 and hash. |
+| Handover as New member | Fewer items, larger stub, no topic or value of restricted items | Pass (2026-11-11). No restricted values; stub "3 restricted items. Ask the approver (Club President)." Same items as the tech lead in this run, because every approved claim came from sources all roles see. |
+| Leak check grid | Every role and surface passes | Pass (2026-11-11). "All 30 checks pass" (5 roles × 6 surfaces). |
+| Download handover (Markdown) | File matches the role's view; no canary outside that role's visibility | Pass (2026-11-11). handover-tech_lead-v1.md (3 KB), no CANARY token. |
+| Start empty and upload a file | Upload accepted (5 MB max per file) or rejected with a reason; run works on the upload | Pass (2026-11-11). A 3-row task CSV was accepted (3 segments, 0 rejected); the run finished in about 7 s with 9 claims. |
 
 ## Known limits
+
+- **A fresh demo copy takes about 4 to 5 minutes on the live link.** On 2026-11-11 the run read 0 of 23 extraction batches from the model cache and called the model live, so Connect shows "Running" for several minutes. The run panel says so and updates by itself.
 
 - **No automated browser suite yet.** Playwright is installed, but the end-to-end checks on the live link are the manual table above.
 - **No CI.** We run the suites locally before pushing; there is no CI workflow in the repository yet.
