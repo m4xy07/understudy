@@ -144,6 +144,25 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
         </div>
       </section>
 
+      {/* Where to start: the bulk approve sits at the bottom of a long list, so offer it here too. */}
+      {isApprover && (
+        <section aria-label="Where to start" className="card mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="max-w-2xl text-sm text-ink-2">
+            <span className="font-medium text-ink">Where to start:</span>{" "}
+            {pendingBy("A") > 0
+              ? "approve the low-risk tier A claims in one go, decide tier B and C below, then "
+              : "decide tier B and C claims below, then "}
+            fill the <a href="#plan-h" className="text-attest underline">continuation plan</a> and{" "}
+            <a href="#snap-h" className="text-attest underline">approve the snapshot</a>.
+          </p>
+          {pendingBy("A") > 0 && (
+            <ActionForm action={bulkApproveAction} hidden={{ ws: id }} className="flex flex-col items-end">
+              <SubmitButton pendingText="Approving…">Approve {pendingBy("A")} tier A claim{pendingBy("A") === 1 ? "" : "s"}</SubmitButton>
+            </ActionForm>
+          )}
+        </section>
+      )}
+
       {/* Claims */}
       <section id="claims" aria-labelledby="claims-h" className="scroll-mt-4">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
