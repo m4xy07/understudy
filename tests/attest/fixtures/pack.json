@@ -1,0 +1,8 @@
+{
+  "entities": [
+    { "key": "firmware-deploy", "label": "Firmware deploy to the robot", "aliases": ["deploy", "flash", "firmware"] },
+    { "key": "lab-booking", "label": "Workshop lab booking", "aliases": ["lab booking", "workshop lab", "lab"] },
+    { "key": "competition", "label": "Regional robotics competition", "aliases": ["regionals", "competition"] },
+    { "key": "sponsor", "label": "Sponsor relationship", "aliases": ["sponsor", "sponsorship"] }
+  ]
+}
