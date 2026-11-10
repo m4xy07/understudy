@@ -1,0 +1,12 @@
+name: deploy
+# weekly deploy to the bot
+on:
+  schedule:
+    - cron: '0 18 * * 1'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./firmware/deploy.sh
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}

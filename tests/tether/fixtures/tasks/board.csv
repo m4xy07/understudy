@@ -1,0 +1,7 @@
+id,title,status,owner,owner_email,due,labels,updated_at,description
+T-1,Renew club domain,open,Priya Nair,priya.nair@robotics-club.example,2027-03-01,dns;admin,2026-10-01,Renew yearly before it expires
+T-2,Book workshop lab,open,Rahul Desai,rahul@robotics-club.example,15/12/2026,lab,2026-10-05,
+,Row without an id,open,,,,,,
+T-4,,open,,,,,,
+T-5,Bad due date,open,,,2026-13-45,,,
+T-6,"Order PCBs, batch 2",done,Arjun Mehta,,2026-11-30,"pcb,vendor",2026-10-10,"Call vendor on +91 98765 43210"

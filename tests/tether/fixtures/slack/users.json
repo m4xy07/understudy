@@ -1,0 +1,5 @@
+[
+  { "id": "U1", "real_name": "Priya Nair", "profile": { "email": "Priya.Nair@robotics-club.example" } },
+  { "id": "U2", "real_name": "Rahul Desai", "profile": { "email": "rahul@robotics-club.example" } },
+  { "id": "U3", "real_name": "Kiran (PCB vendor)", "profile": { "email": "kiran@pcbvendor.example" } }
+]

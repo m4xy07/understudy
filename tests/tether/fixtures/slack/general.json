@@ -1,0 +1,8 @@
+[
+  { "ts": "1786000000.000100", "user": "U1", "text": "DNS renewal is due every year in March; I handle it with the DNS_API_TOKEN" },
+  { "ts": "1786000100.000200", "user": "U2", "text": "thanks <@U1>", "thread_ts": "1786000000.000100" },
+  { "ts": "1786000200.000300", "user": "U1", "text": "token=ghp_abcdefghijklmnopqrstuvwxyz0123456789 is for the deploy bot, mail me at priya.nair@robotics-club.example" },
+  { "ts": "1786000300.000400", "user": "U3", "text": "PCB order shipped, invoice to kiran@pcbvendor.example", "thread_ts": "1786000200.000300" },
+  { "ts": "1786000400.000500", "subtype": "channel_join", "user": "U2", "text": "<@U2> has joined the channel" },
+  { "ts": "1786000500.000600", "user": "U2", "text": "secret_key = \"Zx9!qQ7#mP2$\" for the drive" }
+]

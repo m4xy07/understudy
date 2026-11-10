@@ -1,0 +1,12 @@
+[
+  { "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "author_name": "Priya Nair", "author_email": "priya.nair@robotics-club.example",
+    "date": "2026-08-10T18:00:00+05:30", "message": "firmware: deploy script for the bot", "files": [{ "path": "firmware/deploy.sh", "status": "added" }] },
+  { "sha": "b1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "author_name": "priya-n", "author_email": "PRIYA.NAIR@robotics-club.example",
+    "date": "2026-08-20T18:00:00+05:30", "message": "firmware: fix flash timing", "files": [{ "path": "firmware/flash.c", "status": "modified" }] },
+  { "sha": "c1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "author_name": "Priya Nair", "author_email": "priya.nair@robotics-club.example",
+    "date": "2026-09-01T18:00:00+05:30", "message": "ci: weekly deploy workflow uses DEPLOY_SSH_KEY", "files": [{ "path": ".github/workflows/deploy.yml", "status": "added" }, { "path": "firmware/deploy.sh", "status": "modified" }] },
+  { "sha": "d1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "author_name": "Arjun Mehta", "author_email": "arjun@robotics-club.example",
+    "date": "2026-09-05T12:00:00+05:30", "message": "docs: onboarding", "files": [{ "path": "docs/onboarding.md", "status": "added" }] },
+  { "sha": "e1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "author_name": "Arjun Mehta", "author_email": "arjun@robotics-club.example",
+    "date": "not a date", "message": "broken commit", "files": [] }
+]

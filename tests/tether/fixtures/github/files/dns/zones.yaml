@@ -1,0 +1,5 @@
+zone: robotics-club.example
+provider: cloudflare
+api_token: "cf_9fK2xQ7mZp4LwR8tY3vB6nH1"
+records:
+  - www
