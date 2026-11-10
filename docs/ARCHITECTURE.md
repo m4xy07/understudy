@@ -24,7 +24,9 @@ each role only what it may see.
   Prompts end with `/no_think`. Output is parsed with zod; one retry on invalid JSON; then the step reports
   "model unavailable" and continues with the deterministic paths. The model never sets labels, roles,
   statuses, scores or approvals.
-- Tests: vitest (unit, rules, canary), Playwright (end-to-end on the live URL).
+- Tests: vitest (unit, rules, canary), Playwright (end-to-end on the live URL). vitest runs with
+  `MODEL_DISABLED=1` and `LACUNA_MODEL=off`: no test calls the live model (cache or a fast failure);
+  tests that need model answers inject a fake call.
 - No vector search. No Python at runtime.
 
 ## 1. The demo setting (setting pack `packs/club.json`)
