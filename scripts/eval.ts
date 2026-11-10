@@ -56,6 +56,13 @@ async function main() {
         "Supersession of `title-sponsor / contact` (Meera Shah -> Rahul Desai) is expected to stay missing:",
         "`contact` is multi-valued in the contract, so both values stay active and the newest is current.",
         "",
+        "Known extraction errors behind the competition-date false conflicts: `competition / deadline = 2026-11-08`",
+        "comes from the commit \"website: competition date on the homepage\" (the model took the commit time as the",
+        "date), and `2026-12-05` repeats the deadline example in the extraction prompt. They put the competition",
+        "date in conflict and hide the planted 12 Dec -> 19 Dec supersession. A prompt fix (header times are never",
+        "event dates; a neutral example) was tried and reverted: its cold re-run timed out on 8 of 23 batches,",
+        "so it could not be shown to help within the time box.",
+        "",
       ].join("\n");
       const body = formatReport(rep).replace(/^# Attest evaluation\n\n/, "## Results\n\n");
       const file = path.join(process.cwd(), "docs", "EVALUATION.md");
