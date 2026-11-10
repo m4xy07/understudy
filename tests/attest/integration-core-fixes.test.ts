@@ -65,6 +65,21 @@ describe("only claims about the same kind of fact are compared", () => {
   });
 });
 
+describe("items that are not two versions of one fact", () => {
+  it("two board cards on the same entity never conflict; one segment listing options does not contradict itself", () => {
+    const t1 = claim({ id: "t1", entity: "recruitment", attribute: "owner", value: "Tanvi Deshpande", origin: "structured", sourceKinds: ["tasks_csv"], authorId: "p-1", validFrom: "2026-08-08T10:00:00Z" });
+    const t2 = claim({ id: "t2", entity: "recruitment", attribute: "owner", value: "Dev Malhotra", origin: "structured", sourceKinds: ["tasks_csv"], authorId: "p-2", validFrom: "2026-08-22T10:00:00Z" });
+    expect(applySupersession([t1, t2], pack).firings).toEqual([]);
+    const s = seg({ text: "We chose the ESP32; rejected the Pico W and the Mega + Wi-Fi shield.", ts: "2026-07-03T10:00:00Z", authorId: "p-1" });
+    const cite = [{ segmentId: s.id, quote: "We chose the ESP32", accepted: true, exact: true }];
+    const d1 = claim({ id: "d1", entity: "controller-board", attribute: "decision", value: "use ESP32", authorId: "p-1", validFrom: s.ts, citations: cite });
+    const d2 = claim({ id: "d2", entity: "controller-board", attribute: "decision", value: "rejected Raspberry Pi Pico W", authorId: "p-1", validFrom: s.ts, citations: cite });
+    const out = applySupersession([d1, d2], pack, segMap(s));
+    expect(out.firings).toEqual([]);
+    expect(out.claims.every((c) => c.state === "active")).toBe(true);
+  });
+});
+
 describe("recurring calendar events", () => {
   const ev: Segment = {
     id: "seg_dns", sourceId: "src_cal", sourceKind: "ics", kind: "event", ts: "2026-06-01T00:00:00Z", authorId: null,
