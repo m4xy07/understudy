@@ -1,230 +1,386 @@
-// WALKING-SKELETON STUB: replaced by the Relay builder.
+// Relay: review, release rule, hashed snapshots (database layer over the pure core in ./core).
+// Contract: docs/ARCHITECTURE.md section 4 "Review and Handover" and section 5.
 //
-// Public entry points (keep these names and shapes):
+// Public entry points (names kept from the walking skeleton):
 //   reviewClaim(ws, claimId, decision, actor, opts?)  -> ActionResult    approve / edit / reject one claim
-//   bulkApprove(ws, actor, tiers?)                    -> ActionResult & { approved }
+//   bulkApprove(ws, actor)                            -> ActionResult & { approved }   pending tier A only
 //   approveSnapshot(ws, actor)                        -> ActionResult & { snapshot? }  hash + release rule
-//   compileHandover(ws, role)                         -> Handover        per-role view read under RLS
+//   compileHandover(ws, role)                         -> Handover        per-role I-PASS doc read under RLS
 //   canonicalJson(value)                              -> string          stable key order (hash input)
 //   stubLine(n, pack?)                                -> string          the exact restricted-stub text
+// Plus: getReleaseInfo, listReviewClaims, listSnapshotHistory, previewSnapshotPayload,
+// checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown, runLeakCheck.
 //
-// What this stub really does:
-//   * approver must be pack.approverRole (president); the leaver can never approve (server check).
-//   * release rule: when B > 0, every open blocking gap needs owner, due date and risk note.
-//   * snapshot = sha256 of canonical JSON (approved claim statements + evidence segment ids and
-//     versions + continuation plan), versioned v1, v2, ...; rows copied to snapshot_claims.
-//   * compileHandover reads snapshot_claims inside withRole(ws, role), groups by attribute, and
-//     takes the withheld count from count_withheld() (SECURITY DEFINER, integer only).
-//   * NOT yet: tiers C evidence-opened check, I-PASS layout, timeline, read-back, canary panel.
+// Every rule lives in the tested core (applyReview, bulkApproveTierA, computeReleaseState,
+// buildSnapshotPayload, hashSnapshot, approveSnapshot, compileHandover, checkReadback, ackRecord,
+// scanForCanaries). This file only reads and writes rows and logs every action.
+import * as lacuna from "@/lib/lacuna";
+import { listBlockingGaps } from "@/lib/lacuna";
 import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { toClaim, toSnapshot } from "@/lib/db/mappers";
-import { audit, getLatestTestRun, listPlanItems } from "@/lib/db/queries";
+import { audit, getLatestTestRun, listClaims } from "@/lib/db/queries";
 import { getPack, roleLabel, type Pack } from "@/lib/pack";
-import { listBlockingGaps, planComplete } from "@/lib/lacuna";
-import { sha256Hex } from "@/lib/text/norm";
-import type { Attribute, ReviewState, ReviewTier, RoleKey, Scores, Snapshot, Trust } from "@/lib/types";
+import type { Claim, PlanItem, ReviewState, ReviewTier, RoleKey, Scores, Snapshot } from "@/lib/types";
+import { assignTier, applyReview, bulkApproveTierA, type ReviewAction } from "./core/review";
+import {
+  approveSnapshot as coreApproveSnapshot, buildSnapshotPayload, canonicalJson as coreCanonicalJson,
+  computeReleaseState, diffSnapshots, releaseLabel, verifySnapshot,
+  type ReleaseState, type SnapshotDiff, type SnapshotPayload,
+} from "./core/snapshot";
+import { checkApprover } from "./core/labels";
+import { stubText } from "./core/compile";
+import { parsePayload } from "./handover";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export {
+  compileHandover, checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown,
+  runLeakCheck, resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
+  type Handover, type HandoverItem, type ReadbackCheck, type AckRow, type LeakReport, type LeakCell,
+} from "./handover";
 
-function approverCheck(actor: RoleKey, pack: Pack): ActionResult {
-  if (actor === pack.leaverRole) return { ok: false, error: "The leaver can never approve. Switch to the Club President." };
-  if (actor !== pack.approverRole) return { ok: false, error: `Only the approver (${roleLabel(pack.approverRole, pack)}) can do this.` };
-  return { ok: true };
-}
+export type ActionResult = { ok: true } | { ok: false; error: string; code?: string };
 
-/** JSON with object keys sorted at every level (arrays keep their order). */
+/** JSON with object keys sorted at every level (arrays keep their order). The snapshot hash input. */
 export function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  const obj = value as Record<string, unknown>;
-  return `{${Object.keys(obj).sort().filter((k) => obj[k] !== undefined)
-    .map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`).join(",")}}`;
+  return coreCanonicalJson(value);
 }
 
-/** Exactly: "N restricted items. Ask the approver (Club President)." */
+/** Exactly "N restricted items. Ask the approver (Club President)." ("1 restricted item." for one). */
 export function stubLine(n: number, pack: Pack = getPack()): string {
-  return `${n} restricted items. Ask the approver (${roleLabel(pack.approverRole, pack)}).`;
+  const label = roleLabel(pack.approverRole as RoleKey, pack);
+  return stubText(n, label) ?? `0 restricted items. Ask the approver (${label}).`;
+}
+
+function gate(actor: RoleKey): ActionResult {
+  const err = checkApprover(actor);
+  if (!err) return { ok: true };
+  if (err.code === "leaver_cannot_approve") {
+    return { ok: false, code: err.code, error: "The leaver can never review or approve the handover. Switch to the Club President." };
+  }
+  return { ok: false, code: err.code, error: `Only the approver (${roleLabel(getPack().approverRole as RoleKey)}) can do this.` };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Review
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The tier used for review: the stored tier, raised to C whenever the contract rule says C
+ * (sensitive, conflicting or blocking). A sensitive claim can never slip into bulk approval.
+ */
+export function effectiveTier(c: Claim): ReviewTier {
+  if (c.tier === "C" || assignTier(c) === "C") return "C";
+  return c.tier;
+}
+
+/** Claims as review sees them (tier made effective). Pass `role` for a read under RLS. */
+export async function listReviewClaims(ws: string, role?: RoleKey): Promise<Claim[]> {
+  const claims = await listClaims(ws, role ? { role } : {});
+  return claims.map((c) => ({ ...c, tier: effectiveTier(c) }));
 }
 
 export async function reviewClaim(
-  ws: string, claimId: string, decision: Exclude<ReviewState, "pending">, actor: RoleKey,
-  opts: { note?: string; statement?: string } = {},
+  ws: string,
+  claimId: string,
+  decision: Exclude<ReviewState, "pending">,
+  actor: RoleKey,
+  opts: { note?: string; statement?: string; value?: string; evidenceOpened?: boolean } = {},
 ): Promise<ActionResult> {
-  const pack = getPack();
-  const gate = approverCheck(actor, pack);
-  if (!gate.ok) return gate;
+  const g = gate(actor);
+  if (!g.ok) return g;
   const sql = db();
   const [row] = await sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND id = ${claimId}`;
   if (!row) return { ok: false, error: "Claim not found." };
-  const claim = toClaim(row);
-  const note = (opts.note ?? "").trim();
-  if (claim.tier === "C" && decision !== "rejected" && !note) {
-    return { ok: false, error: "Tier C claims need a written reason. Open the evidence, then write why it is right." };
-  }
-  const statement = decision === "edited" && opts.statement?.trim() ? opts.statement.trim() : claim.statement;
-  await sql`
-    UPDATE claims SET review = ${decision}, review_note = ${note || null}, statement = ${statement}, updated_at = now()
-    WHERE workspace_id = ${ws} AND id = ${claimId}`;
-  await sql`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
-    VALUES (${ws}, ${claimId}, 'reviewed', ${JSON.stringify({ decision, note: note || null })}::jsonb, ${actor})`;
-  await audit(ws, actor, "review_claim", { claimId, decision });
+  const stored = toClaim(row);
+  const claim = { ...stored, tier: effectiveTier(stored) };
+  const action: ReviewAction = {
+    type: decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "edit",
+    by: actor,
+    note: opts.note,
+    newStatement: opts.statement,
+    newValue: opts.value,
+    evidenceOpened: opts.evidenceOpened === true,
+  };
+  const res = applyReview(claim, action);
+  if (!res.ok) return { ok: false, code: res.code, error: res.message };
+  const next = res.claim;
+  // Citations and trust are never touched by a review: an edit keeps them as they were.
+  await sql.begin(async (tx) => {
+    await tx`
+      UPDATE claims SET review = ${next.review}, review_note = ${next.reviewNote}, value = ${next.value},
+        statement = ${next.statement}, updated_at = now()
+      WHERE workspace_id = ${ws} AND id = ${claimId}`;
+    await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
+      VALUES (${ws}, ${claimId}, ${res.event.type}, ${JSON.stringify({ ...res.event.payload, at: res.event.at })}::jsonb, ${actor})`;
+  });
+  await audit(ws, actor, "review_claim", { claimId, decision, tier: claim.tier, evidenceOpened: action.evidenceOpened === true });
   return { ok: true };
 }
 
-/** Approve every pending, non-dropped claim in the given tiers (never tier C). */
-export async function bulkApprove(ws: string, actor: RoleKey, tiers: ReviewTier[] = ["A"]): Promise<ActionResult & { approved?: number }> {
-  const pack = getPack();
-  const gate = approverCheck(actor, pack);
-  if (!gate.ok) return gate;
-  const allowed = tiers.filter((t) => t !== "C");
+/** Approve every pending tier A claim (active). Tiers B and C are never bulk-approved. */
+export async function bulkApprove(
+  ws: string, actor: RoleKey, _tiers?: ReviewTier[],
+): Promise<ActionResult & { approved?: number }> {
+  void _tiers; // kept for call-site compatibility; bulk approval is tier A only.
+  const g = gate(actor);
+  if (!g.ok) return g;
   const sql = db();
-  const rows = await sql`
-    UPDATE claims SET review = 'approved', updated_at = now()
-    WHERE workspace_id = ${ws} AND review = 'pending' AND state <> 'dropped' AND tier = ANY(${allowed}::text[])
-    RETURNING id`;
-  for (const r of rows) {
-    await sql`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
-      VALUES (${ws}, ${String(r.id)}, 'reviewed', ${JSON.stringify({ decision: "approved", bulk: true })}::jsonb, ${actor})`;
+  const claims = (await sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND review = 'pending' ORDER BY id`)
+    .map(toClaim).map((c) => ({ ...c, tier: effectiveTier(c) }));
+  const res = bulkApproveTierA(claims, actor);
+  if (!res.ok) return { ok: false, code: res.code, error: res.message };
+  if (res.approvedIds.length) {
+    await sql.begin(async (tx) => {
+      await tx`
+        UPDATE claims SET review = 'approved', updated_at = now()
+        WHERE workspace_id = ${ws} AND review = 'pending' AND id = ANY(${res.approvedIds}::text[])`;
+      for (const e of res.events) {
+        await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
+          VALUES (${ws}, ${e.claimId}, ${e.type}, ${JSON.stringify({ ...e.payload, at: e.at })}::jsonb, ${actor})`;
+      }
+    });
   }
-  await audit(ws, actor, "bulk_approve", { tiers: allowed, count: rows.length });
-  return { ok: true, approved: rows.length };
+  await audit(ws, actor, "bulk_approve", { tier: "A", count: res.approvedIds.length });
+  return { ok: true, approved: res.approvedIds.length };
 }
 
-export async function approveSnapshot(ws: string, actor: RoleKey): Promise<ActionResult & { snapshot?: Snapshot }> {
+// ---------------------------------------------------------------------------------------------
+// Release rule
+// ---------------------------------------------------------------------------------------------
+
+export interface GapView {
+  responsibilityId: string;
+  responsibilityTitle: string;
+  checkKey: string;
+  checkLabel: string;
+  coverage: string;
+  plan: PlanItem | null;
+}
+
+export interface ReleaseInfo {
+  state: ReleaseState;
+  /** "Released with N open blocking gaps" (never "complete"). */
+  line: string;
+  scores: Scores;
+  gaps: GapView[];
+  /** Plan items for the open blocking gaps (the plan that goes into the snapshot). */
+  plan: PlanItem[];
+  approvedClaims: number;
+  /** Exact reasons the approval is blocked; empty when it may go ahead. */
+  blockers: string[];
+}
+
+const NO_SCORES: Scores = { b: 0, c: 0, k: null };
+const MISSING_WORD = { plan: "an owner, a due date and a risk note", owner: "an owner", dueDate: "a due date", riskNote: "a risk note" } as const;
+
+function toGapView(g: unknown): GapView {
+  const r = g as Record<string, unknown>;
+  const plan = (r.plan ?? null) as PlanItem | null;
+  return {
+    responsibilityId: String(r.responsibilityId ?? ""),
+    responsibilityTitle: String(r.responsibilityTitle ?? r.title ?? r.responsibilityId ?? ""),
+    checkKey: String(r.checkKey ?? ""),
+    checkLabel: String(r.checkLabel ?? r.checkKey ?? ""),
+    coverage: String(r.coverage ?? "missing"),
+    plan: plan ? { ...plan, dueDate: plan.dueDate ? String(plan.dueDate).slice(0, 10) : "" } : null,
+  };
+}
+
+function joinWords(xs: string[]): string {
+  if (xs.length <= 1) return xs.join("");
+  return `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
+}
+
+/** Lacuna's own release summary when it exports one (optional); the gate below never depends on it. */
+async function lacunaReleaseLine(ws: string): Promise<string | null> {
+  const key = "releaseInfo";
+  const fn = (lacuna as unknown as Record<string, unknown>)[key];
+  if (typeof fn !== "function") return null;
+  try {
+    const info = (await (fn as (w: string) => Promise<unknown>)(ws)) as Record<string, unknown> | null;
+    for (const k of ["label", "line", "releaseLine", "releaseLabel"]) {
+      const v = info?.[k];
+      if (typeof v === "string" && /^Released with/.test(v)) return v;
+    }
+  } catch {
+    // fall through to the core label
+  }
+  return null;
+}
+
+/** The release state now: scores of the successor's latest test, open blocking gaps, their plan. */
+export async function getReleaseInfo(ws: string): Promise<ReleaseInfo> {
   const pack = getPack();
-  const gate = approverCheck(actor, pack);
-  if (!gate.ok) return gate;
+  const [run, rawGaps, approvedRow, lacunaLine] = await Promise.all([
+    getLatestTestRun(ws, pack.successorRole as RoleKey),
+    listBlockingGaps(ws),
+    db()`SELECT count(*)::int AS n FROM claims WHERE workspace_id = ${ws}
+      AND review IN ('approved', 'edited') AND state NOT IN ('dropped', 'superseded')`,
+    lacunaReleaseLine(ws),
+  ]);
+  const gaps = (rawGaps as unknown[]).map(toGapView);
+  const scores = run?.scores ?? NO_SCORES;
+  const plan = gaps.filter((g) => g.plan).map((g) => ({ ...g.plan!, responsibilityId: g.responsibilityId, checkKey: g.checkKey }));
+  const state = computeReleaseState({ scores, blockingGaps: gaps, plan });
+  const approvedClaims = Number(approvedRow[0]?.n ?? 0);
+
+  const blockers: string[] = [];
+  if (scores.b > gaps.length) blockers.push(`B is ${scores.b} but only ${gaps.length} blocking gaps are listed for the plan. Re-run the test.`);
+  for (const p of state.problems) {
+    const g = gaps.find((x) => x.responsibilityId === p.responsibilityId && x.checkKey === p.checkKey);
+    const what = g ? `${g.responsibilityTitle}: ${g.checkLabel}` : `${p.responsibilityId}: ${p.checkKey}`;
+    blockers.push(`${what} needs ${joinWords(p.missing.map((m) => MISSING_WORD[m]))}.`);
+  }
+  if (approvedClaims === 0) blockers.push("No approved claims yet: approve at least one claim first.");
+  return { state, line: lacunaLine ?? state.label, scores, gaps, plan, approvedClaims, blockers };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Snapshot
+// ---------------------------------------------------------------------------------------------
+
+async function segmentVersions(ws: string, claims: Claim[]): Promise<Record<string, number>> {
+  const ids = [...new Set(claims.flatMap((c) => c.citations.filter((x) => x.accepted).map((x) => x.segmentId)))];
+  const out: Record<string, number> = {};
+  if (!ids.length) return out;
+  const rows = await db()`
+    SELECT id, max(version)::int AS v FROM segments WHERE workspace_id = ${ws} AND id = ANY(${ids}::text[]) GROUP BY id`;
+  for (const r of rows) out[String(r.id)] = Number(r.v);
+  return out;
+}
+
+async function snapshotInputs(ws: string) {
+  const claims = (await db()`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY id`).map(toClaim);
+  const [versions, release] = await Promise.all([segmentVersions(ws, claims), getReleaseInfo(ws)]);
+  return { claims, versions, release };
+}
+
+/** The payload a snapshot with this version number would hash right now (admin read). */
+export async function previewSnapshotPayload(ws: string, version: number): Promise<SnapshotPayload> {
+  const { claims, versions, release } = await snapshotInputs(ws);
+  return buildSnapshotPayload({
+    workspaceId: ws, version, claims, segmentVersions: versions,
+    plan: release.plan, scores: release.scores, openBlocking: release.state.openBlocking,
+  });
+}
+
+export async function approveSnapshot(
+  ws: string, actor: RoleKey,
+): Promise<ActionResult & { snapshot?: Snapshot; label?: string }> {
+  const g = gate(actor);
+  if (!g.ok) return g;
   const sql = db();
-
-  const run = await getLatestTestRun(ws, pack.successorRole);
-  const openBlocking = run?.scores.b ?? 0;
-  const gaps = await listBlockingGaps(ws);
-  const unplanned = gaps.filter((g) => !planComplete(g.plan));
-  if (openBlocking > 0 && unplanned.length > 0) {
-    return {
-      ok: false,
-      error: `B is ${openBlocking}: ${unplanned.length} open blocking gap(s) still need an owner, a due date and a risk note.`,
-    };
-  }
-
-  const claims = (await sql`
-    SELECT * FROM claims WHERE workspace_id = ${ws} AND review IN ('approved', 'edited') AND state = 'active'
-    ORDER BY id`).map(toClaim);
-  if (!claims.length) return { ok: false, error: "Approve at least one claim before approving a snapshot." };
-
-  const segIds = [...new Set(claims.flatMap((c) => c.citations.filter((x) => x.accepted).map((x) => x.segmentId)))];
-  const versions = new Map<string, number>();
-  if (segIds.length) {
-    const rows = await sql`
-      SELECT id, max(version)::int AS v FROM segments WHERE workspace_id = ${ws} AND id = ANY(${segIds}::text[]) GROUP BY id`;
-    for (const r of rows) versions.set(String(r.id), Number(r.v));
-  }
-  const plan = (await listPlanItems(ws)).sort((a, b) =>
-    `${a.responsibilityId}|${a.checkKey}`.localeCompare(`${b.responsibilityId}|${b.checkKey}`));
+  const { claims, versions, release } = await snapshotInputs(ws);
   const [{ v: maxVersion }] = await sql`SELECT coalesce(max(version), 0)::int AS v FROM snapshots WHERE workspace_id = ${ws}`;
   const version = Number(maxVersion) + 1;
+  const payload = buildSnapshotPayload({
+    workspaceId: ws, version, claims, segmentVersions: versions,
+    plan: release.plan, scores: release.scores, openBlocking: release.state.openBlocking,
+  });
+  const res = coreApproveSnapshot({ by: actor, releaseState: release.state, payload });
+  if (!res.ok) {
+    const detail = res.code === "release_blocked" && release.blockers.length ? ` ${release.blockers.join(" ")}` : "";
+    const lead = res.code === "release_blocked"
+      ? `B is ${release.state.openBlocking}: every open blocking gap needs an owner, a due date and a risk note before release.`
+      : res.message;
+    return { ok: false, code: res.code, error: `${lead}${detail}` };
+  }
 
-  const payload = {
-    workspace: ws,
-    version,
-    claims: claims.map((c) => ({
-      id: c.id,
-      entity: c.entity,
-      attribute: c.attribute,
-      statement: c.statement,
-      evidence: c.citations.filter((x) => x.accepted)
-        .map((x) => ({ segment: x.segmentId, version: versions.get(x.segmentId) ?? 1 })),
-    })),
-    plan,
-    openBlocking,
-  };
-  const hash = sha256Hex(canonicalJson(payload));
   const id = `snap_v${version}`;
-
+  const byId = new Map(claims.map((c) => [c.id, c]));
   await sql.begin(async (tx) => {
     await tx`
-      INSERT INTO snapshots (workspace_id, id, version, hash, approved_by, claim_ids, open_blocking, plan, payload)
-      VALUES (${ws}, ${id}, ${version}, ${hash}, ${pack.approverRole}, ${claims.map((c) => c.id)}::text[], ${openBlocking},
-        ${JSON.stringify(plan)}::jsonb, ${canonicalJson(payload)}::jsonb)`;
-    for (const c of claims) {
+      INSERT INTO snapshots (workspace_id, id, version, hash, approved_by, approved_at, claim_ids, open_blocking, plan, payload)
+      VALUES (${ws}, ${id}, ${version}, ${res.snapshot.hash}, ${actor}, ${res.snapshot.approvedAt}, ${res.snapshot.claimIds}::text[],
+        ${payload.openBlocking}, ${JSON.stringify(payload.plan)}::jsonb, ${coreCanonicalJson(payload)}::jsonb)`;
+    for (const pc of payload.claims) {
+      const c = byId.get(pc.id)!;
       await tx`
-        INSERT INTO snapshot_claims (workspace_id, snapshot_id, claim_id, entity, entity_label, attribute, statement, trust, valid_from, citations, role_set)
-        VALUES (${ws}, ${id}, ${c.id}, ${c.entity}, ${c.entityLabel}, ${c.attribute}, ${c.statement}, ${c.trust}, ${c.validFrom},
-          ${JSON.stringify(c.citations)}::jsonb, ${c.roleSet}::text[])`;
+        INSERT INTO snapshot_claims (workspace_id, snapshot_id, claim_id, entity, entity_label, attribute, statement, value,
+          trust, state, review, importance, valid_from, citations, role_set)
+        VALUES (${ws}, ${id}, ${c.id}, ${c.entity}, ${c.entityLabel}, ${c.attribute}, ${c.statement}, ${c.value},
+          ${c.trust}, ${c.state === "conflicting" ? "conflicting" : "active"}, ${c.review === "edited" ? "edited" : "approved"},
+          ${c.importance}, ${c.validFrom}, ${JSON.stringify(c.citations)}::jsonb, ${pc.roleSet}::text[])`;
     }
+    // The approved snapshot settles the scores it was built on: the latest run per role stops being provisional.
+    await tx`
+      UPDATE test_runs SET provisional = false
+      WHERE workspace_id = ${ws} AND id IN (
+        SELECT DISTINCT ON (role) id FROM test_runs WHERE workspace_id = ${ws} ORDER BY role, created_at DESC)`;
   });
-  await audit(ws, actor, "approve_snapshot", { version, hash, claims: claims.length, openBlocking });
+  await audit(ws, actor, "approve_snapshot", { ...res.event.payload, id });
   const [row] = await sql`SELECT * FROM snapshots WHERE workspace_id = ${ws} AND id = ${id}`;
-  return { ok: true, snapshot: toSnapshot(row) };
+  return { ok: true, snapshot: toSnapshot(row), label: res.label };
 }
 
-export const ATTRIBUTE_ORDER: { attribute: Attribute; label: string }[] = [
-  { attribute: "status", label: "Status" },
-  { attribute: "owner", label: "Owners" },
-  { attribute: "deadline", label: "Deadlines" },
-  { attribute: "procedure", label: "How to do it" },
-  { attribute: "location", label: "Where things live" },
-  { attribute: "access", label: "Access (credential names only)" },
-  { attribute: "contact", label: "Contacts" },
-  { attribute: "dependency", label: "Dependencies" },
-  { attribute: "decision", label: "Decisions" },
-  { attribute: "reason", label: "Reasons" },
-  { attribute: "risk", label: "Risks" },
-];
-
-export interface HandoverItem {
-  claimId: string;
-  entityLabel: string;
-  statement: string;
-  trust: Trust;
+export interface SnapshotHistoryEntry {
+  snapshot: Snapshot;
+  label: string;
+  verified: boolean;
+  claimCount: number;
+  diff: SnapshotDiff | null;
 }
 
-export interface Handover {
-  role: RoleKey;
-  snapshot: Snapshot | null;
-  groups: { attribute: Attribute; label: string; items: HandoverItem[] }[];
-  withheld: number;
-  stubLine: string | null;      // null when nothing is withheld
-  releaseLine: string | null;   // "Released with N open blocking gaps" when B > 0
-  scores: Scores | null;
+/** Every snapshot of the workspace, newest first, with its hash check and the diff to the previous one. */
+export async function listSnapshotHistory(ws: string): Promise<SnapshotHistoryEntry[]> {
+  const rows = await db()`SELECT * FROM snapshots WHERE workspace_id = ${ws} ORDER BY version ASC`;
+  const out: SnapshotHistoryEntry[] = [];
+  let prev: SnapshotPayload | null = null;
+  for (const r of rows) {
+    const snapshot = toSnapshot(r);
+    const payload = parsePayload(r.payload);
+    out.push({
+      snapshot,
+      label: releaseLabel(snapshot.openBlocking),
+      verified: payload ? verifySnapshot(payload, snapshot.hash) : false,
+      claimCount: snapshot.claimIds.length,
+      diff: payload ? diffSnapshots(prev, payload) : null,
+    });
+    if (payload) prev = payload;
+  }
+  return out.reverse();
 }
 
-/** The handover for one role, compiled from the latest approved snapshot under RLS. */
-export async function compileHandover(ws: string, role: RoleKey): Promise<Handover> {
-  const pack = getPack();
-  const [snapRow] = await db()`SELECT * FROM snapshots WHERE workspace_id = ${ws} ORDER BY version DESC LIMIT 1`;
-  const scores = (await getLatestTestRun(ws, role))?.scores ?? null;
-  if (!snapRow) return { role, snapshot: null, groups: [], withheld: 0, stubLine: null, releaseLine: null, scores };
-  const snapshot = toSnapshot(snapRow);
+/** Re-hash the stored payload of one snapshot. */
+export async function verifyStoredSnapshot(ws: string, snapshotId: string): Promise<boolean> {
+  const [r] = await db()`SELECT hash, payload FROM snapshots WHERE workspace_id = ${ws} AND id = ${snapshotId}`;
+  if (!r) return false;
+  const payload = parsePayload(r.payload);
+  return payload ? verifySnapshot(payload, String(r.hash)) : false;
+}
 
-  const { rows, withheld } = await withRole(ws, role, async (tx) => {
-    const rows = await tx`
-      SELECT claim_id, entity_label, attribute, statement, trust FROM snapshot_claims
-      WHERE workspace_id = ${ws} AND snapshot_id = ${snapshot.id}
-      ORDER BY entity_label, claim_id`;
-    const [w] = await tx`SELECT count_withheld(${ws}::uuid, ${role}, 'all') AS n`;
-    return { rows, withheld: Number(w?.n ?? 0) };
-  });
+// ---------------------------------------------------------------------------------------------
+// Evidence for inline review (read as the viewing role, under RLS)
+// ---------------------------------------------------------------------------------------------
 
-  const groups = ATTRIBUTE_ORDER.map(({ attribute, label }) => ({
-    attribute,
-    label,
-    items: rows.filter((r) => r.attribute === attribute).map((r) => ({
-      claimId: String(r.claim_id),
-      entityLabel: String(r.entity_label),
-      statement: String(r.statement),
-      trust: r.trust as Trust,
-    })),
-  })).filter((g) => g.items.length > 0);
+export interface EvidenceSegment {
+  segmentId: string;
+  text: string;
+  sourceName: string;
+  ts: string;
+  thread: string;
+}
 
-  return {
-    role,
-    snapshot,
-    groups,
-    withheld,
-    stubLine: withheld > 0 ? stubLine(withheld, pack) : null,
-    releaseLine: snapshot.openBlocking > 0 ? `Released with ${snapshot.openBlocking} open blocking gaps` : null,
-    scores,
-  };
+/** Latest version of each cited segment the role may see. Missing ids are not visible (or gone). */
+export async function loadEvidence(ws: string, role: RoleKey, segmentIds: string[]): Promise<Record<string, EvidenceSegment>> {
+  const ids = [...new Set(segmentIds)].filter(Boolean);
+  const out: Record<string, EvidenceSegment> = {};
+  if (!ids.length) return out;
+  const rows = await withRole(ws, role, (tx) => tx`
+    SELECT DISTINCT ON (id) id, text, source_id, ts, thread FROM segments
+    WHERE workspace_id = ${ws} AND id = ANY(${ids}::text[])
+    ORDER BY id, version DESC`);
+  const sources = new Map(
+    (await db()`SELECT id, name FROM sources WHERE workspace_id = ${ws}`).map((r) => [String(r.id), String(r.name)]),
+  );
+  for (const r of rows) {
+    out[String(r.id)] = {
+      segmentId: String(r.id),
+      text: String(r.text),
+      sourceName: sources.get(String(r.source_id)) ?? String(r.source_id),
+      ts: r.ts instanceof Date ? r.ts.toISOString() : String(r.ts),
+      thread: String(r.thread),
+    };
+  }
+  return out;
 }

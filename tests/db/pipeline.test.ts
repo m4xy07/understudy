@@ -71,7 +71,8 @@ describe("walking skeleton pipeline", () => {
     const tierC = (await listClaims(ws)).filter((c) => c.tier === "C" && c.review === "pending");
     for (const c of tierC) {
       expect((await reviewClaim(ws, c.id, "approved", "president")).ok).toBe(false); // needs a reason
-      expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence." })).ok).toBe(true);
+      expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence." })).ok).toBe(false); // evidence not opened
+      expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence.", evidenceOpened: true })).ok).toBe(true);
     }
     const gaps = await listBlockingGaps(ws);
     if (gaps.length) {
@@ -90,7 +91,9 @@ describe("walking skeleton pipeline", () => {
     const memberItems = member.groups.flatMap((g) => g.items).length;
     expect(member.withheld).toBe(leadItems - memberItems);
     expect(member.withheld).toBeGreaterThan(0);
-    expect(member.stubLine).toBe(`${member.withheld} restricted items. Ask the approver (Club President).`);
+    expect(member.stubLine).toBe(member.withheld === 1
+      ? "1 restricted item. Ask the approver (Club President)."
+      : `${member.withheld} restricted items. Ask the approver (Club President).`);
     expect(JSON.stringify(member)).not.toContain("league office");
     expect(JSON.stringify(lead)).toContain("league office");
   });
