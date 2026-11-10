@@ -39,7 +39,7 @@ export type { ReleaseState } from "./core/plan";
 /** Fixed "today" for the demo pack: the data is written as of 11 Nov 2026 (IST). */
 export const DEMO_NOW = "2026-11-11T12:00:00+05:30";
 
-const MODEL_CONCURRENCY = 4;
+const MODEL_CONCURRENCY = 6;
 
 function lacunaPack(pack: Pack = getPack()): LacunaPack {
   return toLacunaPack(pack);
