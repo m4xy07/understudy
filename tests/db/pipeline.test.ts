@@ -71,7 +71,8 @@ describe("walking skeleton pipeline", () => {
     const tierC = (await listClaims(ws)).filter((c) => c.tier === "C" && c.review === "pending");
     for (const c of tierC) {
       expect((await reviewClaim(ws, c.id, "approved", "president")).ok).toBe(false); // needs a reason
-      expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence." })).ok).toBe(true);
+      expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence." })).ok).toBe(false); // evidence not opened
+      expect((await reviewClaim(ws, c.id, "approved", "president", { note: "Checked the evidence.", evidenceOpened: true })).ok).toBe(true);
     }
     const gaps = await listBlockingGaps(ws);
     if (gaps.length) {
