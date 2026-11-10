@@ -14,7 +14,11 @@ each role only what it may see.
 - Postgres (Supabase in production, `postgres:16` in Docker for local dev). Driver: `postgres` (porsager).
   Plain SQL migrations in `db/migrations/NNNN_name.sql`, applied by `pnpm db:migrate`.
 - Model: any OpenAI-compatible chat endpoint. Env: `MODEL_BASE_URL`, `MODEL_NAME`, `MODEL_API_KEY`.
-  Local: Ollama `http://localhost:11434/v1`, `qwen3:8b`. Deployed: OpenRouter `qwen/qwen3-8b`.
+  Self-hosted: Ollama `http://localhost:11434/v1`, `qwen3:8b` (no source text leaves the machine).
+  Deployed demo: OpenRouter `qwen/qwen3-32b` (same open-weight Qwen3 family; OpenRouter retired
+  `qwen/qwen3-8b` on 9 Oct 2026, and a public link cannot reach a laptop GPU).
+  Hosting: Vercel functions pinned to `icn1` (Seoul) next to the Supabase database; production uses
+  the Supabase transaction pooler (port 6543), because the session pooler allows only 15 clients.
   Every call goes through `src/lib/model/client.ts`, which caches by `sha256(model_tag + prompt + schema)`
   in table `model_cache` and in the committed file `data/demo/model_cache.json` (seeded on `pnpm db:seed`).
   Prompts end with `/no_think`. Output is parsed with zod; one retry on invalid JSON; then the step reports
