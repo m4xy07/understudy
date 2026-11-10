@@ -68,7 +68,7 @@ async function main() {
   const r = e.report;
   const pct = (x: { value: number | null }) => (x.value === null ? "n/a" : (x.value * 100).toFixed(1) + "%");
   console.log(
-    `eval: precision ${pct(r.precision)} (${r.precision.num}/${r.precision.den}), recall ${pct(r.recall)} (${r.recall.num}/${r.recall.den}), ` +
+    `eval: precision strict ${pct(r.precision)} (${r.precision.num}/${r.precision.den}), on answer-key topics ${pct(r.topicPrecision)} (${r.topicPrecision.num}/${r.topicPrecision.den}), recall ${pct(r.recall)} (${r.recall.num}/${r.recall.den}), ` +
       `citations ${pct(r.citationPassRate)}, from record ${pct(r.fromRecordShare)}, false conflicts ${r.falseConflicts.count}, ` +
       `supersessions ${r.supersessions.found}/${r.supersessions.expected}, secrets ${r.secretsLeaked.count}, restricted ${r.restrictedViolations.count}`,
   );

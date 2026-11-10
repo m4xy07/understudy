@@ -81,8 +81,9 @@ async function Evaluation({ params }: { params: WsParams }) {
         </div>
       )}
 
-      <section aria-label="Headline metrics" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Precision" value={pct(r.precision)} detail={`${r.precision.num} of ${r.precision.den} claims on known entities match a planted fact`} target="Target 80% or more" />
+      <section aria-label="Headline metrics" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Metric label="Precision, strict" value={pct(r.precision)} detail={`${r.precision.num} of ${r.precision.den} claims on known entities match a planted fact. A true fact the answer key never planted counts as wrong.`} target="Target 80% or more" />
+        <Metric label="Precision on answer-key topics" value={pct(r.topicPrecision)} detail={`${r.topicPrecision.num} of ${r.topicPrecision.den} claims on an entity and attribute the answer key covers match it. A wrong value there still counts as wrong.`} />
         <Metric label="Recall" value={pct(r.recall)} detail={`${r.recall.num} of ${r.recall.den} planted facts found`} target="Target 60% or more" />
         <Metric label="Citation pass rate" value={pct(r.citationPassRate)} detail={`${r.citationPassRate.num} of ${r.citationPassRate.den} citations accepted with an exact quote`} />
         <Metric label="From record share" value={pct(r.fromRecordShare)} detail={`${r.fromRecordShare.num} of ${r.fromRecordShare.den} claims; with corroborated ${pct(r.recordBackedShare)}`} />

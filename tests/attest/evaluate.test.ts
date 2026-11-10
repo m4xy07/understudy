@@ -78,6 +78,9 @@ describe("evaluate", () => {
     // Precision ignores "other": 7 scored; correct = 27 Oct (superseded, matches nothing) ... see below.
     // Matched: board deadline (G1), rollback (G2), sponsor (G3), plus the two planted-conflict room claims.
     expect(r.precision).toMatchObject({ num: 5, den: 7 });
+    // On answer-key topics the unplanted "bricking" risk is not judged; the superseded 27 Oct
+    // deadline sits on a planted topic and still counts as wrong.
+    expect(r.topicPrecision).toMatchObject({ num: 5, den: 6 });
     // Citations: 8 live + 1 dropped; inexact: "may brick the board".
     expect(r.citationPassRate).toMatchObject({ num: 7, den: 9 });
     expect(r.supersessions).toMatchObject({ found: 1, expected: 1, ruleMatched: 1 });
@@ -91,8 +94,26 @@ describe("evaluate", () => {
     const md = formatReport(r);
     expect(md).toContain("# Attest evaluation");
     expect(md).toContain("| Recall | 75.0% (3/4) |");
+    expect(md).toContain("| Precision, strict (every claim on a known entity) | 71.4% (5/7) |");
+    expect(md).toContain("| Precision on answer-key topics | 83.3% (5/6) |");
     expect(md).toContain("| Secrets leaked (must be 0) | 0 |");
     expect(md).toContain("G4: lab-booking / owner = Priya");
+  });
+
+  it("precision on answer-key topics ignores true extra facts but not wrong values on planted topics", () => {
+    const { segments, claims } = fixture();
+    const base = evaluate({ claims, segmentsById: segments, groundTruth: gt });
+    const extra = claims.find((c) => c.attribute === "procedure")!;
+    const more = [
+      ...claims,
+      // A true fact the answer key never planted: hurts strict precision only.
+      { ...extra, id: "clm_extra_topic", attribute: "risk" as const, value: "board overheats", statement: "The board can overheat." },
+      // A wrong value on a planted topic: hurts both.
+      { ...extra, id: "clm_wrong_topic", value: "make flash TAG=v9.9", statement: "Roll back with make flash TAG=v9.9." },
+    ];
+    const r = evaluate({ claims: more, segmentsById: segments, groundTruth: gt });
+    expect(r.precision).toMatchObject({ num: base.precision.num, den: base.precision.den + 2 });
+    expect(r.topicPrecision).toMatchObject({ num: base.topicPrecision.num, den: base.topicPrecision.den + 1 });
   });
 
   it("flags leaked secrets, restricted-token widening and false conflicts", () => {

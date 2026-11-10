@@ -44,7 +44,8 @@ export interface EvalInput {
 
 export interface EvalReport {
   totals: { claims: number; active: number; superseded: number; conflicting: number; droppedDrafts: number };
-  precision: Ratio;            // matched extracted / extracted (entity != "other", not dropped)
+  precision: Ratio;            // strict: matched extracted / extracted (entity != "other", not dropped)
+  topicPrecision: Ratio;       // same, only over claims whose (entity, attribute) the answer key covers
   recall: Ratio;               // matched gt / gt
   citationPassRate: Ratio;     // accepted exact citations / all citations
   fromRecordShare: Ratio;      // trust from_record / claims
@@ -139,7 +140,12 @@ export function evaluate(input: EvalInput): EvalReport {
 
   // Precision over claims about known entities.
   const scored = live.filter((c) => c.entity !== "other");
-  const correct = scored.filter((c) => matchedClaimIds.has(c.id) || (c.state === "conflicting" && plantedConflictValue(c, gt)));
+  const isCorrect = (c: Claim) => matchedClaimIds.has(c.id) || (c.state === "conflicting" && plantedConflictValue(c, gt));
+  const correct = scored.filter(isCorrect);
+  // Precision on answer-key topics: true facts the answer key never planted (extra deadlines, extra
+  // contacts) cannot be judged, so only claims on an (entity, attribute) pair the key covers count.
+  const topics = answerKeyTopics(gt);
+  const onTopic = scored.filter((c) => topics.has(`${c.entity}|${c.attribute}`));
 
   // Citations.
   let allCitations = 0;
@@ -225,6 +231,7 @@ export function evaluate(input: EvalInput): EvalReport {
       droppedDrafts: input.dropped?.length ?? 0,
     },
     precision: ratio(correct.length, scored.length),
+    topicPrecision: ratio(onTopic.filter(isCorrect).length, onTopic.length),
     recall: ratio(matchedGt, gt.claims.length),
     citationPassRate: ratio(passCitations, allCitations),
     fromRecordShare: ratio(live.filter((c) => c.trust === "from_record").length, n),
@@ -250,6 +257,15 @@ export function evaluate(input: EvalInput): EvalReport {
   };
 }
 
+/** Every (entity, attribute) pair the ground truth plants a claim, supersession or conflict on. */
+export function answerKeyTopics(gt: GroundTruth): Set<string> {
+  const out = new Set<string>();
+  for (const g of gt.claims) out.add(`${g.entity}|${g.attribute}`);
+  for (const s of gt.supersessions ?? []) out.add(`${s.entity}|${s.attribute}`);
+  for (const k of gt.conflicts ?? []) out.add(`${k.entity}|${k.attribute}`);
+  return out;
+}
+
 function plantedConflictValue(c: Claim, gt: GroundTruth): boolean {
   return (gt.conflicts ?? []).some(
     (k) => k.entity === c.entity && k.attribute === c.attribute && k.values.some((v) => valueMatches(c.value, v)),
@@ -257,6 +273,12 @@ function plantedConflictValue(c: Claim, gt: GroundTruth): boolean {
 }
 
 // ---------------------------------------------------------------------------------------------
+
+/** One plain line per precision metric, shown wherever both are reported. */
+export const PRECISION_NOTES = [
+  "Precision, strict: of all claims on known entities, the share that match a planted fact. A true fact the answer key never planted counts as wrong, so this understates quality.",
+  "Precision on answer-key topics: the same, counting only claims whose entity and attribute the answer key covers (a wrong value there still counts as wrong).",
+] as const;
 
 const pct = (r: Ratio) => (r.value === null ? "n/a" : `${(r.value * 100).toFixed(1)}%`);
 const frac = (r: Ratio) => `${pct(r)} (${r.num}/${r.den})`;
@@ -270,7 +292,8 @@ export function formatReport(r: EvalReport): string {
     "",
   );
   lines.push("| Metric | Value |", "|---|---|");
-  lines.push(`| Precision | ${frac(r.precision)} |`);
+  lines.push(`| Precision, strict (every claim on a known entity) | ${frac(r.precision)} |`);
+  lines.push(`| Precision on answer-key topics | ${frac(r.topicPrecision)} |`);
   lines.push(`| Recall | ${frac(r.recall)} |`);
   lines.push(`| Citation pass rate (accepted exact quote) | ${frac(r.citationPassRate)} |`);
   lines.push(`| From record share | ${frac(r.fromRecordShare)} |`);
@@ -283,6 +306,7 @@ export function formatReport(r: EvalReport): string {
   lines.push(`| Secrets leaked (must be 0) | ${r.secretsLeaked.count} |`);
   lines.push(`| Restricted token violations (must be 0) | ${r.restrictedViolations.count} |`);
   lines.push("");
+  lines.push(...PRECISION_NOTES.map((x) => `- ${x}`), "");
   lines.push("## Recall per entity", "", "| Entity | Matched | Expected | Recall |", "|---|---|---|---|");
   for (const [entity, pe] of Object.entries(r.perEntity).sort(([a], [b]) => a.localeCompare(b))) {
     lines.push(`| ${entity} | ${pe.matched} | ${pe.expected} | ${pe.recall === null ? "n/a" : `${(pe.recall * 100).toFixed(0)}%`} |`);

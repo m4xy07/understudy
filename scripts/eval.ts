@@ -35,7 +35,7 @@ async function main() {
     console.log(`reconstruct ${t1 - t0} ms (${e.batches} batches, ${e.cachedBatches} cached, ${e.failedBatches} failed); verify ${t2 - t1} ms`);
     console.log(`model note: ${r.modelNote}`);
     console.log(`verify: ${JSON.stringify(v)}`);
-    console.log(`precision ${pct(rep.precision)} (${rep.precision.num}/${rep.precision.den}), recall ${pct(rep.recall)} (${rep.recall.num}/${rep.recall.den})`);
+    console.log(`precision strict ${pct(rep.precision)} (${rep.precision.num}/${rep.precision.den}), on answer-key topics ${pct(rep.topicPrecision)} (${rep.topicPrecision.num}/${rep.topicPrecision.den}), recall ${pct(rep.recall)} (${rep.recall.num}/${rep.recall.den})`);
     console.log(`citation pass ${pct(rep.citationPassRate)}, from record ${pct(rep.fromRecordShare)}, false conflicts ${rep.falseConflicts.count}, supersessions ${rep.supersessions.found}/${rep.supersessions.expected}, planted conflicts ${rep.plantedConflicts.found}/${rep.plantedConflicts.expected}, secrets ${rep.secretsLeaked.count}, restricted ${rep.restrictedViolations.count}`);
     if (args.has("--verbose")) {
       for (const u of rep.unmatched) console.log(`  missed ${u.id} ${u.entity}/${u.attribute} = ${u.value}`);
