@@ -237,8 +237,41 @@ function kindWeight(kind: ResponsibilityKind, pack: LacunaPack): [number, number
   return [blocking.length, blocking.reduce((s, c) => s + c.weight, 0)];
 }
 
+/**
+ * Entity keys with the pack's part-of links applied: a part maps to its whole, and a whole
+ * brings its parts along (so claims on either count toward one responsibility).
+ */
+export function expandEntities(entities: readonly string[], packEntities: readonly PackEntity[]): string[] {
+  const parent = new Map(packEntities.filter((e) => e.partOf && e.partOf !== e.key).map((e) => [e.key, e.partOf as string]));
+  const root = (k: string): string => {
+    const seen = new Set<string>();
+    let cur = k;
+    while (parent.has(cur) && !seen.has(cur)) {
+      seen.add(cur);
+      cur = parent.get(cur)!;
+    }
+    return cur;
+  };
+  const out: string[] = [];
+  const add = (k: string) => { if (!out.includes(k)) out.push(k); };
+  for (const e of entities) {
+    const r = root(e);
+    add(r);
+    for (const [child] of parent) if (child !== r && root(child) === r) add(child);
+    add(e);
+  }
+  return out;
+}
+
 export function buildInventory(input: BuildInventoryInput): Responsibility[] {
   const all = [...boardItems(input), ...footprintItems(input), ...templateItems(input)];
+  if (input.pack.entities.some((e) => e.partOf)) {
+    for (const item of all) {
+      item.entities = expandEntities(item.entities, input.pack.entities);
+      const whole = input.pack.entities.find((e) => e.key === item.entities[0]);
+      if (item.origin === "footprint" && whole) item.title = whole.label;
+    }
+  }
   const overrides = input.pack.kindOverrides ?? {};
 
   const drafts = mergeByEntity(all).map((group) => {

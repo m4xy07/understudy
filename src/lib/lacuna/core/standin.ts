@@ -91,11 +91,37 @@ export function buildStandinPrompt(
 
 // ---------- shared helpers ----------
 
+const MONTH = String.raw`(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*`;
+const DATE_RE = new RegExp(
+  String.raw`\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}\b|\b${MONTH}\s+\d{1,2}\b|\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b`,
+  "i",
+);
+
+/** Does the text name a date (ISO, "25 Nov", "Nov 25", "25/11")? */
+export function namesDate(text: string): boolean {
+  return DATE_RE.test(text);
+}
+
+/** True when the value is an ISO date strictly before `today` (day granularity). */
+function isPastIsoDate(value: string, today: string | undefined): boolean {
+  if (!today) return false;
+  const m = /^\s*(\d{4}-\d{2}-\d{2})\s*$/.exec(value);
+  if (!m) return false;
+  const t = Date.parse(today);
+  if (Number.isNaN(t)) return false;
+  return m[1] < new Date(t).toISOString().slice(0, 10);
+}
+
 function satisfies(
   claim: { attribute: Attribute; value?: string; statement?: string },
   check: LacunaCheck,
+  today?: string,
 ): boolean {
   if (!check.attributes.includes(claim.attribute)) return false;
+  if (check.needsDate && claim.value !== undefined) {
+    if (!namesDate(claim.value)) return false;
+    if (isPastIsoDate(claim.value, today)) return false;
+  }
   if (!check.keywords || check.keywords.length === 0) return true;
   if (claim.value === undefined && claim.statement === undefined) return true; // metadata only: attribute decides
   const text = norm(`${claim.value ?? ""} ${claim.statement ?? ""}`);
@@ -128,9 +154,10 @@ function visibleSatisfying(
   check: LacunaCheck,
   role: RoleKey,
   visibleClaims: readonly VisibleClaim[],
+  today?: string,
 ): VisibleClaim[] {
   return visibleClaims.filter(
-    (c) => isLive(c.state) && c.roleSet.includes(role) && resp.entities.includes(c.entity) && satisfies(c, check),
+    (c) => isLive(c.state) && c.roleSet.includes(role) && resp.entities.includes(c.entity) && satisfies(c, check, today),
   );
 }
 
@@ -159,6 +186,8 @@ export interface StandinContext {
   role: RoleKey;
   visibleClaimsById: ReadonlyMap<string, VisibleClaim>;
   allClaimsMeta: ClaimMetaIndex;
+  /** ISO date or date-time; dates before it do not satisfy a needsDate check. */
+  today?: string;
 }
 
 export function evaluateStandin(output: StandinOutput, ctx: StandinContext): CheckResult[] {
@@ -180,7 +209,7 @@ export function evaluateStandin(output: StandinOutput, ctx: StandinContext): Che
     }
 
     if (valid.length === 0) {
-      const noVisibleEvidence = visibleSatisfying(ctx.resp, check, ctx.role, visible).length === 0;
+      const noVisibleEvidence = visibleSatisfying(ctx.resp, check, ctx.role, visible, ctx.today).length === 0;
       if (noVisibleEvidence && hiddenEvidence(ctx.resp, check, ctx.role, ctx.allClaimsMeta)) {
         return result(ctx.resp, check, "restricted", [], RESTRICTED_NOTE);
       }
@@ -209,9 +238,10 @@ export function deterministicStandin(
   visibleClaims: readonly VisibleClaim[],
   allClaimsMeta: ClaimMetaIndex,
   role: RoleKey,
+  today?: string,
 ): CheckResult[] {
   return checks.map((check) => {
-    const hits = visibleSatisfying(resp, check, role, visibleClaims);
+    const hits = visibleSatisfying(resp, check, role, visibleClaims, today);
     const active = hits.filter((c) => c.state === "active");
     const strong = active.filter((c) => STRONG_TRUST.has(c.trust));
     if (strong.length > 0) return result(resp, check, "covered", strong, "");
@@ -233,6 +263,8 @@ export interface RunStandinInput {
   allClaimsMeta: ClaimMetaIndex;
   pack?: LacunaPack | null;
   call?: ModelCall;
+  /** ISO date or date-time; dates before it do not satisfy a needsDate check. */
+  today?: string;
 }
 
 export interface RunStandinOutput {
@@ -269,6 +301,7 @@ export async function runStandin(input: RunStandinInput): Promise<RunStandinOutp
             resp, checks, role: input.role,
             visibleClaimsById: new Map(relevant.map((c) => [c.id, c])),
             allClaimsMeta: input.allClaimsMeta,
+            today: input.today,
           }));
           continue;
         }
@@ -277,7 +310,7 @@ export async function runStandin(input: RunStandinInput): Promise<RunStandinOutp
         errors.push({ responsibilityKey: resp.key, error: res.error });
       }
     }
-    results.push(...deterministicStandin(resp, checks, relevant, input.allClaimsMeta, input.role));
+    results.push(...deterministicStandin(resp, checks, relevant, input.allClaimsMeta, input.role, input.today));
   }
   return { results, modelUsed, errors };
 }

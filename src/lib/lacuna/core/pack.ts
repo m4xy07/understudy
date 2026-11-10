@@ -8,6 +8,8 @@ export interface PackEntity {
   key: string;
   label: string;
   aliases: string[];
+  /** Optional: this entity is part of another one (e.g. a rollback is part of the deploy). */
+  partOf?: string;
 }
 
 /** A check as the pack may define it. Extra optional fields refine Lacuna's behaviour. */
@@ -19,6 +21,11 @@ export interface PackCheck {
   attributes: Attribute[];
   /** Optional: deterministic fallback only counts claims whose value/statement mentions one. */
   keywords?: string[];
+  /**
+   * Optional: the check asks for an upcoming date (e.g. "Next due date"). Only claims whose value
+   * names a date satisfy it ("once a term" does not), and a date before today does not.
+   */
+  needsDate?: boolean;
   /** Optional gap-question templates; placeholders {resp} and {check}. */
   question?: { missing?: string; partial?: string };
 }
@@ -44,7 +51,7 @@ export interface LacunaPack {
 }
 
 /** A check as Lacuna passes it around: the shared CheckDef plus optional pack refinements. */
-export type LacunaCheck = CheckDef & Pick<PackCheck, "keywords" | "question">;
+export type LacunaCheck = CheckDef & Pick<PackCheck, "keywords" | "question" | "needsDate">;
 
 export const TRUST_ORDER: readonly Trust[] = [
   "from_record", "corroborated", "leaver_said", "second_hand", "inferred", "ranked_options",
