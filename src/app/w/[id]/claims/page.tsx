@@ -216,7 +216,7 @@ const IMPORTANCE_STYLE: Record<Importance, { symbol: string; label: string; tone
 function ClaimRow({ c, ws, winner }: { c: Claim; ws: string; winner: Claim | null }) {
   const imp = IMPORTANCE_STYLE[c.importance];
   return (
-    <li className="card scroll-mt-24 p-4" id={c.id}>
+    <li className="card min-w-0 scroll-mt-24 p-4" id={c.id}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="max-w-3xl text-[0.98rem] text-ink">{c.statement}</p>
         <span className="flex flex-wrap gap-1.5">
@@ -243,7 +243,7 @@ function ClaimRow({ c, ws, winner }: { c: Claim; ws: string; winner: Claim | nul
       {c.citations.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-2 text-sm" aria-label="Citations">
           {c.citations.map((cit, i) => (
-            <li key={`${cit.segmentId}-${i}`} className="flex items-center gap-1.5">
+            <li key={`${cit.segmentId}-${i}`} className="flex min-w-0 flex-wrap items-center gap-1.5">
               <Link
                 href={`/w/${ws}/source/${cit.segmentId}?claim=${c.id}&cite=${i}`}
                 className="inline-flex items-center gap-1 rounded border border-rule px-2 py-0.5 text-attest underline-offset-2 hover:bg-paper-2"
