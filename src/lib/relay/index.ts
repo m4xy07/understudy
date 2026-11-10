@@ -17,6 +17,7 @@
 import * as lacuna from "@/lib/lacuna";
 import { listBlockingGaps } from "@/lib/lacuna";
 import { db } from "@/lib/db/client";
+import { withRole } from "@/lib/db/withRole";
 import { toClaim, toSnapshot } from "@/lib/db/mappers";
 import { audit, getLatestTestRun, listClaims } from "@/lib/db/queries";
 import { getPack, roleLabel, type Pack } from "@/lib/pack";
@@ -346,4 +347,40 @@ export async function verifyStoredSnapshot(ws: string, snapshotId: string): Prom
   if (!r) return false;
   const payload = parsePayload(r.payload);
   return payload ? verifySnapshot(payload, String(r.hash)) : false;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Evidence for inline review (read as the viewing role, under RLS)
+// ---------------------------------------------------------------------------------------------
+
+export interface EvidenceSegment {
+  segmentId: string;
+  text: string;
+  sourceName: string;
+  ts: string;
+  thread: string;
+}
+
+/** Latest version of each cited segment the role may see. Missing ids are not visible (or gone). */
+export async function loadEvidence(ws: string, role: RoleKey, segmentIds: string[]): Promise<Record<string, EvidenceSegment>> {
+  const ids = [...new Set(segmentIds)].filter(Boolean);
+  const out: Record<string, EvidenceSegment> = {};
+  if (!ids.length) return out;
+  const rows = await withRole(ws, role, (tx) => tx`
+    SELECT DISTINCT ON (id) id, text, source_id, ts, thread FROM segments
+    WHERE workspace_id = ${ws} AND id = ANY(${ids}::text[])
+    ORDER BY id, version DESC`);
+  const sources = new Map(
+    (await db()`SELECT id, name FROM sources WHERE workspace_id = ${ws}`).map((r) => [String(r.id), String(r.name)]),
+  );
+  for (const r of rows) {
+    out[String(r.id)] = {
+      segmentId: String(r.id),
+      text: String(r.text),
+      sourceName: sources.get(String(r.source_id)) ?? String(r.source_id),
+      ts: r.ts instanceof Date ? r.ts.toISOString() : String(r.ts),
+      thread: String(r.thread),
+    };
+  }
+  return out;
 }

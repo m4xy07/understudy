@@ -91,7 +91,9 @@ describe("walking skeleton pipeline", () => {
     const memberItems = member.groups.flatMap((g) => g.items).length;
     expect(member.withheld).toBe(leadItems - memberItems);
     expect(member.withheld).toBeGreaterThan(0);
-    expect(member.stubLine).toBe(`${member.withheld} restricted items. Ask the approver (Club President).`);
+    expect(member.stubLine).toBe(member.withheld === 1
+      ? "1 restricted item. Ask the approver (Club President)."
+      : `${member.withheld} restricted items. Ask the approver (Club President).`);
     expect(JSON.stringify(member)).not.toContain("league office");
     expect(JSON.stringify(lead)).toContain("league office");
   });
