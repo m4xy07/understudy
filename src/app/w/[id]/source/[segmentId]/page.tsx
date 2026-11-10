@@ -40,7 +40,7 @@ async function Source({ params, searchParams }: { params: Params; searchParams: 
     null;
   const quote = citation?.quote ?? null;
   const back = (
-    <Link href={`/w/${id}/claims`} className="btn btn-quiet btn-sm">
+    <Link href={`/w/${id}/claims${claim ? `#${claim.id}` : ""}`} className="btn btn-quiet btn-sm">
       <span aria-hidden="true">←</span> Back to claims
     </Link>
   );
