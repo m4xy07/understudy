@@ -15,7 +15,7 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 **Look for:** you land on Connect in a private copy of the workspace. Nobody else sees your approvals, and the run starts by itself.
 
 ### 2. Connect (role: Club President)
-**Do:** wait for the **Run Understudy** panel to show every step as Done.
+**Do:** wait for the **Run Understudy** panel to show every step as Done. On a fresh copy this can take a few minutes; the panel updates by itself.
 **Look for:**
 - Eight sources: a WhatsApp chat, three Slack channels (#events, #infra, #finance), a GitHub repo, the task board, meeting notes, a calendar.
 - Per source: segments, **Masked** secrets and contacts, and **Rejected** rows with the reason.
@@ -67,10 +67,10 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 - The stub: "N restricted items. Ask the approver (Club President)." No topic, owner or value is shown.
 
 **Do:** type the five read-back items (competition date, firmware rollback command, sponsor contact at Vertex Motors, domain renewal date, the lab day), press **Check my read-back**, then **Acknowledge receipt**.
-**Look for:** a verdict per item checked by code, and a new row under Acknowledgements with role, time and snapshot hash.
+**Look for:** a verdict per item checked by code, and a new row under Acknowledgements with role, time and snapshot hash. An item whose claim you did not approve shows "Nothing to check": the read-back only compares against the approved snapshot.
 
 **Do:** switch **Viewing as** to **New member** on the same page.
-**Look for:** fewer items, a larger stub, nothing restricted.
+**Look for:** nothing restricted. Approved claims from sources the New member may not see (Slack #infra, #finance) drop out and the stub count grows. If you approved only tier A claims, the two views can look alike, because tier A claims come from sources every role can see.
 
 **Then scroll to Leak check.** It compiles every role's handover and scans every surface (handover text, export, stubs, scores, timeline, questions) for the planted `CANARY-` tokens. Each cell should pass: a token may appear only for roles allowed to see it.
 

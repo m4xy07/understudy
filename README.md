@@ -23,7 +23,7 @@ The demo is a fictional college robotics club. Priya, the outgoing tech lead, gr
 5. Switch **Viewing as** to **Priya (outgoing tech lead)** and open **Ask**. Answer one or two of the ranked questions. Answers come back labelled "Leaver said", and the re-test line shows how B, C and K moved.
 6. Switch to **Club President** and open **Review**. Bulk approve tier A, give an owner, due date and risk note to every open blocking gap in the continuation plan, then press **Approve snapshot v1**. The SHA-256 hash appears, and the release line says "Released with N open blocking gaps" when gaps remain.
 7. Switch to **Incoming tech lead** and open **Handover**. Read the I-PASS sections and the restricted stub ("N restricted items. Ask the approver (Club President)."). Type the five read-back items, press **Check my read-back**, then **Acknowledge receipt**.
-8. Switch to **New member** on the same page and compare: fewer items, a larger stub, no restricted values. At the bottom, the **Leak check** grid compiles every role's handover and scans every surface for planted canary tokens.
+8. Switch to **New member** on the same page and compare: no restricted values, and approved items from sources the New member may not see (#infra, #finance) become part of a larger stub. At the bottom, the **Leak check** grid compiles every role's handover and scans every surface for planted canary tokens.
 
 [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) has the same path with what to look for at each step.
 
