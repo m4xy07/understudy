@@ -1,7 +1,13 @@
-// Precomputes the demo's model answers and commits them as data/demo/model_cache.json.
-//  1. a fresh demo workspace runs the full pipeline against the live model (cold);
-//  2. a second fresh demo workspace runs it again and must be fully cached with identical claims;
-//  3. the cache rows Attest used are merged (by input_hash) into data/demo/model_cache.json.
+// Precomputes every model answer the demo needs and commits them as data/demo/model_cache.json.
+// One run covers every callJson the demo makes: Attest extraction and the support check, the Lacuna
+// stand-in successor for the tech lead and the new member, and the re-test after a leaver answer.
+//  1. a fresh demo workspace runs the full pipeline against the live model (cold), then the leaver
+//     answers the top gap question (the re-test runs the stand-in again);
+//  2. a second fresh demo workspace does the same and must replay the pipeline 100% from the cache
+//     with identical claims, scores and questions;
+//  3. the cache rows used are merged (union by input_hash) into data/demo/model_cache.json.
+// The re-test of the answered responsibility cannot replay: its prompt holds the new answer claim,
+// whose id comes from the answer's time. Every other responsibility replays.
 // Usage: pnpm tsx scripts/precompute.ts [--keep]
 import "./load-env";
 import fs from "node:fs";
@@ -11,10 +17,14 @@ import { createDemoWorkspace } from "@/lib/pipeline/ingest";
 import { executeRun, startRun } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
-import { startRecordingKeys, stopRecordingKeys } from "@/lib/attest/model";
-import { modelAvailable, modelTag } from "@/lib/model/client";
+import { answerQuestion } from "@/lib/lacuna";
+import { getLatestTestRun, listGapQuestions } from "@/lib/db/queries";
+import { modelAvailable, modelTag, startRecording, stopRecording, type CallRecord } from "@/lib/model/client";
+import type { RoleKey } from "@/lib/types";
 
 const keep = process.argv.includes("--keep");
+const PRODUCTION_TAG = "qwen/qwen3-32b@openrouter.ai";
+const ANSWER = "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat.";
 
 interface CacheRow { input_hash: string; model_tag: string; output: unknown; created_at?: string }
 
@@ -25,61 +35,110 @@ async function purge(ws: string) {
   });
 }
 
-async function runOnce(label: string) {
+const s = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+const calls = (r: CallRecord) => `${r.calls} calls (${r.cached} cached, ${r.live} live, ${r.failed} failed)`;
+
+async function runOnce(label: string, allKeys: Set<string>) {
   const ws = (await createDemoWorkspace()).id;
+
+  const pipeRec = startRecording();
   const t0 = Date.now();
   const { runId } = await startRun(ws);
   const run = await executeRun(ws, runId);
-  const ms = Date.now() - t0;
+  const pipelineMs = Date.now() - t0;
+  stopRecording();
+
   const ext = await getExtraction(ws);
   const batches = ext?.batches ?? [];
-  const cached = batches.filter((b) => b.ok && b.cached).length;
-  const failed = batches.filter((b) => !b.ok).length;
-  const step = (k: string) => run?.steps.find((s) => s.key === k);
+  const step = (k: string) => run?.steps.find((x) => x.key === k);
+  const stepMs = (k: string) => {
+    const st = step(k);
+    return st?.startedAt && st.finishedAt ? Date.parse(st.finishedAt) - Date.parse(st.startedAt) : 0;
+  };
+  console.log(`[${label}] ${ws}: run ${run?.status} in ${s(pipelineMs)}; ${calls(pipeRec)}`);
   console.log(
-    `[${label}] ${ws}: run ${run?.status} in ${(ms / 1000).toFixed(1)} s; extraction ${((ext?.extractMs ?? 0) / 1000).toFixed(1)} s, ` +
-      `${batches.length} batches (${cached} cached, ${failed} failed); verify ${((ext?.verification?.ms ?? 0) / 1000).toFixed(1)} s`,
+    `[${label}]   reconstruct ${s(stepMs("reconstruct"))} (${batches.length} batches, ${batches.filter((b) => b.ok && b.cached).length} cached, ` +
+      `${batches.filter((b) => !b.ok).length} failed); verify ${s(stepMs("verify"))}; test ${s(stepMs("test"))}; ask ${s(stepMs("ask"))}`,
   );
-  console.log(`[${label}] reconstruct: ${step("reconstruct")?.note ?? ""}`);
-  console.log(`[${label}] verify: ${JSON.stringify(step("verify")?.counts ?? {})} ${ext?.verification?.supportNote ?? ""}`);
-  if (run?.error) console.log(`[${label}] run error: ${run.error}`);
+  console.log(`[${label}]   reconstruct: ${step("reconstruct")?.note ?? ""}`);
+  console.log(`[${label}]   verify: ${JSON.stringify(step("verify")?.counts ?? {})} ${ext?.verification?.supportNote ?? ""}`);
+  if (pipeRec.errors.length) console.log(`[${label}]   model errors: ${pipeRec.errors.join(" | ").slice(0, 400)}`);
+  if (run?.error) console.log(`[${label}]   run error: ${run.error}`);
+
+  const scores: Record<string, unknown> = {};
+  const notes: string[] = [];
+  for (const role of ["tech_lead", "new_member"] as RoleKey[]) {
+    const t = await getLatestTestRun(ws, role);
+    scores[role] = t?.scores ?? null;
+    const [m] = await db()`SELECT model_used, model_note FROM test_runs WHERE workspace_id = ${ws} AND role = ${role} ORDER BY created_at DESC LIMIT 1`;
+    notes.push(`${role}: model ${m?.model_used ? "used" : "not used"}${m?.model_note ? ` (${m.model_note})` : ""}`);
+  }
+  console.log(`[${label}]   scores before answers: ${JSON.stringify(scores)}${notes.length ? `; ${notes.join("; ")}` : ""}`);
+
   const claims = await db()`
-    SELECT id, value, state, trust, superseded_by, support_check FROM claims WHERE workspace_id = ${ws} ORDER BY id`;
-  return { ws, ms, extractMs: ext?.extractMs ?? 0, batches: batches.length, cached, failed, claims };
+    SELECT id, value, state, trust, superseded_by, support_check, tier FROM claims WHERE workspace_id = ${ws} ORDER BY id`;
+  const questions = (await listGapQuestions(ws)).map((q) => [q.rank, q.checkKey, q.gapType, q.text, q.score]); // ids carry the workspace id
+  // Score the claims before the leaver's answer adds one.
+  const evaluation = await evaluateWorkspace(ws);
+
+  // The leaver answers the top open question; the stand-in re-tests both roles.
+  const answerRec = startRecording();
+  const t1 = Date.now();
+  const [q] = (await listGapQuestions(ws)).filter((x) => !x.answeredClaimId);
+  const ans = q ? await answerQuestion(ws, q.id, ANSWER, "leaver") : null;
+  const answerMs = Date.now() - t1;
+  stopRecording();
+  console.log(
+    `[${label}]   leaver answer + re-test ${s(answerMs)}: ${calls(answerRec)}; ` +
+      (ans?.ok ? `${JSON.stringify(ans.before)} -> ${JSON.stringify(ans.after)}` : `no answer (${ans && !ans.ok ? ans.error : "no question"})`),
+  );
+
+  // Only the pipeline's keys are exported: the re-test's other calls are the same prompts, and the
+  // answered responsibility's prompt (new claim id from the answer time) never repeats.
+  for (const k of pipeRec.keys) allKeys.add(k);
+  const reused = [...answerRec.keys].filter((k) => pipeRec.keys.has(k)).length;
+  console.log(`[${label}]   re-test prompts identical to the pipeline's: ${reused} of ${answerRec.keys.size}`);
+  return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation };
 }
 
 function fingerprint(rows: Record<string, unknown>[]): string {
-  return JSON.stringify(rows.map((r) => [r.id, r.value, r.state, r.trust, r.superseded_by, r.support_check]));
+  return JSON.stringify(rows.map((r) => [r.id, r.value, r.state, r.trust, r.superseded_by, r.support_check, r.tier]));
 }
 
 async function main() {
-  console.log(`model ${modelTag()}; reachable: ${await modelAvailable()}`);
-  startRecordingKeys();
-  const cold = await runOnce("run 1");
-  const warm = await runOnce("run 2");
-  const keys = stopRecordingKeys();
+  const tag = modelTag();
+  console.log(`model ${tag}; reachable: ${await modelAvailable()}`);
+  if (tag !== PRODUCTION_TAG) console.warn(`WARNING: model tag ${tag} is not the production tag ${PRODUCTION_TAG}; production will not hit these rows.`);
+  const keys = new Set<string>();
+  const cold = await runOnce("run 1", keys);
+  const warm = await runOnce("run 2", keys);
 
-  const same = fingerprint(cold.claims) === fingerprint(warm.claims);
-  console.log(`second run fully cached: ${warm.cached === warm.batches && warm.failed === 0} (${warm.cached}/${warm.batches})`);
-  console.log(`identical claims: ${same} (${cold.claims.length} vs ${warm.claims.length})`);
-  console.log(`extraction time: cold ${(cold.extractMs / 1000).toFixed(1)} s, cached ${(warm.extractMs / 1000).toFixed(1)} s`);
+  const sameClaims = fingerprint(cold.claims) === fingerprint(warm.claims);
+  const sameScores = JSON.stringify(cold.scores) === JSON.stringify(warm.scores);
+  const sameQuestions = JSON.stringify(cold.questions) === JSON.stringify(warm.questions);
+  const fullyCached = warm.pipeRec.calls > 0 && warm.pipeRec.cached === warm.pipeRec.calls;
+  console.log(`second pipeline fully cached: ${fullyCached} (${warm.pipeRec.cached}/${warm.pipeRec.calls})`);
+  console.log(`identical claims: ${sameClaims} (${cold.claims.length} vs ${warm.claims.length}); identical scores: ${sameScores}; identical questions: ${sameQuestions}`);
+  console.log(`pipeline time: cold ${s(cold.pipelineMs)}, cached ${s(warm.pipelineMs)}`);
+  console.log(`answer re-test: cold ${calls(cold.answerRec)} in ${s(cold.answerMs)}; second ${calls(warm.answerRec)} in ${s(warm.answerMs)}`);
 
-  const e = await evaluateWorkspace(cold.ws);
-  const r = e.report;
+  const r = warm.evaluation.report;
   const pct = (x: { value: number | null }) => (x.value === null ? "n/a" : (x.value * 100).toFixed(1) + "%");
   console.log(
     `eval: precision strict ${pct(r.precision)} (${r.precision.num}/${r.precision.den}), on answer-key topics ${pct(r.topicPrecision)} (${r.topicPrecision.num}/${r.topicPrecision.den}), recall ${pct(r.recall)} (${r.recall.num}/${r.recall.den}), ` +
       `citations ${pct(r.citationPassRate)}, from record ${pct(r.fromRecordShare)}, false conflicts ${r.falseConflicts.count}, ` +
-      `supersessions ${r.supersessions.found}/${r.supersessions.expected}, secrets ${r.secretsLeaked.count}, restricted ${r.restrictedViolations.count}`,
+      `supersessions ${r.supersessions.found}/${r.supersessions.expected}, planted conflicts ${r.plantedConflicts.found}/${r.plantedConflicts.expected}, ` +
+      `secrets ${r.secretsLeaked.count}, restricted ${r.restrictedViolations.count}`,
   );
 
-  // Merge the rows Attest used into the committed cache file (other modules' rows are kept).
+  // Union by input_hash: rows already in the file are kept; every row this run used is added.
   const rows = await db()<CacheRow[]>`
     SELECT input_hash, model_tag, output, created_at FROM model_cache WHERE input_hash = ANY(${[...keys]}::text[])`;
   const file = path.join(process.cwd(), "data", "demo", "model_cache.json");
   const existing: CacheRow[] = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
   const byHash = new Map(existing.map((x) => [x.input_hash, x]));
   for (const r2 of rows) {
+    if (byHash.has(r2.input_hash)) continue;
     byHash.set(r2.input_hash, {
       input_hash: r2.input_hash,
       model_tag: r2.model_tag,
@@ -89,14 +148,18 @@ async function main() {
   }
   const out = [...byHash.values()].sort((a, b) => (a.input_hash < b.input_hash ? -1 : 1));
   fs.writeFileSync(file, JSON.stringify(out, null, 1) + "\n");
-  console.log(`wrote ${out.length} row(s) (${rows.length} used by Attest in this run) to ${path.relative(process.cwd(), file)}`);
+  const missing = [...keys].filter((k) => !byHash.has(k)).length;
+  console.log(
+    `wrote ${out.length} row(s) to ${path.relative(process.cwd(), file)} (${rows.length} of ${keys.size} pipeline keys are cached; ` +
+      `${missing} not cached: failed calls)`,
+  );
 
   if (!keep) {
     await purge(cold.ws);
     await purge(warm.ws);
   }
   await db().end();
-  if (!same || warm.failed) process.exitCode = 1;
+  if (!sameClaims || !sameScores || !sameQuestions || !fullyCached) process.exitCode = 1;
 }
 
 main().catch((err) => {

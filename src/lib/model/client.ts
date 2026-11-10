@@ -62,6 +62,39 @@ export function cacheKey(tag: string, system: string, user: string, schemaName: 
 
 const memory = new Map<string, unknown>();
 
+/** Every callJson in this process, while scripts/precompute.ts records (keys to export, hit counts). */
+export interface CallRecord {
+  keys: Set<string>;
+  calls: number;
+  cached: number;
+  live: number;
+  failed: number;
+  errors: string[];
+}
+
+const rec = globalThis as unknown as { __usModelRecord?: CallRecord | null };
+
+/** Start recording every callJson cache key and outcome (scripts only). */
+export function startRecording(): CallRecord {
+  rec.__usModelRecord = { keys: new Set(), calls: 0, cached: 0, live: 0, failed: 0, errors: [] };
+  return rec.__usModelRecord;
+}
+
+export function stopRecording(): CallRecord {
+  const r = rec.__usModelRecord ?? { keys: new Set<string>(), calls: 0, cached: 0, live: 0, failed: 0, errors: [] };
+  rec.__usModelRecord = null;
+  return r;
+}
+
+function noteCall(key: string, outcome: "cached" | "live" | "failed", error?: string): void {
+  const r = rec.__usModelRecord;
+  if (!r) return;
+  r.keys.add(key);
+  r.calls++;
+  r[outcome]++;
+  if (error && r.errors.length < 10 && !r.errors.includes(error)) r.errors.push(error);
+}
+
 async function readCache(key: string): Promise<unknown | undefined> {
   if (memory.has(key)) return memory.get(key);
   try {
@@ -170,6 +203,15 @@ async function chat(
  * on invalid JSON. Never throws.
  */
 export async function callJson<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
+  const res = await callJsonInner(opts);
+  if (rec.__usModelRecord) {
+    const user = opts.user.trimEnd().endsWith("/no_think") ? opts.user : `${opts.user.trimEnd()}\n/no_think`;
+    noteCall(cacheKey(modelTag(), opts.system, user, opts.jsonSchemaName), res.ok ? (res.cached ? "cached" : "live") : "failed", res.ok ? undefined : res.error);
+  }
+  return res;
+}
+
+async function callJsonInner<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
   try {
     const tag = modelTag();
     const user = opts.user.trimEnd().endsWith("/no_think") ? opts.user : `${opts.user.trimEnd()}\n/no_think`;
