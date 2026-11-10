@@ -159,6 +159,10 @@ function weekday(s: string): string | null {
   return hits.length === 1 ? hits[0][1] : null;
 }
 
+function dayRank(value: string, statement: string): number {
+  return weekday(value) ? 0 : weekday(statement) ? 1 : 2;
+}
+
 function dateRank(value: string, statement: string): number {
   if (DATE_ONLY.test(value)) return 0;
   if (parseDate(value)) return 1;
@@ -186,6 +190,7 @@ export async function resolveReadbackItems(ws: string, snapshotId: string): Prom
       }))
       .sort((a, b) =>
         (raw.type === "date" ? dateRank(a.value, a.statement) - dateRank(b.value, b.statement) : 0) ||
+        (isDayItem(raw) ? dayRank(a.value, a.statement) - dayRank(b.value, b.statement) : 0) ||
         a.trust - b.trust || b.at - a.at || (a.claimId < b.claimId ? -1 : 1));
     const best = candidates[0] ?? null;
     items.push({ key: raw.key, label: raw.label, type: raw.type, expectedClaimId: best?.claimId ?? null });

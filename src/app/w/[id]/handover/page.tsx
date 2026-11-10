@@ -366,7 +366,7 @@ async function LeakCheck({ ws }: { ws: string }) {
           <tbody>
             {r.roles.map((role) => (
               <tr key={role.key}>
-                <th scope="row" className="text-left text-sm font-medium">
+                <th scope="row" className="text-left text-sm font-medium normal-case tracking-normal text-ink">
                   {role.label}
                   <span className="block text-xs font-normal text-muted">may see {role.maySee} of {r.tokenCount}</span>
                 </th>
