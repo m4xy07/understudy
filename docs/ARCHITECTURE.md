@@ -41,6 +41,28 @@ source authority, the five checklist kinds with checks and weights, role templat
 thresholds, the five critical read-back items, review-tier rules. Core code never branches on the
 setting; it reads the pack.
 
+### 1a. Setting pack shape (`packs/club.json`, validated by zod in `src/lib/pack/`)
+
+```jsonc
+{
+  "id": "club", "name": "College robotics club",
+  "roles": [{ "key": "president", "label": "Club President" }, ...],   // all five RoleKeys
+  "approverRole": "president", "successorRole": "tech_lead", "leaverRole": "leaver",
+  "contactsRoles": ["president", "tech_lead", "treasurer", "leaver"],
+  "entities": [{ "key": "firmware-deploy", "label": "Firmware deploy to the robot",
+                 "aliases": ["deploy", "flash", "firmware"] }, ...],      // canonical entity keys for extraction
+  "sourceAuthority": { "deadline": { "tasks_csv": 3, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 1, "interview": 1 }, ... },  // all 11 attributes
+  "checklists": { "deploy_operate": [{ "key": "rollback", "label": "Rollback", "wTag": "HOW", "weight": 5,
+                   "attributes": ["procedure"] }, ...], ... },            // the five kinds from section 4
+  "roleTemplates": { "tech_lead": [{ "key": "R03", "title": "Book the workshop lab each term",
+                     "kind": "recurring_obligation", "entities": ["lab-booking"] }] },
+  "footprint": { "repeatMin": 3, "distinctWeeksMin": 2, "ownershipShare": 0.8, "windowMonths": 6 },
+  "readback": [{ "key": "competition_date", "label": "Competition date", "type": "date",
+                 "entity": "competition", "attribute": "deadline" }, ...],   // exactly five
+  "uploadDefaults": { "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"] }
+}
+```
+
 ## 2. Vocabulary (exact strings, used in UI and code)
 
 Coverage of a check, per role: `covered` "Covered", `partial` "Partial", `missing` "Missing",
@@ -184,6 +206,38 @@ packs/club.json             setting pack (data builder)
 data/demo/                  synthetic robotics-club exports + ground_truth.json + model_cache.json (data builder)
 tests/                      vitest + playwright
 ```
+
+## 7a. Input formats (the data builder writes these; the Tether adapters read them)
+
+Adapter entry point (pure, no DB): `src/lib/tether/adapters/index.ts`
+`parseSource(kind: SourceKind, files: { path: string; content: string }[], ctx: AdapterContext): AdapterResult`
+where `AdapterContext = { sourceId: string; roleSet: RoleKey[]; identityKey: string; contactsKey: string;
+people: PersonRegistry }` and `PersonRegistry` resolves/creates `Person` ids across sources (exact
+email HMAC merge only). Masking is applied inside every adapter before a Segment is returned.
+
+- `whatsapp`: one `.txt` chat export, Android style, one message per line, continuation lines belong to
+  the previous message: `12/08/26, 21:14 - Priya Nair: text`. System lines (no `Name:`) are skipped.
+  Chat name = file name. WhatsApp has no emails; people match by name only as a suggestion.
+- `slack`: a folder with `users.json` (`[{ id, real_name, profile: { email } }]`) and one
+  `<channel>.json` per channel (`[{ ts: "1723456789.000100", user, text, thread_ts?, reply_to? }]`).
+  Thread = `#channel`. `thread_ts` links replies (used by the supersession rule 2).
+- `github`: a folder with `commits.json` (`[{ sha, author_name, author_email, date, message,
+  files: [{ path, status }] }]`) plus repository files under `files/` (e.g. `files/README.md`,
+  `files/.github/workflows/deploy.yml`). Commits become `commit` segments; each file becomes `file`
+  segments split by heading or top-level YAML key (thread = file path). A live public repo URL is
+  fetched by `src/lib/tether/github-fetch.ts` into the same shape (last 100 commits, README, workflow
+  files, up to 25 small text files).
+- `tasks_csv`: header `id,title,status,owner,owner_email,due,labels,updated_at,description`. One `task`
+  segment per row; `meta` holds the parsed fields. Malformed rows go to `rejected` with the reason.
+- `markdown`: one `.md` per note, optional front matter `title`, `date`, `author`, `author_email`,
+  `roles` (comma list that narrows the source role set). Split into segments by heading.
+- `ics`: one `.ics` calendar; each VEVENT becomes an `event` segment; RRULE recurrences expanded for
+  the next 12 months into `meta.occurrences` (one segment per series, not per occurrence).
+
+Demo pack layout: `data/demo/{whatsapp/,slack/,github/,tasks/,notes/,calendar/}` plus
+`data/demo/sources.json` listing each source `{ kind, name, path, roleSet }` and
+`data/demo/ground_truth.json` (planted claims, gaps, supersessions, conflicts, restricted items with
+canary tokens, off-board duties, critical read-back answers).
 
 ## 7. UI principles
 

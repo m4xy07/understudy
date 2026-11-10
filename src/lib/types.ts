@@ -61,12 +61,22 @@ export interface RejectedRow {
   reason: string;
 }
 
+// One masked email or phone number. The real value is only kept encrypted
+// (AES-256-GCM with env CONTACTS_KEY) and stored in `contacts` under RLS.
+export interface ContactHit {
+  token: string;             // the placeholder written into segment text, e.g. "[CONTACT:p-3]"
+  kind: "email" | "phone";
+  personId: string | null;   // Person.id when known
+  valueEnc: string;          // encrypted value (base64), never the plain value
+}
+
 export interface AdapterResult {
   segments: Segment[];
   people: Person[];
   rejected: RejectedRow[];
   maskedSecrets: number;
   maskedContacts: number;
+  contacts: ContactHit[];
 }
 
 export interface Source {
