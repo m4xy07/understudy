@@ -67,6 +67,14 @@ describe("questionText", () => {
     );
   });
 
+  it("gives the setting pack's check keys the same plain text (no generic fallback)", () => {
+    const work = resp({ id: "w", kind: "unfinished_work", entities: ["website"], title: "Website registration form" });
+    const step = { ...checksFor(work).find((c) => c.key === "next_step")!, key: "next_concrete_step" };
+    expect(questionText({ gapType: "missing" }, work, step, "unfinished_work")).toBe(
+      "What is the next concrete step on Website registration form, and what does someone need to take it?",
+    );
+  });
+
   it("prefixes partial gaps", () => {
     expect(questionText({ gapType: "partial" }, deploy, rollback, "deploy_operate")).toMatch(/^The record only partly answers this for this system\. If firmware/);
   });
