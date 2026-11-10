@@ -59,7 +59,7 @@ function stepSymbol(s: RunStep): { symbol: string; word: string; cls: string } {
 
 function countsText(c: Record<string, number>): string {
   return Object.entries(c)
-    .map(([k, v]) => `${k.replace(/_/g, " ")} ${v}`)
+    .map(([k, v]) => `${k.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, (_, a: string, b: string) => `${a} ${b.toLowerCase()}`)} ${v}`)
     .join(" · ");
 }
 
@@ -95,6 +95,11 @@ export function RunPanel({ ws, initial, hasSources }: { ws: string; initial: Run
         </button>
       </div>
       {!hasSources && <p className="mt-3 text-sm text-muted">Add at least one source first.</p>}
+      {running && (
+        <p className="mt-3 text-sm text-muted" role="status">
+          This can take a few minutes on a fresh workspace. The steps below update by themselves; you can stay on this page.
+        </p>
+      )}
       {error && (
         <p role="alert" className="mt-3 text-sm text-bad">
           <span aria-hidden="true">✕ </span>
