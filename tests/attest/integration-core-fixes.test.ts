@@ -80,6 +80,20 @@ describe("items that are not two versions of one fact", () => {
   });
 });
 
+describe("dates of different occurrences", () => {
+  it("a past booking date does not rival a later due date; the same day in two spellings agrees", () => {
+    const past = claim({ id: "p", entity: "lab-booking", value: "2026-10-12", sourceKinds: ["ics"], authorId: "p-1", validFrom: "2026-10-01T10:00:00Z" });
+    const next = claim({ id: "n", entity: "lab-booking", value: "2026-12-05", sourceKinds: ["whatsapp"], authorId: "p-2", validFrom: "2026-10-29T10:00:00Z" });
+    expect(comparable(past, next)).toBe(false);
+    const iso = claim({ id: "i", entity: "recruitment", value: "2026-08-08", sourceKinds: ["ics"], authorId: "p-1" });
+    const words = claim({ id: "w", entity: "recruitment", value: "8 Aug 10:00 to 13:00", sourceKinds: ["slack"], authorId: "p-2" });
+    expect(comparable(iso, words)).toBe(false);
+    const a = claim({ id: "a", entity: "controller-board", attribute: "owner", value: "use the ESP32", authorId: "p-1" });
+    const b = claim({ id: "b", entity: "controller-board", attribute: "owner", value: "use ESP32", authorId: "p-2" });
+    expect(comparable(a, b)).toBe(false);
+  });
+});
+
 describe("recurring calendar events", () => {
   const ev: Segment = {
     id: "seg_dns", sourceId: "src_cal", sourceKind: "ics", kind: "event", ts: "2026-06-01T00:00:00Z", authorId: null,

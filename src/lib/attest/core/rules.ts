@@ -117,6 +117,20 @@ const DATE_LIKE = new RegExp(
 );
 const CADENCE = /\b(every|each|once|weekly|monthly|yearly|annually|daily|per (?:term|year|month|week)|repeats?)\b/i;
 
+const MONTHS3 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/** "YYYY-MM-DD" for an ISO value, "MM-DD" for "8 Aug ..." / "Aug 8 ...", else null. */
+function dayOf(v: string): string | null {
+  const iso = /^(\d{4}-\d{2}-\d{2})/.exec(v.trim());
+  if (iso) return iso[1];
+  const pad = (n: string) => n.padStart(2, "0");
+  let m = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTH})`, "i").exec(v);
+  if (m) return `${pad(String(MONTHS3.indexOf(m[2].slice(0, 3).toLowerCase()) + 1))}-${pad(m[1])}`;
+  m = new RegExp(`\\b(${MONTH})\\s+(\\d{1,2})\\b`, "i").exec(v);
+  if (m) return `${pad(String(MONTHS3.indexOf(m[1].slice(0, 3).toLowerCase()) + 1))}-${pad(m[2])}`;
+  return null;
+}
+
 /** A single calendar day ("2026-12-19", "19 Dec", "Dec 19"), not a cadence ("every year, next ..."). */
 export function isDateValue(v: string): boolean {
   return DATE_LIKE.test(v) && !CADENCE.test(v);
@@ -136,8 +150,9 @@ export function isDateValue(v: string): boolean {
  * - risk, access: never (several risks or credential names per entity are normal).
  */
 export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
-  const va = norm(a.value);
-  const vb = norm(b.value);
+  const strip = (v: string) => norm(v).replace(/\b(the|a|an)\b/g, " ").replace(/\s+/g, " ").trim();
+  const va = strip(a.value);
+  const vb = strip(b.value);
   if (!va || !vb || va === vb || va.includes(vb) || vb.includes(va)) return false;
   // Two board rows / calendar events are two different items, not two versions of one.
   if (a.origin === "structured" && b.origin === "structured") return false;
@@ -147,8 +162,17 @@ export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segmen
   if (b.citations.some((c) => c.accepted && segsA.has(c.segmentId))) return false;
   if (sameAuthor(a, b) && timeOf(a.validFrom) === timeOf(b.validFrom)) return false;
   switch (a.attribute) {
-    case "deadline":
-      return isDateValue(a.value) && isDateValue(b.value);
+    case "deadline": {
+      if (!isDateValue(a.value) || !isDateValue(b.value)) return false;
+      const da = dayOf(a.value);
+      const db = dayOf(b.value);
+      const md = (d: string) => (d.length === 10 ? d.slice(5) : d);
+      if (da && db && md(da) === md(db) && (da.length === 5 || db.length === 5 || da === db)) return false; // same day
+      // A date already past when the other claim was made is an earlier occurrence, not a rival.
+      if (da?.length === 10 && da < b.validFrom.slice(0, 10)) return false;
+      if (db?.length === 10 && db < a.validFrom.slice(0, 10)) return false;
+      return true;
+    }
     case "owner":
     case "location":
       return true;
