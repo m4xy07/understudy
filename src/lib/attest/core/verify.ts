@@ -21,6 +21,7 @@ import type {
   Trust,
 } from "@/lib/types";
 import { norm, sha256Hex } from "@/lib/text/norm";
+import { isWrittenDateDeadline } from "../dates";
 
 export const ATTRIBUTES: readonly Attribute[] = [
   "owner", "status", "deadline", "location", "procedure", "access",
@@ -198,6 +199,19 @@ export function verifyDrafts(
 
     const acceptedIds = [...new Set(citations.filter((c) => c.accepted).map((c) => c.segmentId))];
     const segs = acceptedIds.map((id) => segmentsById.get(id) as Segment);
+    // A model deadline that is only the day its source was written (a header time read as an
+    // event date). Board and calendar rows are exempt: their dates are fields, not prose.
+    if (
+      draft.attribute === "deadline" &&
+      draft.origin !== "structured" &&
+      isWrittenDateDeadline(
+        draft.value,
+        segs.map((s) => ({ ts: s.ts, text: s.text, quote: citations.find((c) => c.segmentId === s.id && c.accepted)?.quote ?? null })),
+      )
+    ) {
+      drop(draft, "deadline is the date the cited text was written; the text states no such date");
+      continue;
+    }
     const newest = newestSegment(segs);
     const { key: entity, label: entityLabel } = resolveEntity(draft.entity, pack);
     const value = draft.value.trim();

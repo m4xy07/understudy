@@ -21,7 +21,9 @@ each role only what it may see.
   the Supabase transaction pooler (port 6543), because the session pooler allows only 15 clients.
   Every call goes through `src/lib/model/client.ts`, which caches by `sha256(model_tag + prompt + schema)`
   in table `model_cache` and in the committed file `data/demo/model_cache.json` (seeded on `pnpm db:seed`).
-  Prompts end with `/no_think`. Output is parsed with zod; one retry on invalid JSON; then the step reports
+  Prompts end with `/no_think`. Each request has a 120 s timeout; timeouts, 429s, 5xx and dropped
+  connections are retried up to 3 times with exponential backoff (same prompt, same cache key).
+  Output is parsed with zod; one retry on invalid JSON; then the step reports
   "model unavailable" and continues with the deterministic paths. The model never sets labels, roles,
   statuses, scores or approvals.
 - Tests: vitest (unit, rules, canary), Playwright (end-to-end on the live URL). vitest runs with
@@ -115,6 +117,8 @@ deterministically (no model). Verifier:
 - trust `from_record` iff accepted AND quote given AND `norm(quote)` is a substring of `norm(segment)`.
 - accepted without a valid quote: at most `inferred` until a reviewer confirms.
 - no accepted citation: claim `dropped` and counted per source.
+- a model `deadline` whose date is only the day its cited segments were written, while their text
+  states no such date (and no "today"/"tomorrow"), is `dropped` too: a header time read as an event date.
 - `corroborated` when two claims agree on entity + attribute + normalised value and are independent
   (different source kinds OR different authors), and at least one side is backed by a record
   (from_record or corroborated). This lets a record confirm a leaver's answer even when the leaver
