@@ -1,6 +1,8 @@
 "use client";
-// Live pipeline progress. Polls GET /api/w/[id]/run every 1.5 s while a run is in progress and
-// refreshes the page when it finishes. RunPill is the small header indicator.
+// Live pipeline progress. Polls GET /api/w/[id]/run every 1.5 s while a run is in progress and,
+// when it finishes, refreshes the server parts of the page (the header stepper, counts, claims)
+// so nobody has to reload. Polling stops once the run is done or failed. RunPill is the small
+// header indicator; RunPanel is the full list on Connect.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -8,11 +10,26 @@ import type { RunStatus, RunStep } from "@/lib/db/mappers";
 
 const POLL_MS = 1500;
 
+// RunPanel and RunPill both watch the same run: refresh once per finished run, not once per hook.
+const refreshedRuns = new Set<string>();
+
 function useRun(ws: string, initial: RunStatus | null) {
   const router = useRouter();
   const [run, setRun] = useState<RunStatus | null>(initial);
   const [error, setError] = useState<string | null>(null);
   const wasRunning = useRef(initial?.status === "running");
+  // Keep the router in a ref so the polling callbacks stay stable and the interval is not reset.
+  const routerRef = useRef(router);
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+
+  const finished = useCallback((next: RunStatus | null) => {
+    const key = next?.id ?? `${ws}:none`;
+    if (refreshedRuns.has(key)) return;
+    refreshedRuns.add(key);
+    routerRef.current.refresh();
+  }, [ws]);
 
   const poll = useCallback(async () => {
     try {
@@ -21,23 +38,35 @@ function useRun(ws: string, initial: RunStatus | null) {
       const data = (await res.json()) as { run: RunStatus | null };
       setRun(data.run);
       setError(null);
-      if (wasRunning.current && data.run && data.run.status !== "running") router.refresh();
-      wasRunning.current = data.run?.status === "running";
+      const stillRunning = data.run?.status === "running";
+      if (wasRunning.current && !stillRunning) finished(data.run);
+      wasRunning.current = stillRunning;
     } catch {
       setError("Lost contact with the server. Retrying…");
     }
-  }, [ws, router]);
+  }, [ws, finished]);
 
   useEffect(() => {
-    if (run?.status !== "running") return;
+    if (run?.status !== "running") return; // done or failed: no more polling
+    const first = setTimeout(poll, 0); // check at once: a demo replay can finish before the first interval
     const t = setInterval(poll, POLL_MS);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
   }, [run?.status, poll]);
 
   const markStarted = useCallback((next: RunStatus | null) => {
+    if (next && next.status !== "running") {
+      // Finished before we looked: nothing to poll, just bring the page up to date.
+      wasRunning.current = false;
+      setRun(next);
+      finished(next);
+      return;
+    }
     wasRunning.current = true;
     setRun(next);
-  }, []);
+  }, [finished]);
 
   return { run, error, setError, poll, markStarted };
 }

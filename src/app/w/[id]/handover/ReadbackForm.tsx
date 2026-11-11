@@ -2,6 +2,7 @@
 // Synthesis by receiver: the successor types the critical items; the server normalises them and
 // compares exactly with the approved snapshot, then (on request) records an acknowledgement.
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 import { useFormStatus } from "react-dom";
 import type { ReadbackVerdict } from "@/lib/types";
@@ -109,7 +110,10 @@ export function ReadbackForm({
                   </p>
                 )}
                 {(!f.hasRecord || (show && v.verdict === "not_visible")) && (
-                  <p className="text-xs text-muted">No approved record to check this against yet.</p>
+                  <p className="text-xs text-muted">
+                    No approved claim for this yet. The approver can approve it on{" "}
+                    <Link href={`/w/${ws}/review`} className="underline">Review</Link>.
+                  </p>
                 )}
               </div>
             </li>

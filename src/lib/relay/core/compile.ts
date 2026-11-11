@@ -5,7 +5,7 @@ import type {
   Attribute, Claim, PlanItem, ReadbackItem, Responsibility, RoleKey, Scores, Trust,
 } from "@/lib/types";
 import {
-  ATTRIBUTE_LABEL, DEFAULT_APPROVER_LABEL, REVIEWER_EDITED_LABEL, TRUST_LABEL, weakestTrust,
+  ATTRIBUTE_LABEL, DEFAULT_APPROVER_LABEL, OPEN_GAPS_NOTE, REVIEWER_EDITED_LABEL, TRUST_LABEL, weakestTrust,
 } from "./labels";
 import { parseDate } from "./readback";
 import { isReviewerEdited } from "./review";
@@ -251,6 +251,7 @@ export function compileHandover(input: CompileInput): HandoverDoc {
     `Snapshot v${snapshot.version} · approved ${(snapshot.approvedAt ?? "").slice(0, 10)} · sha256 ${snapshot.hash.slice(0, 12)}`,
   ));
   put("status", plainLine("status", formatScores(scores)));
+  if (snapshot.openBlocking !== scores.b) put("status", plainLine("status", OPEN_GAPS_NOTE));
   if (input.provisional) put("status", plainLine("status", "Scores are provisional until review."));
   sections.get("status")!.withheld = input.withheldCounts.status;
 
@@ -358,7 +359,7 @@ export function compileHandover(input: CompileInput): HandoverDoc {
     put("synthesis", plainLine(
       "readback",
       item.expectedClaimId === null
-        ? `Read back: ${item.label}. No approved record to check against yet.`
+        ? `Read back: ${item.label}. No approved claim for this yet. The approver can approve it on Review.`
         : `Read back: ${item.label}.`,
     ));
   }

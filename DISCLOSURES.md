@@ -38,9 +38,8 @@ Licences below are read from each package's `package.json` in `node_modules`, at
 | gray-matter | 4.0.3 | MIT | Front matter in Markdown notes |
 | ical.js | 2.2.1 | MPL-2.0 | Calendar (.ics) parsing and expanding recurring events |
 | clsx | 2.1.1 | MIT | Class name joining |
-| yaml | 2.9.1 | ISC | Installed for YAML parsing; not imported by the current code |
-| rrule | 2.8.1 | BSD-3-Clause | Installed for recurrence rules; not imported (ical.js expands them) |
-| lucide-react | 1.71.0 | ISC | Installed for icons; not imported (the UI uses text symbols) |
+
+The UI uses text symbols, not an icon library. Calendar recurrence is expanded by ical.js.
 
 ### Development and testing
 

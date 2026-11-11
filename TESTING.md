@@ -10,6 +10,7 @@ pnpm db:up          # Postgres 16 in Docker on localhost:45432
 pnpm db:migrate     # the integration, permission and pool suites need the schema
 pnpm test           # vitest run, all suites
 pnpm test:watch     # while working
+pnpm test:e2e       # Playwright, the judge path in Chromium (see "End-to-end suite" below)
 ```
 
 - Tests read `.env.local` (through `scripts/load-env.ts`). `DATABASE_URL` must point at a migrated database; the Docker default from `.env.example` works.
@@ -76,6 +77,44 @@ These are the tests behind "shows each role only what it may see".
 - six copies of a cold page's query mix (plain reads plus `withRole` transactions) finish within 15 seconds on a 2-connection pool, so a hang fails the test instead of timing it out;
 - with `POOLER_TEST_URL` set, three rounds on a fresh pool through the real transaction pooler. This check fails on the old configuration.
 
+## End-to-end suite (Playwright)
+
+`tests/e2e/judge-path.spec.ts` walks the five-minute path from [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) in Chromium, on a fresh private copy of the demo:
+
+1. Open the demo and wait for the run panel to say the run finished. The header stepper must show Reconstruct and Test as Done without a reload.
+2. Claims (From record): a citation opens its source with the exact quote highlighted.
+3. Test: the scores read B · C · K for the Incoming tech lead.
+4. Ask as Priya: answer the top question; the "Re-test after this answer" line shows a change (an arrow in B, C or K).
+5. Review as Club President: approve tier A from "Where to start", save an owner, due date and risk note for every open blocking gap, approve snapshot v1. The history shows "Released with N open blocking gaps".
+6. Handover as Incoming tech lead: the five I-PASS sections and the release label (never "complete").
+7. Handover as New member: the stub "N restricted items. Ask the approver (Club President)." and no `CANARY-` token in the page text.
+8. Leak check: "All N checks pass".
+
+```bash
+pnpm exec playwright install chromium                           # once
+pnpm dev                                                        # in another terminal, for a local run
+pnpm test:e2e                                                   # baseURL http://localhost:3000
+E2E_BASE_URL=https://understudy-lyart.vercel.app pnpm test:e2e  # against the live app
+```
+
+`playwright.config.ts`: Chromium only, one worker, one retry, a screenshot and a trace on failure (in `test-results/`), an HTML report in `playwright-report/`. The answer step allows two minutes because the live re-test calls the model. Vitest ignores `tests/e2e`.
+
+**Result (2026-11-11), against https://understudy-lyart.vercel.app:**
+
+```text
+$ E2E_BASE_URL=https://understudy-lyart.vercel.app pnpm test:e2e
+Running 1 test using 1 worker
+  ✓  1 [chromium] › tests\e2e\judge-path.spec.ts:35:1 › judge path: demo, claims, test, ask, review, handover, leak check (25.1s)
+  1 passed (29.1s)
+
+$ E2E_BASE_URL=https://understudy-lyart.vercel.app npx playwright test --retries=0 --repeat-each=2
+  ✓  1 [chromium] › tests\e2e\judge-path.spec.ts:35:1 › judge path: demo, claims, test, ask, review, handover, leak check (25.2s)
+  ✓  2 [chromium] › tests\e2e\judge-path.spec.ts:35:1 › judge path: demo, claims, test, ask, review, handover, leak check (24.4s)
+  2 passed (51.3s)
+```
+
+The same suite passed against a local production build (`pnpm build && pnpm start`) in 19.8 s. The whole path takes about 25 s on the live app because the demo replays cached model answers.
+
 ## Manual end-to-end checks on the live link
 
 Run in a fresh private browser window on https://understudy-lyart.vercel.app, following [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). The results below come from a fresh browser context (Playwright, Chromium) on 2026-11-11 at 1440×900; every page was also checked at 375 px wide (no horizontal scroll) and no console errors were logged.
@@ -103,7 +142,7 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 ## Known limits
 
 - **Your own uploads call the model live.** The demo replays precomputed model answers (23 of 23 extraction batches from the cache) and finishes in a few seconds. A run on files you upload has no cached answers, so it can take a few minutes; the run panel says so and updates by itself.
-- **No automated browser suite yet.** Playwright is installed, but the end-to-end checks on the live link are the manual table above.
+- **The browser suite covers the judge path only.** It does not cover uploads, tier C review, the read-back form or the Markdown export; those are in the manual table above. Each run creates a demo workspace on the target site.
 - **No CI.** We run the suites locally before pushing; there is no CI workflow in the repository yet.
 - **Model quality is measured, not unit-tested.** The suites fake or disable the model, so they test the rules around it. Extraction quality comes from the evaluation harness. Extraction misses some planted facts and produces extra claims, and supersession and conflict detection miss some planted cases; [docs/EVALUATION.md](docs/EVALUATION.md) has the current numbers.
 - **Lacuna's integration numbers use the planted claims** (a perfect extractor), so they are not the numbers you get from the live pipeline.

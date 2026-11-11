@@ -1,5 +1,6 @@
 // B, then C, then K. Never one percentage (docs/ARCHITECTURE.md section 4).
 import type { Scores as ScoresT } from "@/lib/types";
+import { OPEN_GAPS_NOTE } from "@/lib/relay/core/labels";
 
 export function pct(x: number | null): string {
   return x === null ? "n/a" : `${Math.round(x * 100)}%`;
@@ -24,6 +25,15 @@ export function ScoreLine({ scores, provisional = true }: { scores: ScoresT | nu
       {provisional && <span className="text-xs text-muted">provisional until review</span>}
     </span>
   );
+}
+
+/**
+ * Shown under the scores next to a release label. A restricted blocking gap with a named owner in the
+ * continuation plan leaves B but stays open, so "N open blocking gaps" can be larger than B.
+ */
+export function OpenGapsNote({ b, open }: { b: number; open: number }) {
+  if (open === b) return null;
+  return <p className="mt-1 text-sm text-muted">{OPEN_GAPS_NOTE}</p>;
 }
 
 export function ScoreLegend() {

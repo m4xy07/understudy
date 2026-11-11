@@ -6,7 +6,7 @@ import { first, loadWorkspace, type SearchParams, type WsParams } from "@/lib/pa
 import { getReleaseInfo, listReviewClaims, listSnapshotHistory, loadEvidence, type GapView } from "@/lib/relay";
 import { PageHead, PageLoading } from "@/components/PageHead";
 import { Chip, CoverageChip, StateChip, TierChip, TrustChip } from "@/components/chips";
-import { ScoreLine } from "@/components/Scores";
+import { OpenGapsNote, ScoreLine } from "@/components/Scores";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { EmptyState, Notice } from "@/components/Notice";
 import type { Claim, ReviewTier, RoleKey } from "@/lib/types";
@@ -109,6 +109,7 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
             <p className="mt-2">
               <ScoreLine scores={release.scores} provisional={!latest} />
             </p>
+            <OpenGapsNote b={release.scores.b} open={release.state.openBlocking} />
           </div>
           <div className="flex flex-col items-end gap-2">
             {release.blockers.length === 0 ? (
