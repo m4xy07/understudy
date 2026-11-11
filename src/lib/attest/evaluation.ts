@@ -7,7 +7,30 @@ import { toClaim, toSegment } from "@/lib/db/mappers";
 import type { Segment } from "@/lib/types";
 import { evaluate, type EvalReport, type GroundTruth } from "./core/evaluate";
 import type { DroppedDraft } from "./core/verify";
-import { getExtraction } from "./index";
+import { getExtraction, jsonValue } from "./index";
+
+/**
+ * An attest_dropped row as a DroppedDraft. `citations` is jsonb that can come back as JSON text
+ * (written as a string parameter): read through jsonValue, or the citation pass rate would count
+ * the characters of that text as citations.
+ */
+export function droppedFromRow(r: Record<string, unknown>): DroppedDraft {
+  const citations = jsonValue<{ segment_id: string; quote: string | null }[]>(r.citations, []);
+  return {
+    sourceId: String(r.source_id),
+    reason: String(r.reason),
+    draft: {
+      entity: String(r.entity),
+      attribute: r.attribute as DroppedDraft["draft"]["attribute"],
+      value: String(r.value),
+      statement: String(r.statement),
+      citations: Array.isArray(citations) ? citations : [],
+      batchId: "",
+      batchSegmentIds: [],
+      origin: "extracted",
+    },
+  };
+}
 
 export function loadGroundTruth(root = process.cwd()): GroundTruth & { today?: string } {
   return JSON.parse(readFileSync(join(root, "data", "demo", "ground_truth.json"), "utf8"));
@@ -31,20 +54,7 @@ export async function evaluateWorkspace(ws: string): Promise<WorkspaceEvaluation
   const segRows = await sql`SELECT DISTINCT ON (id) * FROM segments WHERE workspace_id = ${ws} ORDER BY id, version DESC`;
   const segmentsById = new Map<string, Segment>(segRows.map((r) => [String(r.id), toSegment(r)]));
   const droppedRows = await sql`SELECT * FROM attest_dropped WHERE workspace_id = ${ws}`;
-  const dropped: DroppedDraft[] = droppedRows.map((r) => ({
-    sourceId: String(r.source_id),
-    reason: String(r.reason),
-    draft: {
-      entity: String(r.entity),
-      attribute: r.attribute as DroppedDraft["draft"]["attribute"],
-      value: String(r.value),
-      statement: String(r.statement),
-      citations: (r.citations as { segment_id: string; quote: string | null }[]) ?? [],
-      batchId: "",
-      batchSegmentIds: [],
-      origin: "extracted",
-    },
-  }));
+  const dropped: DroppedDraft[] = droppedRows.map(droppedFromRow);
   const ext = await getExtraction(ws);
   const report = evaluate({
     claims,

@@ -130,3 +130,20 @@ describe("evaluate", () => {
     expect(formatReport(r)).not.toContain("ghp_abcdefghijklmnopqrstuvwxyz0123456789");
   });
 });
+
+// Regression: attest_dropped.citations can come back as JSON text; reading `.length` of that text
+// counted every character as a citation (3 dropped drafts turned a 99% citation pass rate into 45%).
+describe("droppedFromRow", () => {
+  const row = (citations: unknown) => ({
+    source_id: "src_gh", reason: "r", entity: "e", attribute: "deadline", value: "v", statement: "s", citations,
+  });
+  const cs = [{ segment_id: "seg_1", quote: "a quote" }, { segment_id: "seg_2", quote: null }];
+
+  it("reads citations stored as jsonb or as JSON text", async () => {
+    const { droppedFromRow } = await import("@/lib/attest/evaluation");
+    expect(droppedFromRow(row(cs)).draft.citations).toEqual(cs);
+    expect(droppedFromRow(row(JSON.stringify(cs))).draft.citations).toEqual(cs);
+    expect(droppedFromRow(row(null)).draft.citations).toEqual([]);
+    expect(droppedFromRow(row("not json")).draft.citations).toEqual([]);
+  });
+});
