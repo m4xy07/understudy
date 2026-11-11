@@ -8,7 +8,7 @@ import type { HandoverLine, HandoverSection } from "@/lib/relay/core/compile";
 import { REVIEWER_EDITED_LABEL } from "@/lib/relay/core/labels";
 import { PageHead, PageLoading } from "@/components/PageHead";
 import { Chip, TrustChip } from "@/components/chips";
-import { ScoreLine } from "@/components/Scores";
+import { OpenGapsNote, ScoreLine } from "@/components/Scores";
 import { EmptyState } from "@/components/Notice";
 import type { RoleKey } from "@/lib/types";
 import { ReadbackForm, type ReadbackField } from "./ReadbackForm";
@@ -98,6 +98,7 @@ async function Handover({ params }: { params: WsParams }) {
             )}
             {h.scores && <ScoreLine scores={h.scores} provisional={false} />}
           </div>
+          {h.scores && <OpenGapsNote b={h.scores.b} open={blocking} />}
           {h.withheld > 0 && (
             <p className="mt-3 text-sm text-muted">
               <span aria-hidden="true">⊘ </span>

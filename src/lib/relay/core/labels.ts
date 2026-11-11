@@ -27,6 +27,13 @@ export const TRUST_ORDER: readonly Trust[] = [
   "ranked_options",
 ];
 
+/**
+ * Shown under the scores when the release label's open gap count differs from B: a restricted blocking
+ * gap with a named owner in the continuation plan leaves B but stays open.
+ */
+export const OPEN_GAPS_NOTE =
+  "B counts blocking gaps nobody owns yet. Open gaps include the ones with an owner in the continuation plan.";
+
 /** Label shown next to any claim text a reviewer edited. Trust is never raised by an edit. */
 export const REVIEWER_EDITED_LABEL = "edited by reviewer";
 

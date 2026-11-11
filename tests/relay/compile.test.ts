@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileHandover, formatScores, renderMarkdown, stubText } from "@/lib/relay/core/compile";
+import { OPEN_GAPS_NOTE } from "@/lib/relay/core/labels";
 import { SECRET_TOKEN, scenarioClaims, scenarioDoc, scenarioInput } from "./scenario";
 
 const section = (doc: ReturnType<typeof scenarioDoc>, key: string) => doc.sections.find((s) => s.key === key)!;
@@ -51,6 +52,8 @@ describe("compileHandover", () => {
     expect(lines[0]).toBe("Released with 2 open blocking gaps");
     expect(lines).toContain("B 1 · C 91% · K 50%");
     expect(lines).toContain("Scores are provisional until review.");
+    // 2 open gaps next to B 1 reads as a contradiction without the note.
+    expect(lines).toContain(OPEN_GAPS_NOTE);
     expect(lines.join(" ").toLowerCase()).not.toContain("complete");
   });
 
