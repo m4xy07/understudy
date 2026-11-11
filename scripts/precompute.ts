@@ -96,8 +96,8 @@ async function runOnce(label: string, allKeys: Set<string>) {
       (ans?.ok ? `${JSON.stringify(ans.before)} -> ${JSON.stringify(ans.after)}` : `no answer (${ans && !ans.ok ? ans.error : "no question"})`),
   );
 
-  // Only the pipeline's keys are exported: the re-test's other calls are the same prompts, and the
-  // answered responsibility's prompt (new claim id from the answer time) never repeats.
+  // The pipeline's keys are exported here; re-test prompts that repeat in both runs are added in
+  // main(). The answered responsibility's prompt (new claim id from the answer time) never repeats.
   for (const k of pipeRec.keys) allKeys.add(k);
   const reused = [...answerRec.keys].filter((k) => pipeRec.keys.has(k)).length;
   console.log(`[${label}]   re-test prompts identical to the pipeline's: ${reused} of ${answerRec.keys.size}`);
@@ -115,6 +115,12 @@ async function main() {
   const keys = new Set<string>();
   const cold = await runOnce("run 1", keys);
   const warm = await runOnce("run 2", keys);
+
+  // Re-test prompts that both runs sent are independent of the answer's time, so they replay in
+  // the demo too: export them with the pipeline's. (The answered responsibility's prompt differs.)
+  const stableRetest = [...cold.answerRec.keys].filter((k) => warm.answerRec.keys.has(k) && !keys.has(k));
+  for (const k of stableRetest) keys.add(k);
+  console.log(`answer re-test prompts sent by both runs (exported too): ${stableRetest.length} beyond the pipeline's`);
 
   const sameClaims = fingerprint(cold.claims) === fingerprint(warm.claims);
   const sameScores = JSON.stringify(cold.scores) === JSON.stringify(warm.scores);
@@ -153,7 +159,7 @@ async function main() {
   fs.writeFileSync(file, JSON.stringify(out, null, 1) + "\n");
   const missing = [...keys].filter((k) => !byHash.has(k)).length;
   console.log(
-    `wrote ${out.length} row(s) to ${path.relative(process.cwd(), file)} (${rows.length} of ${keys.size} pipeline keys are cached; ` +
+    `wrote ${out.length} row(s) to ${path.relative(process.cwd(), file)} (${rows.length} of ${keys.size} pipeline and repeatable re-test keys are cached;` +
       `${missing} not cached: failed calls)`,
   );
 
