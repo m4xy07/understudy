@@ -61,6 +61,9 @@ async function runOnce(label: string, allKeys: Set<string>) {
       `${batches.filter((b) => !b.ok).length} failed); verify ${s(stepMs("verify"))}; test ${s(stepMs("test"))}; ask ${s(stepMs("ask"))}`,
   );
   console.log(`[${label}]   reconstruct: ${step("reconstruct")?.note ?? ""}`);
+  for (const b of batches.filter((x) => !x.ok)) {
+    console.error(`[${label}]   FAILED BATCH ${b.id} ${b.thread} (${b.segmentIds.length} segments): ${b.error ?? "error"}`);
+  }
   console.log(`[${label}]   verify: ${JSON.stringify(step("verify")?.counts ?? {})} ${ext?.verification?.supportNote ?? ""}`);
   if (pipeRec.errors.length) console.log(`[${label}]   model errors: ${pipeRec.errors.join(" | ").slice(0, 400)}`);
   if (run?.error) console.log(`[${label}]   run error: ${run.error}`);

@@ -12,7 +12,74 @@ import {
   modelAvailable,
   modelDisabled,
   modelTag,
+  backoffMs,
+  isTransientFailure,
+  parseRetryAfter,
+  withRetries,
+  DEFAULT_TIMEOUT_MS,
+  DEFAULT_RETRIES,
 } from "@/lib/model/client";
+
+describe("model client retries", () => {
+  type R = { ok: true; content: string } | { ok: false; status: number; error: string; retryAfterMs?: number };
+  const seq = (...rs: R[]) => {
+    let i = 0;
+    return vi.fn(async () => rs[Math.min(i++, rs.length - 1)]);
+  };
+  const noSleep = vi.fn(async () => {});
+
+  it("defaults: 120 s per request, 3 retries", () => {
+    expect(DEFAULT_TIMEOUT_MS).toBe(120_000);
+    expect(DEFAULT_RETRIES).toBe(3);
+  });
+
+  it("classifies timeouts, 408/429/5xx and network drops as transient; 400/401/422 and bad JSON are not", () => {
+    expect(isTransientFailure(0, "model timed out")).toBe(true);
+    expect(isTransientFailure(0, "fetch failed")).toBe(true);
+    expect(isTransientFailure(0, "empty model response")).toBe(true);
+    for (const s of [408, 429, 500, 502, 503, 504]) expect(isTransientFailure(s, `HTTP ${s}`)).toBe(true);
+    for (const s of [400, 401, 403, 404, 422]) expect(isTransientFailure(s, `HTTP ${s}`)).toBe(false);
+    expect(isTransientFailure(0, "no JSON in model output")).toBe(false);
+  });
+
+  it("backs off exponentially with jitter, capped, and honours a longer Retry-After", () => {
+    const mid = () => 0.5;
+    expect([0, 1, 2, 3, 10].map((a) => backoffMs(a, undefined, mid))).toEqual([2000, 4000, 8000, 16000, 30000]);
+    expect(backoffMs(0, undefined, () => 0)).toBe(1500);
+    expect(backoffMs(0, 9000, mid)).toBe(9000);
+    expect(backoffMs(0, 120_000, mid)).toBe(30_000);
+    expect(parseRetryAfter("7")).toBe(7000);
+    expect(parseRetryAfter(new Date(10_000).toUTCString(), 4_000)).toBe(6000);
+    expect(parseRetryAfter(null)).toBeUndefined();
+  });
+
+  it("retries transient failures until one succeeds", async () => {
+    const attempt = seq(
+      { ok: false, status: 0, error: "model timed out" },
+      { ok: false, status: 429, error: "HTTP 429", retryAfterMs: 1000 },
+      { ok: false, status: 503, error: "HTTP 503" },
+      { ok: true, content: "{}" },
+    );
+    const sleep = vi.fn(async () => {});
+    const res = await withRetries(attempt, { retries: 3, sleep, random: () => 0.5 });
+    expect(res).toEqual({ ok: true, content: "{}" });
+    expect(attempt).toHaveBeenCalledTimes(4);
+    expect(sleep.mock.calls.map((c) => (c as unknown[])[0])).toEqual([2000, 4000, 8000]);
+  });
+
+  it("gives up after the retry budget and returns the last failure", async () => {
+    const attempt = seq({ ok: false, status: 0, error: "model timed out" });
+    const res = await withRetries(attempt, { retries: 2, sleep: noSleep });
+    expect(res).toMatchObject({ ok: false, error: "model timed out" });
+    expect(attempt).toHaveBeenCalledTimes(3);
+  });
+
+  it("never retries a permanent failure", async () => {
+    const attempt = seq({ ok: false, status: 401, error: "HTTP 401" });
+    await withRetries(attempt, { retries: 3, sleep: noSleep });
+    expect(attempt).toHaveBeenCalledTimes(1);
+  });
+});
 
 afterAll(async () => {
   vi.unstubAllGlobals();

@@ -30,30 +30,27 @@ export function newStats(): CallStats {
   return { calls: 0, cached: 0, failed: 0, errors: [] };
 }
 
-const RETRIES = 2;
-const TRANSIENT = /timed out|timeout|HTTP 429|HTTP 5\d\d|fetch failed|ECONNRESET|empty model response/i;
+/** Per-request timeout for Attest calls: a 5,000-character batch can take over 90 s on a busy provider. */
+export const ATTEST_TIMEOUT_MS = 120_000;
 
-/** A ModelCall over callJson. `cacheOnly` skips the network (model unavailable). */
-export function attestModelCall(opts: { cacheOnly: boolean; stats?: CallStats }): ModelCall {
+/**
+ * A ModelCall over callJson. `cacheOnly` skips the network (model unavailable). Transient failures
+ * (timeouts under load, rate limits, 5xx) are retried with backoff inside callJson with the SAME
+ * prompt, so a later success lands under the same cache key.
+ */
+export function attestModelCall(opts: { cacheOnly: boolean; stats?: CallStats; timeoutMs?: number }): ModelCall {
   return async (o) => {
     const user = o.user.trimEnd().endsWith("/no_think") ? o.user : `${o.user.trimEnd()}\n/no_think`;
     g.__attestKeys?.add(cacheKey(modelTag(), o.system, user, o.jsonSchemaName));
-    const ask = () =>
-      callJson({
-        system: o.system,
-        user: o.user,
-        schema: o.schema,
-        jsonSchemaName: o.jsonSchemaName,
-        jsonSchema: o.jsonSchema,
-        cacheOnly: opts.cacheOnly,
-      });
-    let res = await ask();
-    // Transient failures (timeouts under load, rate limits, 5xx) are retried with the SAME
-    // prompt, so a later success lands under the same cache key.
-    for (let attempt = 0; !opts.cacheOnly && !res.ok && attempt < RETRIES && TRANSIENT.test(res.error); attempt++) {
-      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-      res = await ask();
-    }
+    const res = await callJson({
+      system: o.system,
+      user: o.user,
+      schema: o.schema,
+      jsonSchemaName: o.jsonSchemaName,
+      jsonSchema: o.jsonSchema,
+      cacheOnly: opts.cacheOnly,
+      timeoutMs: opts.timeoutMs ?? ATTEST_TIMEOUT_MS,
+    });
     if (opts.stats) {
       opts.stats.calls++;
       if (res.ok && res.cached) opts.stats.cached++;
