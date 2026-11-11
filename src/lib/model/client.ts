@@ -21,9 +21,23 @@ export interface CallOpts<T> {
   temperature?: 0;
   /** Skip the network: return a cached answer or { ok: false } (used for replay-only runs). */
   cacheOnly?: boolean;
+  /** Per-request timeout (default DEFAULT_TIMEOUT_MS). Each retry gets the full timeout again. */
+  timeoutMs?: number;
+  /** Retries after a transient failure (timeout, 429, 5xx, network); default DEFAULT_RETRIES. */
+  retries?: number;
 }
 
-const TIMEOUT_MS = 90_000;
+/** OpenRouter can take well over a minute for a long JSON answer when its providers are busy. */
+export const DEFAULT_TIMEOUT_MS = 120_000;
+/**
+ * Completion cap sent as max_tokens. Without it OpenRouter reserves the model's whole context
+ * (~117k tokens) per request and answers HTTP 402 once the account's credit is low. The longest
+ * answers (extraction of a 5,000-character batch) are ~2,000 tokens.
+ */
+export const DEFAULT_MAX_TOKENS = 4_096;
+export const DEFAULT_RETRIES = 3;
+const RETRY_BASE_MS = 2_000;
+const RETRY_MAX_MS = 30_000;
 const PROBE_TIMEOUT_MS = 3_000;
 const PROBE_TTL_MS = 30_000;
 
@@ -165,6 +179,48 @@ export function extractJson(text: string): unknown {
 type ResponseFormatMode = "json_schema" | "json_object" | "none";
 let preferredFormat: ResponseFormatMode = "json_schema";
 
+type ChatResult = { ok: true; content: string } | { ok: false; status: number; error: string; retryAfterMs?: number };
+
+/** Failures worth another try with the same prompt: timeouts, rate limits, 5xx, dropped connections, empty replies. */
+export function isTransientFailure(status: number, error: string): boolean {
+  if (status === 408 || status === 429 || (status >= 500 && status < 600)) return true;
+  if (status !== 0) return false;
+  return /timed out|timeout|abort|fetch failed|network|socket|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|UND_ERR|empty model response/i.test(error);
+}
+
+/** Exponential backoff with jitter (2 s, 4 s, 8 s ... capped), or the server's Retry-After when it is longer. */
+export function backoffMs(attempt: number, retryAfterMs?: number, random: () => number = Math.random): number {
+  const exp = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** attempt);
+  const jittered = Math.round(exp * (0.75 + 0.5 * random()));
+  return Math.min(RETRY_MAX_MS, Math.max(jittered, retryAfterMs ?? 0));
+}
+
+/** Seconds or an HTTP date, as in a Retry-After header; undefined when absent or unreadable. */
+export function parseRetryAfter(value: string | null, now: number = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const secs = Number(value);
+  if (Number.isFinite(secs)) return Math.max(0, secs * 1000);
+  const at = Date.parse(value);
+  return Number.isFinite(at) ? Math.max(0, at - now) : undefined;
+}
+
+/**
+ * Run `attempt` until it succeeds, fails for good, or `retries` transient failures were retried.
+ * Same prompt every time, so a late success lands under the same cache key. Exported for tests.
+ */
+export async function withRetries(
+  attempt: () => Promise<ChatResult>,
+  opts: { retries: number; sleep?: (ms: number) => Promise<void>; random?: () => number },
+): Promise<ChatResult> {
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  let res = await attempt();
+  for (let i = 0; i < opts.retries && !res.ok && isTransientFailure(res.status, res.error); i++) {
+    await sleep(backoffMs(i, res.retryAfterMs, opts.random));
+    res = await attempt();
+  }
+  return res;
+}
+
 async function chat(
   system: string,
   user: string,
@@ -172,11 +228,13 @@ async function chat(
   schemaName: string,
   jsonSchema: unknown,
   temperature: number,
-): Promise<{ ok: true; content: string } | { ok: false; status: number; error: string }> {
+  timeoutMs: number,
+): Promise<ChatResult> {
   const { baseUrl, name, apiKey } = cfg();
   const body: Record<string, unknown> = {
     model: name,
     temperature,
+    max_tokens: DEFAULT_MAX_TOKENS,
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
@@ -198,11 +256,16 @@ async function chat(
         ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      return { ok: false, status: res.status, error: `HTTP ${res.status}: ${text.slice(0, 200)}` };
+      return {
+        ok: false,
+        status: res.status,
+        error: `HTTP ${res.status}: ${text.slice(0, 200)}`,
+        retryAfterMs: parseRetryAfter(res.headers.get("retry-after")),
+      };
     }
     const data = (await res.json()) as { choices?: { message?: { content?: string | null } }[] };
     const content = data.choices?.[0]?.message?.content;
@@ -216,8 +279,9 @@ async function chat(
 
 /**
  * Ask the model for JSON matching `schema`. Cached by sha256(model tag + system + user + schema
- * name) in memory and in model_cache. "/no_think" is appended to the user prompt. One retry
- * on invalid JSON. Never throws.
+ * name) in memory and in model_cache. "/no_think" is appended to the user prompt. Each request
+ * has its own timeout (default 120 s); transient failures (timeout, 429, 5xx, network) are retried
+ * with backoff (default 3 retries); one more try on invalid JSON. Never throws.
  */
 export async function callJson<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
   const res = await callJsonInner(opts);
@@ -252,13 +316,20 @@ async function callJsonInner<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
       }
     }
 
+    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const retries = Math.max(0, Math.floor(opts.retries ?? DEFAULT_RETRIES));
+    const ask = () =>
+      withRetries(
+        () => chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0, timeoutMs),
+        { retries },
+      );
     let lastError = "invalid JSON";
     for (let attempt = 0; attempt < 2; attempt++) {
-      let res = await chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0);
+      let res = await ask();
       // Endpoints without json_schema support answer 400/422: fall back once, remember it.
       while (!res.ok && (res.status === 400 || res.status === 422) && preferredFormat !== "none") {
         preferredFormat = preferredFormat === "json_schema" ? "json_object" : "none";
-        res = await chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0);
+        res = await ask();
       }
       if (!res.ok) return { ok: false, error: res.error };
       try {

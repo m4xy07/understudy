@@ -1,12 +1,13 @@
 // Evaluates Attest on a fresh demo workspace against data/demo/ground_truth.json and writes
 // docs/EVALUATION.md. Uses the model cache first (pnpm db:seed), then the live model.
-// Usage: pnpm tsx scripts/eval.ts [--keep] [--no-write] [--no-support]
+// Exits 1 and leaves docs/EVALUATION.md alone when any extraction batch failed (--allow-failed writes it).
+// Usage: pnpm tsx scripts/eval.ts [--keep] [--no-write] [--no-support] [--verbose] [--allow-failed]
 import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/lib/db/client";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
-import { reconstruct, verify } from "@/lib/attest";
+import { getExtraction, reconstruct, verify } from "@/lib/attest";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
 import { formatReport } from "@/lib/attest/core/evaluate";
 import { modelTag } from "@/lib/model/client";
@@ -41,7 +42,16 @@ async function main() {
       for (const u of rep.unmatched) console.log(`  missed ${u.id} ${u.entity}/${u.attribute} = ${u.value}`);
       for (const p of rep.falseConflicts.pairs) console.log(`  false conflict ${p.entity}/${p.attribute}: ${p.values.join(" vs ")}`);
     }
-    if (!args.has("--no-write")) {
+    // A failed batch silently removes its claims and lowers recall: never publish such a run as the score.
+    const failed = ((await getExtraction(ws))?.batches ?? []).filter((b) => !b.ok);
+    if (failed.length) {
+      console.error(`FAILED BATCHES: ${failed.length} of ${e.batches}; their segments have no model claims, so these scores are incomplete.`);
+      for (const b of failed) console.error(`  ${b.id} ${b.thread} (${b.segmentIds.length} segments): ${b.error ?? "error"}`);
+      process.exitCode = 1;
+    }
+    if (failed.length && !args.has("--allow-failed")) {
+      console.error("docs/EVALUATION.md not written (pass --allow-failed to write it anyway).");
+    } else if (!args.has("--no-write")) {
       const header = [
         "# Evaluation",
         "",
@@ -56,13 +66,16 @@ async function main() {
         "Supersession of `title-sponsor / contact` (Meera Shah -> Rahul Desai) is expected to stay missing:",
         "`contact` is multi-valued in the contract, so both values stay active and the newest is current.",
         "",
-        "Known extraction errors on the competition date: `competition / deadline = 2026-11-08` comes from the",
-        "commit \"website: competition date on the homepage\" (the model took the commit time as the date). It puts",
-        "both 2026-12-19 claims in conflict (2 of the false-conflict pairs below), so the 12 Dec -> 19 Dec",
-        "supersession points at a conflicting claim. `2026-12-05` repeats the deadline example in the extraction",
-        "prompt; it is superseded, so it adds no conflict. A prompt fix (header times are never event dates; a",
-        "neutral example) was tried and reverted: its cold re-run timed out on 8 of 23 batches, the commits batch",
-        "among them, so it could not be shown to help within the time box.",
+        "Dates: the verifier drops a model deadline that is only the day its cited text was written while the",
+        "text states no such date (docs/ARCHITECTURE.md section 4). It removes `competition / deadline =",
+        "2026-11-08`, which the model took from the commit \"website: competition date on the homepage\" (8 Nov);",
+        "that claim made two false conflicts and left both 2026-12-19 claims conflicting. `2026-12-05` still",
+        "repeats the deadline example in the extraction prompt; it is superseded, so it adds no conflict.",
+        "",
+        "A prompt rewrite (header times labelled \"written\", examples from a made-up garden with no dates, explicit",
+        "procedure / owner / cadence / access guidance) was measured with two cold runs (27 batches each, none",
+        "failed) and reverted: recall rose to 73.1% and 67.9%, but false conflicts rose to 11 and 12 (separate",
+        "\"X rejected\" decision claims, venue options extracted as locations). It stays in the git history.",
         "",
         "",
       ].join("\n");

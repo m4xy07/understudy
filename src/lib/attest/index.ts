@@ -195,8 +195,9 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
     const call = opts.call ?? attestModelCall({ cacheOnly: !up, stats });
     const xopts = {
       concurrency: opts.concurrency ?? 4,
-      // ~1,700 tokens of segments per call: a long chat splits into several calls that each
-      // answer well inside the client's 90 s timeout.
+      // ~1,700 tokens of segments per call: answers are output-bound (~30 tokens/s on OpenRouter,
+      // 50-70 s measured for a full batch), inside the 120 s timeout. The batch size is part of every
+      // extraction cache key: changing it makes the committed demo cache miss until precompute reruns.
       maxChars: EXTRACT_MAX_CHARS,
       authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
     };

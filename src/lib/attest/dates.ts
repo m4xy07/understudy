@@ -67,3 +67,50 @@ export function toIsoDate(value: string, refIso: string | null = null): string |
   }
   return null;
 }
+
+const DATE_IN_TEXT = new RegExp(
+  [
+    "\\b\\d{4}-\\d{1,2}-\\d{1,2}\\b",
+    `\\b${WEEKDAY}\\d{1,2}(?:st|nd|rd|th)?\\s+(?:of\\s+)?${MONTH_RE}(?:,?\\s+\\d{4})?`,
+    `\\b${WEEKDAY}${MONTH_RE}\\s+\\d{1,2}(?:st|nd|rd|th)?\\b(?:,?\\s+\\d{4})?`,
+    "\\b\\d{1,2}[/.]\\d{1,2}[/.](?:\\d{4}|\\d{2})\\b",
+  ].join("|"),
+  "gi",
+);
+
+/** Every calendar date written in `text` (ISO, "8 Nov", "Nov 8, 2026", "08/11/26"), as YYYY-MM-DD. */
+export function datesInText(text: string, refIso: string | null = null): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(DATE_IN_TEXT)) {
+    const iso = toIsoDate(m[0].replace(/\s+/g, " ").trim(), refIso);
+    if (iso) out.add(iso);
+  }
+  return out;
+}
+
+/** Words that date an event relative to when the message was written. */
+const RELATIVE_DAY = /\b(today|tonight|this (?:morning|afternoon|evening)|now|tomorrow|yesterday)\b/i;
+
+/** The UTC calendar date of a timestamp (as the extraction prompt shows it), or null. */
+export function writtenDate(ts: string): string | null {
+  const t = Date.parse(ts);
+  return Number.isFinite(t) ? new Date(t).toISOString().slice(0, 10) : null;
+}
+
+/**
+ * True when a deadline `value` is only the day its sources were written: every cited text was
+ * written on that date and none of them states it (no written date, no "today"/"tomorrow").
+ * A commit titled "show the event date on the homepage" made on some day says nothing about the
+ * event happening that day.
+ */
+export function isWrittenDateDeadline(value: string, cited: { ts: string; text: string; quote?: string | null }[]): boolean {
+  if (!cited.length) return false;
+  const iso = toIsoDate(value);
+  if (!iso) return false;
+  for (const c of cited) {
+    if (writtenDate(c.ts) !== iso) return false;
+    const texts = [c.text, c.quote ?? ""];
+    if (texts.some((t) => RELATIVE_DAY.test(t) || datesInText(t, c.ts).has(iso))) return false;
+  }
+  return true;
+}
