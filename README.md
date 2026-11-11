@@ -162,9 +162,13 @@ Other scripts: `pnpm build`, `pnpm lint`, `pnpm db:down`, `pnpm db:export-cache`
 ```bash
 pnpm db:up && pnpm db:migrate   # the integration and permission suites need a migrated database
 pnpm test
+
+# End-to-end: the five-minute judge path in Chromium (first time: pnpm exec playwright install chromium)
+pnpm test:e2e                                                   # against pnpm dev on localhost:3000
+E2E_BASE_URL=https://understudy-lyart.vercel.app pnpm test:e2e  # against the live app
 ```
 
-Vitest covers each module's rules, the RLS boundary, the leaver-cannot-approve rule, the canary leak check and the pooler regression. [TESTING.md](TESTING.md) lists what each suite covers and the manual checks on the live link. Extraction quality against the planted ground truth is in [docs/EVALUATION.md](docs/EVALUATION.md).
+Vitest covers each module's rules, the RLS boundary, the leaver-cannot-approve rule, the canary leak check and the pooler regression. The Playwright suite walks the judge path in a real browser on a fresh copy of the demo. [TESTING.md](TESTING.md) lists what each suite covers, the end-to-end result and the manual checks on the live link. Extraction quality against the planted ground truth is in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Against the Round 1 plan
 

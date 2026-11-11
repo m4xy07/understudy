@@ -13,7 +13,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:export-cache": "tsx scripts/export-cache.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "clsx": "^2.1.1",
