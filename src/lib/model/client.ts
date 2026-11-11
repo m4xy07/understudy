@@ -29,6 +29,12 @@ export interface CallOpts<T> {
 
 /** OpenRouter can take well over a minute for a long JSON answer when its providers are busy. */
 export const DEFAULT_TIMEOUT_MS = 120_000;
+/**
+ * Completion cap sent as max_tokens. Without it OpenRouter reserves the model's whole context
+ * (~117k tokens) per request and answers HTTP 402 once the account's credit is low. The longest
+ * answers (extraction of a 5,000-character batch) are ~2,000 tokens.
+ */
+export const DEFAULT_MAX_TOKENS = 4_096;
 export const DEFAULT_RETRIES = 3;
 const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
@@ -228,6 +234,7 @@ async function chat(
   const body: Record<string, unknown> = {
     model: name,
     temperature,
+    max_tokens: DEFAULT_MAX_TOKENS,
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },

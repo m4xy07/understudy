@@ -126,7 +126,7 @@ The full contract is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The Round 
 | Supabase (Postgres) | Production database with RLS | The compile boundary promised in Round 1. |
 | Vercel | Hosting, functions pinned to `icn1` next to the database | One public link, no sign-up. |
 
-Every model call goes through `src/lib/model/client.ts`. Answers are cached by `sha256(model tag + prompt + schema)` in the `model_cache` table, and the demo's precomputed extraction answers are committed in `data/demo/model_cache.json`, so the demo replays the same claims. Output is parsed with zod, with one retry on invalid JSON. If the model is unreachable, the step says "Model unavailable" and the rule-based paths (task board, calendar, deterministic successor test) still run.
+Every model call goes through `src/lib/model/client.ts`. Answers are cached by `sha256(model tag + prompt + schema)` in the `model_cache` table, and the demo's precomputed extraction answers are committed in `data/demo/model_cache.json`, so the demo replays the same claims. Output is parsed with zod, with one retry on invalid JSON; each request has a 120 s timeout, and timeouts, rate limits and 5xx errors are retried up to 3 times with backoff. If the model is unreachable, the step says "Model unavailable" and the rule-based paths (task board, calendar, deterministic successor test) still run.
 
 ## Run it locally
 

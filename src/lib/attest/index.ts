@@ -144,7 +144,7 @@ async function entityKindsFor(ws: string, pack: Pack): Promise<Map<string, Respo
 // reconstruct
 
 const DONE_STATUS = /^(done|closed|complete|completed|cancelled|canceled|resolved)$/i;
-export const EXTRACT_MAX_CHARS = 3_500;
+export const EXTRACT_MAX_CHARS = 5_000;
 
 /** Normalise deadline values to ISO dates where the value is one date; slug unknown task entities. */
 function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): DraftClaim[] {
@@ -195,8 +195,9 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
     const call = opts.call ?? attestModelCall({ cacheOnly: !up, stats });
     const xopts = {
       concurrency: opts.concurrency ?? 4,
-      // ~1,200 tokens of segments per call: a long chat splits into several calls whose JSON
-      // answers (output-bound, ~30 tokens/s on OpenRouter) finish well inside the 120 s timeout.
+      // ~1,700 tokens of segments per call: answers are output-bound (~30 tokens/s on OpenRouter,
+      // 50-70 s measured for a full batch), inside the 120 s timeout. The batch size is part of every
+      // extraction cache key: changing it makes the committed demo cache miss until precompute reruns.
       maxChars: EXTRACT_MAX_CHARS,
       authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
     };

@@ -18,6 +18,7 @@ import {
   withRetries,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_RETRIES,
+  DEFAULT_MAX_TOKENS,
 } from "@/lib/model/client";
 
 describe("model client retries", () => {
@@ -28,9 +29,10 @@ describe("model client retries", () => {
   };
   const noSleep = vi.fn(async () => {});
 
-  it("defaults: 120 s per request, 3 retries", () => {
+  it("defaults: 120 s per request, 3 retries, a bounded completion (no 402 from reserving the whole context)", () => {
     expect(DEFAULT_TIMEOUT_MS).toBe(120_000);
     expect(DEFAULT_RETRIES).toBe(3);
+    expect(DEFAULT_MAX_TOKENS).toBe(4096);
   });
 
   it("classifies timeouts, 408/429/5xx and network drops as transient; 400/401/422 and bad JSON are not", () => {

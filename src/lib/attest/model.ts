@@ -30,7 +30,7 @@ export function newStats(): CallStats {
   return { calls: 0, cached: 0, failed: 0, errors: [] };
 }
 
-/** Per-request timeout for Attest calls: a 5,000-character batch can take over 90 s on a busy provider. */
+/** Per-request timeout for Attest calls: a 5,000-character batch takes 50-70 s and more on a busy provider. */
 export const ATTEST_TIMEOUT_MS = 120_000;
 
 /**
