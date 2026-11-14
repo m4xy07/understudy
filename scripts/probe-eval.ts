@@ -16,14 +16,14 @@ import { db } from "@/lib/db/client";
 import { getExtraction } from "@/lib/attest";
 import { countWithheld, getLatestTestRun, listClaims } from "@/lib/db/queries";
 import { listBlockingGaps, savePlanItem } from "@/lib/lacuna";
-import { callJson, modelAvailable, modelTag, startRecording, stopRecording } from "@/lib/model/client";
+import { modelAvailable, modelTag, startRecording, stopRecording } from "@/lib/model/client";
 import { defaultPackId, getPack, roleLabel } from "@/lib/pack";
 import { createDemoWorkspace, createEmptyWorkspace, ingestSources } from "@/lib/pipeline/ingest";
 import { executeRun, startRun } from "@/lib/pipeline/run";
 import { approveSnapshot, bulkApprove, reviewClaim, runProbes } from "@/lib/relay";
 import { textRevealsFact } from "@/lib/relay/core/probes";
 import { demoProbeFacts } from "@/lib/relay/handover";
-import { JUDGE_SCHEMA_NAME, judgeResponseSchema, judgeText, type JudgeCall } from "@/lib/relay/probes";
+import { judgeText, modelJudgeCall } from "@/lib/relay/probes";
 import { pct, probeSummaryPath, type ClassifierCategoryRow, type ProbeSummary } from "@/lib/relay/probe-summary";
 import { CATEGORIES, CLASSIFIER_VERSION } from "@/lib/tether/sensitivity";
 import type { RoleKey } from "@/lib/types";
@@ -211,10 +211,7 @@ async function main() {
 
   // Detector check.
   const useJudge = !arg("--no-judge");
-  const judge: JudgeCall = (o) => callJson({
-    system: o.system, user: o.user, schema: judgeResponseSchema, jsonSchemaName: JUDGE_SCHEMA_NAME,
-    cacheOnly: !up, timeoutMs: 60_000, retries: 1,
-  });
+  const judge = modelJudgeCall({ cacheOnly: () => !up });
   const detector: ProbeSummary["detector"] = {
     rewordings: 0, keyTerms: 0, judgeOnly: 0, neither: 0, judgeAsked: false, missed: [],
     catchable: { total: 0, keyTerms: 0 }, hard: { total: 0, keyTerms: 0, judgeOnly: 0, neither: 0 },
@@ -232,7 +229,8 @@ async function main() {
       if (!byTerms && useJudge) {
         const answers = await judgeText([f], "detector", surface, judge);
         if (answers !== null) detector.judgeAsked = true;
-        byJudge = (answers ?? []).some((a) => a.quote.trim().length >= 4 && surface.toLowerCase().includes(a.quote.trim().toLowerCase()));
+        // The same rule as the grid: the quote is in the text and the judge's second look stands by it.
+        byJudge = (answers ?? []).some((a) => a.verified === true);
       }
       if (r.kind === "rewording") {
         detector.catchable.total++;
@@ -255,8 +253,10 @@ async function main() {
 
   // The grid, with the judge.
   const t1 = Date.now();
+  const judgeRec = startRecording();
   const { run, report } = await runProbes(demo.ws, "script", useJudge ? { call: judge } : { judge: false });
-  console.log(`grid: ${report.checks} checks, ${report.failed} fail; ${run.summary.judgeCalls} judge calls (${run.summary.judgeFailed} failed) in ${((Date.now() - t1) / 1000).toFixed(1)} s`);
+  stopRecording();
+  console.log(`grid: ${report.checks} checks, ${report.failed} fail; ${run.summary.judgeCalls} judge calls (${run.summary.judgeFailed} failed, ${run.summary.judgeWithdrawn} findings withdrawn at the second look) in ${((Date.now() - t1) / 1000).toFixed(1)} s`);
 
   const withheld = {} as Record<RoleKey, number>;
   for (const r of roles) withheld[r] = await countWithheld(demo.ws, r);
@@ -272,7 +272,7 @@ async function main() {
     grid: {
       checks: report.checks, failed: report.failed, textsChecked: report.textsChecked,
       tokenLeaks: run.summary.tokenLeaks, probeLeaks: run.summary.probeLeaks, unconfirmed: run.summary.unconfirmed,
-      judgeCalls: run.summary.judgeCalls, judgeFailed: run.summary.judgeFailed,
+      judgeCalls: run.summary.judgeCalls, judgeFailed: run.summary.judgeFailed, judgeWithdrawn: run.summary.judgeWithdrawn,
       notBuilt: report.surfaces.filter((s) => !s.built).map((s) => s.label),
     },
     modelCallAudit: audit,
@@ -285,6 +285,25 @@ async function main() {
     ...f, fact: facts.find((x) => x.id === f.item)?.fact ?? f.item,
   })), { ingestMs: demo.ingestMs, classifierCalls: demo.classifierCalls, classifierCached: demo.classifierCached }));
   console.log(`wrote ${path.relative(process.cwd(), probeSummaryPath(pack)!)} and docs/PROBE_RESULTS.md`);
+
+  // The judge's answers for the demo's outputs go into the demo cache, so "Run probes again" in a
+  // fresh copy of the demo replays what it can (texts that are the same in every copy) at once.
+  if (useJudge && run.summary.judgeFailed === 0 && judgeRec.keys.size) {
+    const cached = await sql<{ input_hash: string; model_tag: string; output: unknown; created_at: Date }[]>`
+      SELECT input_hash, model_tag, output, created_at FROM model_cache WHERE input_hash = ANY(${[...judgeRec.keys]}::text[])`;
+    const file = path.join(DATA, "model_cache.json");
+    const existing = JSON.parse(fs.readFileSync(file, "utf8")) as { input_hash: string }[];
+    const byHash = new Map<string, unknown>(existing.map((x) => [x.input_hash, x]));
+    let added = 0;
+    for (const r of cached) {
+      if (byHash.has(r.input_hash)) continue;
+      byHash.set(r.input_hash, { input_hash: r.input_hash, model_tag: r.model_tag, output: r.output, created_at: r.created_at.toISOString() });
+      added++;
+    }
+    const out = [...byHash.values()].sort((a, b) => ((a as { input_hash: string }).input_hash < (b as { input_hash: string }).input_hash ? -1 : 1));
+    fs.writeFileSync(file, JSON.stringify(out, null, 1) + "\n");
+    console.log(`judge answers in the demo cache: ${added} added, ${out.length} rows in ${path.relative(process.cwd(), file)}`);
+  }
 
   if (!arg("--keep")) for (const ws of made) await purge(ws);
   await sql.end();
@@ -335,6 +354,7 @@ function markdown(
   L.push(`- Checks (role, output and row with something to check): ${s.grid.checks}. Failing: ${s.grid.failed}.`);
   L.push(`- Exact tokens: ${s.grid.tokenLeaks} leaks. Reworded facts: ${s.grid.probeLeaks} confirmed leaks, ${s.grid.unconfirmed} unconfirmed judge findings.`);
   L.push(`- Texts checked: ${s.grid.textsChecked}. Model judge calls: ${s.grid.judgeCalls} (${s.grid.judgeFailed} could not be asked).`);
+  L.push(`- The judge raised ${s.grid.judgeWithdrawn} findings that only named a person or a topic and withdrew them at its second look (one fact, one quote, yes or no). They are not leaks and are not counted.`);
   L.push(`- Model calls with a limited message in a batch for a wider role set: ${s.modelCallAudit.violations} of ${s.modelCallAudit.calls} extraction calls.`);
   if (s.grid.notBuilt.length) L.push(`- Not built in this branch, so not counted: ${s.grid.notBuilt.join(", ")}.`);
   L.push(`- Messages limited at ingest in the demo: ${s.limited.total} (${s.limited.byRule} by a rule, ${s.limited.byModel} by the model, ${s.limited.held} held).`);
@@ -362,7 +382,7 @@ function markdown(
   L.push("");
   if (!findings.length) L.push("No check found a restricted token or fact in any role's outputs.");
   for (const f of findings) {
-    L.push(`- ${f.row === "token" ? `Token ${f.item}` : `Probe ${f.item}`} · ${role(f.role)} · ${f.surface} · caught by ${f.by === "judge" ? "model judge" : f.by === "token" ? "exact token" : "key terms"}${f.confirmed ? "" : " (unconfirmed: the quoted words are not in the text)"}`);
+    L.push(`- ${f.row === "token" ? `Token ${f.item}` : `Probe ${f.item}`} · ${role(f.role)} · ${f.surface} · caught by ${f.by === "judge" ? "model judge" : f.by === "token" ? "exact token" : "key terms"}${f.confirmed ? "" : " (unconfirmed: the judge could not point to words in the text that give the fact away)"}`);
     if (f.row === "probe") L.push(`  - Fact: ${f.fact}`);
   }
   L.push("");

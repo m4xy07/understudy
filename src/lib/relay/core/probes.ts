@@ -159,13 +159,20 @@ export interface JudgeAnswer {
   quote: string;
   /** The text the judge was shown. The quote must be found in it. */
   chunk: string;
+  /**
+   * The judge's second look at its own finding: does the quote alone give away the private
+   * detail? false: the judge withdrew it (dropped). null: the second look could not be asked
+   * (kept as unconfirmed). Absent or true: it stands.
+   */
+  verified?: boolean | null;
 }
 
 /**
  * Check 2, the merge. Key-term findings are kept exactly as they are; judge answers are added.
  * There is no way for a judge answer to remove or weaken a key-term finding, and "not revealed"
  * is not an answer this function takes. A judge finding is confirmed only when its quote is in
- * the text it was shown (after norm()); an unconfirmed one is kept for the write-up.
+ * the text it was shown (after norm()) and the judge's second look did not fail to run; an
+ * unconfirmed one is kept for the write-up. A finding the judge itself withdrew is dropped.
  */
 export function mergeJudge(
   keyFindings: readonly ProbeFinding[], answers: readonly JudgeAnswer[], knownFactIds: ReadonlySet<string>,
@@ -173,10 +180,10 @@ export function mergeJudge(
   const out: ProbeFinding[] = [...keyFindings];
   const have = new Set(keyFindings.map((f) => `${f.surface}\u0000${f.factId}`));
   for (const a of answers) {
-    if (!knownFactIds.has(a.factId)) continue;
+    if (!knownFactIds.has(a.factId) || a.verified === false) continue;
     const key = `${a.surface}\u0000${a.factId}`;
     const quote = (a.quote ?? "").trim();
-    const confirmed = quote.length >= 4 && norm(a.chunk).includes(norm(quote));
+    const confirmed = a.verified !== null && quote.length >= 4 && norm(a.chunk).includes(norm(quote));
     if (have.has(key)) continue;   // already a finding (key terms, or an earlier judge answer)
     if (confirmed) have.add(key);
     out.push({ factId: a.factId, surface: a.surface, by: "judge", quote, confirmed });

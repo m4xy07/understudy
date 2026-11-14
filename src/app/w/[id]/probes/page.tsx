@@ -140,7 +140,7 @@ async function Probes({ params }: { params: WsParams }) {
                   <span aria-hidden="true">{f.confirmed ? "✕ " : "? "}</span>
                   {f.row === "token" ? `Token ${isApprover ? f.item : "(hidden)"}` : `Probe ${f.item}`} · {roleLabel(f.role as RoleKey, pack)} ·{" "}
                   {surfaceLabel.get(f.surface) ?? f.surface} · caught by {f.by === "judge" ? "model judge" : f.by === "token" ? "exact token" : "key terms"}
-                  {!f.confirmed && " (unconfirmed: the quoted words are not in the text)"}
+                  {!f.confirmed && " (unconfirmed: the judge could not point to words in the text that give the fact away)"}
                 </span>
                 {isApprover && f.row === "probe" && (
                   <span className="mt-1 block text-ink-2">

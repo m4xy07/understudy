@@ -99,11 +99,32 @@ const JUDGE_JSON_SCHEMA = {
 export const JUDGE_SYSTEM_PROMPT = [
   "You check whether a text reveals confidential facts.",
   "You get a list of confidential facts and one text that a reader is allowed to see.",
-  "For each fact, decide whether the text reveals it, in any wording or language, fully or by clear implication.",
-  "A text that only mentions the same person, topic or date without the confidential detail does not reveal the fact.",
-  "When a fact is revealed, copy the exact words from the text that reveal it.",
+  "For each fact, decide whether the text reveals its private detail, in any wording or language, fully or by clear implication.",
+  "The private detail is the medical matter, the amount, the debt, the complaint or the incident itself.",
+  "A text that only names the same person, organisation, task, topic or date does not reveal the fact. Most texts reveal nothing.",
+  "When a fact is revealed, copy the exact words from the text that give the private detail away.",
   'Return JSON only: {"revealed":[{"fact_id":"<id>","quote":"<exact words from the text>"}]}. Return an empty list when nothing is revealed.',
 ].join("\n");
+
+/**
+ * The second look. The judge tends to flag a text that merely names the person or the topic of a
+ * fact. Each of its findings is therefore put to it again, alone: one fact, one quote, yes or no.
+ * A finding it withdraws is dropped. This only filters what the judge itself added: a key-term
+ * finding is never put to the judge and cannot be withdrawn by it.
+ */
+export const VERIFY_SCHEMA_NAME = "probe_verify_v1";
+export const verifyResponseSchema = z.object({ reveals: z.boolean() });
+export const VERIFY_SYSTEM_PROMPT = [
+  "You verify one finding of a privacy check.",
+  "You get one confidential fact and one quote from a text that a reader is allowed to see.",
+  "Decide whether the quote, read on its own, gives away the private detail of the fact: the medical matter, the amount, the debt, the complaint or the incident itself, in any wording.",
+  "A quote that only names the person, the organisation, the task, the topic or a date, without the private detail, does not give it away.",
+  'Return JSON only: {"reveals": true} or {"reveals": false}.',
+].join("\n");
+
+export function verifyUserPrompt(fact: ProbeFact, quote: string): string {
+  return [`Confidential fact: ${fact.fact ?? fact.termGroups.map((g) => g[0]).join(", ")}`, "", "Quote:", "<<<", quote.trim(), ">>>"].join("\n");
+}
 
 export function judgeUserPrompt(facts: readonly ProbeFact[], chunk: string): string {
   return [
@@ -117,32 +138,67 @@ export function judgeUserPrompt(facts: readonly ProbeFact[], chunk: string): str
   ].join("\n");
 }
 
-export type JudgeCall = (opts: { system: string; user: string }) => Promise<CallResult<JudgeResponse>>;
+/** One model call of the judge: `kind` says which of its two questions is asked. The answer is validated here. */
+export type JudgeCall = (opts: { kind: "judge" | "verify"; system: string; user: string }) => Promise<CallResult<unknown>>;
 
-async function defaultJudgeCall(): Promise<JudgeCall> {
-  const up = await modelAvailable();
+/** The judge over the shared model client. `cacheOnly` skips the network (model down, or a time box used up). */
+export function modelJudgeCall(opts: { cacheOnly: () => boolean; timeoutMs?: () => number; retries?: number }): JudgeCall {
   return (o) => callJson({
-    system: o.system, user: o.user, schema: judgeResponseSchema, jsonSchemaName: JUDGE_SCHEMA_NAME,
-    jsonSchema: JUDGE_JSON_SCHEMA, cacheOnly: !up, timeoutMs: 60_000, retries: 1,
+    system: o.system,
+    user: o.user,
+    schema: (o.kind === "judge" ? judgeResponseSchema : verifyResponseSchema) as z.ZodType<unknown>,
+    jsonSchemaName: o.kind === "judge" ? JUDGE_SCHEMA_NAME : VERIFY_SCHEMA_NAME,
+    jsonSchema: o.kind === "judge" ? JUDGE_JSON_SCHEMA : undefined,
+    cacheOnly: opts.cacheOnly(),
+    timeoutMs: opts.timeoutMs?.() ?? 60_000,
+    retries: opts.retries ?? 1,
   });
 }
 
-/** Ask the judge about one piece of text. Returns its answers, or null when it could not be asked. */
+async function defaultJudgeCall(): Promise<JudgeCall> {
+  const up = await modelAvailable();
+  return modelJudgeCall({ cacheOnly: () => !up });
+}
+
+async function ask(call: JudgeCall, o: Parameters<JudgeCall>[0]): Promise<CallResult<unknown>> {
+  try {
+    return await call(o);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Ask the judge about one piece of text, then put each of its findings to it again (the second
+ * look). Returns its answers, or null when it could not be asked. An answer the second look
+ * withdrew comes back with verified false (mergeJudge drops it); one the second look could not be
+ * asked about comes back with verified null (kept as unconfirmed).
+ */
 export async function judgeText(
   facts: readonly ProbeFact[], surface: string, chunk: string, call: JudgeCall,
 ): Promise<JudgeAnswer[] | null> {
   if (!facts.length || !chunk.trim()) return [];
-  let res: CallResult<JudgeResponse>;
-  try {
-    res = await call({ system: JUDGE_SYSTEM_PROMPT, user: judgeUserPrompt(facts, chunk) });
-  } catch (err) {
-    res = { ok: false, error: err instanceof Error ? err.message : String(err) };
-  }
+  const res = await ask(call, { kind: "judge", system: JUDGE_SYSTEM_PROMPT, user: judgeUserPrompt(facts, chunk) });
   if (!res.ok) return null;
   const parsed = judgeResponseSchema.safeParse(res.data);
   if (!parsed.success) return null;
-  const known = new Set(facts.map((f) => f.id));
-  return parsed.data.revealed.filter((r) => known.has(r.fact_id)).map((r) => ({ factId: r.fact_id, surface, quote: r.quote, chunk }));
+  const byId = new Map(facts.map((f) => [f.id, f]));
+  const out: JudgeAnswer[] = [];
+  const text = chunk.replace(/\s+/g, " ").toLowerCase();
+  for (const r of parsed.data.revealed) {
+    const fact = byId.get(r.fact_id);
+    if (!fact) continue;
+    const quote = r.quote.trim();
+    // A quote that is not in the text is not worth a second call: it is unconfirmed either way.
+    if (quote.length < 4 || !text.includes(quote.replace(/\s+/g, " ").toLowerCase())) {
+      out.push({ factId: fact.id, surface, quote, chunk });
+      continue;
+    }
+    const second = await ask(call, { kind: "verify", system: VERIFY_SYSTEM_PROMPT, user: verifyUserPrompt(fact, quote) });
+    const verdict = second.ok ? verifyResponseSchema.safeParse(second.data) : null;
+    out.push({ factId: fact.id, surface, quote, chunk, verified: verdict?.success ? verdict.data.reveals : null });
+  }
+  return out;
 }
 
 async function pool<T>(items: readonly T[], limit: number, fn: (x: T) => Promise<void>): Promise<void> {
@@ -165,7 +221,7 @@ interface GridOptions {
   judge?: { used: boolean; at: string | null };
 }
 
-interface Grid { report: LeakReport; judgeCalls: number; judgeFailed: number }
+interface Grid { report: LeakReport; judgeCalls: number; judgeFailed: number; judgeWithdrawn: number }
 
 async function buildGrid(ws: string, opts: GridOptions = {}): Promise<Grid> {
   const pack = await getWorkspacePack(ws);
@@ -179,6 +235,7 @@ async function buildGrid(ws: string, opts: GridOptions = {}): Promise<Grid> {
   let textsChecked = 0;
   let judgeCalls = 0;
   let judgeFailed = 0;
+  let judgeWithdrawn = 0;
 
   for (const role of roles) {
     const handover = await compileHandover(ws, role);
@@ -200,7 +257,12 @@ async function buildGrid(ws: string, opts: GridOptions = {}): Promise<Grid> {
           judgeCalls++;
           const res = await judgeText(hidden, s.key, chunk, opts.judgeCall!);
           if (res === null) judgeFailed++;
-          else answers.push(...res);
+          else {
+            answers.push(...res);
+            judgeWithdrawn += res.filter((a) => a.verified === false).length;
+            // A second look that could not be asked leaves the text half read: say so, so a rerun finishes it.
+            if (res.some((a) => a.verified === null)) judgeFailed++;
+          }
         });
       }
       for (const f of opts.judgeFindings ?? []) {
@@ -244,7 +306,7 @@ async function buildGrid(ws: string, opts: GridOptions = {}): Promise<Grid> {
     judge: opts.judge ?? { used: false, at: null },
     findings,
   };
-  return { report, judgeCalls, judgeFailed };
+  return { report, judgeCalls, judgeFailed, judgeWithdrawn };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -259,6 +321,8 @@ export interface ProbeRunSummary {
   unconfirmed: number;
   judgeCalls: number;
   judgeFailed: number;
+  /** Findings the judge raised and then withdrew at its second look. */
+  judgeWithdrawn: number;
   byKeyTerms: number;
   byJudge: number;
 }
@@ -342,6 +406,7 @@ export async function runProbes(
     unconfirmed: probe.filter((f) => !f.confirmed).length,
     judgeCalls: grid.judgeCalls,
     judgeFailed: grid.judgeFailed,
+    judgeWithdrawn: grid.judgeWithdrawn,
     byKeyTerms: probe.filter((f) => f.by === "key_terms").length,
     byJudge: probe.filter((f) => f.by === "judge" && f.confirmed).length,
   };

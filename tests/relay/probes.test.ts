@@ -165,15 +165,42 @@ describe("T25: the judge can only add findings", () => {
 
   it("judgeText keeps only ids it asked about, and null means the judge could not be asked", async () => {
     const facts = FACTS.slice(0, 2);
-    const answering: JudgeCall = async () => ({
-      ok: true, cached: false,
-      data: { revealed: [{ fact_id: facts[0].id, quote: "Dev has surgery soon." }, { fact_id: "pf-made-up", quote: "x" }] },
-    });
+    const answering: JudgeCall = async (o) => (o.kind === "verify"
+      ? { ok: true, cached: false, data: { reveals: true } }
+      : { ok: true, cached: false, data: { revealed: [{ fact_id: facts[0].id, quote: "Dev has surgery soon." }, { fact_id: "pf-made-up", quote: "x" }] } });
     const out = await judgeText(facts, "claims", chunk, answering);
-    expect(out).toEqual([{ factId: facts[0].id, surface: "claims", quote: "Dev has surgery soon.", chunk }]);
+    expect(out).toEqual([{ factId: facts[0].id, surface: "claims", quote: "Dev has surgery soon.", chunk, verified: true }]);
     expect(await judgeText(facts, "claims", chunk, async () => ({ ok: false, error: "model timed out" }))).toBeNull();
     expect(await judgeText(facts, "claims", chunk, async () => { throw new Error("boom"); })).toBeNull();
     expect(await judgeText([], "claims", chunk, answering)).toEqual([]);
+  });
+
+  it("the second look: a finding that only names the person is withdrawn; one it cannot check stays unconfirmed", async () => {
+    const facts = FACTS.slice(0, 1);
+    const asked: string[] = [];
+    const judge = (verdict: "yes" | "no" | "down"): JudgeCall => async (o) => {
+      asked.push(o.kind);
+      if (o.kind === "judge") return { ok: true, cached: false, data: { revealed: [{ fact_id: facts[0].id, quote: "Dev has surgery soon." }, { fact_id: facts[0].id, quote: "words not in the text" }] } };
+      expect(o.user).toContain(facts[0].fact!);
+      expect(o.user).toContain("Dev has surgery soon.");
+      expect(o.user).not.toContain("Kabir");   // one fact, one quote: never the rest of the text
+      if (verdict === "down") return { ok: false, error: "model timed out" };
+      return { ok: true, cached: false, data: { reveals: verdict === "yes" } };
+    };
+    const known = new Set([facts[0].id]);
+    const yes = (await judgeText(facts, "claims", chunk, judge("yes")))!;
+    expect(yes.map((a) => a.verified)).toEqual([true, undefined]);
+    expect(asked).toEqual(["judge", "verify"]);   // the quote that is not in the text gets no second call
+    expect(mergeJudge([], yes, known).map((f) => f.confirmed)).toEqual([true]);
+    const no = (await judgeText(facts, "claims", chunk, judge("no")))!;
+    expect(no[0].verified).toBe(false);
+    expect(confirmedLeaks(mergeJudge([], no, known))).toEqual([]);
+    expect(mergeJudge([], [no[0]], known)).toEqual([]);   // withdrawn: not even shown as unconfirmed
+    const down = (await judgeText(facts, "claims", chunk, judge("down")))!;
+    expect(down[0].verified).toBeNull();
+    expect(mergeJudge([], [down[0]], known)).toEqual([{ factId: facts[0].id, surface: "claims", by: "judge", quote: "Dev has surgery soon.", confirmed: false }]);
+    // A withdrawn judge answer never touches a key-term finding for the same fact.
+    expect(mergeJudge(key, [{ ...no[0], factId: "pf-01" }], new Set(["pf-01"]))).toEqual(key);
   });
 
   it("the judge prompt lists the facts and the text, the same for the same input", () => {

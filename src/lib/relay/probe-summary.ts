@@ -56,6 +56,7 @@ export interface ProbeSummary {
     unconfirmed: number;
     judgeCalls: number;
     judgeFailed: number;
+    judgeWithdrawn: number;
     notBuilt: string[];
   };
   modelCallAudit: { calls: number; violations: number };

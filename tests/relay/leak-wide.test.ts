@@ -128,6 +128,7 @@ describe("the model judge in the grid (injected call)", () => {
     let asked = 0;
     let invented = false;
     const judge: JudgeCall = async (o) => {
+      if (o.kind === "verify") return { ok: true, cached: false, data: { reveals: true } };
       asked++;
       // "Reveals" the fact wherever the text names the release state; elsewhere invents a quote once.
       const m = /Released with \d+ open blocking gaps?/.exec(o.user);

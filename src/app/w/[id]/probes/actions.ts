@@ -6,10 +6,10 @@
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
-import { callJson, modelAvailable } from "@/lib/model/client";
+import { modelAvailable } from "@/lib/model/client";
 import { getWorkspacePack, roleLabel } from "@/lib/pack";
 import { runProbes } from "@/lib/relay";
-import { JUDGE_SCHEMA_NAME, judgeResponseSchema, type JudgeCall } from "@/lib/relay/probes";
+import { modelJudgeCall } from "@/lib/relay/probes";
 import { viewingRole } from "@/lib/session";
 
 export interface ActionState {
@@ -29,13 +29,11 @@ export async function runProbesAction(_prev: ActionState, form: FormData): Promi
   }
   const up = await modelAvailable();
   const deadline = Date.now() + TIME_BOX_MS;
-  const call: JudgeCall = (o) => {
-    const left = deadline - Date.now();
-    return callJson({
-      system: o.system, user: o.user, schema: judgeResponseSchema, jsonSchemaName: JUDGE_SCHEMA_NAME,
-      cacheOnly: !up || left < 3_000, timeoutMs: Math.max(3_000, left), retries: 0,
-    });
-  };
+  const call = modelJudgeCall({
+    cacheOnly: () => !up || deadline - Date.now() < 3_000,
+    timeoutMs: () => Math.max(3_000, deadline - Date.now()),
+    retries: 0,
+  });
   try {
     const { run } = await runProbes(ws, role, { call });
     refresh();
