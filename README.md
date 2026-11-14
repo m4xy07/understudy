@@ -153,6 +153,8 @@ Environment variables (`.env.example` lists them all):
 | `MODEL_BASE_URL`, `MODEL_NAME`, `MODEL_API_KEY` | Any OpenAI-compatible chat endpoint. |
 | `IDENTITY_KEY`, `CONTACTS_KEY` | 32 random bytes, base64. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. |
 | `GITHUB_TOKEN` | Optional. Raises the GitHub API rate limit for public repo imports. |
+| `CRON_SECRET` | Protects `GET /api/cron/purge`, the daily cleanup in `vercel.json`. Without it the route answers 401. `PURGE_DEMO_DAYS` (default 7) and `PURGE_IDLE_DAYS` (default 14) set the retention; a workspace with an approved snapshot is never deleted by the cleanup. |
+| `MODEL_CALLS_PER_WORKSPACE_PER_DAY`, `MODEL_CALLS_PER_DAY` | Optional caps on live model calls (defaults 400 and 4000; 0 turns a cap off). Cached answers never count. |
 
 **Which model.** The cache key includes the model name and host, so cached answers replay only for the model that made them.
 

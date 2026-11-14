@@ -44,6 +44,8 @@ export const MAX_SLICES = 40;
 /** A model call that fails for a passing reason is tried again in a later pass, this many times in all. */
 export const MAX_ATTEMPTS = 3;
 const PROGRESS_SAVE_MS = 1_200;
+const RETRY_PASS_BASE_MS = 1_500;
+const RETRY_PASS_MAX_MS = 8_000;
 
 function freshSteps(): RunStep[] {
   return ORDER.map((key) => ({
@@ -125,7 +127,14 @@ type StepFn = () => Promise<{ counts: Record<string, number>; note?: string | nu
 export interface ExecuteOptions {
   /** Time budget of this slice for starting live model calls (default SLICE_BUDGET_MS). */
   budgetMs?: number;
+  /** Retries inside one model call (default 0: a web slice retries across passes instead). */
+  retries?: number;
+  /** Do not count live calls against the spend cap (scripts run by the team, never a web request). */
+  unmetered?: boolean;
 }
+
+/** For scripts (precompute, replay check): one long slice, in-call retries, no spend cap. */
+export const SCRIPT_RUN: ExecuteOptions = { budgetMs: 60 * 60_000, retries: 3, unmetered: true };
 
 function parseJson<T>(v: unknown, fallback: T): T {
   if (v === null || v === undefined) return fallback;
@@ -261,7 +270,7 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
 
       // One pass over the step, repeated while calls that failed for a passing reason remain and
       // time is left. Finished calls replay from the cache, so a pass only redoes what is missing.
-      for (;;) {
+      for (let pass = 0; ; pass++) {
         const p: RunProgress = { step: step.key, done: 0, total: totals[step.key] ?? null, cached: 0, failed: 0, retry: 0, refused: 0 };
         progress = p;
         let deferred = 0;
@@ -269,10 +278,10 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
         let lastSave = 0;
         const ctx: ModelContext = {
           deadline,
-          retries: 0,
+          retries: opts.retries ?? 0,
           gate: async (key) => {
             if ((attempts[key] ?? 0) >= MAX_ATTEMPTS) return `this call failed ${MAX_ATTEMPTS} times and was not tried again`;
-            return chargeModelCall(ws);
+            return opts.unmetered ? null : chargeModelCall(ws);
           },
           onResult: (key, outcome, info) => {
             seen++;
@@ -326,7 +335,8 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
         }
         step.note = `${progressText(p)} Retrying.`;
         await save().catch(() => {});
-        await new Promise((r) => setTimeout(r, 1_500));
+        // Back off before the next pass (1.5 s, 3 s, 6 s): a rate limit needs a moment to clear.
+        await new Promise((r) => setTimeout(r, Math.min(RETRY_PASS_MAX_MS, RETRY_PASS_BASE_MS * 2 ** pass)));
       }
       if (paused) break;
       step.finishedAt = new Date().toISOString();

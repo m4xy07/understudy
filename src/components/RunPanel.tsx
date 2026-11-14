@@ -131,7 +131,9 @@ function stepSymbol(s: RunStep): { symbol: string; word: string; cls: string } {
 }
 
 function progressLine(p: NonNullable<RunStatus["progress"]>): string {
-  const lead = p.total && p.total > 0 ? `${p.done} of ${p.total} model calls finished` : `${p.done} model calls finished so far`;
+  const lead = p.total && p.total > 0
+    ? `${p.done} of ${p.total} model ${p.total === 1 ? "call" : "calls"} finished`
+    : `${p.done} model ${p.done === 1 ? "call" : "calls"} finished so far`;
   const parts = [
     p.cached ? `${p.cached} from the cache` : null,
     p.retry ? `${p.retry} will be retried` : null,

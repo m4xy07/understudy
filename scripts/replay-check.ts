@@ -8,7 +8,7 @@ import fs from "node:fs";
 import { db } from "@/lib/db/client";
 import { defaultPackId } from "@/lib/pack";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
-import { executeRun, startRun } from "@/lib/pipeline/run";
+import { runToEnd, SCRIPT_RUN } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
 import { listGapQuestions } from "@/lib/db/queries";
 import { startRecording, stopRecording } from "@/lib/model/client";
@@ -23,8 +23,7 @@ async function main() {
   process.env.MODEL_DISABLED = "1";
   const ws = (await createDemoWorkspace(arg("--pack") ?? defaultPackId())).id;
   const rec = startRecording();
-  const { runId } = await startRun(ws);
-  const run = await executeRun(ws, runId);
+  const run = await runToEnd(ws, SCRIPT_RUN);
   stopRecording();
 
   const batches = (await getExtraction(ws))?.batches ?? [];
