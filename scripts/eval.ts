@@ -4,13 +4,16 @@
 // writes docs/EVALUATION.<pack>.md. Notes on the numbers come from docs/eval-notes/<pack>.md.
 // Exits 1 and leaves the report alone when any extraction batch failed (--allow-failed writes it).
 // The extraction prompt comes from ATTEST_PROMPT (v2 = two passes, r2 = the Round 2 prompt), then the pack.
-// Usage: pnpm tsx scripts/eval.ts [--pack <id>] [--keep] [--no-write] [--no-support] [--verbose] [--allow-failed]
+// --scores also runs the stand-in successor for every role the pack tests and prints B, C and K
+// before any answer (more model calls: the Lacuna test step).
+// Usage: pnpm tsx scripts/eval.ts [--pack <id>] [--keep] [--no-write] [--no-support] [--verbose] [--allow-failed] [--scores]
 import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/lib/db/client";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
 import { getExtraction, reconstruct, verify } from "@/lib/attest";
+import { buildInventory, runTest } from "@/lib/lacuna";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
 import { formatReport } from "@/lib/attest/core/evaluate";
 import { modelTag } from "@/lib/model/client";
@@ -56,6 +59,17 @@ async function main() {
       "recall per entity: " +
         Object.entries(rep.perEntity).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, x]) => `${k} ${x.matched}/${x.expected}`).join(", "),
     );
+    const scoreLines: string[] = [];
+    if (args.has("--scores")) {
+      const t3 = Date.now();
+      await buildInventory(ws);
+      for (const role of pack.testRoles) {
+        const t = await runTest(ws, role);
+        const sc = t.scores;
+        scoreLines.push(`${role}: B ${sc.b} \u00b7 C ${Math.round(sc.c * 100)}% \u00b7 K ${sc.k == null ? "n/a" : Math.round(sc.k * 100) + "%"}`);
+      }
+      console.log(`scores before answers (${Date.now() - t3} ms): ${scoreLines.join("; ")}`);
+    }
     if (args.has("--verbose")) {
       for (const f of cons?.firings ?? []) console.log(`  ${f.rule} ${f.entity}/${f.attribute} = ${f.value} :: ${f.detail}`);
       for (const m of rep.supersessions.missing) console.log(`  missed supersession ${m.entity}/${m.attribute}: ${m.old} -> ${m.new}`);
@@ -85,6 +99,7 @@ async function main() {
         `- Model: \`${modelTag()}\` (answers replayed from \`${dataDir}/model_cache.json\` when cached)`,
         `- Extraction: ${e.batches} model batches (${e.cachedBatches} from the cache, ${e.failedBatches} failed), ${t1 - t0} ms; verify incl. support check ${t2 - t1} ms`,
         `- Extraction prompt: \`${r.variant}\` (ATTEST_PROMPT=v2|r2); consolidation: ${consLine}`,
+        ...(scoreLines.length ? [`- Stand-in successor before any answer: ${scoreLines.join("; ")}`] : []),
         `- Verify: ${v.checked} claims, ${v.fromRecord} from record, ${v.corroborated} corroborated, ${v.inferred} inferred, ${v.dropped} drafts dropped, ${v.superseded} superseded, ${v.conflicting} conflicting, ${v.firings} rule firings, support check ${v.supportChecked} checked / ${v.supportLowered} lowered`,
         "",
         ...(notes.length ? [...notes, ""] : []),

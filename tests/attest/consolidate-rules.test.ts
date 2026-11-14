@@ -45,6 +45,40 @@ describe("Round 2 false conflicts", () => {
     const side = claim({ value: "2026-12-12 (kit inspection)", authorId: "p-2", validFrom: "2026-10-03T10:00:00.000Z" });
     expect(comparable(own, side)).toBe(false);
   });
+
+  it("firmware-rollback / status: two compatible statements by one person, the newer in a weaker source", () => {
+    // Round 2: a commit ("known-good build", authority 2) and a later Slack message ("keep as
+    // rollback target", authority 1) by the same person conflicted under rule 4.
+    const commit = claim({ entity: "firmware-rollback", attribute: "status", value: "v2.3.1 known-good build",
+      sourceKinds: ["github"], authorId: "p-1", validFrom: "2026-09-20T10:00:00.000Z" });
+    const chat = claim({ entity: "firmware-rollback", attribute: "status", value: "keep v2.3.1 as rollback target until after competition",
+      sourceKinds: ["slack"], authorId: "p-1", validFrom: "2026-10-02T10:00:00.000Z" });
+    const { claims, firings } = applySupersession([commit, chat], pack);
+    expect(states(claims)).toEqual(["active", "active"]);
+    expect(firings).toEqual([]);
+  });
+
+  it("one person's two statuses about different things are not versions of each other", () => {
+    const a = claim({ entity: "sponsor", attribute: "status", value: "BOM added", sourceKinds: ["slack"], authorId: "p-1", validFrom: "2026-10-01T10:00:00.000Z" });
+    const b = claim({ entity: "sponsor", attribute: "status", value: "quote received", sourceKinds: ["slack"], authorId: "p-1", validFrom: "2026-10-05T10:00:00.000Z" });
+    expect(states(applySupersession([a, b], pack).claims)).toEqual(["active", "active"]);
+  });
+});
+
+describe("restatements that still count", () => {
+  it("the same person updating the same thing in an equal source supersedes", () => {
+    const a = claim({ entity: "sponsor", attribute: "status", value: "quote requested", sourceKinds: ["slack"], authorId: "p-1", validFrom: "2026-10-01T10:00:00.000Z" });
+    const b = claim({ entity: "sponsor", attribute: "status", value: "quote received", sourceKinds: ["slack"], authorId: "p-1", validFrom: "2026-10-05T10:00:00.000Z" });
+    expect(states(applySupersession([a, b], pack).claims)).toEqual(["superseded", "active"]);
+  });
+
+  it("a board field against the same person's later chat message is still flagged (rule 4)", () => {
+    const board = claim({ entity: "sponsor", attribute: "status", value: "In progress", sourceKinds: ["tasks_csv"], origin: "structured", authorId: "p-1", validFrom: "2026-10-01T10:00:00.000Z" });
+    const chat = claim({ entity: "sponsor", attribute: "status", value: "done and sent", sourceKinds: ["slack"], authorId: "p-1", validFrom: "2026-10-05T10:00:00.000Z" });
+    const { claims, firings } = applySupersession([board, chat], pack);
+    expect(states(claims)).toEqual(["conflicting", "conflicting"]);
+    expect(firings).toEqual([{ rule: 4, olderId: board.id, newerId: chat.id }]);
+  });
 });
 
 describe("what must still fire", () => {

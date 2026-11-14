@@ -14,7 +14,7 @@ import type {
 import { MULTI_VALUED, type RoleKey } from "@/lib/types";
 import { norm } from "@/lib/text/norm";
 import type { AttestPack } from "./verify";
-import { isOptionsValue, locationKind, sameEvent } from "./consolidate";
+import { contentTokens, isOptionsValue, locationKind, sameEvent } from "./consolidate";
 
 /** One supersession/conflict decision, for the claim_events audit log. */
 export interface RuleFiring {
@@ -149,13 +149,21 @@ export function isDateValue(v: string): boolean {
  *   see ./consolidate), so the date of one event never conflicts with the date of another;
  * - owner: always; location: only the same kind of location (a room and a repo path are two facts);
  * - never: a folded list of options ("Options: A or B"), which states no single value;
- * - procedure, status, decision: only a restatement, i.e. the same author, a reply / quote link
- *   between the cited segments;
+ * - procedure, status, decision: only a restatement. A reply / quote link between the cited
+ *   segments always counts. The same author counts when one side is a board or calendar field;
+ *   for two pieces of prose only when the values share a content word (they are about the same
+ *   thing) and the newer one is not from a source with less authority (prose in a weaker source
+ *   is another facet, not a correction);
  * - never: two structured rows (two board cards are two items), claims sharing a cited segment,
  *   or one person's statements made at the same moment;
  * - risk, access: never (several risks or credential names per entity are normal).
  */
-export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segment>): boolean {
+export function comparable(
+  a: Claim,
+  b: Claim,
+  segmentsById?: Map<string, Segment>,
+  pack?: Pick<AttestPack, "sourceAuthority">,
+): boolean {
   const strip = (v: string) => norm(v).replace(/\b(the|a|an)\b/g, " ").replace(/\s+/g, " ").trim();
   const va = strip(a.value);
   const vb = strip(b.value);
@@ -187,8 +195,17 @@ export function comparable(a: Claim, b: Claim, segmentsById?: Map<string, Segmen
       return sameEvent(a.value, b.value) && locationKind(a.value) === locationKind(b.value);
     case "procedure":
     case "status":
-    case "decision":
-      return sameAuthor(a, b) || linked(a, b, segmentsById);
+    case "decision": {
+      if (linked(a, b, segmentsById)) return true;
+      if (!sameAuthor(a, b)) return false;
+      if (a.origin === "structured" || b.origin === "structured") return true;
+      const ta = contentTokens(a.value);
+      const tb = new Set(contentTokens(b.value));
+      if (!ta.some((t) => tb.has(t))) return false;
+      if (!pack) return true;
+      const [older, newer] = timeOf(a.validFrom) <= timeOf(b.validFrom) ? [a, b] : [b, a];
+      return authorityOf(newer, pack) >= authorityOf(older, pack);
+    }
     default:
       return false;
   }
@@ -250,7 +267,7 @@ export function applySupersession(
         const a = sorted[i]; // older (or same time)
         const b = sorted[j]; // newer (or same time)
         if (norm(a.value) === norm(b.value)) continue;
-        if (!comparable(a, b, segmentsById)) continue;
+        if (!comparable(a, b, segmentsById, pack)) continue;
         const aa = authorityOf(a, pack);
         const ab = authorityOf(b, pack);
         if (timeOf(a.validFrom) === timeOf(b.validFrom)) {

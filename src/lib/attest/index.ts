@@ -22,7 +22,7 @@ import type { Attribute, Claim, ResponsibilityKind, ReviewTier, RoleKey, Segment
 import { extractClaims, type BatchReport } from "./core/extract";
 import { structuredClaims, matchEntity as matchPackEntity } from "./core/structured";
 import { OTHER_ENTITY, resolvePromptVariant, type DraftClaim, type ExtractionPack, type OffListClaim, type PromptVariant } from "./core/schema";
-import { consolidate, type ConsolidationFiring, type ConsolidationRule } from "./core/consolidate";
+import { consolidate, exampleValues, type ConsolidationFiring, type ConsolidationRule } from "./core/consolidate";
 import {
   claimId as coreClaimId,
   intersectRoleSets,
@@ -193,6 +193,12 @@ async function entityKindsFor(ws: string, pack: Pick<AttestPack, "roleTemplates"
 
 const DONE_STATUS = /^(done|closed|complete|completed|cancelled|canceled|resolved)$/i;
 export const EXTRACT_MAX_CHARS = 5_000;
+/**
+ * Batch size of the two-pass candidate prompt. Smaller than Round 2 on purpose: in a dense chat
+ * batch the model skips short messages, and a missed message is a missed claim. More calls, each
+ * shorter; the size is part of every candidate cache key.
+ */
+export const EXTRACT_MAX_CHARS_V2 = 3_000;
 
 /** Normalise deadline values to ISO dates where the value is one date; slug unknown task entities. */
 function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): DraftClaim[] {
@@ -248,7 +254,7 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
       // ~1,700 tokens of segments per call: answers are output-bound (~30 tokens/s on OpenRouter,
       // 50-70 s measured for a full batch), inside the 120 s timeout. The batch size is part of every
       // extraction cache key: changing it makes the committed demo cache miss until precompute reruns.
-      maxChars: EXTRACT_MAX_CHARS,
+      maxChars: variant === "v2" ? EXTRACT_MAX_CHARS_V2 : EXTRACT_MAX_CHARS,
       roleOrder: pack.roleOrder,
       skipKinds: EXTRACTION_SKIP_KINDS,
       authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
@@ -276,7 +282,13 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
   const normalised = normaliseDrafts([...structured, ...modelDrafts], segsById);
   // Second pass (code only): tidy the candidates before the verifier and the rules see them.
   const pass2 = (opts.consolidate ?? consolidationOn(variant))
-    ? consolidate(normalised, { entities: xpack.entities, segmentsById: segsById, roleOrder: pack.roleOrder })
+    ? consolidate(normalised, {
+        entities: xpack.entities,
+        segmentsById: segsById,
+        roleOrder: pack.roleOrder,
+        // Only the candidate prompt prints these examples; the Round 2 prompt has its own.
+        exampleValues: variant === "v2" ? exampleValues(xpack.promptExamples) : [],
+      })
     : null;
   const drafts = pass2 ? pass2.drafts : normalised;
   const modelUsed = batches.some((b) => b.ok);

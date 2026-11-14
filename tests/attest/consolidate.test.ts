@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   consolidate,
   contentTokens,
+  exampleValues,
   eventOf,
   isOptionsValue,
   locationKind,
@@ -158,8 +159,8 @@ describe("rule: bind dates and places to named events", () => {
   });
 
   it("a date for another, unlisted event keeps its entity and carries the event in its value", () => {
-    const s = seg({ text: "Marquee setup is on 30 April." });
-    const r = run([draft("open-day", "deadline", "2026-04-30", [[s, "Marquee setup is on 30 April"]], { event: "marquee setup" })], [s]);
+    const s = seg({ text: "Marquee setup for the open day is on 30 April." });
+    const r = run([draft("open-day", "deadline", "2026-04-30", [[s, "Marquee setup for the open day is on 30 April"]], { event: "marquee setup" })], [s]);
     expect(r.drafts[0]).toMatchObject({ entity: "open-day", value: "2026-04-30 (marquee setup)" });
     expect(eventOf(r.drafts[0].value)).toBe("marquee setup");
   });
@@ -171,6 +172,35 @@ describe("rule: bind dates and places to named events", () => {
     const written = draft("open-day", "deadline", "2026-04-30", [[s, "Marquee goes up soon"]], { event: "marquee" });
     const r = run([none, cadence, written], [s]);
     expect(r.drafts.map((d) => d.value)).toEqual(["2026-05-02", "every spring", "2026-04-30"]);
+  });
+
+  it("a date, place or owner whose text never names the chosen entity moves to the entity it names, or to other", () => {
+    const roster = seg({ text: "Posts this year. Sam Okoye: chair. Dee Park: treasurer.", thread: "notes/posts.md" });
+    const gate = seg({ text: "The gate key hangs in the tool store.", thread: "Garden chat" });
+    const reply = seg({ text: "Yes, the 14th of March 2026.", thread: "Garden chat", meta: { replyTo: "seg_parent" } });
+    const parent = seg({ id: "seg_parent", text: "Is the open day still on the 14th?", thread: "Garden chat" });
+    const r = run(
+      [
+        draft("watering", "owner", "Sam Okoye", [[roster, "Sam Okoye: chair"]]),
+        draft("watering", "owner", "Dee Park", [[roster, "Dee Park: treasurer"]]),
+        draft("plot-booking", "location", "the tool store", [[gate, "The gate key hangs in the tool store"]]),
+        draft("open-day", "deadline", "2026-03-14", [[reply, "the 14th of March 2026"]]),
+      ],
+      [roster, gate, reply, parent],
+    );
+    expect(r.drafts.map((d) => d.entity)).toEqual(["other", "other", "late-entry", "open-day"]);
+    // The gate key is moved by the re-file rule (its quote names another entity by a phrase);
+    // the two roster owners have no entity to go to, so they go to "other".
+    expect(r.counts.refile_entity).toBe(1);
+    expect(r.counts.bind_event).toBe(2);
+    expect(r.firings.find((f) => f.rule === "bind_event")?.detail).toContain("never names watering");
+  });
+
+  it("an owner named in a text about the entity stays", () => {
+    const s = seg({ text: "Sam looks after the pump and the hoses." });
+    const r = run([draft("watering", "owner", "Sam", [[s, "Sam looks after the pump"]])], [s]);
+    expect(r.drafts[0].entity).toBe("watering");
+    expect(r.counts.bind_event).toBe(0);
   });
 
   it("values with different events are different facts; without events they are the same event", () => {
@@ -205,6 +235,12 @@ describe("rule: fold considered and rejected options into one claim", () => {
     expect(r.drafts.filter((d) => d.attribute === "location")).toHaveLength(0);
     expect(r.drafts.filter((d) => d.attribute === "status")).toHaveLength(1);
     expect(r.counts.fold_options).toBe(1);
+  });
+
+  it("a value that offers a choice is not settled, whatever stance the model gave it", () => {
+    const s = seg({ text: "The open day will be in the car park or the old orchard." });
+    const r = run([draft("open-day", "location", "the car park or the old orchard", [[s, "in the car park or the old orchard"]])], [s]);
+    expect(r.drafts.map((d) => [d.attribute, d.value])).toEqual([["decision", "Options: the car park or the old orchard"]]);
   });
 
   it("a decided value is never folded, and options never cross role sets", () => {
@@ -242,13 +278,28 @@ describe("rule: location kind", () => {
   });
 
   it("reports an entity that has locations of more than one kind", () => {
-    const s = seg({ text: "Plans are in plots/ and the tools are in Shed 3." });
+    const s = seg({ text: "Watering plans are in plots/ and the tools are in Shed 3." });
     const r = run(
       [draft("watering", "location", "plots/", [[s, "Plans are in plots/"]]), draft("watering", "location", "Shed 3", [[s, "tools are in Shed 3"]])],
       [s],
     );
     expect(r.counts.location_kind).toBe(1);
     expect(r.firings.find((f) => f.rule === "location_kind")?.detail).toContain("path, place");
+  });
+});
+
+describe("rule: example echo", () => {
+  it("drops a candidate whose value repeats a prompt example, and nothing else", () => {
+    const s = seg({ text: "The pump is waiting for a new seal." });
+    const values = exampleValues({ status: 'value "waiting for seeds", statement "The herb bed is waiting for seeds."' });
+    expect(values).toEqual(["waiting for seeds"]);
+    const drafts = [
+      draft("watering", "status", "Waiting for seeds", [[s, "The pump is waiting"]]),
+      draft("watering", "status", "waiting for a new seal", [[s, "waiting for a new seal"]]),
+    ];
+    const r = consolidate(drafts, { entities, segmentsById: new Map([[s.id, s]]), roleOrder: ORDER, exampleValues: values });
+    expect(r.drafts.map((d) => d.value)).toEqual(["waiting for a new seal"]);
+    expect(r.counts.example_echo).toBe(1);
   });
 });
 
@@ -259,7 +310,7 @@ describe("consolidate", () => {
     const a = run(drafts, [s]);
     const b = run(drafts, [s]);
     expect(a).toEqual(b);
-    expect(Object.keys(a.counts).sort()).toEqual(["bind_event", "fold_options", "location_kind", "merge_duplicates", "refile_entity"]);
+    expect(Object.keys(a.counts).sort()).toEqual(["bind_event", "example_echo", "fold_options", "location_kind", "merge_duplicates", "refile_entity"]);
   });
 
   it("treats a draft without stance or event (the Round 2 shape) as decided", () => {

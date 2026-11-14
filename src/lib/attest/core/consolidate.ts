@@ -6,26 +6,32 @@
 // verifier and the rules see them:
 //   1. refile_entity     a candidate whose quote names another pack entity, and whose cited text
 //                        does not name the entity the model chose, moves to the entity it names;
-//   2. bind_event        a date or place that is for something other than the entity's own event
-//                        moves to the entity its `event` words name, or keeps its entity with the
-//                        event written after the value: "2026-08-02 (stall)". Two values with
-//                        different events are different facts and are never compared;
-//   3. fold_options      considered, rejected and open options for one entity and attribute fold
-//                        into one `decision` claim, "Options: A or B", with every citation kept;
+//   2. bind_event        a date, place or owner stays on its entity only when its `event` words or
+//                        the text it was read from name that entity. A date or place for another
+//                        event keeps its entity with the event written after the value,
+//                        "2026-08-02 (stall)", and values with different events are never
+//                        compared; a claim whose text never names its entity moves to the entity
+//                        the text names, or to "other";
+//   3. fold_options      considered, rejected and open options for one entity and attribute, and
+//                        values that offer a choice ("A or B"), fold into one `decision` claim,
+//                        "Options: A or B", with every citation kept;
 //   4. merge_duplicates  the same fact said twice by one person inside one role set becomes one
 //                        claim with the most specific value and the union of the citations;
 //   5. location_kind     a place, a repo path, a URL and an account are different kinds of
 //                        location and are never compared (read by ./rules through `locationKind`).
+// Before these, example_echo drops a candidate whose value is a value from the prompt's own
+// examples: the examples describe a made-up setting, so an echo of one is never a fact.
 // Board and calendar rows (origin "structured") are never touched: their fields are not prose.
 import type { Attribute, RoleKey, Segment } from "@/lib/types";
 import { norm } from "@/lib/text/norm";
 import { isWrittenDateDeadline } from "../dates";
 import { OTHER_ENTITY, type DraftCitation, type DraftClaim, type PackEntity } from "./schema";
 
-export type ConsolidationRule = "refile_entity" | "bind_event" | "fold_options" | "merge_duplicates" | "location_kind";
+export type ConsolidationRule =
+  | "example_echo" | "refile_entity" | "bind_event" | "fold_options" | "merge_duplicates" | "location_kind";
 
 export const CONSOLIDATION_RULES: readonly ConsolidationRule[] = [
-  "refile_entity", "bind_event", "fold_options", "merge_duplicates", "location_kind",
+  "example_echo", "refile_entity", "bind_event", "fold_options", "merge_duplicates", "location_kind",
 ];
 
 /** One consolidation decision, for the evaluation report and the tests. */
@@ -43,6 +49,18 @@ export interface ConsolidateOptions {
   segmentsById: Map<string, Segment>;
   /** The pack's role order (pack.roleOrder). */
   roleOrder: readonly RoleKey[];
+  /** Values printed as examples in the prompt (see `exampleValues`). A candidate that repeats one is dropped. */
+  exampleValues?: readonly string[];
+}
+
+/** The `value "..."` parts of a pack's prompt example lines. */
+export function exampleValues(examples: Partial<Record<Attribute, string>> | undefined): string[] {
+  const out: string[] = [];
+  for (const line of Object.values(examples ?? {})) {
+    const m = /value\s+"([^"]+)"/.exec(line ?? "");
+    if (m) out.push(m[1]);
+  }
+  return out;
 }
 
 export interface ConsolidationResult {
@@ -279,20 +297,38 @@ function refile(d: DraftClaim, ctx: Ctx, firings: ConsolidationFiring[]): DraftC
 }
 
 // ---------------------------------------------------------------------------------------------
-// Rule 2: bind dates and places to named events
+// Rule 2: bind dates, places and owners to the entity and event they are for
+
+const BOUND: readonly Attribute[] = ["deadline", "location", "owner"];
+
+/** What the claim was read from: its quotes, the cited segments, their thread names and the messages they reply to. */
+function contextOf(d: DraftClaim, ctx: Ctx): string {
+  const parts: string[] = [quotesOf(d)];
+  for (const s of citedSegments(d, ctx)) {
+    parts.push(s.thread, s.text);
+    const to = s.meta?.replyTo;
+    const parent = typeof to === "string" ? ctx.segs.get(to) : undefined;
+    if (parent) parts.push(parent.text);
+  }
+  return parts.join("\n");
+}
 
 /**
- * A decided date or place with `event` words. When the words name the claim's own entity (they
- * share a content word with its key, label or aliases) nothing changes. When they name another
- * entity and nothing in the quote names the chosen one, the claim moves there. Otherwise the
- * claim stays and its value carries the event: "2026-08-02 (stall)".
+ * A decided date, place or owner stays on the entity the model chose only when something ties it
+ * there: the `event` words name the entity (they share a content word with its key, label or
+ * aliases), or the text it was read from names the entity. Otherwise:
+ * - `event` words that name another entity move the claim there;
+ * - a date or place for an event of its own keeps its entity and carries the event in its value,
+ *   "2026-08-02 (stall)", so it is never compared with the entity's own date or place;
+ * - a claim whose text never names the chosen entity moves to the entity the text does name, or
+ *   to "other" (a list of who holds which post is not the owner of whatever the model filed it under).
  */
 function bindEvent(d: DraftClaim, ctx: Ctx, firings: ConsolidationFiring[]): DraftClaim {
-  if (!isCandidate(d) || stanceOf(d) !== "decided") return d;
-  if (d.attribute !== "deadline" && d.attribute !== "location") return d;
+  if (!isCandidate(d) || stanceOf(d) !== "decided" || !BOUND.includes(d.attribute)) return d;
   if (d.entity === OTHER_ENTITY) return d;
-  const event = (d.event ?? "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
-  if (!event || eventOf(d.value)) return d;
+  const chosen = ctx.byKey.get(d.entity);
+  if (!chosen) return d;
+  if (d.attribute !== "owner" && eventOf(d.value)) return d;
   if (d.attribute === "deadline") {
     if (!DATE_VALUE.test(d.value.trim())) return d; // a cadence is never compared with a date
     // A date that is only the day its source was written is dropped by the verifier: leave it bare.
@@ -303,36 +339,52 @@ function bindEvent(d: DraftClaim, ctx: Ctx, firings: ConsolidationFiring[]): Dra
     }));
     if (isWrittenDateDeadline(d.value, cited)) return d;
   }
-  const chosen = ctx.byKey.get(d.entity);
-  if (!chosen) return d;
+  const what = d.attribute === "deadline" ? "date" : d.attribute === "location" ? "place" : "owner";
+  const event = d.attribute === "owner" ? "" : (d.event ?? "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
   const words = contentTokens(event);
-  if (!words.length) return d;
   const own = new Set(namesOf(chosen).flatMap(contentTokens));
   if (words.some((w) => own.has(w))) return d;
-  // The value itself often repeats the event ("Hall B" for the event "Hall B"): not a separate event.
-  const valueWords = new Set(contentTokens(d.value));
-  if (words.every((w) => valueWords.has(w))) return d;
 
-  const other = bestNamed(event, ctx.entities, d.entity);
-  if (other && namedScore(quotesOf(d), chosen) === 0) {
-    firings.push({
-      rule: "bind_event",
-      entity: other.key,
-      attribute: d.attribute,
-      value: d.value,
-      detail: `moved from ${d.entity}: the ${d.attribute === "deadline" ? "date" : "place"} is for "${event}"`,
-    });
-    return { ...d, entity: other.key, entityRaw: null };
+  const quote = quotesOf(d);
+  const grounded = namedScore(contextOf(d, ctx), chosen) > 0;
+  // The value itself often repeats the event ("Hall 2" for the event "Hall 2"): not a separate event.
+  const valueWords = new Set(contentTokens(d.value));
+  const ownEvent = words.length > 0 && !words.every((w) => valueWords.has(w));
+  if (ownEvent) {
+    const other = bestNamed(event, ctx.entities, d.entity);
+    if (other && namedScore(quote, chosen) === 0) {
+      firings.push({
+        rule: "bind_event",
+        entity: other.key,
+        attribute: d.attribute,
+        value: d.value,
+        detail: `moved from ${d.entity}: the ${what} is for "${event}"`,
+      });
+      return { ...d, entity: other.key, entityRaw: null };
+    }
+    if (grounded) {
+      const value = `${d.value.trim()} (${event})`;
+      firings.push({
+        rule: "bind_event",
+        entity: d.entity,
+        attribute: d.attribute,
+        value,
+        detail: `kept on ${d.entity} as its own event "${event}", not compared with other ${what}s`,
+      });
+      return { ...d, value };
+    }
   }
-  const value = `${d.value.trim()} (${event})`;
+  if (grounded) return d;
+  const named = bestNamed(quote, ctx.entities, d.entity, 2) ?? bestNamed(contextOf(d, ctx), ctx.entities, d.entity, 2);
+  const target = named?.key ?? OTHER_ENTITY;
   firings.push({
     rule: "bind_event",
-    entity: d.entity,
+    entity: target,
     attribute: d.attribute,
-    value,
-    detail: `kept on ${d.entity} as its own event "${event}", not compared with other ${d.attribute === "deadline" ? "dates" : "places"}`,
+    value: d.value,
+    detail: `moved from ${d.entity}: the text this ${what} was read from never names ${d.entity}`,
   });
-  return { ...d, value };
+  return { ...d, entity: target, entityRaw: null };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -341,6 +393,16 @@ function bindEvent(d: DraftClaim, ctx: Ctx, firings: ConsolidationFiring[]): Dra
 const ATTR_WORD: Partial<Record<Attribute, string>> = {
   decision: "", location: " for where", owner: " for who owns it", deadline: " for when",
 };
+
+/**
+ * A single-valued fact whose value offers a choice ("Hall 2 or the yard") is not settled, whatever
+ * stance the model gave it. Decisions are left alone: "A or B, whichever is free" can be the decision.
+ */
+function listsAlternatives(d: DraftClaim): boolean {
+  if (d.attribute === "decision") return false;
+  if (d.attribute === "deadline" && !DATE_VALUE.test(d.value.trim())) return false;
+  return /\S\s+or\s+\S/i.test(baseValue(d.value));
+}
 
 function distinctValues(ds: DraftClaim[]): string[] {
   const out: string[] = [];
@@ -362,7 +424,8 @@ function foldOptions(drafts: DraftClaim[], ctx: Ctx, firings: ConsolidationFirin
   const groups = new Map<string, DraftClaim[]>();
   const keep: (DraftClaim | { fold: string })[] = [];
   for (const d of drafts) {
-    const foldable = isCandidate(d) && stanceOf(d) !== "decided" && FOLDED.includes(d.attribute) && d.entity !== OTHER_ENTITY;
+    const foldable =
+      isCandidate(d) && FOLDED.includes(d.attribute) && d.entity !== OTHER_ENTITY && (stanceOf(d) !== "decided" || listsAlternatives(d));
     if (!foldable) {
       keep.push(d);
       continue;
@@ -524,8 +587,8 @@ function locationKinds(drafts: DraftClaim[], firings: ConsolidationFiring[]): vo
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Run the consolidation rules over a draft list, in order: re-file, bind events, fold options,
- * merge duplicates, then count location kinds. Deterministic: the same drafts and segments give
+ * Run the consolidation rules over a draft list, in order: drop example echoes, re-file, bind
+ * events, fold options, merge duplicates, then count location kinds. Deterministic: the same drafts and segments give
  * the same result. Structured drafts pass through unchanged.
  */
 export function consolidate(drafts: DraftClaim[], opts: ConsolidateOptions): ConsolidationResult {
@@ -536,7 +599,19 @@ export function consolidate(drafts: DraftClaim[], opts: ConsolidateOptions): Con
     roleOrder: opts.roleOrder,
   };
   const firings: ConsolidationFiring[] = [];
-  let out = drafts.map((d) => refile(d, ctx, firings));
+  const echoes = new Set((opts.exampleValues ?? []).map(flat).filter(Boolean));
+  let out = drafts.filter((d) => {
+    if (!isCandidate(d) || !echoes.has(flat(d.value))) return true;
+    firings.push({
+      rule: "example_echo",
+      entity: d.entity,
+      attribute: d.attribute,
+      value: d.value,
+      detail: "dropped: the value repeats an example from the prompt, not the text",
+    });
+    return false;
+  });
+  out = out.map((d) => refile(d, ctx, firings));
   out = out.map((d) => bindEvent(d, ctx, firings));
   out = foldOptions(out, ctx, firings);
   out = mergeDuplicates(out, ctx, firings);
