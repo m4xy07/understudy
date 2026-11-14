@@ -153,7 +153,7 @@ Closed attribute list (11): `owner`, `status`, `deadline`, `location`, `procedur
 
 See the file itself; it is the source of truth. Summary: `RoleKey` (a pack-defined string),
 `SourceKind` (`whatsapp | slack | github | tasks_csv | markdown | ics | interview | finding`),
-`SegmentKind` (`message | commit | file | task | note | event | answer | finding`), `Segment`, `Source`,
+`SegmentKind` (`message | commit | file | task | note | event | answer | finding | run`), `Segment`, `Source`,
 `Person`, `Attribute`, `Trust`, `Coverage`, `Claim`, `Citation`, `Responsibility`, `CheckDef`,
 `CheckResult`, `TestRun`, `GapQuestion`, `Snapshot`, `ReadbackItem`.
 
@@ -261,6 +261,56 @@ item; an acknowledgement row records verdicts, role, time and snapshot hash.
 Canary tests: restricted segments in the demo pack carry tokens `CANARY-XXXX`. For every role and every
 surface (handover text, export, stubs, scores, timeline, questions), no token outside that role's
 visibility may appear. Runs as a vitest suite and as a "Leak check" panel in the app.
+
+**Recovery (unreachable leaver; Lacuna with Tether and Attest).** Migration `0007_recovery.sql`; code in
+`src/lib/tether/{graph,traces}.ts`, `src/lib/lacuna/core/{ladder,options}.ts`, `src/lib/lacuna/recovery.ts`.
+Only the approver switches "leaver can't be reached" on or off (`workspaces.leaver_unreachable`, with
+when, why and the successor run that was latest at switch-on); both are in `audit_log`. While it is
+on, the leaver's answer boxes are closed and every open gap question walks three rungs. Each outcome
+is one row in `recovery_steps` (RLS on `role_set`, exactly like `claims`; admin writes only).
+1. *People.* The collaboration graph takes `GraphSegment`, a type with no text field; the query that
+   feeds it never selects `segments.text`. Edges: `reply` 3, `same_thread` 1 (consecutive messages,
+   different authors, at most 30 minutes apart), `co_change` 2 (same path inside the footprint
+   window), `shared_event` 2 if recurring else 1; each instance × recency `max(0.1, 0.5^(ageDays/90))`.
+   Which segments concern an entity comes from the citations of record claims Attest extracted earlier
+   (plus one reply hop), so the graph module reads no message text. A neighbour's score for a gap =
+   wrote + replied + near + files + events + tie; under 1 is left out; a role holder is scored only on
+   segments their own role may see. A person is asked through the role they hold (`role_holders`): a
+   person with no role is shown and not asked; a person whose role is walled off is skipped. "Walled
+   off" has one definition: any live claim that could satisfy the check is hidden from that role
+   (decided from `claim_meta()`). A neighbour row's role set = the roles that can see every segment
+   behind the score ∩ the roles that are not walled off, so a skipped person's role is never in it and
+   cannot read the row, the reason or the fact that they were considered. The reason sentence is
+   built from counts and the entity label only. An answer is masked, stored as an `answer` segment in
+   the source `src_recovery` and as a claim with trust `second_hand`, origin `neighbour_answer`; its
+   role set starts at the upload default cut down to the roles that already see every record on the
+   topic the neighbour can see, and the neighbour may only narrow it (their role and the approver stay).
+   `gap_questions.answered_claim_id` is not touched: the leaver can still be asked later.
+2. *Files and history.* The trace reader reads workflow files (trigger, matrix, steps in file order,
+   secrets by name), the CI run history (`run` segments from `runs.json`: last green run, failing
+   streak, where the failing step sits in the workflow, what did not run), commit sequences on the
+   paths of an entity (newest 8, what changes together, an unfinished last change) and calendar
+   entries (cadence and next date). A trace only combines segments with one identical role set. Each
+   step is `quoted` (its quote must pass Attest's exact-quote check against the cited segment) or
+   `derived` (no quote). The trace goes through `verifyDrafts()` and is stored as a claim with origin
+   `trace` and trust `inferred`, always; a trace where fewer than half of the quoted steps verify is
+   discarded and logged. A trace is attached to a gap only if a claim built from it would make that
+   check Partial under the deterministic stand-in; a check that asks who is never served by a trace.
+3. *Possible answers.* Ranked options come from conflicting claims, from weak claims (neighbour
+   answers, traces), from a calendar cadence, and from model proposals over record claims (every
+   cited claim id is checked in code; ungrounded proposals are dropped). Code alone ranks:
+   Σ trustWeight × authority/3 × recency + 0.5 × (distinct authors − 1), top 3. Options are rows in
+   `recovery_steps` only, never claims, so they cannot change coverage or any score.
+Credit for weaker evidence (`countsFully()` in `core/standin.ts`): a Second-hand claim can cover a
+check of weight 1 or 3; on a blocking check (weight 5) it stays Partial until the approver has
+approved the claim in review; Inferred is always Partial; `ranked_options` is ignored. So recovery
+never lowers B on its own word and never raises K. Recovery claims stay outside Attest's rules
+(supersession, conflicts, corroboration) and are carried over by `verify()` untouched. The before
+and after panel compares the latest successor run with the same gaps answered by the leaver: a
+stored run of the demo when its data carries one, else `projectLeaverRun()` (the scoring rules
+applied to the baseline, no model). `runTest(ws, role, { only })` re-judges the named
+responsibilities and copies the rest from the latest run. `recoverySurfaces(ws, role)` returns
+every recovery text a role can read, for the leak check.
 
 ## 5. Permissions: RLS is the compile boundary
 

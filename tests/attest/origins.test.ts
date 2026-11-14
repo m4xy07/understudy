@@ -25,8 +25,8 @@ describe("extraction skips a person's own words", () => {
     seg({ id: "seg_task", kind: "task", thread: "board", ts: at(4), roleSet: ALL, text: "status: Open" }),
   ];
 
-  it("skip kinds are task, event, answer and finding", () => {
-    expect([...EXTRACTION_SKIP_KINDS].sort()).toEqual(["answer", "event", "finding", "task"]);
+  it("skip kinds are task, event, answer, finding and run", () => {
+    expect([...EXTRACTION_SKIP_KINDS].sort()).toEqual(["answer", "event", "finding", "run", "task"]);
     expect([...DETERMINISTIC_KINDS]).toEqual(["task", "event"]);
     expect([...PERSON_SEGMENT_KINDS]).toEqual(["answer", "finding"]);
   });

@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { getLatestTestRun, getWorkspace, listClaims, listResponsibilities } from "@/lib/db/queries";
-import { createDemoWorkspace } from "@/lib/pipeline/ingest";
+import { createDemoWorkspace, createEmptyWorkspace } from "@/lib/pipeline/ingest";
 import { verify } from "@/lib/attest";
 import { verifyDrafts } from "@/lib/attest/core/verify";
 import { attestPack } from "@/lib/attest";
@@ -56,6 +56,30 @@ afterAll(async () => {
     });
   }
   await sql.end();
+});
+
+describe("edge: a workspace with nothing to work on", () => {
+  it("refuses the switch with a plain message, writes no audit row and stores nothing", async () => {
+    const empty = await createEmptyWorkspace("recovery empty", CLUB_ID);
+    try {
+      expect(await setLeaverUnreachable(empty, true, APPROVER)).toEqual({
+        ok: false, error: "Run the successor test first. There are no gaps to work on yet.",
+      });
+      expect((await recoveryState(empty)).on).toBe(false);
+      expect(await sql`SELECT 1 FROM audit_log WHERE workspace_id = ${empty} AND action = 'recovery_on'`).toHaveLength(0);
+      expect(await sql`SELECT 1 FROM recovery_steps WHERE workspace_id = ${empty}`).toHaveLength(0);
+      expect(await listLadder(empty, APPROVER)).toEqual([]);
+      expect(await recoveryComparison(empty)).not.toBeUndefined();
+      // switching off something that is off is fine and silent
+      expect((await setLeaverUnreachable(empty, false, APPROVER)).ok).toBe(true);
+      expect(await sql`SELECT 1 FROM audit_log WHERE workspace_id = ${empty} AND action = 'recovery_off'`).toHaveLength(0);
+    } finally {
+      await sql.begin(async (tx) => {
+        await tx`SELECT set_config('us.allow_purge', 'on', true)`;
+        await tx`DELETE FROM workspaces WHERE id = ${empty}`;
+      });
+    }
+  });
 });
 
 describe("T-DB-1 (D1): the switch", () => {
