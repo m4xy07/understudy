@@ -469,7 +469,16 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
   const index = entitySegmentIndex(recordClaims, gsegs);
 
   // ---- rung 2 first: traces become claims, then the successor is re-tested for what they touch.
-  const commitEntities = [...new Set(gaps.filter((g) => g.check.attributes.includes("procedure")).flatMap((g) => g.resp.entities))];
+  // Commit sequences are read for the entities of gaps that a procedure can answer, and kept for
+  // every entity that already has one (a rebuild must not retire a stored reading).
+  const keptCommitEntities = (await sql`
+    SELECT DISTINCT detail->>'entity' AS entity FROM recovery_steps
+    WHERE workspace_id = ${ws} AND responsibility_id = ${LIBRARY} AND detail->>'traceKind' = 'commit_sequence'`)
+    .map((r) => String(r.entity ?? "")).filter(Boolean);
+  const commitEntities = [...new Set([
+    ...gaps.filter((g) => g.check.attributes.includes("procedure")).flatMap((g) => g.resp.entities),
+    ...keptCommitEntities,
+  ])].sort();
   let stored: StoredTrace[] = [];
   let traceError: string | null = null;
   try {
@@ -510,16 +519,20 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
 
   // ---- model availability for option proposals (M2), asked once.
   const wantModel = opts.model !== false;
-  const modelUp = wantModel ? await modelAvailable() : false;
+  const modelOff = process.env.LACUNA_MODEL === "off"; // same switch the stand-in honours: no model call at all
+  const modelUp = wantModel && !modelOff ? await modelAvailable() : false;
   const existingModel = new Map<string, OptionCandidate[]>();
+  const existingRulesOnly = new Set<string>();
   if (!wantModel) {
+    // A refresh keeps what the one model pass at switch-on gave: its proposals and its "unavailable" note.
     const kept = await sql`
       SELECT responsibility_id, check_key, detail FROM recovery_steps
-      WHERE workspace_id = ${ws} AND rung = 3 AND kind = 'option'`;
+      WHERE workspace_id = ${ws} AND rung = 3`;
     for (const r of kept) {
-      const d = (typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail) as Partial<OptionDetail>;
-      if (!d.sources?.includes("model") || !d.value || !d.evidence?.length) continue;
+      const d = (typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail) as Partial<OptionDetail> & { rulesOnly?: boolean };
       const k = gapKey(String(r.responsibility_id), String(r.check_key));
+      if (d.rulesOnly === true) existingRulesOnly.add(k);
+      if (!d.sources?.includes("model") || !d.value || !d.evidence?.length) continue;
       existingModel.set(k, [...(existingModel.get(k) ?? []), { value: d.value, source: "model", evidence: d.evidence, why: d.why }]);
     }
   }
@@ -607,9 +620,12 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
         const distinct = new Set(candidates.map((c) => c.value.trim().toLowerCase())).size;
         if (!wantModel) {
           candidates.push(...(existingModel.get(gk) ?? []));
+          rulesOnly = existingRulesOnly.has(gk);
         } else if (distinct < 2) {
           const record = onGap.filter((c) => isRecordOrigin(c.origin) && (c.state === "active" || c.state === "conflicting"));
-          if (record.length > 0) {
+          if (modelOff) {
+            rulesOnly = record.length > 0;
+          } else if (record.length > 0) {
             const proposed = await proposeOptions(ctx, resp, check, q.text, record, !modelUp);
             candidates.push(...proposed.candidates);
             rulesOnly = proposed.unavailable;

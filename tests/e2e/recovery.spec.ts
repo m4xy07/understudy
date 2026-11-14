@@ -80,7 +80,7 @@ test("recovery: the leaver cannot be reached, neighbours answer, traces and opti
     }
     await expect(ladder.getByText("Skipped: no access.", { exact: false }).first()).toBeVisible();
     await expect(ladder.getByText("Not asked: no role in this handover.", { exact: false }).first()).toBeVisible();
-    await expect(ladder.getByText(INFERRED).first()).toBeVisible();
+    await expect(page.getByText(INFERRED).first()).toBeVisible();
     await expect(ladder.getByText(OPTIONS).first()).toBeVisible();
     await expect(ladder.getByText("Files and history cannot say who. Skipped.").first()).toBeVisible();
   });
