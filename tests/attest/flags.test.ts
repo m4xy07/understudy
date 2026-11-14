@@ -31,14 +31,46 @@ describe("flagRoleSets (pure)", () => {
     expect(flags.get("fin")).toBeNull();   // its own role set already equals the shared one
   });
 
-  it("a three-way conflict is one component: the flag is the intersection of all sides", () => {
+  it("with more than two sides, each claim is visible to the roles that can read one of its counterparts", () => {
+    const b: RoleKey[] = ["president", "tech_lead", "leaver"];
     const flags = flagRoleSets(
-      [c("a", ALL), c("b", ["president", "tech_lead", "leaver"]), c("d", FINANCE)],
+      [c("a", ALL), c("b", b), c("d", FINANCE)],
       [{ rule: 3, olderId: "a", newerId: "b" }, { rule: 4, olderId: "b", newerId: "d" }],
     );
-    expect(flags.get("a")).toEqual(["president", "leaver"]);
-    expect(flags.get("b")).toEqual(["president", "leaver"]);
-    expect(flags.get("d")).toEqual(["president", "leaver"]);
+    expect(flags.get("a")).toEqual(b);                       // a conflicts with b only
+    expect(flags.get("b")).toBeNull();                       // every role of b reads a
+    expect(flags.get("d")).toEqual(["president", "leaver"]); // d conflicts with b only
+    // No role is left looking at a conflicting claim with no visible counterpart.
+    const claims = [c("a", ALL), c("b", b), c("d", FINANCE)];
+    const edges: [string, string][] = [["a", "b"], ["b", "d"]];
+    for (const role of ALL) {
+      const sees = (id: string) => (flags.get(id) ?? claims.find((x) => x.id === id)!.roleSet).includes(role);
+      for (const x of claims) {
+        if (!sees(x.id)) continue;
+        const others = edges.filter((e) => e.includes(x.id)).map((e) => (e[0] === x.id ? e[1] : e[0]));
+        expect(others.some(sees), `${role} sees ${x.id} with a counterpart`).toBe(true);
+      }
+    }
+  });
+
+  it("an open conflict keeps showing when a further, hidden claim also disagrees", () => {
+    // Two open sides conflict with each other; a third, approver-only claim conflicts with both.
+    const flags = flagRoleSets(
+      [c("a", ALL), c("b", ALL), c("h", ["president"])],
+      [{ rule: 3, olderId: "a", newerId: "b" }, { rule: 3, olderId: "a", newerId: "h" }, { rule: 3, olderId: "b", newerId: "h" }],
+    );
+    expect(flags.get("a")).toBeNull();
+    expect(flags.get("b")).toBeNull();
+    expect(flags.get("h")).toBeNull();
+  });
+
+  it("two open claims that agree, both disputed only by a hidden one, are hidden from the roles that cannot read it", () => {
+    const flags = flagRoleSets(
+      [c("a", ALL), c("b", ALL), c("h", FINANCE)],
+      [{ rule: 3, olderId: "a", newerId: "h" }, { rule: 3, olderId: "b", newerId: "h" }],
+    );
+    expect(flags.get("a")).toEqual(FINANCE);
+    expect(flags.get("b")).toEqual(FINANCE);
   });
 
   it("T20: a superseded claim whose winner is hidden is hidden from that role too", () => {

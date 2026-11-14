@@ -311,9 +311,10 @@ are deleted and stand-in notes citing those claims are blanked; then the pipelin
 snapshot payload and hash are not touched. This is the only code path that adds a role to a stored
 segment (widen), and no path does it without the approver.
 
-**Flag visibility (Attest, `core/flags.ts`).** A role sees a conflict only if it can see every claim
-in it; otherwise it sees none of them (a stub, and the check reads Restricted). The same for a
-superseded claim whose winner the role cannot see. `verify()` writes `claims.flag_role_set`
+**Flag visibility (Attest, `core/flags.ts`).** A role sees a conflicting claim only if it can also see
+a claim it conflicts with; a claim whose every counterpart is hidden is hidden too (a stub, and the
+check reads Restricted). With two sides: a role sees a conflict only if it can see every side. The
+same for a superseded claim whose winner the role cannot see. `verify()` writes `claims.flag_role_set`
 (null = nothing extra to hide); approval copies it to `snapshot_claims`. The approver settles the
 conflict in Review: rejecting one side clears the flag and the other side is visible again.
 

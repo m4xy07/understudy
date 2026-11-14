@@ -132,7 +132,11 @@ function isLive(state: ClaimState): boolean {
   return state === "active" || state === "conflicting";
 }
 
-/** Is there an active claim on the responsibility that satisfies the check but the role cannot see? */
+/**
+ * Is there a live claim on the responsibility that satisfies the check but the role cannot see?
+ * A conflicting claim counts too: a conflict with a side the role cannot read is hidden from it
+ * whole (flag visibility), and the check then reads Restricted, not Missing.
+ */
 function hiddenEvidence(
   resp: Pick<Responsibility, "entities">,
   check: LacunaCheck,
@@ -140,7 +144,7 @@ function hiddenEvidence(
   allClaimsMeta: ClaimMetaIndex,
 ): boolean {
   for (const [, m] of metaEntries(allClaimsMeta)) {
-    if (m.state !== "active") continue;
+    if (m.state !== "active" && m.state !== "conflicting") continue;
     if (!resp.entities.includes(m.entity)) continue;
     if (!check.attributes.includes(m.attribute)) continue;
     if (m.roleSet.includes(role)) continue;

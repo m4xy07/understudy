@@ -1,9 +1,13 @@
 // Flag visibility: who may see a claim that takes part in a conflict or a supersession. Pure.
 // Contract: docs/ARCHITECTURE.md section 4a, docs/round3/specs/02_confidentiality.md section 10.
 //
-// Rule: a role sees a conflict only if it can see every claim in it. Otherwise it sees none of
-// them. Showing the visible side without its flag would let the role act on a value the record
-// disputes; showing the flag would tell the role that a hidden claim exists and disagrees.
+// Rule: a role sees a conflicting claim only if it can also see a claim it conflicts with.
+// A claim whose every counterpart is hidden from the role is hidden too: showing it without its
+// flag would let the role act on a value the record disputes, and showing the flag would tell
+// the role that a hidden claim exists and disagrees. With two sides this is "the role sees a
+// conflict only if it can see every side". With more sides, a role that can read two of them
+// still sees those two as a conflict (each explains the other's flag); a further hidden side
+// adds nothing the role can notice.
 // The same holds for a superseded claim: its "Superseded" note and link point at the winner, so
 // a role that cannot see the winner does not see the superseded claim either.
 //
@@ -21,35 +25,25 @@ export function flagRoleSets(claims: readonly FlagClaim[], firings: readonly Rul
   const byId = new Map(claims.map((c) => [c.id, c]));
   const flags = new Map<string, RoleKey[] | null>(claims.map((c) => [c.id, null]));
 
-  // Conflicts (rules 3 and 4): connected components over the firings.
-  const parent = new Map<string, string>();
-  const find = (x: string): string => {
-    let p = parent.get(x) ?? x;
-    if (p !== x) {
-      p = find(p);
-      parent.set(x, p);
-    }
-    return p;
+  // Conflicts (rules 3 and 4): a claim is cut down to the roles that can read at least one of the
+  // claims it conflicts with.
+  const counterparts = new Map<string, Set<string>>();
+  const link = (a: string, b: string) => {
+    const set = counterparts.get(a) ?? new Set<string>();
+    set.add(b);
+    counterparts.set(a, set);
   };
   for (const f of firings) {
     if (f.rule < 3 || !byId.has(f.olderId) || !byId.has(f.newerId)) continue;
-    parent.set(find(f.olderId), find(f.newerId));
+    link(f.olderId, f.newerId);
+    link(f.newerId, f.olderId);
   }
-  const components = new Map<string, string[]>();
-  for (const f of firings) {
-    if (f.rule < 3) continue;
-    for (const id of [f.olderId, f.newerId]) {
-      if (!byId.has(id)) continue;
-      const root = find(id);
-      const list = components.get(root) ?? [];
-      if (!list.includes(id)) list.push(id);
-      components.set(root, list);
-    }
-  }
-  for (const members of components.values()) {
-    let shared: RoleKey[] = [...byId.get(members[0])!.roleSet];
-    for (const id of members.slice(1)) shared = intersect(shared, byId.get(id)!.roleSet);
-    for (const id of members) flags.set(id, sameSet(shared, byId.get(id)!.roleSet) ? null : shared);
+  for (const [id, others] of counterparts) {
+    const own = byId.get(id)!.roleSet;
+    const explained = new Set<RoleKey>();
+    for (const o of others) for (const r of byId.get(o)!.roleSet) explained.add(r);
+    const shared = own.filter((r) => explained.has(r));
+    flags.set(id, sameSet(shared, own) ? null : shared);
   }
 
   // Supersession (rules 1 and 2): the loser is cut down to the roles that can see the winner.
