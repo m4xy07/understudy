@@ -338,7 +338,8 @@ function otherSettings(): string[] {
     lines.push(`- ${other.name} (\`${other.id}\`), measured on ${s.generatedAt.slice(0, 10)}: ` +
       `${s.grid.checks} checks over every role and output, ${s.grid.failed} failing; ` +
       `classifier precision ${pct(s.classifier.precision)} and recall ${pct(s.classifier.recall)} on ${s.classifier.segments} messages; ` +
-      `key terms caught ${d.catchable.keyTerms} of ${d.catchable.total} catchable rewordings and ${d.hard.keyTerms + d.hard.judgeOnly} of ${d.hard.total} hard ones. ` +
+      `key terms caught ${d.catchable.keyTerms} of ${d.catchable.total} catchable rewordings; of the ${d.hard.total} hard ones, key terms caught ${d.hard.keyTerms} and ` +
+      `${d.judgeAsked ? `the model judge caught ${d.hard.judgeOnly}` : "the model judge was not asked"}. ` +
       `Full write-up: [${reportFile(other.id)}](${reportFile(other.id)}).`);
   }
   return lines.length ? ["## Other settings", "", ...lines, ""] : [];
