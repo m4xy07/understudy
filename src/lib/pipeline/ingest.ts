@@ -10,10 +10,27 @@ import { loadDemoSources } from "@/lib/tether/demo";
 import { fetchPublicRepo, GithubFetchError } from "@/lib/tether/github-fetch";
 import { sha256Hex } from "@/lib/text/norm";
 import { syncRoleHolders } from "@/lib/roles";
+import { applySensitivity, nameParts, packSensitivity, type SensitivityModelCall } from "@/lib/tether/sensitivity";
+import { sensitivityModelCall } from "@/lib/tether/visibility";
 import type { AdapterResult, Person, RoleKey, SourceKind } from "@/lib/types";
 
-export const UPLOAD_LIMIT_BYTES = 5 * 1024 * 1024;
+// The live host refuses a request body over about 4.5 MB before our code runs, so the limit and
+// every message say 4.5 MB.
+export const UPLOAD_LIMIT_BYTES = Math.floor(4.5 * 1024 * 1024);
+export const UPLOAD_LIMIT_MESSAGE = "Upload is over 4.5 MB. Split it or trim it.";
+/** One upload may add this many segments (messages, rows, sections). Larger exports are split. */
+export const UPLOAD_MAX_SEGMENTS = 20_000;
+export const UPLOAD_MAX_FILES = 200;
 export const UPLOAD_KINDS: SourceKind[] = ["whatsapp", "slack", "github", "tasks_csv", "markdown", "ics"];
+/** How an upload kind is named in messages ("Nothing could be read from a.txt as a WhatsApp chat"). */
+export const UPLOAD_KIND_LABEL: Partial<Record<SourceKind, string>> = {
+  whatsapp: "a WhatsApp chat export",
+  slack: "a Slack export",
+  github: "a GitHub export",
+  tasks_csv: "a task board CSV",
+  markdown: "Markdown notes",
+  ics: "a calendar (.ics) file",
+};
 
 export interface StoredSource {
   id: string;
@@ -109,19 +126,42 @@ async function storePeople(ws: string, people: Person[]): Promise<void> {
   }
 }
 
-/** Parse and store several sources with one shared PersonRegistry. */
-export async function ingestSources(ws: string, inputs: IngestInput[], origin: string): Promise<StoredSource[]> {
+export interface IngestOptions {
+  /** The classifier's model call (tests inject one). null: no model, borderline segments are held. */
+  sensitivityCall?: SensitivityModelCall | null;
+  sensitivityBudgetMs?: number;
+}
+
+/**
+ * Parse and store several sources with one shared PersonRegistry. Between parsing and the first
+ * write, the content classifier narrows the role set of sensitive segments (rules, then the model
+ * for borderline ones), so the narrowed role set is the only one ever stored for version 1.
+ */
+export async function ingestSources(ws: string, inputs: IngestInput[], origin: string, opts: IngestOptions = {}): Promise<StoredSource[]> {
   const { identityKey, contactsKey } = keys();
   const { reg } = await registryFor(ws, identityKey);
   const out = ingestAll(
     inputs.map((s) => ({ ...s, sourceId: s.sourceId ?? sourceIdFor(s.kind, s.name) })),
     { identityKey, contactsKey, registry: reg },
   );
+  const pack = await getWorkspacePack(ws);
+  const authorNames: Record<string, string[]> = {};
+  for (const p of out.people) authorNames[p.id] = nameParts([p.displayName, ...p.aliases]);
+  const call = opts.sensitivityCall === undefined ? await sensitivityModelCall() : (opts.sensitivityCall ?? undefined);
+  const classified = await applySensitivity(out.sources, packSensitivity(pack), {
+    knownNames: nameParts(out.people.flatMap((p) => [p.displayName, ...p.aliases])),
+    authorNames,
+    call,
+    budgetMs: opts.sensitivityBudgetMs,
+  });
   await storePeople(ws, out.people);
   // New sources can bring new person records: match the pack's role holders to them.
   await syncRoleHolders(ws);
   const stored: StoredSource[] = [];
-  for (const s of out.sources) stored.push(await storeResult(ws, s, origin));
+  for (const s of classified.sources) stored.push(await storeResult(ws, s, origin));
+  const { decisions: _decisions, ...counts } = classified.report;
+  void _decisions; // counts only in the audit trail: never text, ids or categories
+  await audit(ws, "system", "classify_sensitivity", counts);
   return stored;
 }
 
@@ -146,12 +186,12 @@ export async function createEmptyWorkspace(name = "My handover", packId: string 
 }
 
 /** A private copy of a pack's demo: workspace + all demo sources stored + role holders matched. */
-export async function createDemoWorkspace(packId: string): Promise<{ id: string; sources: StoredSource[] }> {
+export async function createDemoWorkspace(packId: string, opts: IngestOptions = {}): Promise<{ id: string; sources: StoredSource[] }> {
   const pack = getPack(packId);
   if (!pack.demo) throw new Error(`Setting pack "${pack.id}" has no demo.`);
   const id = await insertWorkspace(pack.name + " (demo)", "demo", pack);
   const demo = loadDemoSources(pack.demo.dataDir);
-  const sources = await ingestSources(id, demo.map((d) => ({ kind: d.kind, name: d.name, roleSet: d.roleSet, files: d.files })), "demo");
+  const sources = await ingestSources(id, demo.map((d) => ({ kind: d.kind, name: d.name, roleSet: d.roleSet, files: d.files })), "demo", opts);
   await audit(id, "system", "create_workspace", { kind: "demo", pack: pack.id, sources: sources.length });
   return { id, sources };
 }
@@ -163,16 +203,63 @@ export function uploadRoleSet(pack: Pick<ResolvedPack, "uploadDefaults">, narrow
   return base.filter((r) => narrow.includes(r));
 }
 
+/** A file read as text that is really an image, a PDF, a zip: NUL bytes or many undecodable bytes. */
+export function looksBinary(content: string): boolean {
+  const sample = content.slice(0, 8000);
+  if (!sample.length) return false;
+  let bad = 0;
+  for (let i = 0; i < sample.length; i++) {
+    const c = sample.charCodeAt(i);
+    if (c === 0) return true;
+    if (c === 0xfffd || (c < 9) || (c > 13 && c < 32 && c !== 27)) bad++;
+  }
+  return bad / sample.length > 0.02;
+}
+
+/**
+ * Checks on an upload before anything is stored. Returns the message to show, or null.
+ * Pure apart from one throwaway parse, so a refused upload leaves no source row behind.
+ */
+export function uploadProblem(kind: SourceKind, files: { path: string; content: string }[], label: string = kind): string | null {
+  if (!files.length) return "Choose at least one file.";
+  if (files.length > UPLOAD_MAX_FILES) return `That is ${files.length} files; the limit is ${UPLOAD_MAX_FILES} per upload. Upload them in parts.`;
+  const bytes = files.reduce((n, f) => n + Buffer.byteLength(f.content, "utf8"), 0);
+  if (bytes > UPLOAD_LIMIT_BYTES) return UPLOAD_LIMIT_MESSAGE;
+  const named = (f: { path: string }) => f.path.split("/").pop() || "the file";
+  if (files.every((f) => !f.content.trim())) {
+    return files.length === 1 ? `"${named(files[0])}" is empty. Choose a file with content.` : "These files are all empty. Choose files with content.";
+  }
+  const binary = files.find((f) => looksBinary(f.content));
+  if (binary) return `"${named(binary)}" does not look like a text file. Upload the exported text, CSV, JSON, Markdown or .ics file.`;
+  let parsed;
+  try {
+    const { identityKey, contactsKey } = keys();
+    parsed = ingestAll([{ kind, name: "check", roleSet: [], files }], { identityKey, contactsKey, registry: new PersonRegistry(identityKey) }).sources[0]?.result;
+  } catch (err) {
+    return `Could not read ${files.length === 1 ? `"${named(files[0])}"` : "these files"} as ${label}: ${err instanceof Error ? err.message : String(err)}`;
+  }
+  const segments = parsed?.segments.length ?? 0;
+  if (segments === 0) {
+    const why = parsed?.rejected[0]?.reason;
+    return `Nothing could be read from ${files.length === 1 ? `"${named(files[0])}"` : "these files"} as ${label}${why ? `: ${why}` : ""}. Check that the source type matches the file.`;
+  }
+  if (segments > UPLOAD_MAX_SEGMENTS) {
+    return `This upload has ${segments.toLocaleString("en")} entries; the limit is ${UPLOAD_MAX_SEGMENTS.toLocaleString("en")} per upload. Split the export (for example by month) and upload the parts.`;
+  }
+  return null;
+}
+
 export async function ingestUpload(
-  ws: string, kind: SourceKind, files: { path: string; content: string }[], opts: { narrowRoles?: RoleKey[]; name?: string; actor?: string } = {},
+  ws: string, kind: SourceKind, files: { path: string; content: string }[],
+  opts: { narrowRoles?: RoleKey[]; name?: string; actor?: string; kindLabel?: string } = {},
 ): Promise<IngestResult> {
   if (!UPLOAD_KINDS.includes(kind)) return { ok: false, error: "Pick a source type." };
-  if (!files.length) return { ok: false, error: "Choose at least one file." };
+  const problem = uploadProblem(kind, files, opts.kindLabel ?? kind);
+  if (problem) return { ok: false, error: problem };
   const bytes = files.reduce((n, f) => n + Buffer.byteLength(f.content, "utf8"), 0);
-  if (bytes > UPLOAD_LIMIT_BYTES) return { ok: false, error: "Upload is over 5 MB. Split it or trim it." };
   const roleSet = uploadRoleSet(await getWorkspacePack(ws), opts.narrowRoles);
   if (!roleSet.length) return { ok: false, error: "Pick at least one role who can see this source." };
-  const name = opts.name?.trim() || (files.length === 1 ? files[0].path.split("/").pop()! : `${kind} upload (${files.length} files)`);
+  const name = (opts.name?.trim() || (files.length === 1 ? files[0].path.split("/").pop()! : `${kind} upload (${files.length} files)`)).slice(0, 200);
   try {
     const sources = await ingestSources(ws, [{ kind, name, roleSet, files }], "upload");
     await audit(ws, opts.actor ?? "uploader", "upload", { kind, name, files: files.length, bytes, roleSet });

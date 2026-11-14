@@ -6,17 +6,18 @@ import { norm, sha256Hex } from "@/lib/text/norm";
 import { EXTRACTION_SKIP_KINDS } from "./origins";
 import { buildSystemPrompt, buildUserPrompt, renderSegment, type AuthorLabel } from "./prompts";
 import {
-  EXTRACTION_JSON_SCHEMA_NAME,
   OTHER_ENTITY,
   buildExtractionJsonSchema,
   isAttribute,
   modelResponseSchema,
   rawClaimSchema,
+  schemaNameFor,
   type DraftCitation,
   type DraftClaim,
   type ExtractionPack,
   type ModelCall,
   type OffListClaim,
+  type PromptVariant,
 } from "./schema";
 
 /** About 8,000 tokens at ~3 chars per token. */
@@ -238,6 +239,8 @@ export interface ExtractOptions {
   maxChars?: number;
   skipKinds?: readonly SegmentKind[];
   authorLabel?: AuthorLabel;
+  /** "r2": the Round 2 prompt (default here). "v2": the candidate prompt with stance and event. */
+  variant?: PromptVariant;
 }
 
 /**
@@ -252,8 +255,10 @@ export async function extractClaims(
   opts: ExtractOptions,
 ): Promise<ExtractionResult> {
   const batches = planBatches(segments, { roleOrder: opts.roleOrder, maxChars: opts.maxChars, skipKinds: opts.skipKinds });
-  const system = buildSystemPrompt(pack);
-  const jsonSchema = buildExtractionJsonSchema(pack.entities.map((e) => e.key));
+  const variant: PromptVariant = opts.variant ?? "r2";
+  const system = buildSystemPrompt(pack, variant);
+  const jsonSchema = buildExtractionJsonSchema(pack.entities.map((e) => e.key), variant);
+  const jsonSchemaName = schemaNameFor(variant);
   const resolveEntity = makeEntityResolver(pack);
   const concurrency = Math.max(1, Math.floor(opts.concurrency ?? DEFAULT_CONCURRENCY));
 
@@ -274,9 +279,9 @@ export async function extractClaims(
     try {
       const res = await call({
         system,
-        user: buildUserPrompt(batch, { authorLabel: opts.authorLabel }),
+        user: buildUserPrompt(batch, { authorLabel: opts.authorLabel, variant }),
         schema: modelResponseSchema,
-        jsonSchemaName: EXTRACTION_JSON_SCHEMA_NAME,
+        jsonSchemaName,
         jsonSchema,
       });
       if (!res.ok) {
@@ -316,6 +321,8 @@ export async function extractClaims(
           origin: "extracted",
           batchId: batch.id,
           batchSegmentIds: [...batch.segmentIds],
+          // Round 2 drafts keep their Round 2 shape: no stance, no event.
+          ...(variant === "v2" ? { stance: c.stance, event: c.event } : {}),
         });
       }
       report.claims = drafts.length;

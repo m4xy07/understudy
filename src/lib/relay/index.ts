@@ -31,12 +31,17 @@ import {
 import { checkApprover } from "./core/labels";
 import { stubText } from "./core/compile";
 import { parsePayload } from "./handover";
+import { insertSnapshotChange, prepareSnapshotChange } from "./changeStore";
 
 export {
   compileHandover, checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown,
-  runLeakCheck, resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
-  type Handover, type HandoverItem, type ReadbackCheck, type AckRow, type LeakReport, type LeakCell,
+  resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
+  type Handover, type HandoverItem, type ReadbackCheck, type AckRow,
 } from "./handover";
+export {
+  runLeakCheck, runProbes, latestProbeRun,
+  type LeakReport, type LeakCell, type LeakFinding, type LeakRow, type ProbeRun,
+} from "./probes";
 
 export type ActionResult = { ok: true } | { ok: false; error: string; code?: string };
 
@@ -293,7 +298,10 @@ export async function approveSnapshot(
 
   const id = `snap_v${version}`;
   const byId = new Map(claims.map((c) => [c.id, c]));
-  await sql.begin(async (tx) => {
+  // What this version changes against the previous one, and why (stored beside the snapshot, not in its hash).
+  const change = await prepareSnapshotChange(ws, pack, payload);
+  try {
+   await sql.begin(async (tx) => {
     await tx`
       INSERT INTO snapshots (workspace_id, id, version, hash, approved_by, approved_at, claim_ids, open_blocking, plan, payload)
       VALUES (${ws}, ${id}, ${version}, ${res.snapshot.hash}, ${actor}, ${res.snapshot.approvedAt}, ${res.snapshot.claimIds}::text[],
@@ -302,17 +310,26 @@ export async function approveSnapshot(
       const c = byId.get(pc.id)!;
       await tx`
         INSERT INTO snapshot_claims (workspace_id, snapshot_id, claim_id, entity, entity_label, attribute, statement, value,
-          trust, state, review, importance, valid_from, citations, role_set)
+          trust, state, review, importance, valid_from, citations, role_set, flag_role_set)
         VALUES (${ws}, ${id}, ${c.id}, ${c.entity}, ${c.entityLabel}, ${c.attribute}, ${c.statement}, ${c.value},
           ${c.trust}, ${c.state === "conflicting" ? "conflicting" : "active"}, ${c.review === "edited" ? "edited" : "approved"},
-          ${c.importance}, ${c.validFrom}, ${JSON.stringify(c.citations)}::jsonb, ${pc.roleSet}::text[])`;
+          ${c.importance}, ${c.validFrom}, ${JSON.stringify(c.citations)}::jsonb, ${pc.roleSet}::text[],
+          ${c.flagRoleSet ?? null}::text[])`;
     }
     // The approved snapshot settles the scores it was built on: the latest run per role stops being provisional.
     await tx`
       UPDATE test_runs SET provisional = false
       WHERE workspace_id = ${ws} AND id IN (
         SELECT DISTINCT ON (role) id FROM test_runs WHERE workspace_id = ${ws} ORDER BY role, created_at DESC)`;
-  });
+    await insertSnapshotChange(tx, ws, id, change);
+   });
+  } catch (err) {
+    // Two approvals at once: versions are unique, so the second one loses and nothing of it is stored.
+    if ((err as { code?: string }).code === "23505") {
+      return { ok: false, code: "version_conflict", error: "Another snapshot was approved just now. Reload." };
+    }
+    throw err;
+  }
   await audit(ws, actor, "approve_snapshot", { ...res.event.payload, id });
   const [row] = await sql`SELECT * FROM snapshots WHERE workspace_id = ${ws} AND id = ${id}`;
   return { ok: true, snapshot: toSnapshot(row), label: res.label };

@@ -7,6 +7,8 @@ import { isUuid } from "@/lib/db/withRole";
 import { viewingRole } from "@/lib/session";
 import { getWorkspacePack } from "@/lib/pack";
 import { acknowledgeHandover, checkHandoverReadback } from "@/lib/relay";
+import { exclusive } from "@/lib/pipeline/guard";
+import { busyMessage } from "@/lib/pipeline/once";
 import type { ReadbackState } from "./ReadbackForm";
 
 export async function readbackAction(_prev: ReadbackState, form: FormData): Promise<ReadbackState> {
@@ -17,7 +19,8 @@ export async function readbackAction(_prev: ReadbackState, form: FormData): Prom
   for (const item of (await getWorkspacePack(ws)).readback) typed[item.key] = String(form.get(`rb_${item.key}`) ?? "");
 
   if (form.get("intent") === "ack") {
-    const res = await acknowledgeHandover(ws, role, typed);
+    const res = await exclusive(ws, `ack:${role}`, () => acknowledgeHandover(ws, role, typed),
+      { ok: false as const, error: busyMessage("This acknowledgement") }, 30_000);
     if (!res.ok) return { ok: false, message: res.error, verdicts: null, acked: false };
     refresh();
     const visible = res.ack.verdicts.filter((v) => v.verdict !== "not_visible");

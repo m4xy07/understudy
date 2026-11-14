@@ -1,5 +1,5 @@
 // B, C, K (ARCHITECTURE section 4). Computed in code only; the UI shows B, then C, then K.
-import type { CheckDef, CheckResult, Coverage, Scores } from "@/lib/types";
+import type { CheckDef, CheckResult, Coverage, Scores, Trust } from "@/lib/types";
 import { findCheck } from "./checks";
 import { gapKey, RECORD_TRUST, TRUST_LABEL } from "./pack";
 
@@ -45,6 +45,32 @@ export function computeScores(
     c: sumW === 0 ? 0 : sumWS / sumW,
     k: sumWS === 0 ? null : sumWSRecord / sumWS,
   };
+}
+
+/**
+ * What the coverage rests on, by trust label: Σ w·s over checks whose bestTrust is that label,
+ * divided by the total Σ w·s. The from_record and corroborated shares sum to K, so this is K
+ * broken open, not a new score. Display only. Empty when nothing is covered.
+ */
+export function evidenceMix(
+  results: readonly CheckResult[],
+  checksByResp: Record<string, readonly CheckDef[]>,
+): Partial<Record<Trust, number>> {
+  const sums = new Map<Trust, number>();
+  let total = 0;
+  for (const r of results) {
+    if (r.coverage === "restricted" || r.bestTrust === null) continue;
+    const check = findCheck(checksByResp, r.responsibilityId, r.checkKey);
+    if (!check) continue;
+    const ws = check.weight * S[r.coverage];
+    if (ws === 0) continue;
+    total += ws;
+    sums.set(r.bestTrust, (sums.get(r.bestTrust) ?? 0) + ws);
+  }
+  const out: Partial<Record<Trust, number>> = {};
+  if (total === 0) return out;
+  for (const [trust, ws] of sums) out[trust] = ws / total;
+  return out;
 }
 
 export function pct(x: number): string {
@@ -104,8 +130,9 @@ export function scoreDelta(
     }
     parts.push(`B ${b0} → ${b1}${why}`);
   }
-  parts.push(before.scores.c === after.scores.c ? `C ${pct(after.scores.c)}` : `C ${pct(before.scores.c)} → ${pct(after.scores.c)}`);
+  // Compare what is shown: a change that rounds to the same percentage reads as no change.
+  parts.push(pct(before.scores.c) === pct(after.scores.c) ? `C ${pct(after.scores.c)}` : `C ${pct(before.scores.c)} → ${pct(after.scores.c)}`);
   const k = (v: number | null) => (v === null ? "n/a" : pct(v));
-  parts.push(before.scores.k === after.scores.k ? `K ${k(after.scores.k)}` : `K ${k(before.scores.k)} → ${k(after.scores.k)}`);
+  parts.push(k(before.scores.k) === k(after.scores.k) ? `K ${k(after.scores.k)}` : `K ${k(before.scores.k)} → ${k(after.scores.k)}`);
   return parts.join(" · ");
 }

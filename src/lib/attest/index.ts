@@ -21,7 +21,8 @@ import { norm, sha256Hex } from "@/lib/text/norm";
 import type { Attribute, Claim, ResponsibilityKind, ReviewTier, RoleKey, Segment, SourceKind } from "@/lib/types";
 import { extractClaims, type BatchReport } from "./core/extract";
 import { structuredClaims, matchEntity as matchPackEntity } from "./core/structured";
-import { OTHER_ENTITY, type DraftClaim, type ExtractionPack, type OffListClaim } from "./core/schema";
+import { OTHER_ENTITY, resolvePromptVariant, type DraftClaim, type ExtractionPack, type OffListClaim, type PromptVariant } from "./core/schema";
+import { consolidate, exampleValues, type ConsolidationFiring, type ConsolidationRule } from "./core/consolidate";
 import {
   claimId as coreClaimId,
   intersectRoleSets,
@@ -30,6 +31,7 @@ import {
   type DroppedDraft,
 } from "./core/verify";
 import { applyRules, isSensitive, tierOf, type RuleFiring } from "./core/rules";
+import { flagRoleSets } from "./core/flags";
 import { EXTRACTION_SKIP_KINDS, isCarriedOrigin, isRecordOrigin, takesPartInRules } from "./core/origins";
 import type { AttestPack } from "./core/verify";
 import { supportCheck, weakerTrust } from "./core/support";
@@ -41,6 +43,10 @@ export interface ReconstructResult {
   total: number;         // drafts stored for verify()
   modelUsed: boolean;
   modelNote: string | null;
+  /** The extraction prompt this run used ("v2": two passes; "r2": the Round 2 prompt). */
+  variant: PromptVariant;
+  /** What the consolidation pass did; null when it did not run. */
+  consolidation: { counts: Record<ConsolidationRule, number>; firings: ConsolidationFiring[]; before: number; after: number } | null;
 }
 
 export interface VerifyResult {
@@ -62,6 +68,21 @@ export interface ReconstructOptions {
   /** false: structured sources only. */
   useModel?: boolean;
   concurrency?: number;
+  /** Default: the environment (ATTEST_PROMPT), then the pack (extraction.prompt), then DEFAULT_PROMPT_VARIANT. */
+  variant?: PromptVariant;
+  /** Run the consolidation pass. Default: on for both prompts (ATTEST_CONSOLIDATE=0 turns it off). */
+  consolidate?: boolean;
+}
+
+/** The extraction variant for a pack: ATTEST_PROMPT first, then the pack's `extraction.prompt`. */
+export function promptVariantFor(pack: Pick<ExtractionPack, "prompt">): PromptVariant {
+  return resolvePromptVariant(process.env.ATTEST_PROMPT, pack.prompt);
+}
+
+/** Consolidation runs after either prompt; ATTEST_CONSOLIDATE=0 gives the bare drafts of the prompt. */
+function consolidationOn(): boolean {
+  const v = (process.env.ATTEST_CONSOLIDATE ?? "").trim().toLowerCase();
+  return !(v === "0" || v === "false" || v === "off");
 }
 
 export interface VerifyOptions {
@@ -80,10 +101,20 @@ export function claimId(entity: string, attribute: string, value: string, segmen
 /** The part of the pack extraction reads: entities, and the pack's own prompt examples and hints. */
 export function extractionPack(pack: Pack): ExtractionPack {
   return {
-    entities: pack.entities.map((e) => ({ key: e.key, label: e.label, aliases: [...(e.aliases ?? [])] })),
+    entities: pack.entities.map((e) => {
+      const partOf = (e as { partOf?: unknown }).partOf;
+      return {
+        key: e.key,
+        label: e.label,
+        aliases: [...(e.aliases ?? [])],
+        ...(typeof partOf === "string" ? { partOf } : {}),
+      };
+    }),
     examples: pack.extraction?.examples as ExtractionPack["examples"],
     entityHint: pack.extraction?.entityHint,
     contactExample: pack.extraction?.contactExample,
+    promptExamples: pack.extraction?.promptExamples as ExtractionPack["promptExamples"],
+    prompt: typeof pack.extraction?.prompt === "string" ? pack.extraction.prompt : undefined,
   };
 }
 
@@ -131,6 +162,16 @@ async function loadSegments(ws: string): Promise<Segment[]> {
   return rows.map(toSegment);
 }
 
+/** Head versions of the named segments only (the ones a set of claims cites). */
+export async function loadSegmentsByIds(ws: string, ids: readonly string[]): Promise<Segment[]> {
+  const wanted = [...new Set(ids)];
+  if (wanted.length === 0) return [];
+  const rows = await db()`
+    SELECT DISTINCT ON (id) * FROM segments WHERE workspace_id = ${ws} AND id = ANY(${wanted}::text[])
+    ORDER BY id, version DESC`;
+  return rows.map(toSegment);
+}
+
 function newestTs(segs: Segment[]): string | null {
   let best: string | null = null;
   for (const s of segs) if (!best || Date.parse(s.ts) > Date.parse(best)) best = s.ts;
@@ -162,6 +203,12 @@ async function entityKindsFor(ws: string, pack: Pick<AttestPack, "roleTemplates"
 
 const DONE_STATUS = /^(done|closed|complete|completed|cancelled|canceled|resolved)$/i;
 export const EXTRACT_MAX_CHARS = 5_000;
+/**
+ * Batch size of the two-pass candidate prompt. Smaller than Round 2 on purpose: in a dense chat
+ * batch the model skips short messages, and a missed message is a missed claim. More calls, each
+ * shorter; the size is part of every candidate cache key.
+ */
+export const EXTRACT_MAX_CHARS_V2 = 3_000;
 
 /** Normalise deadline values to ISO dates where the value is one date; slug unknown task entities. */
 function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): DraftClaim[] {
@@ -196,6 +243,7 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
   const segsById = new Map(segments.map((s) => [s.id, s]));
   const names = await peopleNames(ws).catch(() => ({}) as Record<string, string>);
 
+  const variant = opts.variant ?? promptVariantFor(xpack);
   const structured = structuredClaims(segments, xpack, { now: newestTs(segments) ?? undefined });
 
   let batches: BatchReport[] = [];
@@ -216,10 +264,11 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
       // ~1,700 tokens of segments per call: answers are output-bound (~30 tokens/s on OpenRouter,
       // 50-70 s measured for a full batch), inside the 120 s timeout. The batch size is part of every
       // extraction cache key: changing it makes the committed demo cache miss until precompute reruns.
-      maxChars: EXTRACT_MAX_CHARS,
+      maxChars: variant === "v2" ? EXTRACT_MAX_CHARS_V2 : EXTRACT_MAX_CHARS,
       roleOrder: pack.roleOrder,
       skipKinds: EXTRACTION_SKIP_KINDS,
       authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
+      variant,
     };
     const res = await extractClaims(segments, xpack, call, xopts);
     batches = res.batches;
@@ -240,7 +289,18 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
     }
   }
 
-  const drafts = normaliseDrafts([...structured, ...modelDrafts], segsById);
+  const normalised = normaliseDrafts([...structured, ...modelDrafts], segsById);
+  // Second pass (code only): tidy the candidates before the verifier and the rules see them.
+  const pass2 = (opts.consolidate ?? consolidationOn())
+    ? consolidate(normalised, {
+        entities: xpack.entities,
+        segmentsById: segsById,
+        roleOrder: pack.roleOrder,
+        // Only the candidate prompt prints these examples; the Round 2 prompt has its own.
+        exampleValues: variant === "v2" ? exampleValues(xpack.promptExamples) : [],
+      })
+    : null;
+  const drafts = pass2 ? pass2.drafts : normalised;
   const modelUsed = batches.some((b) => b.ok);
   const ms = Date.now() - t0;
   await sql`
@@ -251,7 +311,14 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
       drafts = EXCLUDED.drafts, batches = EXCLUDED.batches, off_list = EXCLUDED.off_list,
       model_used = EXCLUDED.model_used, model_note = EXCLUDED.model_note, extract_ms = EXCLUDED.extract_ms,
       extracted_at = now()`;
-  return { claims: drafts.length, total: drafts.length, modelUsed, modelNote };
+  return {
+    claims: drafts.length,
+    total: drafts.length,
+    modelUsed,
+    modelNote,
+    variant,
+    consolidation: pass2 ? { counts: pass2.counts, firings: pass2.firings, before: normalised.length, after: drafts.length } : null,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -403,7 +470,8 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
   //    the rules; second-hand answers and traces stay outside them (see ./core/origins).
   const produced = new Set(claims.map((c) => c.id));
   const carried = existingRows.filter((c) => isCarriedOrigin(c.origin) && !produced.has(c.id) && c.state !== "dropped");
-  const answers = carried.filter((c) => takesPartInRules(c.origin));
+  //    A finding the approver has not let in yet moves nothing: it stays out of the rules.
+  const answers = carried.filter((c) => takesPartInRules(c.origin) && !isUndecidedFinding(c));
 
   // 5. Rules: supersession / conflicts, corroboration, importance and tier.
   const entityKinds = await entityKindsFor(ws, pack);
@@ -411,7 +479,11 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
     segmentsById: segsById,
     entityKinds,
   });
-  const finalClaims = ruled.claims;
+  // A claim that cites a segment the content classifier marked is tier C, whatever its role set.
+  const marked = (c: Claim) => c.citations.some((x) => x.accepted && (segsById.get(x.segmentId)?.sensitivity?.length ?? 0) > 0);
+  const finalClaims = ruled.claims.map((c) => (c.tier !== "C" && marked(c) ? { ...c, tier: "C" as const } : c));
+  // Flag visibility: a conflict or supersession with a side a role cannot read hides every side from it.
+  const flags = flagRoleSets(finalClaims, ruled.firings);
   const firingByOlder = new Map(ruled.firings.map((f) => [f.olderId, f]));
   const firingByNewer = new Map(ruled.firings.filter((f) => f.rule >= 3).map((f) => [f.newerId, f]));
 
@@ -424,7 +496,7 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
 
   // 7. Write the projection (review fields untouched) and one event per change.
   const toWrite = [...finalClaims, ...stale];
-  const rows = toWrite.map((c) => claimRow(c, sourceIdsOf(c, segsById)));
+  const rows = toWrite.map((c) => ({ ...claimRow(c, sourceIdsOf(c, segsById)), flag_role_set: flags.get(c.id) ?? null }));
   for (let i = 0; i < rows.length; i += 200) {
     const chunk = rows.slice(i, i + 200);
     await sql`
@@ -437,7 +509,8 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
         state_note = EXCLUDED.state_note, superseded_by = EXCLUDED.superseded_by, role_set = EXCLUDED.role_set,
         valid_from = EXCLUDED.valid_from, author_id = EXCLUDED.author_id, source_kinds = EXCLUDED.source_kinds,
         importance = EXCLUDED.importance, tier = EXCLUDED.tier, origin = EXCLUDED.origin,
-        support_check = EXCLUDED.support_check, source_ids = EXCLUDED.source_ids, updated_at = now()`;
+        support_check = EXCLUDED.support_check, source_ids = EXCLUDED.source_ids,
+        flag_role_set = EXCLUDED.flag_role_set, updated_at = now()`;
   }
 
   const events: { workspace_id: string; claim_id: string; event: string; data: string; actor: string }[] = [];
@@ -518,6 +591,82 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
     UPDATE attest_runs SET verification = ${JSON.stringify(summary)}::jsonb, verified_at = now()
     WHERE workspace_id = ${ws}`;
   return result;
+}
+
+/** A successor finding still waiting for the approver. It is evidence for nobody until approved. */
+function isUndecidedFinding(c: Pick<Claim, "origin" | "review">): boolean {
+  return c.origin === "successor_finding" && c.review === "pending";
+}
+
+const RULE_FIELDS = ["trust", "state", "stateNote", "supersededBy"] as const;
+
+/** The label a person's own word starts with. Only a record that agrees can raise it. */
+const PERSON_BASE_TRUST: Partial<Record<Claim["origin"], Claim["trust"]>> = {
+  leaver_answer: "leaver_said",
+  successor_finding: "successor_found",
+};
+
+/**
+ * Re-run the rules (supersession, conflicts, corroboration, importance, tier) over the stored
+ * claims. No extraction and no model call. Used when a successor finding is approved or
+ * rejected: the claim set changed, the record did not.
+ *
+ * A person's word is put back to its own label first, so it reads "Corroborated" only while a
+ * record still agrees and can never corroborate another person's word. Writes only the rows
+ * whose rule fields changed, with one claim_events row each.
+ */
+export async function rerunRules(ws: string, actor: string): Promise<{ changed: number; firings: number }> {
+  const sql = db();
+  const pack = attestPack(await getWorkspacePack(ws));
+  const stored = (await sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND state <> 'dropped'`).map(toClaim);
+  const byId = new Map(stored.map((c) => [c.id, c]));
+  const input = stored
+    .filter((c) => (isRecordOrigin(c.origin) || takesPartInRules(c.origin)) && !isUndecidedFinding(c))
+    .map((c) => {
+      const base = PERSON_BASE_TRUST[c.origin];
+      return base && c.trust === "corroborated" ? { ...c, trust: base } : c;
+    });
+  // The rules look a segment up only through a claim's citations: read those, not every segment.
+  const cited = input.flatMap((c) => c.citations.map((x) => x.segmentId));
+  const segsById = new Map((await loadSegmentsByIds(ws, cited)).map((s) => [s.id, s]));
+  const entityKinds = await entityKindsFor(ws, pack);
+  const ruled = applyRules(input, pack, { segmentsById: segsById, entityKinds });
+  const firingByOlder = new Map(ruled.firings.map((f) => [f.olderId, f]));
+  const firingByNewer = new Map(ruled.firings.filter((f) => f.rule >= 3).map((f) => [f.newerId, f]));
+
+  let changed = 0;
+  for (const c of ruled.claims) {
+    const prev = byId.get(c.id);
+    if (!prev) continue;
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
+    // Only a change of trust or state counts. Importance and tier follow such a change; on their
+    // own they are left as the last full run set them, so a re-run never touches unrelated claims.
+    for (const f of RULE_FIELDS) {
+      if ((prev[f] ?? null) !== (c[f] ?? null)) changes[f] = { from: prev[f] ?? null, to: c[f] ?? null };
+    }
+    if (!Object.keys(changes).length) continue;
+    for (const f of ["importance", "tier"] as const) {
+      if (prev[f] !== c[f]) changes[f] = { from: prev[f], to: c[f] };
+    }
+    changed++;
+    const firing = firingByOlder.get(c.id) ?? firingByNewer.get(c.id);
+    const event = changes.state
+      ? c.state === "superseded" ? "superseded" : c.state === "conflicting" ? "conflicting" : "reactivated"
+      : changes.trust ? "verified" : "updated";
+    const data = {
+      changes, note: c.stateNote, trigger: "rules re-run",
+      ...(firing && (changes.state || changes.supersededBy) ? { rule: firing.rule, olderId: firing.olderId, newerId: firing.newerId } : {}),
+    };
+    await sql.begin(async (tx) => {
+      await tx`
+        UPDATE claims SET trust = ${c.trust}, state = ${c.state}, state_note = ${c.stateNote},
+          superseded_by = ${c.supersededBy}, importance = ${c.importance}, tier = ${c.tier}, updated_at = now()
+        WHERE workspace_id = ${ws} AND id = ${c.id}`;
+      await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
+        VALUES (${ws}, ${c.id}, ${event}, ${JSON.stringify(data)}::jsonb, ${actor})`;
+    });
+  }
+  return { changed, firings: ruled.firings.length };
 }
 
 function sourceIdsOf(c: Claim, segsById: Map<string, Segment>): string[] {

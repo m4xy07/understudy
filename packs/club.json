@@ -135,7 +135,20 @@
       "risk": "value \"USB port drops during flash\", statement \"The USB port often drops mid-flash; use the powered hub.\""
     },
     "entityHint": "an entry fee is entry-fee, not competition",
-    "contactExample": "Rahul Desai"
+    "contactExample": "Rahul Desai",
+    "promptExamples": {
+      "owner": "value \"Alex Example\", statement \"Alex Example looks after the garden shed.\"",
+      "status": "value \"waiting for seeds\", statement \"The herb bed is waiting for seeds.\"",
+      "deadline": "value \"every second Tuesday\", statement \"The compost bins are emptied every second Tuesday.\"",
+      "location": "value \"the blue cupboard\", statement \"The spare hoses are kept in the blue cupboard.\"",
+      "procedure": "value \"open the valve, then run the pump for two minutes\", statement \"To water the beds, open the valve, then run the pump for two minutes.\"",
+      "access": "value \"GARDEN_PORTAL login, held by Alex Example\", statement \"The GARDEN_PORTAL login is held by Alex Example.\"",
+      "decision": "value \"drip hoses instead of sprinklers\", statement \"The group decided to use drip hoses instead of sprinklers.\"",
+      "reason": "value \"sprinklers wasted water\", statement \"Drip hoses were chosen because sprinklers wasted water.\"",
+      "dependency": "value \"approval from the allotment office\", statement \"The new bed waits on approval from the allotment office.\"",
+      "contact": "value \"[CONTACT:p-9]\", statement \"Ask [CONTACT:p-9] at the allotment office about plot changes.\"",
+      "risk": "value \"pump trips when the tank is low\", statement \"The pump trips when the tank is low; refill it first.\""
+    }
   },
   "demo": {
     "dataDir": "data/demo",
@@ -159,6 +172,11 @@
         { "label": "lab bookings", "source": "ics", "pattern": "Book Workshop Lab 3", "minCount": 3, "minWeeks": 3 }
       ]
     }
+  },
+  "sensitivity": {
+    "finance": ["president", "treasurer", "leaver"],
+    "hr": ["president"],
+    "health": ["president"]
   },
   "forbiddenInCore": ["Priya", "Club President", "robotics", "RoboLeague", "Vertex", "Pawar", "Kulkarni", "Rahul Desai"]
 }

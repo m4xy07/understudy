@@ -111,7 +111,10 @@ breaks a rule below with a readable message, at load.
   },
   "kindLabels": { ... },                                  // optional display names for the five responsibility kinds
   "kindOverrides": { ... },                               // optional; pins a responsibility kind per entity or card
-  "sensitivity": { "<class>": ["<role>", ...] },          // optional; owned by the confidentiality work
+  "sensitivity": {                                        // optional: who may see each kind of sensitive content (section 4a)
+    "finance": ["president", "treasurer", "leaver"],      //   all three categories, each list includes the approver
+    "hr": ["president"], "health": ["president"] },       //   a pack without the key keeps every category for its approver only
+  "sensitivityTerms": { "finance": { "weak": ["cost centre"] } },   // optional: extra classifier terms per category (strong, weak)
   "forbiddenInCore": ["Priya", "Club President", ...]     // proper nouns the literal check must never find in core
 }
 ```
@@ -119,7 +122,8 @@ breaks a rule below with a readable message, at load.
 Loader rules: role keys unique; exactly one approver, one successor and one leaver, all different;
 at least one restricted audience role, not the approver or the leaver; every role named in
 `contactsRoles`, `uploadDefaults.roleSet`, `roleTemplates`, `roleHolders` and `sensitivity` is a role
-of this pack; `uploadDefaults.roleSet` includes the approver; legacy `approverRole` and friends agree
+of this pack; `sensitivity`, when present, lists exactly `finance`, `hr` and `health`, each with at
+least the approver; `uploadDefaults.roleSet` includes the approver; legacy `approverRole` and friends agree
 with the flags; `readback[].entity` and `roleTemplates[].entities[]` exist in `entities`;
 `extraction.examples` keys are attributes; `demo.dataDir` exists and holds `sources.json`.
 
@@ -153,7 +157,7 @@ Closed attribute list (11): `owner`, `status`, `deadline`, `location`, `procedur
 
 See the file itself; it is the source of truth. Summary: `RoleKey` (a pack-defined string),
 `SourceKind` (`whatsapp | slack | github | tasks_csv | markdown | ics | interview | finding`),
-`SegmentKind` (`message | commit | file | task | note | event | answer | finding`), `Segment`, `Source`,
+`SegmentKind` (`message | commit | file | task | note | event | answer | finding | run`), `Segment`, `Source`,
 `Person`, `Attribute`, `Trust`, `Coverage`, `Claim`, `Citation`, `Responsibility`, `CheckDef`,
 `CheckResult`, `TestRun`, `GapQuestion`, `Snapshot`, `ReadbackItem`.
 
@@ -170,7 +174,8 @@ the real value stored AES-256-GCM encrypted (key from env `CONTACTS_KEY`) in `co
 to roles in the pack's `contacts_roles`. Identity: people merge automatically only on an exact email,
 compared as HMAC-SHA256 with env `IDENTITY_KEY`; other matches are suggestions only.
 Role set of a segment = the source's role set from the pack (notes may narrow it with front matter
-`roles:`). Data level shown on Connect: L0 none, L1 task board, L2 + chat, L3 + code/config.
+`roles:`), then narrowed by what the segment says (section 4a) before it is first stored.
+Data level shown on Connect: L0 none, L1 task board, L2 + chat, L3 + code/config.
 
 **Claims (Attest).** Extraction runs per thread, batched by role set: a model call only ever sees
 segments with one identical role set. Output schema: `{ claims: [{ entity, attribute, value,
@@ -258,9 +263,157 @@ compartment, owning role or any value. Its count comes from `count_withheld()` (
 returns an integer only). Read-back: the successor types the five critical items from the pack; typed
 parsers normalise (dates to ISO, strings via norm); code compares exactly with the snapshot; verdict per
 item; an acknowledgement row records verdicts, role, time and snapshot hash.
+**Living handover (Relay, `src/lib/relay/living.ts`).** After a snapshot exists the successor records
+findings on the First weeks page, one per open gap. A finding is stored as: a segment (kind `finding`,
+source kind `finding`, source `src_first_weeks`, thread `first-weeks:<responsibility key>:<check key>`,
+fixed text layout with the line `Answer: <answer>`), an optional second segment for an attached text
+file (same source, position 1: the file is part of the finding and never a source of its own), a claim
+(origin `successor_finding`, trust `successor_found`, value = the answer, one citation with the exact
+quote `Answer: <answer>`), and a `findings` row (the flow record: ids, status, role set, no content).
+Text is masked before storage; a link is kept as text and never fetched. Role set = the pack upload
+default narrowed by the successor; the successor and the approver always keep it; nothing widens it.
+Only the successor records; only the approver decides; the leaver never.
+A pending finding moves nothing: `runTest` counts a finding claim only when its review is approved or
+edited, `claim_meta()` leaves it out, and the Attest rules skip it. On approval, in order: the claim is
+approved under the tier rules (tier C needs the evidence opened and a reason), `rerunRules(ws)` runs
+the rules with no extraction and no model call, every role in `pack.testRoles` is re-tested, and the
+next snapshot is approved: one snapshot per approved finding. If the release rule blocks it, the
+finding stays approved and the snapshot waits with the blocker shown; the next snapshot the approver
+releases carries it. A rejected finding leaves its claim rejected and the gap open: no test run, no
+snapshot. A finding is upgraded to `corroborated` only by an independent record with the same entity,
+attribute and normalised value; another finding, a leaver answer, its own link or its own file never
+upgrade it, and a claim that began as a finding never enters tier A.
+Every snapshot has one `snapshot_changes` row, written in the same transaction: the claim diff of the
+two hashed payloads (`diffSnapshots`), the gaps closed and opened between the two successor runs, the
+B, C and K sentences (fixed text chosen by code, never a model) and the cause (`first`, `finding`,
+`manual`). It holds ids, numbers and those sentences only. The snapshot payload schema is unchanged and
+the record is not part of the hash. The "What changed in v<n>" panel joins statements from
+`snapshot_claims` inside `withRole`; a change the role may not see becomes a count:
+"N restricted changes. Ask the approver (<approver label>)." `changeTexts(ws, role)` and
+`firstWeeksTexts(ws, role)` return every string those two surfaces show a role, for the leak check.
 Canary tests: restricted segments in the demo pack carry tokens `CANARY-XXXX`. For every role and every
-surface (handover text, export, stubs, scores, timeline, questions), no token outside that role's
-visibility may appear. Runs as a vitest suite and as a "Leak check" panel in the app.
+surface, no token outside that role's visibility may appear, and no restricted fact in other words
+either (section 4a, "Leak check"). Runs as a vitest suite and as a "Leak check" panel in the app.
+
+## 4a. Content-level confidentiality (Round 3)
+
+Where a message was posted decides its source role set. What it says can narrow that further.
+
+**Classifier (Tether, `src/lib/tether/sensitivity.ts`, lexicons in `sensitivity-lexicon.ts`).**
+Three categories, a closed core list: `finance`, `hr`, `health`. The pack maps each to the roles that
+may see it (`sensitivity`). Two stages, both between parsing and the first write in `ingestSources`:
+1. Rules, pure: strong hits limit the segment (stage `rule`; a reply to a limited message inherits,
+   stage `follow`); weak hits make it borderline. One weak term alone is clear. Repository files only
+   honour strong rules. Rule ids: F1 account pattern, F2 amount + personal-money cue + person,
+   F3 cue + name + fee or dues, F4 weak finance; H1 complaint + another person, H2 judgement near a
+   name, H3 weak; M1 condition + person, M2 weak; R1 reply link, R2 follow-up window (4 messages,
+   20 minutes, borderline only).
+2. Model, borderline segments only, batched by one source and one role set, 4,000 characters, 20 s
+   budget. It answers one enum per segment id (`finance | hr | health | none`), validated by zod. A
+   category narrows; `none` leaves the source role set. The model cannot widen and never sees a
+   strong hit. Segments that narrowing would not change are not sent.
+Fail closed: a borderline segment the model could not be asked about (down, not cached, budget used,
+no answer for its id) is held: limited to its candidate categories with stage `held` until the
+approver decides.
+Narrowing: new role set = current role set cut down to the pack's roles for every hit category. It
+never adds a role; if nothing would be left, the set is unchanged. The narrowed set is the first
+role set ever stored (`role_set`); the source role set is kept in `role_set_original`.
+Segments made outside ingest (answers, findings) call `narrowForSensitivity(text, kind, roleSet,
+packSensitivity(pack), knownNames)` before their insert and store what it returns (rules only; a
+borderline text is held). Every pipeline run also calls `reclassify(ws)`: head segments stored by an
+older rules version, or by a module that did not classify, are checked by the rules; a newly
+sensitive one gets a narrower version and its derived rows shrink at once. Nothing is widened there.
+Because extraction batches by identical role set, a limited segment only ever sits in a model call
+whose role set is its own (tested: `tests/tether/sensitivity-ingest.test.ts`).
+A claim that cites a segment with a non-empty `sensitivity` is tier C.
+
+**Visibility changes (`src/lib/tether/visibility.ts`).** Segments are immutable, so a change is a new
+version row; readers only see the head version (RLS). Only the pack's approver may change one segment,
+with a written reason of at least 10 characters, logged in `audit_log` (`widen_segment`,
+`limit_segment`) and on the new version (`visibility_note`, `visibility_actor`).
+Widen: the target set S must satisfy current ⊆ S ⊆ `role_set_original`; stage `widened`; the pipeline
+re-runs; handovers change only with the next approved snapshot (a banner says so).
+Limit: target = narrowing by the chosen categories; stage `manual`; in the same transaction the claims
+that cite the segment and their copies in every snapshot lose the removed roles, open gap questions
+are deleted and stand-in notes citing those claims are blanked; then the pipeline re-runs. The stored
+snapshot payload and hash are not touched. This is the only code path that adds a role to a stored
+segment (widen), and no path does it without the approver.
+
+**Flag visibility (Attest, `core/flags.ts`).** A role sees a conflicting claim only if it can also see
+a claim it conflicts with; a claim whose every counterpart is hidden is hidden too (a stub, and the
+check reads Restricted). With two sides: a role sees a conflict only if it can see every side. The
+same for a superseded claim whose winner the role cannot see. `verify()` writes `claims.flag_role_set`
+(null = nothing extra to hide); approval copies it to `snapshot_claims`. The approver settles the
+conflict in Review: rejecting one side clears the flag and the other side is visible again.
+
+**Leak check (Relay).** `src/lib/relay/surfaces.ts` is a registry of surface providers; each returns
+the exact strings a role is shown, read under that role. Surfaces: handover text, export, stubs,
+scores, timeline, questions, conflict flags, claim list, test notes, sensitive panel, and (owned by
+other modules, wired in `surface-sources.ts`; "Not built" and not counted until then) people graph,
+neighbour questions, traces, ranked options, what changed. Two rows per role and surface:
+exact tokens (`scanForCanaries`) and reworded facts. Reworded facts are the planted facts of
+`<demo.dataDir>/probes.json` (`{ id, fact, roleSet, termGroups, mustGroups, minGroups, rewordings,
+hardRewordings }`); a role is only checked for facts it may not see. Check 1, key terms
+(`core/probes.ts`): text and terms are normalised (amounts to digits, dates to one form, a light
+stem); a fact is found in one line when at least `minGroups` term groups match and every must group
+is among them. Check 2, a model judge (`relay/probes.ts`): one call per role and chunk; it can only
+add findings, and a finding counts only when its quote is in the text (else it is kept as
+unconfirmed). The judge never runs on a page render: it runs from the approver's "Run probes again"
+and from `scripts/probe-eval.ts`, and its results are stored in `probe_runs` (admin only). The export
+guard refuses an export that holds a restricted token or a reworded restricted fact.
+`scripts/probe-eval.ts` scores the classifier on the labelled evaluation set (in a scratch workspace;
+hard rewordings never enter the live demo), runs the detector check and the probes, and writes
+`docs/PROBE_RESULTS.md` and `<demo.dataDir>/probe_summary.json` (read by `/w/[id]/probes`).
+
+**Recovery (unreachable leaver; Lacuna with Tether and Attest).** Migration `0007_recovery.sql`; code in
+`src/lib/tether/{graph,traces}.ts`, `src/lib/lacuna/core/{ladder,options}.ts`, `src/lib/lacuna/recovery.ts`.
+Only the approver switches "leaver can't be reached" on or off (`workspaces.leaver_unreachable`, with
+when, why and the successor run that was latest at switch-on); both are in `audit_log`. While it is
+on, the leaver's answer boxes are closed and every open gap question walks three rungs. Each outcome
+is one row in `recovery_steps` (RLS on `role_set`, exactly like `claims`; admin writes only).
+1. *People.* The collaboration graph takes `GraphSegment`, a type with no text field; the query that
+   feeds it never selects `segments.text`. Edges: `reply` 3, `same_thread` 1 (consecutive messages,
+   different authors, at most 30 minutes apart), `co_change` 2 (same path inside the footprint
+   window), `shared_event` 2 if recurring else 1; each instance × recency `max(0.1, 0.5^(ageDays/90))`.
+   Which segments concern an entity comes from the citations of record claims Attest extracted earlier
+   (plus one reply hop), so the graph module reads no message text. A neighbour's score for a gap =
+   wrote + replied + near + files + events + tie; under 1 is left out; a role holder is scored only on
+   segments their own role may see. A person is asked through the role they hold (`role_holders`): a
+   person with no role is shown and not asked; a person whose role is walled off is skipped. "Walled
+   off" has one definition: any live claim that could satisfy the check is hidden from that role
+   (decided from `claim_meta()`). A neighbour row's role set = the roles that can see every segment
+   behind the score ∩ the roles that are not walled off, so a skipped person's role is never in it and
+   cannot read the row, the reason or the fact that they were considered. The reason sentence is
+   built from counts and the entity label only. An answer is masked, stored as an `answer` segment in
+   the source `src_recovery` and as a claim with trust `second_hand`, origin `neighbour_answer`; its
+   role set starts at the upload default cut down to the roles that already see every record on the
+   topic the neighbour can see, and the neighbour may only narrow it (their role and the approver stay).
+   `gap_questions.answered_claim_id` is not touched: the leaver can still be asked later.
+2. *Files and history.* The trace reader reads workflow files (trigger, matrix, steps in file order,
+   secrets by name), the CI run history (`run` segments from `runs.json`: last green run, failing
+   streak, where the failing step sits in the workflow, what did not run), commit sequences on the
+   paths of an entity (newest 8, what changes together, an unfinished last change) and calendar
+   entries (cadence and next date). A trace only combines segments with one identical role set. Each
+   step is `quoted` (its quote must pass Attest's exact-quote check against the cited segment) or
+   `derived` (no quote). The trace goes through `verifyDrafts()` and is stored as a claim with origin
+   `trace` and trust `inferred`, always; a trace where fewer than half of the quoted steps verify is
+   discarded and logged. A trace is attached to a gap only if a claim built from it would make that
+   check Partial under the deterministic stand-in; a check that asks who is never served by a trace.
+3. *Possible answers.* Ranked options come from conflicting claims, from weak claims (neighbour
+   answers, traces), from a calendar cadence, and from model proposals over record claims (every
+   cited claim id is checked in code; ungrounded proposals are dropped). Code alone ranks:
+   Σ trustWeight × authority/3 × recency + 0.5 × (distinct authors − 1), top 3. Options are rows in
+   `recovery_steps` only, never claims, so they cannot change coverage or any score.
+Credit for weaker evidence (`countsFully()` in `core/standin.ts`): a Second-hand claim can cover a
+check of weight 1 or 3; on a blocking check (weight 5) it stays Partial until the approver has
+approved the claim in review; Inferred is always Partial; `ranked_options` is ignored. So recovery
+never lowers B on its own word and never raises K. Recovery claims stay outside Attest's rules
+(supersession, conflicts, corroboration) and are carried over by `verify()` untouched. The before
+and after panel compares the latest successor run with the same gaps answered by the leaver: a
+stored run of the demo when its data carries one, else `projectLeaverRun()` (the scoring rules
+applied to the baseline, no model). `runTest(ws, role, { only })` re-judges the named
+responsibilities and copies the rest from the latest run. `recoverySurfaces(ws, role)` returns
+every recovery text a role can read, for the leak check.
 
 ## 5. Permissions: RLS is the compile boundary
 
@@ -269,11 +422,17 @@ visibility may appear. Runs as a vitest suite and as a "Leak check" panel in the
 - `withRole(workspaceId, role, fn)`: `BEGIN; SET LOCAL ROLE us_reader; SELECT set_config('request.jwt.claims',
   '{"workspace_id":"…","role_key":"…"}', true); …fn…; COMMIT`.
 - Policy: `workspace_id = (claims->>'workspace_id')::uuid AND (claims->>'role_key') = ANY(role_set)`.
+  On `segments` also `version = us_segment_head(workspace_id, id)`: a reader only ever sees the newest
+  version, so an older, wider version is never readable again. On `claims` and `snapshot_claims` the
+  role test is `us_can_see(role, role_set, flag_role_set)`; `count_withheld()` and `claim_meta()` use
+  the same function, so the three cannot drift apart. `count_limited(ws, role)` returns how many
+  messages in sources the role can open were limited away from it (an integer only).
 - Compile, successor test, gap questions and every handover/export read go through `withRole`. Admin
   steps (import, extraction, review writes) run as the app user and are logged.
 - Workspaces: each visitor gets a private copy (`POST /api/workspaces` clones the demo pack or creates an
   empty one). The workspace UUID is in the URL; the current role is a cookie `us_role_<workspaceId>`.
-  No sign-up. Workspaces older than 7 days may be deleted.
+  No sign-up. A daily cleanup deletes demo copies older than 7 days and empty-start workspaces
+  idle for 14 days; a workspace with an approved snapshot is never deleted by it.
 
 ## 6. Code layout and ownership (parallel builders stay in their lane)
 
@@ -289,7 +448,11 @@ src/lib/relay/              tiers, snapshot, compile, stubs, readback, canary (R
 src/lib/pipeline/           run orchestration across steps (foundation)
 src/app/                    landing + /w/[id]/{connect,claims,test,ask,review,handover,evaluation}
 src/components/             shared UI (foundation); step-specific components live next to their page
-db/migrations/              0001_core (foundation), 0002_tether, 0003_attest, 0004_lacuna, 0005_relay
+db/migrations/              0001_core (foundation), 0002_tether, 0003_attest, 0004_lacuna, 0005_relay,
+                            0006_packs, 0007_recovery (the switch, recovery_steps, run segments),
+                            0008_confidentiality (segment sensitivity, head-version rule, flag visibility, probe_runs),
+                            0009_findings (findings, snapshot_changes), 0010_fixes (run and action leases, spend cap, cleanup),
+                            0011_claim_meta (claim_meta() as the union of 0008 and 0009)
 packs/club.json             setting pack (data builder)
 data/demo/                  synthetic robotics-club exports + ground_truth.json + model_cache.json (data builder)
 tests/                      vitest + playwright

@@ -1,0 +1,179 @@
+{
+ "generatedAt": "2026-11-14T07:46:38.723Z",
+ "modelTag": "qwen/qwen3-32b@openrouter.ai",
+ "pack": "club",
+ "classifier": {
+  "segments": 40,
+  "positives": 18,
+  "negatives": 22,
+  "rows": [
+   {
+    "category": "finance",
+    "planted": 9,
+    "byRule": 4,
+    "byModel": 2,
+    "held": 0,
+    "missed": 3,
+    "wronglyLimited": 1
+   },
+   {
+    "category": "hr",
+    "planted": 4,
+    "byRule": 2,
+    "byModel": 1,
+    "held": 0,
+    "missed": 1,
+    "wronglyLimited": 1
+   },
+   {
+    "category": "health",
+    "planted": 5,
+    "byRule": 3,
+    "byModel": 1,
+    "held": 0,
+    "missed": 1,
+    "wronglyLimited": 0
+   }
+  ],
+  "precision": 0.8666666666666667,
+  "recall": 0.7222222222222222,
+  "recallRulesOnly": 0.5,
+  "heldModelOff": 6,
+  "wronglyLimited": 2,
+  "primaryCases": {
+   "caught": 3,
+   "of": 3
+  },
+  "missed": [
+   {
+    "id": "ev-004",
+    "category": "health",
+    "difficulty": "hard",
+    "text": "Dev will not be driving for a while after next Tuesday, his leg is getting fixed."
+   },
+   {
+    "id": "ev-008",
+    "category": "finance",
+    "difficulty": "hard",
+    "text": "K has not squared up what every member puts in at the start of the season, so the treasurer is sitting on his motor driver claim."
+   },
+   {
+    "id": "ev-010",
+    "category": "finance",
+    "difficulty": "hard",
+    "text": "I already gave my season money to Priya by hand before the monsoon break."
+   },
+   {
+    "id": "ev-014",
+    "category": "hr",
+    "difficulty": "hard",
+    "text": "There is friction between the incoming tech lead and one of the firmware people over how her code gets talked about in reviews, and she is thinking of walking away."
+   },
+   {
+    "id": "ev-017",
+    "category": "finance",
+    "difficulty": "hard",
+    "text": "The Bengaluru people might trim what they give us by a third if the write-up with photos slips."
+   }
+  ],
+  "wronglyLimitedItems": [
+   {
+    "id": "ev-027",
+    "text": "Priya paid Rs 450 for the lab booking deposit, I will reimburse her on Monday.",
+    "stage": "rule"
+   },
+   {
+    "id": "ev-035",
+    "text": "Arjun was late again today, the arena setup started without him 😂",
+    "stage": "model"
+   }
+  ],
+  "modelCalls": 1,
+  "ms": 4060
+ },
+ "detector": {
+  "rewordings": 36,
+  "keyTerms": 27,
+  "judgeOnly": 4,
+  "neither": 5,
+  "judgeAsked": true,
+  "missed": [
+   {
+    "factId": "pf-04",
+    "text": "There is friction between the incoming tech lead and one of the firmware people over how her code gets talked about in reviews, and she is thinking of walking away.",
+    "kind": "hard"
+   },
+   {
+    "factId": "pf-05",
+    "text": "Our main backer covers roughly one and a half times the opening balance.",
+    "kind": "hard"
+   },
+   {
+    "factId": "pf-06",
+    "text": "What we pay the organisers to take part is due three days before the date Dev heard.",
+    "kind": "hard"
+   },
+   {
+    "factId": "pf-07",
+    "text": "The gearbox and motor order comes to a little under a third of what the sponsor gave us.",
+    "kind": "hard"
+   },
+   {
+    "factId": "pf-08",
+    "text": "Nobody renewed the address in time a year ago, so the site vanished over a long weekend.",
+    "kind": "hard"
+   }
+  ],
+  "catchable": {
+   "total": 27,
+   "keyTerms": 27
+  },
+  "hard": {
+   "total": 9,
+   "keyTerms": 0,
+   "judgeOnly": 4,
+   "neither": 5
+  }
+ },
+ "grid": {
+  "checks": 94,
+  "failed": 0,
+  "textsChecked": 8485,
+  "tokenLeaks": 0,
+  "probeLeaks": 0,
+  "unconfirmed": 4,
+  "judgeCalls": 256,
+  "judgeFailed": 0,
+  "judgeWithdrawn": 41,
+  "notBuilt": []
+ },
+ "modelCallAudit": {
+  "calls": 31,
+  "violations": 0
+ },
+ "withheld": {
+  "president": 0,
+  "tech_lead": 32,
+  "new_member": 44,
+  "treasurer": 20,
+  "leaver": 4
+ },
+ "scores": {
+  "tech_lead": {
+   "b": 3,
+   "c": 0.7608695652173914,
+   "k": 1
+  },
+  "new_member": {
+   "b": 5,
+   "c": 0.7391304347826086,
+   "k": 1
+  }
+ },
+ "limited": {
+  "byRule": 8,
+  "byModel": 1,
+  "held": 0,
+  "total": 9
+ }
+}

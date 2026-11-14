@@ -8,6 +8,11 @@ import { RoleChip, TrustChip } from "@/components/chips";
 import { Notice } from "@/components/Notice";
 import { SegmentText } from "@/components/SegmentText";
 import { QuoteText } from "./QuoteText";
+import { CATEGORY_CHIP, CATEGORY_OPTIONS } from "../../connect/SensitivePanel";
+import { LimitForm } from "../../connect/VisibilityForms";
+
+// Limiting a message re-runs the pipeline inside after(): the same limit as the run route.
+export const maxDuration = 300;
 
 type Params = Promise<{ id: string; segmentId: string }>;
 
@@ -117,6 +122,19 @@ async function Source({ params, searchParams }: { params: Params; searchParams: 
                 <RoleChip key={r} role={r} label={roleLabel(r, pack)} />
               ))}
             </p>
+            {(s.sensitivity?.length ?? 0) > 0 && (
+              <p className="mt-2 text-xs text-ink-2">
+                <span aria-hidden="true">⊘ </span>
+                {s.sensitivityStage === "widened" ? "Widened by the approver. Marked as: " : "Limited. Marked as: "}
+                {s.sensitivity!.map((c) => CATEGORY_CHIP[c].label).join(", ")}
+                {s.sensitivityReason ? `. Why: ${s.sensitivityReason}` : ""}
+              </p>
+            )}
+            {role === pack.approverRole && s.kind !== "answer" && s.kind !== "finding" && (
+              <div className="mt-3">
+                <LimitForm ws={id} segment={s.id} button="Limit who sees this" options={CATEGORY_OPTIONS} />
+              </div>
+            )}
           </div>
         </aside>
       </div>

@@ -24,3 +24,8 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: firmware/.pio/build/esp32dev/firmware.bin
+
+# The OTA password is compiled into the firmware at build time (firmware/src/ota.cpp).
+# It is read by name from the repository secrets and is never written in this file.
+env:
+  OTA_PASSWORD: ${{ secrets.OTA_PASSWORD }}

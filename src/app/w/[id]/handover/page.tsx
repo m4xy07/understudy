@@ -3,7 +3,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import { roleLabel } from "@/lib/pack";
 import { loadWorkspace, type WsParams } from "@/lib/page";
-import { compileHandover, listAcknowledgements, resolveReadbackItems, runLeakCheck } from "@/lib/relay";
+import { compileHandover, listAcknowledgements, resolveReadbackItems } from "@/lib/relay";
+import { visibilityChangedSinceSnapshot } from "@/lib/tether/visibility";
 import type { HandoverLine, HandoverSection } from "@/lib/relay/core/compile";
 import { REVIEWER_EDITED_LABEL } from "@/lib/relay/core/labels";
 import { PageHead, PageLoading } from "@/components/PageHead";
@@ -11,7 +12,13 @@ import { Chip, TrustChip } from "@/components/chips";
 import { OpenGapsNote, ScoreLine } from "@/components/Scores";
 import { EmptyState } from "@/components/Notice";
 import type { RoleKey } from "@/lib/types";
+import { latestChange } from "@/lib/relay/living";
+import { WhatChanged } from "@/components/WhatChanged";
 import { ReadbackForm, type ReadbackField } from "./ReadbackForm";
+import { LeakFallback, LeakGrid } from "./LeakGrid";
+
+// "Run probes again" asks the model judge inside a time box of 40 seconds.
+export const maxDuration = 60;
 
 export default function HandoverPage({ params }: { params: WsParams }) {
   return (
@@ -48,7 +55,9 @@ async function Handover({ params }: { params: WsParams }) {
   }
 
   const { doc, snapshot } = h;
-  const [acks, resolved] = await Promise.all([listAcknowledgements(id), resolveReadbackItems(id, snapshot.id)]);
+  const [acks, resolved, change, visibilityChanged] = await Promise.all([
+    listAcknowledgements(id), resolveReadbackItems(id, snapshot.id), latestChange(id, role), visibilityChangedSinceSnapshot(id),
+  ]);
   const hasRecord = new Map(resolved.items.map((i) => [i.key, i.expectedClaimId !== null]));
   const fields: ReadbackField[] = doc.readbackForm.map((f) => ({ ...f, hasRecord: hasRecord.get(f.key) ?? false }));
   const synthesis = doc.sections.find((s) => s.key === "synthesis");
@@ -75,6 +84,13 @@ async function Handover({ params }: { params: WsParams }) {
         Compiled from the approved snapshot through fixed templates, read under this role&apos;s permissions. Switch
         &ldquo;Viewing as&rdquo; to compare roles.
       </PageHead>
+
+      {visibilityChanged && (
+        <p role="status" className="mb-4 rounded-md border border-warn bg-[#fbf6ea] px-4 py-3 text-sm">
+          <span aria-hidden="true">! </span>
+          Visibility changed after this snapshot was approved. Approve a new snapshot to apply it.
+        </p>
+      )}
 
       {/* Release banner */}
       <section className="card mb-6 overflow-hidden" aria-labelledby="release-h">
@@ -107,6 +123,18 @@ async function Handover({ params }: { params: WsParams }) {
           )}
         </div>
       </section>
+
+      {/* Living handover: the way to First weeks, and what the latest version changed (role-scoped) */}
+      {blocking > 0 && (
+        <p className="mb-6 text-sm text-ink-2">
+          Some gaps are still open.{" "}
+          {role === pack.successorRole
+            ? "Record what you find in your first weeks."
+            : `${roleLabel(pack.successorRole as RoleKey, pack)} records what they find in their first weeks.`}{" "}
+          <Link className="font-medium text-attest underline" href={`/w/${id}/first-weeks`}>Go to First weeks</Link>
+        </p>
+      )}
+      {change && change.version > 1 && <WhatChanged view={change} ws={id} />}
 
       {/* The I-PASS document */}
       <article className="card p-4 sm:p-8" aria-label={`Handover document for ${roleName}`}>
@@ -183,7 +211,7 @@ async function Handover({ params }: { params: WsParams }) {
 
       {/* Leak check */}
       <Suspense fallback={<LeakFallback />}>
-        <LeakCheck ws={id} />
+        <LeakGrid ws={id} isApprover={role === pack.approverRole} />
       </Suspense>
     </>
   );
@@ -315,84 +343,5 @@ function TimelineItem({ line: l, ws, cite }: { line: HandoverLine; ws: string; c
         </span>
       </div>
     </li>
-  );
-}
-
-function LeakFallback() {
-  return (
-    <section className="card mt-8 p-4 sm:p-5" aria-busy="true">
-      <h2 className="text-xl">Leak check</h2>
-      <p className="mt-1 text-sm text-muted">Compiling every role and scanning every surface…</p>
-    </section>
-  );
-}
-
-const SURFACE_LABEL: Record<string, string> = {
-  handover: "Handover text", export: "Export", stubs: "Stubs", scores: "Scores", timeline: "Timeline", questions: "Questions",
-};
-
-async function LeakCheck({ ws }: { ws: string }) {
-  const r = await runLeakCheck(ws);
-  const total = r.cells.length;
-  const failing = r.cells.filter((c) => c.leaks > 0).length;
-  return (
-    <section className="card mt-8 p-4 sm:p-5" aria-labelledby="leak-h">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-3xl">
-          <h2 id="leak-h" className="text-xl">Leak check</h2>
-          <p className="mt-1 text-sm text-muted">
-            {r.source === "ground_truth"
-              ? `${r.tokenCount} canary tokens are planted in restricted demo sources.`
-              : r.tokenCount > 0
-                ? `${r.tokenCount} canary-shaped token${r.tokenCount === 1 ? "" : "s"} found in your sources.`
-                : "No canary tokens in these sources; any CANARY-shaped text would still be caught."}{" "}
-            Every role&apos;s handover is compiled and every surface scanned; a token may appear only for roles allowed to see it.
-          </p>
-        </div>
-        {r.allPass ? (
-          <Chip symbol="✓" label={`All ${total} checks pass`} tone="ok" />
-        ) : (
-          <Chip symbol="✕" label={`${failing} of ${total} checks fail`} tone="bad" />
-        )}
-      </div>
-      <div className="table-wrap mt-4">
-        <table className="data-table">
-          <caption className="sr-only">Leak check by role and surface</caption>
-          <thead>
-            <tr>
-              <th scope="col">Role</th>
-              {r.surfaces.map((s) => <th key={s} scope="col">{SURFACE_LABEL[s] ?? s}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {r.roles.map((role) => (
-              <tr key={role.key}>
-                <th scope="row" className="text-left text-sm font-medium normal-case tracking-normal text-ink">
-                  {role.label}
-                  <span className="block text-xs font-normal text-muted">may see {role.maySee} of {r.tokenCount}</span>
-                </th>
-                {r.surfaces.map((s) => {
-                  const c = r.cells.find((x) => x.role === role.key && x.surface === s)!;
-                  return (
-                    <td key={s} className="text-sm">
-                      {c.leaks === 0 ? (
-                        <span className="text-ok" title={`${c.texts} text${c.texts === 1 ? "" : "s"} scanned`}>
-                          <span aria-hidden="true">✓ </span>Pass
-                        </span>
-                      ) : (
-                        <span className="font-semibold text-bad">
-                          <span aria-hidden="true">✕ </span>{c.leaks} leak{c.leaks === 1 ? "" : "s"}
-                        </span>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {!r.compiled && <p className="mt-2 text-xs text-muted">No snapshot yet: only the gap questions were scanned.</p>}
-    </section>
   );
 }

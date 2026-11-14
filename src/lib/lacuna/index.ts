@@ -16,14 +16,17 @@ import { withRole } from "@/lib/db/withRole";
 import { getWorkspacePack, entityLabel, roleLabel, type ResolvedPack } from "@/lib/pack";
 import { claimId as makeClaimId, tierFor } from "@/lib/attest";
 import { computeFootprint } from "@/lib/tether/footprint";
-import { maskText } from "@/lib/tether/mask";
+import { limitedNote, narrowTypedText } from "@/lib/tether/visibility";
+import { maskAnswer, persistAnswer, RETEST_FAILED } from "./persist";
+
+export { RETEST_FAILED } from "./persist";
 import { callJson, modelAvailable } from "@/lib/model/client";
 import type {
-  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun,
+  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun, Trust,
 } from "@/lib/types";
 import { buildInventory as coreInventory } from "./core/inventory";
 import { checksByResp, checksFor, findCheck } from "./core/checks";
-import { RECORD_TRUST, gapKey, type LacunaCheck, type LacunaPack } from "./core/pack";
+import { RECORD_TRUST, gapKey, strongestTrust, type LacunaCheck, type LacunaPack } from "./core/pack";
 import { computeScores, scoreDelta } from "./core/scores";
 import {
   runStandin, STANDIN_JSON_SCHEMA, type ClaimMeta, type VisibleClaim,
@@ -35,6 +38,15 @@ import { dropFinishedFootprint, leaverName, leaverPersonIds, markPartlyRestricte
 
 export { toLacunaPack, leaverPersonIds, leaverName } from "./adapt";
 export type { ReleaseState } from "./core/plan";
+// Unreachable-leaver recovery (docs/ARCHITECTURE.md section 4, "Recovery").
+export {
+  recoveryState, setLeaverUnreachable, buildLadder, listLadder, questionsForRole, answerAsNeighbour, declineAsNeighbour,
+  recoveryComparison, listTraces, recoverySurfaces, precomputeRecovery, measureLeaverRun, recoverySamples, askedRoles,
+  repliesByRole,
+} from "./recovery";
+export type {
+  RecoveryState, LadderGap, LadderStep, NeighbourQuestion, NeighbourReply, TraceView, RecoveryComparison, RecoverySample,
+} from "./recovery";
 
 const MODEL_CONCURRENCY = 6;
 
@@ -166,10 +178,10 @@ export async function claimMeta(ws: string, role?: RoleKey): Promise<Map<string,
   return out;
 }
 
-/** Claims `role` may see, read under RLS. */
+/** Claims `role` may see, read under RLS. The order is total (id breaks ties), so prompts built from it are deterministic. */
 export async function visibleClaims(ws: string, role: RoleKey): Promise<Claim[]> {
   const rows = await withRole(ws, role, (tx) =>
-    tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from`);
+    tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from, id`);
   return rows.map(toClaim);
 }
 
@@ -202,7 +214,53 @@ export interface RunTestOptions {
   model?: "auto" | "off" | "cache";
   /** What triggered the run, stored with it (e.g. "pipeline", "re-run", "answer gq_…"). */
   trigger?: string;
+  /**
+   * Responsibility ids to re-judge. Results for every other responsibility are copied from the
+   * latest run of this role (one answer changes one responsibility, so the rest need no model call).
+   * Ignored when the role has no earlier run.
+   */
+  only?: string[];
+  /**
+   * With `only`: do not keep an earlier, better result. For the background model re-check, whose
+   * whole point is that the model may lower the first, rule-based reading of the same evidence.
+   */
+  rejudge?: boolean;
+  /**
+   * Refuse to store the run when the evidence changed while it was being judged (a decision, an
+   * answer or a plan entry saved meanwhile): throws StaleTestError instead of inserting a run that
+   * is older than what the page already shows. For background work; a foreground action reads
+   * its own write and needs no check. Pass a fingerprint (testInputFingerprint) taken earlier to
+   * compare against that moment instead of the start of this run.
+   */
+  refuseStale?: boolean | string;
 }
+
+/** Thrown by runTest({ refuseStale: true }) when its inputs changed while it ran. Nothing was stored. */
+export class StaleTestError extends Error {
+  constructor() {
+    super("The evidence changed while the test ran; the run was not stored.");
+    this.name = "StaleTestError";
+  }
+}
+
+/**
+ * A fingerprint of everything a test run reads: claims (state, review, role set, text), the plan
+ * and the inventory. Two equal fingerprints mean a run started at the first is still current.
+ */
+export async function testInputFingerprint(ws: string): Promise<string> {
+  const [row] = await db()`
+    SELECT
+      (SELECT coalesce(md5(string_agg(md5(id || '|' || state || '|' || review || '|' || array_to_string(role_set, ',') || '|' || trust
+          || '|' || coalesce(value, '') || '|' || statement), ',' ORDER BY id)), '') FROM claims WHERE workspace_id = ${ws}) AS claims,
+      (SELECT coalesce(md5(string_agg(responsibility_id || '|' || check_key || '|' || owner || '|' || coalesce(due_date::text, '') || '|' || risk_note,
+          ',' ORDER BY responsibility_id, check_key)), '') FROM plan_items WHERE workspace_id = ${ws}) AS plan,
+      (SELECT coalesce(md5(string_agg(id || '|' || kind || '|' || array_to_string(entities, ','), ',' ORDER BY id)), '')
+        FROM responsibilities WHERE workspace_id = ${ws}) AS resps`;
+  return `${String(row?.claims ?? "")}.${String(row?.plan ?? "")}.${String(row?.resps ?? "")}`;
+}
+
+/** Spend-cap refusals and calls left for a later slice: the model was not asked, by our own limits. */
+const BUDGET_ERROR = /live model budget|left for later/i;
 
 /** Is the workspace's current state covered by an approved snapshot? */
 async function isProvisional(ws: string): Promise<boolean> {
@@ -222,17 +280,26 @@ async function isProvisional(ws: string): Promise<boolean> {
 export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = {}): Promise<TestRun> {
   const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
+  const startedOn = typeof opts.refuseStale === "string" ? opts.refuseStale
+    : opts.refuseStale ? await testInputFingerprint(ws) : null;
   const [resps, visible, meta, plan] = await Promise.all([
     listResponsibilities(ws),
     visibleClaims(ws, role),
     claimMeta(ws, role),
     listPlanItems(ws),
   ]);
-  const usable: VisibleClaim[] = visible.filter((c) => c.state === "active" || c.state === "conflicting");
+  // A successor finding counts only once the approver has let it in (approved or edited).
+  const usable: VisibleClaim[] = visible.filter((c) => (c.state === "active" || c.state === "conflicting")
+    && !(c.origin === "successor_finding" && c.review !== "approved" && c.review !== "edited"));
   const checks = checksByResp(resps, lpack);
 
   const today = await workspaceNow(ws);
-  const det = await runStandin({ resps, role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, today });
+  // `only`: re-judge these responsibilities (and any the earlier run does not know), copy the rest.
+  const prev = opts.only && opts.only.length > 0 ? await getLatestTestRun(ws, role) : null;
+  const prevResps = new Set((prev?.results ?? []).map((r) => r.responsibilityId));
+  const allResps = resps;
+  const judged = prev ? allResps.filter((r) => opts.only!.includes(r.id) || !prevResps.has(r.id)) : allResps;
+  const det = await runStandin({ resps: judged, role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, today });
   let results = det.results;
   let modelUsed = false;
   let modelNote: string | null = null;
@@ -243,24 +310,53 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     let call: ModelCall | undefined;
     if (mode === "cache") call = cachedStandinCall;
     else call = (await modelAvailable()) ? standinCall : cachedStandinCall;
-    const perResp = await mapLimit(resps, MODEL_CONCURRENCY, (r) =>
+    const perResp = await mapLimit(judged, MODEL_CONCURRENCY, (r) =>
       runStandin({ resps: [r], role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, call, today }));
     const modelResults = perResp.filter((p) => p.modelUsed).flatMap((p) => p.results);
     const errors = perResp.flatMap((p) => p.errors);
     modelUsed = modelResults.length > 0;
     results = mergeJudgements(modelResults, det.results);
-    if (errors.length) {
-      const unavailable = errors.filter((e) => /not in cache|not configured|timed out|HTTP|fetch/i.test(e.error)).length;
-      modelNote = unavailable === errors.length
-        ? `Model unavailable for ${errors.length} responsibilit${errors.length === 1 ? "y" : "ies"}: deterministic reading used.`
-        : `Model answer unusable for ${errors.map((e) => e.responsibilityKey).join(", ")}: deterministic reading used.`;
-    }
+    if (errors.length) modelNote = standinErrorNote(errors);
   }
 
+  // The label of a result is the strongest trust among the claims it cites, not among every claim
+  // that could have satisfied the check. So a check the stand-in closes on a colleague's answer
+  // reads Second-hand even when a record on the same topic exists, and K does not count it.
+  const trustOf = new Map(usable.map((c) => [c.id, c.trust]));
+  results = results.map((r) => {
+    if (r.claimIds.length === 0 || (r.coverage !== "covered" && r.coverage !== "partial")) return r;
+    const cited = r.claimIds.map((id) => trustOf.get(id)).filter((t): t is Trust => !!t);
+    return cited.length > 0 ? { ...r, bestTrust: strongestTrust(cited) } : r;
+  });
+
+  if (prev) {
+    // A re-test of one responsibility follows new evidence (an answer, a trace). New evidence cannot
+    // take away what the record already supported: a check keeps its earlier, better result as long
+    // as every claim it rested on is still live and visible. This also keeps the model's judgement
+    // of the unchanged checks from drifting when the prompt gains a claim.
+    // "Live" means active: a claim that a new claim now contradicts (state conflicting) no longer
+    // carries its earlier result, so a new conflict shows in the scores and in "what changed".
+    // Nor does a claim the approver rejected since.
+    const liveIds = new Set(usable.filter((c) => c.state === "active" && c.review !== "rejected").map((c) => c.id));
+    const before = new Map(prev.results.map((r) => [gapKey(r.responsibilityId, r.checkKey), r]));
+    const rank: Record<Coverage, number> = { covered: 3, partial: 2, conflicting: 1, missing: 0, restricted: 0 };
+    results = results.map((r) => {
+      if (opts.rejudge) return r;
+      const was = before.get(gapKey(r.responsibilityId, r.checkKey));
+      if (!was || rank[was.coverage] <= rank[r.coverage]) return r;
+      if (was.claimIds.length === 0 || !was.claimIds.every((id) => liveIds.has(id))) return r;
+      return was;
+    });
+    // Keep the inventory order: fresh results for the judged responsibilities, the earlier ones for the rest.
+    const judgedIds = new Set(judged.map((r) => r.id));
+    results = allResps.flatMap((r) =>
+      judgedIds.has(r.id) ? results.filter((x) => x.responsibilityId === r.id) : prev.results.filter((x) => x.responsibilityId === r.id));
+  }
   results = markPartlyRestricted(results, resps, checks, meta, role);
   const named = namedOwnersFromPlan(openBlockingGaps(results, checks), plan);
   const scores = computeScores(results, checks, named);
   const provisional = await isProvisional(ws);
+  if (startedOn !== null && (await testInputFingerprint(ws)) !== startedOn) throw new StaleTestError();
   const id = `trn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}_${role}`;
   const [row] = await db()`
     INSERT INTO test_runs (workspace_id, id, role, scores, results, provisional, model_used, trigger, model_note)
@@ -268,6 +364,30 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
       ${provisional}, ${modelUsed}, ${opts.trigger ?? "run"}, ${modelNote})
     RETURNING *`;
   return toTestRun(row);
+}
+
+/**
+ * The note stored with a run when the stand-in model could not be used for some responsibilities.
+ * Three different things, said apart: our own budget or time limit stopped the call, the model
+ * could not be reached, or it answered something unusable.
+ */
+export function standinErrorNote(errors: { responsibilityKey: string; error: string }[]): string | null {
+  if (errors.length === 0) return null;
+  const n = (k: number) => `${k} responsibilit${k === 1 ? "y" : "ies"}`;
+  const budget = errors.filter((e) => BUDGET_ERROR.test(e.error));
+  const rest = errors.filter((e) => !BUDGET_ERROR.test(e.error));
+  const unavailable = rest.filter((e) => /not in cache|not configured|timed out|HTTP|fetch|disabled/i.test(e.error));
+  const unusable = rest.filter((e) => !unavailable.includes(e));
+  const parts: string[] = [];
+  if (budget.length) {
+    const cap = budget.some((e) => /live model budget/i.test(e.error));
+    parts.push(cap
+      ? `Today's live model budget is used: the model was not asked for ${n(budget.length)}.`
+      : `The model was not asked for ${n(budget.length)} in the time allowed; press Re-run test to finish.`);
+  }
+  if (unavailable.length) parts.push(`Model unavailable for ${n(unavailable.length)}.`);
+  if (unusable.length) parts.push(`Model answer unusable for ${unusable.map((e) => e.responsibilityKey).join(", ")}.`);
+  return `${parts.join(" ")} Deterministic reading used.`;
 }
 
 export interface TestRunSummary {
@@ -390,7 +510,14 @@ export async function buildQuestions(ws: string): Promise<GapQuestion[]> {
 // ---------------------------------------------------------------------------
 
 export type AnswerResult =
-  | { ok: true; claimId: string; before: Scores | null; after: Scores; delta: string }
+  | {
+    ok: true; claimId: string; before: Scores | null; after: Scores; delta: string;
+    /** Set when the answer was limited as sensitive. */ limited?: string | null;
+    /** The responsibility the answer is about (for a re-check narrowed to it). */
+    responsibilityId: string;
+    /** True when the answer is saved but the re-test after it could not run. */
+    retestFailed?: boolean;
+  }
   | { ok: false; error: string };
 
 const INTERVIEW_SOURCE = "src_interview";
@@ -410,6 +537,13 @@ export async function answerQuestion(
   const leaverRole = pack.leaverRole as RoleKey;
   const successor = pack.successorRole as RoleKey;
   if (actor !== leaverRole) return { ok: false, error: "Only the leaver can answer gap questions." };
+  // Recovery: while the approver has marked the leaver as unreachable, the leaver's answer boxes are closed.
+  if ((await getWorkspace(ws))?.leaverUnreachable) {
+    return {
+      ok: false,
+      error: `${leaverName(pack) || "The leaver"} is marked as unreachable. ${roleLabel(pack.approverRole, pack)} can switch this off.`,
+    };
+  }
   const text = (answer ?? "").trim();
   if (text.length < 2) return { ok: false, error: "Write an answer first." };
   if (text.length > 4000) return { ok: false, error: "Keep the answer under 4000 characters." };
@@ -432,18 +566,8 @@ export async function answerQuestion(
     : null;
 
   // Mask before storage. Contact placeholders get workspace-unique numbers.
-  const masked = maskText(text, { contactsKey: process.env.CONTACTS_KEY ?? "", people: null });
-  let maskedText = masked.text;
-  const contacts = [] as { token: string; kind: "email" | "phone"; valueEnc: string }[];
-  if (masked.contacts.length) {
-    const [{ n }] = await sql`SELECT count(*)::int AS n FROM contacts WHERE workspace_id = ${ws}`;
-    const renum = new Map<string, string>();
-    for (const c of masked.contacts) {
-      if (!renum.has(c.token)) renum.set(c.token, `[CONTACT:c-${9000 + Number(n) + renum.size + 1}]`);
-      contacts.push({ token: renum.get(c.token)!, kind: c.kind, valueEnc: c.valueEnc });
-    }
-    for (const [from, to] of renum) maskedText = maskedText.split(from).join(to);
-  }
+  const masked = await maskAnswer(ws, text);
+  const maskedText = masked.text;
 
   const people = await listPeople(ws);
   const leaverIds = leaverPersonIds(people, leaverName(pack), pack.leaverPerson.aliases);
@@ -456,7 +580,10 @@ export async function answerQuestion(
     leaverId,
     { leaverName: leaverName(pack) || "The leaver", ts, sourceId: INTERVIEW_SOURCE, workspaceId: ws, narrowTo },
   );
-  const roleSet = draft.roleSet;
+  // Sensitive content typed into an answer is limited at insert, like an ingested message: the
+  // classifier's rules can only narrow the role set the leaver chose.
+  const sensitivity = await narrowTypedText(ws, segment.text, "answer", draft.roleSet);
+  const roleSet = sensitivity.roleSet;
   const id = makeClaimId(draft.entity, draft.attribute, draft.value, [segment.id]);
   const claim: Claim = {
     id, workspaceId: ws, entity: draft.entity, entityLabel: draft.entityLabel, attribute: draft.attribute,
@@ -469,48 +596,41 @@ export async function answerQuestion(
 
   const before = await getLatestTestRun(ws, successor);
   await sql.begin(async (tx) => {
-    await tx`
-      INSERT INTO sources (workspace_id, id, kind, name, role_set, origin)
-      VALUES (${ws}, ${INTERVIEW_SOURCE}, 'interview', 'Gap interview', ${base}::text[], 'interview')
-      ON CONFLICT (workspace_id, id) DO NOTHING`;
-    await tx`
-      INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta)
-      VALUES (${ws}, ${segment.id}, 1, ${INTERVIEW_SOURCE}, 'interview', 'answer', ${ts}, ${leaverId}, ${segment.thread}, 0,
-        ${segment.text}, ${segment.textHash}, ${roleSet}::text[], ${JSON.stringify(segment.meta)}::jsonb)
-      ON CONFLICT DO NOTHING`;
-    await tx`UPDATE sources SET segment_count = segment_count + 1, masked_secrets = masked_secrets + ${masked.secrets},
-      masked_contacts = masked_contacts + ${contacts.length} WHERE workspace_id = ${ws} AND id = ${INTERVIEW_SOURCE}`;
-    const contactRoles = (pack.contactsRoles as RoleKey[]).filter((r) => roleSet.includes(r));
-    for (const c of contacts) {
-      await tx`
-        INSERT INTO contacts (workspace_id, token, kind, person_id, value_enc, role_set, source_id)
-        VALUES (${ws}, ${c.token}, ${c.kind}, ${null}, ${c.valueEnc}, ${contactRoles}::text[], ${INTERVIEW_SOURCE})
-        ON CONFLICT DO NOTHING`;
-    }
-    await tx`
-      INSERT INTO claims (workspace_id, id, entity, entity_label, attribute, value, statement, citations, trust, state,
-        role_set, valid_from, author_id, source_kinds, importance, tier, review, origin, source_ids)
-      VALUES (${ws}, ${claim.id}, ${claim.entity}, ${claim.entityLabel}, ${claim.attribute}, ${claim.value}, ${claim.statement},
-        ${JSON.stringify(claim.citations)}::jsonb, 'leaver_said', 'active', ${roleSet}::text[], ${ts}, ${leaverId},
-        ${["interview"]}::text[], ${claim.importance}, ${claim.tier}, 'pending', 'leaver_answer', ${[INTERVIEW_SOURCE]}::text[])
-      ON CONFLICT (workspace_id, id) DO NOTHING`;
-    await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
-      VALUES (${ws}, ${claim.id}, 'created', ${JSON.stringify({
+    await persistAnswer(tx, ws, {
+      source: { id: INTERVIEW_SOURCE, name: "Gap interview", roleSet: base },
+      segment,
+      claim,
+      masked,
+      sensitivity,
+      contactRoles: (pack.contactsRoles as RoleKey[]).filter((r) => roleSet.includes(r)),
+      event: {
         origin: "leaver_answer", questionId, segmentId: segment.id, trust: "leaver_said", roleSet,
-        narrowed: roleSet.length < base.length,
-      })}::jsonb, ${actor})`;
+        narrowed: roleSet.length < base.length, ...(sensitivity.roleSetOriginal ? { sensitivity: sensitivity.categories, stage: sensitivity.stage } : {}),
+      },
+      actor,
+    });
     await tx`UPDATE gap_questions SET answered_claim_id = ${claim.id}, answered_at = now()
       WHERE workspace_id = ${ws} AND id = ${questionId}`;
   });
   await audit(ws, actor, "answer_question", { questionId, claimId: claim.id, roleSet });
 
-  const trigger = `answer ${questionId}`;
-  // Re-test as the successor (the score shown) and as every other role the pack tests.
-  const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger })));
-  const checks = checksByResp(await listResponsibilities(ws), lpack);
-  const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
-  await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
-  return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta };
+  // The answer is committed. Whatever fails from here on must not read as "the answer failed":
+  // a retry would be told the question is already answered.
+  try {
+    const trigger = `answer ${questionId}`;
+    // Re-test as the successor (the score shown) and as every other role the pack tests.
+    const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger })));
+    const checks = checksByResp(await listResponsibilities(ws), lpack);
+    const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
+    await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
+    return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta, limited: limitedNote(sensitivity), responsibilityId: resp.id };
+  } catch (err) {
+    console.error(`[lacuna ${ws}] re-test after answer ${questionId} failed`, err);
+    return {
+      ok: true, claimId: claim.id, before: before?.scores ?? null, after: before?.scores ?? { b: 0, c: 0, k: null },
+      delta: RETEST_FAILED, limited: limitedNote(sensitivity), responsibilityId: resp.id, retestFailed: true,
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------

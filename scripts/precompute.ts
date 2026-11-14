@@ -9,19 +9,34 @@
 // The re-test of the answered responsibility cannot replay: its prompt holds the new answer claim,
 // whose id comes from the answer's time. Every other responsibility replays.
 // The sample leaver answer is the pack's demo.sampleAnswer.
+// Round 3 paths, each on its own fresh demo workspace so they start where a judge starts (the
+// pipeline replays from the rows step 1 just made), twice, exporting the prompts both passes sent:
+//  * recovery (packs whose demo has recovery samples, <demo.dataDir>/recovery.json): the approver
+//    marks the leaver as unreachable, the ladder is built (traces), and each sample neighbour
+//    answer is applied (precomputeRecovery);
+//  * living handover (packs whose answer key has an example finding): tier A approved, every
+//    blocking gap planned, snapshot v1, the successor records the example finding, the approver
+//    approves it (the re-test of the affected responsibility) and v2 is released.
+// Content-level confidentiality adds two things to one run: the classifier's model calls during
+// ingest are recorded too, and when the demo's answer key plants a deliberate false positive
+// (decoys with group "false_positive"), the approver widens it and the pipeline re-runs, so the
+// scripted widening of the walkthrough replays from the cache as well.
 // Usage: pnpm tsx scripts/precompute.ts [--pack <id>] [--keep]
 import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/lib/db/client";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
-import { executeRun, startRun } from "@/lib/pipeline/run";
+import { executeRun, runToEnd, SCRIPT_RUN } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
-import { answerQuestion } from "@/lib/lacuna";
+import { answerQuestion, listBlockingGaps, precomputeRecovery, recoverySamples, savePlanItem } from "@/lib/lacuna";
+import { approveSnapshot, bulkApprove } from "@/lib/relay";
+import { decideFinding, exampleFinding, firstWeeks, recordFinding } from "@/lib/relay/living";
 import { getLatestTestRun, listGapQuestions } from "@/lib/db/queries";
 import { modelAvailable, modelTag, startRecording, stopRecording, type CallRecord } from "@/lib/model/client";
 import { defaultPackId, getPack } from "@/lib/pack";
+import { setSegmentVisibility } from "@/lib/tether/visibility";
 
 const keep = process.argv.includes("--keep");
 const PRODUCTION_TAG = "qwen/qwen3-32b@openrouter.ai";
@@ -42,13 +57,52 @@ async function purge(ws: string) {
 const s = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 const calls = (r: CallRecord) => `${r.calls} calls (${r.cached} cached, ${r.live} live, ${r.failed} failed)`;
 
-async function runOnce(label: string, allKeys: Set<string>) {
-  const ws = (await createDemoWorkspace(pack.id)).id;
+/** The text of the demo's deliberate false positive (the message the walkthrough widens), if it plants one. */
+function plantedFalsePositive(): string | null {
+  try {
+    const gt = JSON.parse(fs.readFileSync(path.join(process.cwd(), pack.demo!.dataDir, "ground_truth.json"), "utf8")) as {
+      decoys?: { group?: string; containsText?: string }[];
+    };
+    return gt.decoys?.find((d) => d.group === "false_positive")?.containsText ?? null;
+  } catch {
+    return null;
+  }
+}
 
+/** The approver widens the planted false positive and the pipeline re-runs. Returns the keys it used. */
+async function widenFalsePositive(label: string, ws: string): Promise<Set<string>> {
+  const text = plantedFalsePositive();
+  if (!text) return new Set();
+  const [seg] = await db()`
+    SELECT id FROM segments WHERE workspace_id = ${ws} AND position(${text} in text) > 0 AND role_set_original IS NOT NULL
+    ORDER BY version DESC LIMIT 1`;
+  if (!seg) {
+    console.log(`[${label}]   widening: the planted false positive is not limited in this run; skipped`);
+    return new Set();
+  }
+  const res = await setSegmentVisibility(ws, String(seg.id), { action: "widen", roles: "source", reason: "Routine and useful: it backs a procedure everyone needs." }, pack.approverRole);
+  if (!res.ok || !res.runId) {
+    console.log(`[${label}]   widening failed: ${res.ok ? "no run started" : res.error}`);
+    return new Set();
+  }
+  const rec = startRecording();
+  const t0 = Date.now();
+  const run = await executeRun(ws, res.runId, SCRIPT_RUN);
+  stopRecording();
+  console.log(`[${label}]   widening + re-run ${s(Date.now() - t0)}: run ${run?.status}; ${calls(rec)}`);
+  return rec.keys;
+}
+
+async function runOnce(label: string, allKeys: Set<string>) {
+  // The content classifier asks the model about borderline segments during ingest: record that too.
+  const ingestRec = startRecording();
+  const ws = (await createDemoWorkspace(pack.id)).id;
+  stopRecording();
+  for (const k of ingestRec.keys) allKeys.add(k);
+  console.log(`[${label}] ingest classifier: ${calls(ingestRec)}`);
   const pipeRec = startRecording();
   const t0 = Date.now();
-  const { runId } = await startRun(ws);
-  const run = await executeRun(ws, runId);
+  const run = await runToEnd(ws, SCRIPT_RUN);
   const pipelineMs = Date.now() - t0;
   stopRecording();
 
@@ -105,7 +159,80 @@ async function runOnce(label: string, allKeys: Set<string>) {
   for (const k of pipeRec.keys) allKeys.add(k);
   const reused = [...answerRec.keys].filter((k) => pipeRec.keys.has(k)).length;
   console.log(`[${label}]   re-test prompts identical to the pipeline's: ${reused} of ${answerRec.keys.size}`);
-  return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation };
+  const widenKeys = await widenFalsePositive(label, ws);
+  return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation, widenKeys };
+}
+
+/** A fresh demo workspace with the pipeline run (replayed from the cache after run 1). */
+async function freshDemo(): Promise<string> {
+  const ws = (await createDemoWorkspace(pack.id)).id;
+  await runToEnd(ws, SCRIPT_RUN);
+  return ws;
+}
+
+/** Recovery on a fresh demo: switch on, ladder, sample neighbour answers. Null when the pack has no samples. */
+async function recoveryOnce(label: string): Promise<{ ws: string; rec: CallRecord } | null> {
+  const ws = await freshDemo();
+  const samples = await recoverySamples(ws);
+  if (samples.answers.length === 0 && !samples.decline) {
+    await purge(ws);
+    return null;
+  }
+  const rec = startRecording();
+  const t0 = Date.now();
+  try {
+    const r = await precomputeRecovery(ws);
+    console.log(`[${label}] recovery ${ws}: ${r.gaps} gaps on the ladder, ${r.answered} sample answers, ${r.declined} declined in ${s(Date.now() - t0)}; ${calls(rec)}`);
+  } finally {
+    stopRecording();
+  }
+  return { ws, rec };
+}
+
+/** The living-handover demo path on a fresh demo. Null when the answer key has no example finding. */
+async function findingOnce(label: string): Promise<{ ws: string; rec: CallRecord } | null> {
+  if (!exampleFinding(pack)) return null;
+  const ws = await freshDemo();
+  const approver = pack.approverRole;
+  const successor = pack.successorRole;
+  const due = new Date(Date.parse(pack.demo!.today) + 14 * 86_400_000).toISOString().slice(0, 10);
+  const must = <T extends { ok: boolean }>(what: string, r: T): Extract<T, { ok: true }> => {
+    if (!r.ok) throw new Error(`${what}: ${(r as { error?: string }).error ?? "refused"}`);
+    return r as Extract<T, { ok: true }>;
+  };
+  must("approve tier A", await bulkApprove(ws, approver));
+  for (const g of await listBlockingGaps(ws)) {
+    must("plan", await savePlanItem(ws, {
+      responsibilityId: g.responsibilityId, checkKey: g.checkKey,
+      owner: "The successor", dueDate: due, riskNote: "Known gap; checked weekly.",
+    }, approver));
+  }
+  must("snapshot v1", await approveSnapshot(ws, approver));
+  const fw = await firstWeeks(ws, successor);
+  const row = [...fw.blocking, ...fw.other].find((g) => g.example && g.canRecord);
+  if (!row?.example) {
+    console.warn(`[${label}] finding ${ws}: the example finding's gap is not open for ${successor}; nothing to precompute`);
+    await purge(ws);
+    return null;
+  }
+  const rec = startRecording();
+  const t0 = Date.now();
+  try {
+    const recorded = must("record finding", await recordFinding(ws, successor, {
+      responsibilityId: row.responsibilityId, checkKey: row.checkKey,
+      answer: row.example.answer, note: row.example.note, link: "", attachment: null, narrowRoles: null, example: true,
+    }));
+    const decided = must("approve finding", await decideFinding(ws, approver, recorded.findingId, "approved", {
+      evidenceOpened: true, note: "Checked against the evidence.",
+    }));
+    console.log(
+      `[${label}] finding ${ws}: ${row.responsibilityKey}.${row.checkKey} approved in ${s(Date.now() - t0)}; ${calls(rec)}; ` +
+        (decided.snapshot ? `snapshot v${decided.snapshot.version} ${decided.delta ?? ""}` : `not released: ${decided.blocked ?? "no snapshot"}`),
+    );
+  } finally {
+    stopRecording();
+  }
+  return { ws, rec };
 }
 
 function fingerprint(rows: Record<string, unknown>[]): string {
@@ -125,6 +252,27 @@ async function main() {
   const stableRetest = [...cold.answerRec.keys].filter((k) => warm.answerRec.keys.has(k) && !keys.has(k));
   for (const k of stableRetest) keys.add(k);
   console.log(`answer re-test prompts sent by both runs (exported too): ${stableRetest.length} beyond the pipeline's`);
+  // The same rule for the scripted widening: prompts both runs sent replay in the demo.
+  const stableWiden = [...cold.widenKeys].filter((k) => warm.widenKeys.has(k) && !keys.has(k));
+  for (const k of stableWiden) keys.add(k);
+  console.log(`widening re-run prompts sent by both runs (exported too): ${stableWiden.length} beyond the others`);
+
+  // Round 3 paths: each twice on fresh workspaces; the prompts both passes sent replay in the demo.
+  const extraWs: string[] = [];
+  for (const [name, once] of [["recovery", recoveryOnce], ["finding", findingOnce]] as const) {
+    const first = await once("run 1");
+    const second = first ? await once("run 2") : null;
+    if (!first || !second) {
+      if (first) extraWs.push(first.ws);
+      console.log(`${name}: ${first ? "second pass did not run" : "not in this pack's demo; skipped"}`);
+      continue;
+    }
+    extraWs.push(first.ws, second.ws);
+    const stable = [...first.rec.keys].filter((k) => second.rec.keys.has(k) && !keys.has(k));
+    for (const k of stable) keys.add(k);
+    const unstable = [...second.rec.keys].filter((k) => !first.rec.keys.has(k)).length;
+    console.log(`${name}: prompts sent by both passes (exported too): ${stable.length} beyond the earlier ones; ${unstable} of the second pass did not repeat; second pass ${calls(second.rec)}`);
+  }
 
   const sameClaims = fingerprint(cold.claims) === fingerprint(warm.claims);
   const sameScores = JSON.stringify(cold.scores) === JSON.stringify(warm.scores);
@@ -170,6 +318,7 @@ async function main() {
   if (!keep) {
     await purge(cold.ws);
     await purge(warm.ws);
+    for (const w of extraWs) await purge(w);
   }
   await db().end();
   if (!sameClaims || !sameScores || !sameQuestions || !fullyCached) process.exitCode = 1;

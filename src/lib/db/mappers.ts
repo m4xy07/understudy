@@ -3,6 +3,7 @@ import type {
   Citation, Claim, ClaimState, Importance, Person, PlanItem, RejectedRow, Responsibility,
   ResponsibilityKind, ResponsibilityOrigin, ReviewState, ReviewTier, RoleKey, Segment, SegmentKind,
   Snapshot, Source, SourceKind, Attribute, Trust, TestRun, Scores, CheckResult, GapQuestion,
+  SensitivityCategory, SensitivityStage,
 } from "@/lib/types";
 
 // postgres.js returns timestamptz as Date, date as string (see client.ts), jsonb as parsed JSON.
@@ -40,6 +41,12 @@ export interface Workspace {
   kind: "demo" | "empty";
   packId: string;
   createdAt: string;
+  /** Recovery switch (0007): the approver marked the leaver as unreachable. */
+  leaverUnreachable: boolean;
+  leaverUnreachableAt: string | null;
+  leaverUnreachableNote: string | null;
+  /** The successor run that was latest when the switch went on. */
+  recoveryBaselineRun: string | null;
 }
 
 export function toWorkspace(r: Row): Workspace {
@@ -49,6 +56,10 @@ export function toWorkspace(r: Row): Workspace {
     kind: r.kind as Workspace["kind"],
     packId: String(r.pack_id),
     createdAt: iso(r.created_at),
+    leaverUnreachable: Boolean(r.leaver_unreachable),
+    leaverUnreachableAt: isoOrNull(r.leaver_unreachable_at),
+    leaverUnreachableNote: (r.leaver_unreachable_note as string | null) ?? null,
+    recoveryBaselineRun: (r.recovery_baseline_run as string | null) ?? null,
   };
 }
 
@@ -96,6 +107,13 @@ export function toSegment(r: Row): Segment {
     roleSet: arr<RoleKey>(r.role_set),
     version: Number(r.version ?? 1),
     meta: json<Record<string, unknown>>(r.meta, {}),
+    sensitivity: arr<SensitivityCategory>(r.sensitivity),
+    sensitivityStage: (r.sensitivity_stage as SensitivityStage | null) ?? null,
+    sensitivityReason: (r.sensitivity_reason as string | null) ?? null,
+    roleSetOriginal: Array.isArray(r.role_set_original) ? (r.role_set_original as RoleKey[]) : null,
+    visibilityNote: (r.visibility_note as string | null) ?? null,
+    visibilityActor: (r.visibility_actor as RoleKey | null) ?? null,
+    classifierVersion: Number(r.classifier_version ?? 0),
   };
 }
 
@@ -123,6 +141,7 @@ export function toClaim(r: Row): Claim {
     reviewNote: (r.review_note as string | null) ?? null,
     origin: r.origin as Claim["origin"],
     supportCheck: (r.support_check as Claim["supportCheck"]) ?? null,
+    flagRoleSet: Array.isArray(r.flag_role_set) ? (r.flag_role_set as RoleKey[]) : null,
   };
 }
 
@@ -171,6 +190,13 @@ export function segmentRow(s: Segment, workspaceId: string) {
     text_hash: s.textHash,
     role_set: s.roleSet,
     meta: JSON.stringify(s.meta ?? {}),
+    sensitivity: s.sensitivity ?? [],
+    sensitivity_stage: s.sensitivityStage ?? null,
+    sensitivity_reason: s.sensitivityReason ?? null,
+    role_set_original: s.roleSetOriginal ?? null,
+    visibility_note: s.visibilityNote ?? null,
+    visibility_actor: s.visibilityActor ?? null,
+    classifier_version: s.classifierVersion ?? 0,
   };
 }
 
@@ -256,11 +282,29 @@ export interface RunStep {
 export interface RunStatus {
   id: string;
   workspaceId: string;
-  status: "running" | "done" | "failed";
+  /** "paused": the run stopped at its time budget and continues in another slice (same run id). */
+  status: "running" | "paused" | "done" | "failed";
   steps: RunStep[];
   error: string | null;
   startedAt: string;
   finishedAt: string | null;
+  /** Function invocations this run has used so far. */
+  slices: number;
+  /** Model-call progress of the step in hand. */
+  progress: RunProgress | null;
+  /** True when nobody is working on a live run (paused, or its worker died): a POST continues it. */
+  resumable: boolean;
+}
+
+export interface RunProgress {
+  step: RunStepKey;
+  done: number;
+  /** Known after the first full pass over the step; null before. */
+  total: number | null;
+  cached: number;
+  failed: number;
+  retry: number;
+  refused: number;
 }
 
 export function toRun(r: Row): RunStatus {
@@ -272,5 +316,8 @@ export function toRun(r: Row): RunStatus {
     error: (r.error as string | null) ?? null,
     startedAt: iso(r.started_at),
     finishedAt: isoOrNull(r.finished_at),
+    slices: Number(r.slices ?? 0),
+    progress: json<{ progress?: RunProgress | null }>(r.cursor, {}).progress ?? null,
+    resumable: r.resumable === true,
   };
 }

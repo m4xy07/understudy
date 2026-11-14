@@ -2,13 +2,17 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRunStatus, getWorkspace } from "@/lib/db/queries";
-import { getProgress } from "@/lib/progress";
+import { askHint, getProgress } from "@/lib/progress";
 import { getRole } from "@/lib/session";
 import { getWorkspacePack } from "@/lib/pack";
 import { roleOptions, type WsParams } from "@/lib/page";
 import { Stepper } from "@/components/Stepper";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { RunPill } from "@/components/RunPanel";
+import { leaseHeld } from "@/lib/pipeline/guard";
+import { REJUDGE_KEY } from "@/lib/pipeline/rejudge";
+import { publicRun } from "@/lib/pipeline/public-run";
+import { touchWorkspace } from "@/lib/pipeline/cleanup";
 
 export default function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: WsParams }) {
   return (
@@ -42,7 +46,10 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
   const workspace = await getWorkspace(id);
   if (!workspace) notFound();
   const pack = await getWorkspacePack(id);
-  const [role, progress, run] = await Promise.all([getRole(id, pack), getProgress(id, pack), getRunStatus(id)]);
+  const [role, progress, run, background] = await Promise.all([
+    getRole(id, pack), getProgress(id, pack), getRunStatus(id), leaseHeld(id, REJUDGE_KEY).catch(() => false),
+  ]);
+  void touchWorkspace(id); // at most one write an hour: the cleanup keeps workspaces that are in use
   return (
     <header className="border-b border-rule bg-paper">
       <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-3 sm:px-8">
@@ -54,21 +61,34 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
             <span className="truncate text-sm text-muted" title={workspace.name}>
               {workspace.name}
             </span>
-            <RunPill ws={id} initial={run} />
+            <RunPill ws={id} initial={publicRun(run)} background={background} />
           </div>
           <RoleSwitcher ws={id} role={role} roles={roleOptions(pack)} />
         </div>
-        <div className="mt-3">
-          <Stepper
-            ws={id}
-            steps={progress.steps}
-            next={
-              // Already viewing as the leaver: drop the "Switch to ..." part of the hint.
-              progress.next?.key === "ask" && role === pack.leaverRole
-                ? { ...progress.next, hint: "Answer a gap question." }
-                : progress.next
-            }
-          />
+        <div className="mt-3 flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <Stepper
+              ws={id}
+              steps={progress.steps}
+              next={
+                // Already viewing as the leaver: drop the "Switch to ..." part of the hint. While
+                // recovery is on the hint points at the people listed on the Ask page instead.
+                progress.next?.key === "ask"
+                  ? { ...progress.next, hint: askHint(pack, { recovery: progress.recovery, viewerIsLeaver: role === pack.leaverRole }) }
+                  : progress.next
+              }
+            />
+          </div>
+          {/* After the first snapshot the handover keeps improving: the way to First weeks. */}
+          {progress.steps.some((s) => s.key === "review" && s.done) && (
+            <Link
+              href={`/w/${id}/first-weeks`}
+              className="flex-none rounded-md border-t-[3px] border-rule px-2 py-1.5 text-sm font-medium text-ink-2 no-underline hover:bg-paper-2"
+            >
+              <span className="block text-[0.7rem] font-semibold uppercase tracking-wider text-muted">After</span>
+              First weeks
+            </Link>
+          )}
         </div>
       </div>
     </header>

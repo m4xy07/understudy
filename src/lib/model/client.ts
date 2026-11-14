@@ -2,6 +2,7 @@
 // Every model call in Understudy goes through callJson(). It never throws to callers:
 // failures come back as { ok: false, error } so the step can continue on deterministic paths.
 // The model never sets labels, roles, statuses, scores or approvals; callers validate output.
+import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
 import type { ZodType } from "zod";
 import { z } from "zod";
@@ -9,7 +10,46 @@ import { db } from "@/lib/db/client";
 
 export type CallResult<T> =
   | { ok: true; data: T; cached: boolean }
-  | { ok: false; error: string };
+  | { ok: false; error: string; transient?: boolean; refused?: boolean };
+
+/** What one callJson did, as reported to a ModelContext. */
+export type CallOutcome = "cached" | "live" | "failed" | "deferred" | "refused";
+
+/**
+ * Limits for every callJson made inside runWithModelContext(ctx, fn), however deep (extraction,
+ * support check, stand-in). Cached answers are always served; the limits only stop new live calls.
+ *   deadline  no live call starts after this time: the call returns { ok: false, error: DEFERRED }.
+ *             A call in flight is not tried a second time (retry, invalid JSON) once it has passed.
+ *   hardDeadline  no request runs past this time: each request's timeout is cut to what is left,
+ *             so a call that started just before `deadline` cannot outlive the slice or the route.
+ *   retries   replaces the per-call retry count (a sliced run retries across slices, not inside one).
+ *   gate      asked before each live call; a string refuses the call with that message (spend cap).
+ *   onResult  told the outcome of every call (progress counts).
+ */
+export interface ModelContext {
+  deadline?: number;
+  hardDeadline?: number;
+  retries?: number;
+  gate?: (key: string) => Promise<string | null>;
+  onResult?: (key: string, outcome: CallOutcome, info: { error?: string; transient?: boolean }) => void;
+}
+
+export const DEFERRED_ERROR = "not in cache yet: the live model call was left for later";
+
+const ctxStore = globalThis as unknown as { __usModelCtx?: AsyncLocalStorage<ModelContext> };
+function contexts(): AsyncLocalStorage<ModelContext> {
+  if (!ctxStore.__usModelCtx) ctxStore.__usModelCtx = new AsyncLocalStorage<ModelContext>();
+  return ctxStore.__usModelCtx;
+}
+
+/** Run `fn` with limits on the live model calls it makes. Nested contexts replace the outer one. */
+export function runWithModelContext<T>(ctx: ModelContext, fn: () => Promise<T>): Promise<T> {
+  return contexts().run(ctx, fn);
+}
+
+export function currentModelContext(): ModelContext | undefined {
+  return contexts().getStore();
+}
 
 export interface CallOpts<T> {
   system: string;
@@ -38,6 +78,8 @@ export const DEFAULT_MAX_TOKENS = 4_096;
 export const DEFAULT_RETRIES = 3;
 const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
+/** A request with less time than this left before the hard deadline is not sent. */
+export const MIN_REQUEST_MS = 1_000;
 const PROBE_TIMEOUT_MS = 3_000;
 const PROBE_TTL_MS = 30_000;
 
@@ -210,12 +252,14 @@ export function parseRetryAfter(value: string | null, now: number = Date.now()):
  */
 export async function withRetries(
   attempt: () => Promise<ChatResult>,
-  opts: { retries: number; sleep?: (ms: number) => Promise<void>; random?: () => number },
+  opts: { retries: number; sleep?: (ms: number) => Promise<void>; random?: () => number; /** No retry starts after this time. */ until?: number },
 ): Promise<ChatResult> {
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   let res = await attempt();
   for (let i = 0; i < opts.retries && !res.ok && isTransientFailure(res.status, res.error); i++) {
-    await sleep(backoffMs(i, res.retryAfterMs, opts.random));
+    const wait = backoffMs(i, res.retryAfterMs, opts.random);
+    if (opts.until !== undefined && Date.now() + wait >= opts.until) break;
+    await sleep(wait);
     res = await attempt();
   }
   return res;
@@ -284,15 +328,28 @@ async function chat(
  * with backoff (default 3 retries); one more try on invalid JSON. Never throws.
  */
 export async function callJson<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
-  const res = await callJsonInner(opts);
-  if (rec.__usModelRecord) {
+  const ctx = currentModelContext();
+  const res = await callJsonInner(opts, ctx);
+  if (rec.__usModelRecord || ctx?.onResult) {
     const user = opts.user.trimEnd().endsWith("/no_think") ? opts.user : `${opts.user.trimEnd()}\n/no_think`;
-    noteCall(cacheKey(modelTag(), opts.system, user, opts.jsonSchemaName), res.ok ? (res.cached ? "cached" : "live") : "failed", res.ok ? undefined : res.error);
+    const key = cacheKey(modelTag(), opts.system, user, opts.jsonSchemaName);
+    if (rec.__usModelRecord) noteCall(key, res.ok ? (res.cached ? "cached" : "live") : "failed", res.ok ? undefined : res.error);
+    if (ctx?.onResult) {
+      try {
+        if (res.ok) ctx.onResult(key, res.cached ? "cached" : "live", {});
+        else {
+          const outcome: CallOutcome = res.error === DEFERRED_ERROR ? "deferred" : res.refused ? "refused" : "failed";
+          ctx.onResult(key, outcome, { error: res.error, transient: res.transient === true });
+        }
+      } catch {
+        // a progress callback never fails a model call
+      }
+    }
   }
   return res;
 }
 
-async function callJsonInner<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
+async function callJsonInner<T>(opts: CallOpts<T>, ctx?: ModelContext): Promise<CallResult<T>> {
   try {
     const tag = modelTag();
     const user = opts.user.trimEnd().endsWith("/no_think") ? opts.user : `${opts.user.trimEnd()}\n/no_think`;
@@ -306,6 +363,12 @@ async function callJsonInner<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
     if (opts.cacheOnly) return { ok: false, error: "not in cache" };
     if (modelDisabled()) return { ok: false, error: "model disabled in tests" };
     if (!cfg().baseUrl || !cfg().name) return { ok: false, error: "model not configured" };
+    // Limits of the surrounding run or action: only live calls are held back, never cached answers.
+    if (ctx?.deadline !== undefined && Date.now() >= ctx.deadline) return { ok: false, error: DEFERRED_ERROR };
+    if (ctx?.gate) {
+      const refusal = await ctx.gate(key);
+      if (refusal) return { ok: false, error: refusal, refused: true };
+    }
 
     let jsonSchema: unknown = opts.jsonSchema;
     if (!jsonSchema) {
@@ -317,21 +380,30 @@ async function callJsonInner<T>(opts: CallOpts<T>): Promise<CallResult<T>> {
     }
 
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const retries = Math.max(0, Math.floor(opts.retries ?? DEFAULT_RETRIES));
+    const retries = Math.max(0, Math.floor(ctx?.retries ?? opts.retries ?? DEFAULT_RETRIES));
+    // The surrounding slice or action ends at a fixed time: a request never gets more time than is
+    // left of it, and with too little left it is not sent at all (the next slice asks again).
+    const hard = ctx?.hardDeadline;
     const ask = () =>
       withRetries(
-        () => chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0, timeoutMs),
-        { retries },
+        () => {
+          const left = hard === undefined ? timeoutMs : Math.min(timeoutMs, hard - Date.now());
+          if (left < MIN_REQUEST_MS) return Promise.resolve<ChatResult>({ ok: false, status: 0, error: "model timed out" });
+          return chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0, left);
+        },
+        { retries, until: ctx?.deadline },
       );
     let lastError = "invalid JSON";
     for (let attempt = 0; attempt < 2; attempt++) {
+      // The second try (after invalid JSON) is a new live call: none starts after the deadline.
+      if (attempt > 0 && ctx?.deadline !== undefined && Date.now() >= ctx.deadline) break;
       let res = await ask();
       // Endpoints without json_schema support answer 400/422: fall back once, remember it.
       while (!res.ok && (res.status === 400 || res.status === 422) && preferredFormat !== "none") {
         preferredFormat = preferredFormat === "json_schema" ? "json_object" : "none";
         res = await ask();
       }
-      if (!res.ok) return { ok: false, error: res.error };
+      if (!res.ok) return { ok: false, error: res.error, transient: isTransientFailure(res.status, res.error) };
       try {
         const raw = extractJson(res.content);
         const parsed = opts.schema.safeParse(raw);
