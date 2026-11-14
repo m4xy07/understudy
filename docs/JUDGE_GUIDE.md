@@ -1,11 +1,13 @@
-# Judge guide: Understudy in about 5 minutes
+# Judge guide: Understudy in about ten minutes
 
 Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a private window
+
+**What is here.** Two demos and three Round 3 improvements. Steps 1 to 7 walk the robotics-club demo (about six minutes). Steps 8 to 10 show the improvements: First weeks, recovery, and sensitive content. The last section is the research-group demo.
 
 **The story.** A fictional college robotics club. Priya, the outgoing tech lead, graduates. The incoming tech lead takes over. Understudy reads the club's record, tests whether the successor could do the work tomorrow, asks Priya only what the record cannot answer, and gives each role its own handover.
 
 **Two controls do everything.**
-- The **stepper** across the top (Connect, Reconstruct, Verify, Test, Ask, Review, Handover) marks each step Done, Next or To do and says what to do next.
+- The **stepper** across the top (Connect, Reconstruct, Verify, Test, Ask, Review, Handover) marks each step and says what to do next. After the first snapshot, **First weeks** appears at its right end.
 - The **Viewing as** menu in the header switches the person. You start as **Club President**. The role is stored per workspace, and the database decides what each role can see.
 
 ---
@@ -17,16 +19,18 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 ### 2. Connect (role: Club President)
 **Do:** wait for the **Run Understudy** panel to show every step as Done. The demo replays precomputed model answers, so a fresh copy finishes in a few seconds. Your own uploads call the model live and can take a few minutes; the panel updates by itself.
 **Look for:**
-- Eight sources: a WhatsApp chat, three Slack channels (#events, #infra, #finance), a GitHub repo, the task board, meeting notes, a calendar.
+- Eight sources and 466 segments: a WhatsApp chat, three Slack channels (#events, #infra, #finance), a GitHub repo, the task board, meeting notes, a calendar.
+- The run panel line "Read 31 batches (31 from the cache)" and, at the end, "Run finished. Open Reconstruct to see the claims."
 - Per source: segments, **Masked** secrets and contacts, and **Rejected** rows with the reason.
 - The data level reached (L0 to L3).
+- The **Sensitive content** panel under the sources (step 10 below).
 - The demo contains planted FAKE secrets. Their values never reach the database or the model; they appear as `[SECRET:<type>]`. Emails and phone numbers appear as `[CONTACT:p-n]` and are shown in full only to roles allowed to see contacts.
 
 ### 3. Claims: Reconstruct and Verify (role: Club President)
 **Do:** open **Reconstruct** from the stepper, pick any claim and click its citation.
 **Look for:**
 - The source segment opens with the **exact quote highlighted**. A claim is "From record" only when the quote matches the source word for word.
-- Trust labels in words: From record, Corroborated, Leaver said, Inferred.
+- Trust labels in words: From record, Corroborated, Leaver said, Successor found, Second-hand, Inferred.
 - **Superseded** and **Conflicting** claims, each naming the rule that fired.
 - A counter of dropped claims per source.
 - Optional: the **Evaluation** button shows how the claims compare with the planted ground truth.
@@ -83,6 +87,41 @@ Optional: **Download handover (Markdown)** exports the current role's view.
 **Do:** switch to **Club President**, open **Review**. Under **Successor findings (1)** read the evidence, tick "I opened the evidence", write a reason and press **Approve and release v2**.
 **Look for:** "Finding approved. Snapshot v2 released. B 6 → 5." (numbers depend on the run). Version history shows v1 and v2 with "Finding approved: ..." and a stored diff. On **Handover**, "What changed in v2" lists the claim added, the gap closed and B, C and K with one sentence each. K does not rise: a finding is a person's word until a record agrees.
 
+### 9. Recovery: the leaver cannot be reached (switch to: Club President, then Incoming tech lead)
+This works at any point after the run. A fresh copy of the demo is the cleanest place to try it.
+
+**Do:** as **Club President**, open **Ask**. In the card "Can Priya answer?" type a reason if you like and press **Priya can't be reached**.
+**Look for:**
+- A banner "Priya can't be reached" with who switched it on and when. Priya's answer boxes are closed.
+- **With Priya and without**: two columns, "If Priya answered" and "Without Priya, so far". Fewer gaps close without her, and the evidence is weaker.
+- **Gaps being worked (N)**: each gap goes down three rungs.
+  1. **People who worked on this.** Who was closest to the topic and why, built from counts only. Some say "Skipped: no access." or "Not asked: no role in this handover."
+  2. **What the files and history show.** Procedures rebuilt from workflow files, CI runs, commits and the calendar, labelled Inferred.
+  3. **Possible answers.** "Leads, not answers. They never close a gap."
+- **Rebuilt procedures (N)** at the bottom: each step is marked "Quoted" or "Worked out from history", with a link to its source.
+
+**Do:** press **Switch to Arjun to answer**. Under **Questions for you**, press **Use a sample answer**, then **Save answer**. On another question you can press **I don't know**.
+**Look for:** the line Saved as "Second-hand", and B reads "(no change)" when the check is a blocking one: a second-hand answer does not close a blocking gap until the approver approves it in Review. "I don't know" stores nothing as evidence.
+
+**Do:** switch back to **Club President** and press **Priya is back. Use the normal flow**.
+**Look for:** the normal questions return. What the neighbours said stays, with its label.
+
+### 10. Sensitive content, the leak check and the probes page (role: Club President, then New member)
+**Do:** as **Club President**, open **Connect** and scroll to **Sensitive content**.
+**Look for:**
+- The count line, "9 limited · 0 held for you to check · 0 widened by you" on a fresh club demo.
+- Each row: the kind (Money, People matter, Health), why it was limited ("Found by a rule" or "Found by the model"), the roles that can still see it, and **Open message**.
+- **Widen** on a row asks who should see it and why (at least 10 characters), then **Widen and re-run**. Only the approver can widen. On a message's own page the approver also has **Limit who sees this**. Both are written to the audit log.
+
+**Do:** switch **Viewing as** to **New member** on the same page.
+**Look for:** no message text, only a count: "N messages in sources you can open are limited to fewer roles. Ask the approver (Club President)."
+
+**Do:** open **Handover** and scroll to **Leak check**.
+**Look for:**
+- Two tables, one row per role and one column per output. **Exact tokens** looks for the planted `CANARY-` tokens letter for letter. **Reworded facts** looks for restricted facts said in other words.
+- Each cell reads a pass with the number of texts checked, "Nothing to check", or a finding.
+- **See probe results** opens the Probe results page: how the classifier scored on a labelled set, what the two detectors caught, and a **Missed** section with what got through. As Club President, **Run probes again** asks the model judge once more.
+
 ---
 
 ### A second setting: the research-group demo
@@ -91,12 +130,14 @@ The landing page has two cards. **Open the research-group demo** runs the same s
 
 - **The story.** A fictional university research group. Farhan, a postdoc, leaves for a new post. The incoming postdoc takes over the analysis pipeline, the sequencing bookings and the approvals.
 - **Roles in "Viewing as":** Principal investigator (the approver; you start here), Incoming postdoc (the successor), PhD student (sees least), Lab manager, Farhan (outgoing postdoc).
-- **Sources:** three Slack channels (#lab-general, #pipeline, #lab-admin), a git repository, a lab notebook, a task sheet and a calendar. No WhatsApp.
+- **Sources:** seven sources and 191 segments: three Slack channels (#lab-general, #pipeline, #lab-admin), a git repository, a lab notebook, a task sheet and a calendar. No WhatsApp. The run reads 25 batches from the cache and finishes in a few seconds.
 - **Look for:** different checklists on Test (for example "Dataset provenance" and "Environment pin and rollback"); the stub line reads "N restricted items. Ask the approver (Principal investigator)."; the read-back asks for the biosafety renewal date, the environment restore command, the sequencing core contact, the revision due date and the lab meeting day; the leak check scans for the lab's own six canary tokens.
 - **Evaluation** (button on the Claims page) scores this workspace against the lab's answer key. The lab is our hold-out: nothing was tuned to it. Numbers: [EVALUATION.lab.md](EVALUATION.lab.md).
 
 ---
 
-**Want to try your own files?** On the landing page, press **Start empty and upload my files**. Connect accepts a WhatsApp `.txt`, Slack JSON, a task board CSV, Markdown notes, an `.ics` calendar, or a public GitHub repo URL (5 MB per file). Please do not upload real or confidential data.
+**Want to try your own files?** On the landing page, press **Start empty and upload my files**. Connect accepts a WhatsApp `.txt`, Slack JSON, a task board CSV, Markdown notes, an `.ics` calendar, or a public GitHub repo URL (4.5 MB per upload). Please do not upload real or confidential data.
 
-**If something looks stuck:** the run panel on Connect shows each step's status and any error. If the model is unreachable, the page says "Model unavailable" and the rule-based steps still run.
+**If something looks stuck:** the run panel on Connect shows each step's status and any error. If the model is unreachable, the panel says so and the rule-based steps still run.
+
+**Running it yourself:** the [README](../README.md#run-it-locally) takes a fresh clone to both demos in about ten minutes, with no model key.
