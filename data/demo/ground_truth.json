@@ -6,7 +6,7 @@
       "title": "Firmware deploy to the robot",
       "kind": "deploy_operate",
       "origin": "footprint",
-      "originDetail": "ownership share: Priya authored 20 of 23 commits touching firmware/ (87%) and 5 of 5 touching .github/workflows/deploy.yml since June 2026",
+      "originDetail": "ownership share: Priya authored 20 of 23 commits touching firmware/ (87%) and 6 of 6 touching .github/workflows/deploy.yml since June 2026",
       "entities": [
         "firmware-deploy",
         "firmware-rollback"
@@ -1781,7 +1781,7 @@
         "responsibility": "R08",
         "checkKey": "next_due_date"
       },
-      "state": "active"
+      "state": "conflicting"
     },
     {
       "id": "gt-067",
@@ -2087,6 +2087,57 @@
       ],
       "check": null,
       "state": "active"
+    },
+    {
+      "id": "gt-079",
+      "entity": "entry-fee",
+      "attribute": "deadline",
+      "value": "2026-11-28",
+      "keywords": [
+        "2026-11-28"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/events/events.json",
+        "contains": "Organisers' mail says the competition entry fee has to be paid by 28 Nov 2026."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "next_due_date"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-080",
+      "entity": "firmware-deploy",
+      "attribute": "status",
+      "value": "The Actions runs are red on the last few pushes to main; it is not known which build the release page holds",
+      "keywords": [
+        "red",
+        "release"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/demo/slack/infra/infra.json",
+        "contains": "Actions shows red on the last few pushes to main. Not sure which build the release page has now."
+      },
+      "roleSet": [
+        "president",
+        "tech_lead",
+        "leaver"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "how_to_verify"
+      },
+      "state": "active"
     }
   ],
   "gaps": [
@@ -2096,6 +2147,13 @@
       "coverage": "missing",
       "blocking": true,
       "why": "OTA_PASSWORD is named in docs/DEPLOY.md and Arjun asked in #infra on 4 Nov who has it; nobody answered. No record says who holds the OTA password."
+    },
+    {
+      "responsibility": "R01",
+      "checkKey": "how_to_verify",
+      "coverage": "partial",
+      "blocking": false,
+      "why": "docs/DEPLOY.md verifies the robot after flashing (boot banner version, motor test), but nothing on record says how to tell which build the latest release holds. Arjun wrote on 10 Nov that Actions is red and nobody followed up. Only the run history and the workflow file answer it (see recovery.ciRuns). May show on Steps instead, or as covered until the trace reader runs."
     },
     {
       "responsibility": "R02",
@@ -2144,7 +2202,7 @@
       "checkKey": "next_due_date",
       "coverage": "restricted",
       "blocking": true,
-      "why": "The card has no due date; 25 Nov 2026 is stated only in #finance."
+      "why": "The card has no due date; 25 Nov 2026 is stated only in #finance. Dev's 28 Nov 2026 in #events conflicts with it, and the tech lead can read only that side, so the check stays Restricted: a stub, no flag and no value."
     },
     {
       "responsibility": "R08",
@@ -2335,6 +2393,30 @@
         "gt-075"
       ],
       "note": "Dev in WhatsApp (20 Oct) and Tanvi in #events (24 Oct); whatsapp and slack have equal deadline authority."
+    },
+    {
+      "entity": "entry-fee",
+      "attribute": "deadline",
+      "values": [
+        "2026-11-25",
+        "2026-11-28"
+      ],
+      "rule": 3,
+      "claims": [
+        "gt-066",
+        "gt-079"
+      ],
+      "note": "Ananya in #finance (21 Oct, restricted source) and Dev in #events (3 Nov, open). Equal authority, different authors, no reply link.",
+      "oneSideHidden": true,
+      "flagVisibleTo": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "stubFor": [
+        "tech_lead",
+        "new_member"
+      ]
     }
   ],
   "restricted": [
@@ -2390,6 +2472,35 @@
         "leaver"
       ],
       "where": "data/demo/slack/infra/infra.json"
+    },
+    {
+      "token": "CANARY-M2DV",
+      "roleSet": [
+        "president"
+      ],
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "level": "content",
+      "category": "health"
+    },
+    {
+      "token": "CANARY-F9KS",
+      "roleSet": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "level": "content",
+      "category": "finance"
+    },
+    {
+      "token": "CANARY-H7RC",
+      "roleSet": [
+        "president"
+      ],
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "level": "content",
+      "category": "hr"
     }
   ],
   "secrets": [
@@ -2448,7 +2559,7 @@
     {
       "responsibility": "R01",
       "rule": "ownership_share",
-      "evidence": "Priya authored 20 of 23 commits touching firmware/ (87%) and 5 of 5 touching .github/workflows/deploy.yml in the last 6 months."
+      "evidence": "Priya authored 20 of 23 commits touching firmware/ (87%) and 6 of 6 touching .github/workflows/deploy.yml in the last 6 months."
     },
     {
       "responsibility": "R02",
@@ -2530,5 +2641,731 @@
       "why": "Part of R01 (Firmware deploy to the robot); merge into R01, not a separate responsibility."
     }
   ],
-  "expectedTechLeadBlockingGaps": 7
+  "expectedTechLeadBlockingGaps": 7,
+  "sensitive": [
+    {
+      "id": "sv-A1",
+      "case": "A",
+      "kind": "original",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "health",
+      "expectedRoles": [
+        "president"
+      ],
+      "stage": "rule",
+      "rule": "M1",
+      "canary": "CANARY-M2DV",
+      "author": "Dev Malhotra",
+      "containsText": "Guys, I am having knee surgery on 17 Nov 2026 and will be out for two weeks, so I cannot take my drive team trial on the planned date."
+    },
+    {
+      "id": "sv-A2",
+      "case": "A",
+      "kind": "follow_up",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "health",
+      "expectedRoles": [
+        "president"
+      ],
+      "stage": "follow",
+      "rule": "R2",
+      "canary": null,
+      "author": "Kabir Sethi",
+      "containsText": "Get well soon Dev, speedy recovery bro"
+    },
+    {
+      "id": "sv-A3",
+      "case": "A",
+      "kind": "rewording",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "health",
+      "expectedRoles": [
+        "president"
+      ],
+      "stage": "rule",
+      "rule": "M1",
+      "canary": "CANARY-M2DV",
+      "author": "Tanvi Deshpande",
+      "containsText": "Dev's operation is on the 17th and he is out till December, so do not count on him for arena setup this month"
+    },
+    {
+      "id": "sv-B1",
+      "case": "B",
+      "kind": "original",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "finance",
+      "expectedRoles": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "stage": "rule",
+      "rule": "F2",
+      "canary": "CANARY-F9KS",
+      "author": "Ananya Iyer",
+      "containsText": "Kabir, you still owe the Rs 1,500 season membership fee from August. Your Rs 2,340 reimbursement for the motor drivers is on hold until it is cleared"
+    },
+    {
+      "id": "sv-B2",
+      "case": "B",
+      "kind": "original",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "finance",
+      "expectedRoles": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "stage": "rule",
+      "rule": "F2",
+      "canary": "CANARY-F9KS",
+      "author": "Kabir Sethi",
+      "containsText": "Not true. I paid Rs 1,500 in cash to Priya in July"
+    },
+    {
+      "id": "sv-B3",
+      "case": "B",
+      "kind": "rewording",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "finance",
+      "expectedRoles": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "stage": "rule",
+      "rule": "F3",
+      "canary": "CANARY-F9KS",
+      "author": "Ananya Iyer",
+      "containsText": "Kabir's 1.5k membership dues are still unpaid in my sheet, so his motor driver refund stays on hold"
+    },
+    {
+      "id": "sv-C1",
+      "case": "C",
+      "kind": "original",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "hr",
+      "expectedRoles": [
+        "president"
+      ],
+      "stage": "rule",
+      "rule": "H1",
+      "canary": "CANARY-H7RC",
+      "author": "Sneha Joshi",
+      "containsText": "Arjun Rao keeps dismissing my firmware work in reviews, and on Saturday he called it useless in front of the first years. Please step in or I will leave the firmware subteam."
+    },
+    {
+      "id": "sv-C2",
+      "case": "C",
+      "kind": "rewording",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "category": "hr",
+      "expectedRoles": [
+        "president"
+      ],
+      "stage": "rule",
+      "rule": "H1",
+      "canary": "CANARY-H7RC",
+      "author": "Sneha Joshi",
+      "containsText": "Arjun insulted my code in last night's review with everyone watching, this is harassment now."
+    }
+  ],
+  "sensitiveNotes": {
+    "caseB": "sv-B1 and sv-B2 disagree (owes Rs 1,500 against paid Rs 1,500 in cash in July). If Attest extracts them, the conflict must have both sides inside the finance roles. No pack entity covers membership fees, so no claim is listed for them here.",
+    "caseC": "Arjun Rao holds the tech_lead role and is a likely neighbour in recovery. He must never be asked about, or shown, sv-C1 or sv-C2.",
+    "caseA": "sv-A1 touches drive team selection (R10). It must not become a risk or dependency claim for any role but the president."
+  },
+  "decoys": [
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "Reminder: all reimbursements go through me, please keep the bills",
+      "expected": "open",
+      "tempts": "finance word (reimbursements)",
+      "existing": true,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/slack/events/events.json",
+      "containsText": "Late registration for RoboLeague costs double, so let's not miss the entry fee deadline.",
+      "expected": "open",
+      "tempts": "finance words (costs, fee)",
+      "existing": true,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "motor driver got hot again",
+      "expected": "open",
+      "tempts": "'hot', near a health lexicon",
+      "existing": true,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "Saturday attendance was low, exams?",
+      "expected": "open",
+      "tempts": "attendance (HR weak term, no name)",
+      "existing": true,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "I am sick of this USB cable drama, when is OTA coming",
+      "expected": "open",
+      "tempts": "idiom 'sick of'",
+      "existing": false,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "PSA: the first aid kit is in the grey cupboard in Lab 3, next to the filament.",
+      "expected": "open",
+      "tempts": "health word, operational fact",
+      "existing": false,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "Spare ESP32 dev boards ordered, 3 pcs, Rs 1,350, voucher filed.",
+      "expected": "open",
+      "tempts": "amount plus purchase",
+      "existing": false,
+      "classifierPath": "borderline_then_open"
+    },
+    {
+      "group": "spec_decoy",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "this PID bug is a headache, the robot keeps overshooting on the long straight",
+      "expected": "open",
+      "tempts": "idiom 'is a headache'",
+      "existing": false,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "open_follow_up",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "I will sort your trial slot, don't worry.",
+      "expected": "open",
+      "tempts": "follows the limited medical message within 20 minutes, says nothing medical",
+      "existing": false,
+      "classifierPath": "clear",
+      "follows": "sv-A1"
+    },
+    {
+      "group": "open_follow_up",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "Calling you in five minutes.",
+      "expected": "open",
+      "tempts": "follows the limited complaint within 20 minutes, says nothing about it",
+      "existing": false,
+      "classifierPath": "clear",
+      "follows": "sv-C1"
+    },
+    {
+      "group": "open_conflict_side",
+      "where": "data/demo/slack/events/events.json",
+      "containsText": "Organisers' mail says the competition entry fee has to be paid by 28 Nov 2026.",
+      "expected": "open",
+      "tempts": "a fee deadline with no amount and no person: not sensitive. It is the open side of the entry-fee conflict",
+      "existing": false,
+      "classifierPath": "clear"
+    },
+    {
+      "group": "false_positive",
+      "where": "data/demo/whatsapp/RoboClub Core.txt",
+      "containsText": "Priya paid Rs 450 for the lab booking deposit, I will reimburse her on Monday.",
+      "expected": "limited_by_rule_then_widened",
+      "tempts": "amount, a person and a reimbursement cue; routine and useful (it backs the lab booking procedure)",
+      "existing": false,
+      "classifierPath": "sensitive_by_rule",
+      "expectedRolesBeforeWiden": [
+        "president",
+        "treasurer",
+        "leaver"
+      ],
+      "expectedRolesAfterWiden": [
+        "president",
+        "tech_lead",
+        "new_member",
+        "treasurer",
+        "leaver"
+      ],
+      "note": "The judge walkthrough widens this one with a reason (spec 02, section 4.2). It carries no canary token and matches no probe fact."
+    }
+  ],
+  "probes": {
+    "file": "data/demo/probes.json",
+    "facts": [
+      "pf-01",
+      "pf-02",
+      "pf-03",
+      "pf-04",
+      "pf-05",
+      "pf-06",
+      "pf-07",
+      "pf-08",
+      "pf-09"
+    ],
+    "evalSegments": 40,
+    "evalPositives": 18,
+    "evalNegatives": 22,
+    "liveRewordings": [
+      "sv-A3",
+      "sv-B3",
+      "sv-C2"
+    ],
+    "note": "Hard rewordings exist only in probes.json (hardRewordings and evalSegments with difficulty 'hard'). They are scored in a scratch workspace and never appear in the live demo sources."
+  },
+  "recovery": {
+    "status": "expected_from_reading",
+    "roleHolders": {
+      "president": [
+        "Rohan Mehta"
+      ],
+      "tech_lead": [
+        "Arjun Rao"
+      ],
+      "treasurer": [
+        "Ananya Iyer"
+      ],
+      "leaver": [
+        "Priya Nair"
+      ],
+      "new_member": []
+    },
+    "noRole": [
+      "Kabir Sethi",
+      "Sneha Joshi",
+      "Dev Malhotra",
+      "Tanvi Deshpande",
+      "Mr. Pawar",
+      "Dr. S. Kulkarni"
+    ],
+    "plantedFacts": {
+      "F2": {
+        "where": "data/demo/slack/infra/infra.json",
+        "what": "Arjun's 'ok' (6 Jul) and 'saving this' (20 Sep) carry thread_ts, so they are true thread replies.",
+        "parents": [
+          "1783348200.000700",
+          "1789923000.003100"
+        ]
+      },
+      "F3": {
+        "where": "data/demo/slack/infra/infra.json",
+        "what": "Arjun replies in the thread under the NameHarbor renewal message.",
+        "containsText": "Can you show me before you leave?",
+        "parent": "1790343300.003400"
+      },
+      "F4": {
+        "where": "data/demo/github/files/.github/workflows/deploy.yml",
+        "what": "The workflow reads the OTA password by name from the repository secrets (workflow-level env block at the end of the file, so the name, on and jobs segments keep their ids).",
+        "containsText": "OTA_PASSWORD: ${{ secrets.OTA_PASSWORD }}",
+        "commit": "9c1e5b7a40d2f6831b0e7c4a5d9f2e61038b7a4c",
+        "commitMessage": "ci: read OTA_PASSWORD from the repo secrets"
+      }
+    },
+    "neighbours": [
+      {
+        "responsibility": "R01",
+        "checkKey": "credential_owner",
+        "asked": [
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Kabir Sethi"
+        ],
+        "trace": "not_applicable_who",
+        "options": "lead from Arjun's answer; evidence from the secrets line and the 13 Aug run pair",
+        "endState": "partly_answered_second_hand"
+      },
+      {
+        "responsibility": "R01",
+        "checkKey": "how_to_verify",
+        "asked": [
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Kabir Sethi"
+        ],
+        "trace": "ci_runs_and_workflow",
+        "options": "none needed",
+        "endState": "partly_answered_inferred"
+      },
+      {
+        "responsibility": "R03",
+        "checkKey": "next_due_date",
+        "asked": [
+          "Rohan Mehta"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Kabir Sethi",
+          "Sneha Joshi"
+        ],
+        "trace": "calendar_cadence_without_upcoming_date",
+        "options": [
+          "2026-12-01",
+          "2026-12-05"
+        ],
+        "endState": "open_unless_rohan_answers"
+      },
+      {
+        "responsibility": "R04",
+        "checkKey": "how_to_do_it",
+        "asked": [
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [
+          "Ananya Iyer"
+        ],
+        "noSeat": [],
+        "trace": "commit_sequence_and_calendar",
+        "options": "usually none",
+        "endState": "partly_answered_inferred"
+      },
+      {
+        "responsibility": "R06",
+        "checkKey": "next_concrete_step",
+        "asked": [],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Sneha Joshi",
+          "Dev Malhotra"
+        ],
+        "trace": "commit_sequence_unfinished",
+        "options": "from the trace and from the 2 Oct and 1 Nov status messages",
+        "endState": "partly_answered_inferred"
+      },
+      {
+        "responsibility": "R09",
+        "checkKey": "next_due_date",
+        "asked": [
+          "Rohan Mehta"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Mr. Pawar"
+        ],
+        "trace": "none",
+        "options": "none",
+        "endState": "still_open"
+      },
+      {
+        "responsibility": "R09",
+        "checkKey": "how_to_do_it",
+        "asked": [
+          "Rohan Mehta"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Mr. Pawar"
+        ],
+        "trace": "none",
+        "options": "model lead from the five past requests",
+        "endState": "still_open_or_partly_answered"
+      },
+      {
+        "responsibility": "R10",
+        "checkKey": "owner",
+        "asked": [
+          "Rohan Mehta",
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [],
+        "trace": "not_applicable_who",
+        "options": "lead from Rohan's answer",
+        "endState": "partly_answered_second_hand"
+      },
+      {
+        "responsibility": "R10",
+        "checkKey": "deadline",
+        "asked": [
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Dev Malhotra",
+          "Tanvi Deshpande"
+        ],
+        "trace": "none",
+        "options": [
+          "2026-11-22",
+          "2026-11-29"
+        ],
+        "endState": "still_open"
+      },
+      {
+        "responsibility": "R02",
+        "checkKey": "open_commitments",
+        "asked": [
+          "Ananya Iyer"
+        ],
+        "skippedNoAccess": [
+          "Arjun Rao"
+        ],
+        "noSeat": [],
+        "trace": "none",
+        "options": "none visible to the tech lead",
+        "endState": "unchanged_for_tech_lead"
+      }
+    ],
+    "neighbourNotes": [
+      "People listed under asked are asked only if their score reaches 1 on the first real run; Rohan on R09 and anyone on R06 are the uncertain cells.",
+      "Restricted gaps (R04 consequence_if_missed, R07 next_concrete_step, R08 next_due_date and how_to_do_it) do not enter the ladder.",
+      "The three sensitive cases must not leak through the graph: a reason sentence, a question or a 'considered' row built from sv-A*, sv-B* or sv-C* is visible only to the roles in their expectedRoles. Arjun is never asked about sv-C1 or sv-C2."
+    ],
+    "skips": [
+      {
+        "person": "Ananya Iyer",
+        "role": "treasurer",
+        "responsibility": "R04",
+        "checkKey": "how_to_do_it",
+        "status": "skipped_no_access",
+        "why": "The only procedure claim for domain renewal is in #infra, which the Treasurer cannot read."
+      },
+      {
+        "person": "Arjun Rao",
+        "role": "tech_lead",
+        "responsibility": "R02",
+        "checkKey": "open_commitments",
+        "status": "skipped_no_access",
+        "why": "The banner and the sponsorship report are stated only in #finance, which the tech lead cannot read."
+      }
+    ],
+    "traces": [
+      {
+        "kind": "workflow",
+        "artefact": ".github/workflows/deploy.yml",
+        "serves": [
+          {
+            "responsibility": "R01",
+            "checkKey": "how_to_verify",
+            "with": "ci_runs"
+          }
+        ],
+        "quotedSteps": [
+          "branches: [main]",
+          "- uses: actions/checkout@v4",
+          "- uses: actions/cache@v4",
+          "- run: pip install platformio",
+          "- run: pio test -e native",
+          "- run: pio run -e esp32dev",
+          "- uses: softprops/action-gh-release@v2",
+          "robot: [bench, competition]",
+          "OTA_PASSWORD: ${{ secrets.OTA_PASSWORD }}"
+        ],
+        "secretNames": [
+          "OTA_PASSWORD"
+        ],
+        "note": "Without the run history this trace has no open gap to serve and is listed under Rebuilt procedures."
+      },
+      {
+        "kind": "ci_runs",
+        "artefact": "data/demo/github/runs.json",
+        "serves": [
+          {
+            "responsibility": "R01",
+            "checkKey": "how_to_verify"
+          }
+        ],
+        "note": "See recovery.ciRuns."
+      },
+      {
+        "kind": "commit_sequence",
+        "artefact": "dns/",
+        "serves": [
+          {
+            "responsibility": "R04",
+            "checkKey": "how_to_do_it"
+          }
+        ],
+        "commits": [
+          "f2c71d2bd9",
+          "41d576a69c",
+          "7ff0eb3a9a",
+          "976b502230",
+          "64986c45f5"
+        ],
+        "expect": "Inferred procedure; R04 how_to_do_it ends Partly answered."
+      },
+      {
+        "kind": "calendar",
+        "artefact": "Renew the witroboclub.example domain at NameHarbor (yearly)",
+        "serves": [
+          {
+            "responsibility": "R04",
+            "checkKey": "how_to_do_it"
+          }
+        ],
+        "expect": "Cadence and next date 2026-12-02; supports the R04 trace."
+      },
+      {
+        "kind": "commit_sequence",
+        "artefact": "website/register.*",
+        "serves": [
+          {
+            "responsibility": "R06",
+            "checkKey": "next_concrete_step"
+          }
+        ],
+        "commits": [
+          "a67fb8fd85",
+          "616ee1f87e",
+          "3798334b0f",
+          "21bc28ef3c",
+          "f112c782d6",
+          "72766f0ad9",
+          "af30b9cecc",
+          "447c306737"
+        ],
+        "unfinishedCommit": "447c306737",
+        "expect": "The unfinished step fires on 'WIP confirmation email template, not wired yet'."
+      },
+      {
+        "kind": "calendar",
+        "artefact": "Book Workshop Lab 3 (three one-off events)",
+        "serves": [],
+        "expect": "A cadence but no upcoming date, so it does not answer R03 next_due_date."
+      }
+    ],
+    "ciRuns": {
+      "file": "data/demo/github/runs.json",
+      "workflowFile": ".github/workflows/deploy.yml",
+      "workflowName": "firmware-deploy",
+      "count": 34,
+      "failures": 8,
+      "rule": "One run per push to main from the commit that added the workflow (11 Aug 2026). Commits that touch website/register.* live on feature/registration-form and have no run. Two runs are re-runs of the same commit.",
+      "gap": {
+        "responsibility": "R01",
+        "checkKey": "how_to_verify",
+        "attribute": "status",
+        "question": "Which build does the latest GitHub release hold, and is main releasable right now?",
+        "answer": "Main has been red since 5 Nov: the last 4 runs all failed at 'pio test -e native'. The workflow runs that step before the build and the release step, so none of them attached a firmware.bin. The latest release is the one from run 30 on 3 Nov (commit 64986c4), which is v2.4.0 code. The encoder filter commits of 5 Nov and 10 Nov are not in any release, and firmware/src/version.h has not changed since 26 Oct, so the boot banner check in docs/DEPLOY.md cannot tell the builds apart.",
+        "lastGreenRunNumber": 30,
+        "lastGreenRunId": 11419887760,
+        "lastGreenSha": "64986c45f5335ac92ca27a159a135e2973d30af1",
+        "lastGreenStartedAt": "2026-11-03T18:52:58+05:30",
+        "failingRunNumbers": [
+          31,
+          32,
+          33,
+          34
+        ],
+        "failedStep": "pio test -e native",
+        "firstFailingSha": "41425541193124d4e6651136768a30f15b74456c",
+        "latestSha": "3a22bcf1e22b533e54d071d029caef516fc6160a",
+        "workflowQuotes": [
+          "- run: pio test -e native",
+          "- run: pio run -e esp32dev",
+          "- uses: softprops/action-gh-release@v2",
+          "files: firmware/.pio/build/esp32dev/firmware.bin"
+        ],
+        "versionCommit": "506f5eb6d5",
+        "whyOnlyRunsAndWorkflow": "No chat message, note, task or document says which runs failed, at which step, or which commit the latest release was built from. The workflow file gives the order of the steps; the run history gives the outcome per commit.",
+        "trigger": {
+          "where": "data/demo/slack/infra/infra.json",
+          "containsText": "Actions shows red on the last few pushes to main. Not sure which build the release page has now.",
+          "note": "A status with no follow-up. It names no step, no commit and no release."
+        },
+        "expectedTrust": "inferred",
+        "expectedCoverageAfter": "partial",
+        "mustNotAppearInChat": [
+          "pio test -e native"
+        ]
+      },
+      "otherSequences": [
+        {
+          "name": "secret_added",
+          "runNumbers": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "reading": "Runs 1 to 3 failed at 'pio run -e esp32dev' (ota.cpp needs OTA_PASSWORD at build time). Run 4 is a re-run of the same commit 9c1e5b7 fourteen minutes later with no code change, started by Priya Nair, and it passed: the repository secret OTA_PASSWORD was created between the two runs.",
+          "supports": {
+            "responsibility": "R01",
+            "checkKey": "credential_owner",
+            "as": "rung_3_evidence_only",
+            "why": "A WHO check is never served by a trace. This is evidence that the password lives in the repository secrets and that Priya set it on 13 Aug; it does not say who holds it now."
+          }
+        },
+        {
+          "name": "infrastructure_flake",
+          "runNumbers": [
+            20,
+            21
+          ],
+          "reading": "Run 20 failed at 'pip install platformio' and the re-run passed. A failure at the install step followed by a green re-run is not a code problem and must not be read like the 13 Aug pair."
+        }
+      ]
+    },
+    "sampleAnswers": [
+      {
+        "responsibility": "R01",
+        "checkKey": "credential_owner",
+        "person": "Arjun Rao",
+        "text": "Priya has it. She typed it on the lab laptop herself each time. I asked on 4 Nov and never got it."
+      },
+      {
+        "responsibility": "R10",
+        "checkKey": "owner",
+        "person": "Rohan Mehta",
+        "text": "Arjun will own drive team selection. We agreed it at the core meeting on 11 Nov."
+      },
+      {
+        "responsibility": "R03",
+        "checkKey": "next_due_date",
+        "person": "Rohan Mehta",
+        "text": "I think it is 1 Dec, but I only heard that from Kabir."
+      },
+      {
+        "responsibility": "R02",
+        "checkKey": "open_commitments",
+        "person": "Ananya Iyer",
+        "text": "Vertex also expects a banner at the competition and a report with photos afterwards."
+      }
+    ],
+    "declineSample": {
+      "responsibility": "R04",
+      "checkKey": "how_to_do_it",
+      "person": "Arjun Rao",
+      "text": "I don't know"
+    },
+    "sampleAnswersNote": "Copied from spec 01 (facts F5 and F6) so the recovery builder can move them into data/demo/recovery.json unchanged."
+  },
+  "finding": {
+    "responsibility": "R09",
+    "checkKey": "next_due_date",
+    "entity": "lab-late-access",
+    "attribute": "deadline",
+    "date": "2026-11-18",
+    "weekday": "Wednesday",
+    "note": "Mr. Pawar confirmed late access is every Wednesday in build season. The next one is Wednesday 18 Nov. Ask him by Monday.",
+    "confirmedBy": "Mr. Pawar",
+    "foundBy": "Arjun Rao",
+    "foundByRole": "tech_lead",
+    "expectedBlockingDelta": -1,
+    "mustHold": [
+      "R09 next_due_date is an open blocking gap (missing) for the tech lead before the finding.",
+      "No source states an upcoming late-access date; 18 Nov 2026 appears nowhere in the demo sources.",
+      "The date is after the demo today (11 Nov 2026), so a needsDate check accepts it.",
+      "Mr. Pawar is a person in the record (WhatsApp author) and holds no role.",
+      "R09 cadence stays covered by 'almost every week in build season', so the finding closes only the date."
+    ],
+    "dataNotes": [
+      "The five past requests (20 Aug, 3 Sep, 24 Sep, 15 Oct, 5 Nov) all fell on a Thursday. The finding says Wednesday, so it reads as new information from Mr. Pawar, not as a restatement of the record.",
+      "Card T-024 (Order drivetrain parts) is also due on 2026-11-18. That is a coincidence and has nothing to do with late access; no line about late access or Mr. Pawar carries the date."
+    ]
+  }
 }
