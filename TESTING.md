@@ -115,6 +115,19 @@ $ E2E_BASE_URL=https://understudy-lyart.vercel.app npx playwright test --retries
 
 The same suite passed against a local production build (`pnpm build && pnpm start`) in 19.8 s. The whole path takes about 25 s on the live app because the demo replays cached model answers.
 
+## CI (GitHub Actions)
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`; a newer run cancels the older run of the same branch. It needs no secrets and never calls a live model (`MODEL_DISABLED=1`).
+
+| Job | Steps |
+|---|---|
+| test and build | Postgres 16 service, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm test`, `pnpm build` |
+| e2e (local server, model disabled) | Same database setup, `pnpm build`, `pnpm start`, then `pnpm test:e2e` in Chromium against `localhost:3000`. The Playwright report is uploaded when the job fails. |
+
+- `IDENTITY_KEY` and `CONTACTS_KEY` are dummy values written in the workflow. `MODEL_NAME` and `MODEL_BASE_URL` are set only because they form the cache tag: with them the seeded answers in `data/demo/model_cache.json` are found, and no request is sent.
+- The e2e suite runs unchanged with the model disabled. The demo run replays the seeded cache, and the re-test after the leaver's answer falls back to the deterministic stand-in, which still moves the scores. Checked locally on 2026-11-14 against `pnpm start` with a freshly migrated and seeded database: 1 passed in 9.3 s.
+- `pnpm staging:setup` (`scripts/staging.ts`) prepares the rehearsal database: it reads `STAGING_POOLER_URL` from `.env.local`, applies the migrations, seeds the model cache and prints row counts. It refuses to run if that URL is the production project.
+
 ## Manual end-to-end checks on the live link
 
 Run in a fresh private browser window on https://understudy-lyart.vercel.app, following [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). The results below come from a fresh browser context (Playwright, Chromium) on 2026-11-11 at 1440×900; every page was also checked at 375 px wide (no horizontal scroll) and no console errors were logged.
@@ -143,7 +156,7 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 
 - **Your own uploads call the model live.** The demo replays precomputed model answers (23 of 23 extraction batches from the cache) and finishes in a few seconds. A run on files you upload has no cached answers, so it can take a few minutes; the run panel says so and updates by itself.
 - **The browser suite covers the judge path only.** It does not cover uploads, tier C review, the read-back form or the Markdown export; those are in the manual table above. Each run creates a demo workspace on the target site.
-- **No CI.** We run the suites locally before pushing; there is no CI workflow in the repository yet.
+- **CI covers tests, build and the judge path only.** Lint, the type check and the evaluation gate are not CI jobs yet.
 - **Model quality is measured, not unit-tested.** The suites fake or disable the model, so they test the rules around it. Extraction quality comes from the evaluation harness. Extraction misses some planted facts and produces extra claims, and supersession and conflict detection miss some planted cases; [docs/EVALUATION.md](docs/EVALUATION.md) has the current numbers.
 - **Lacuna's integration numbers use the planted claims** (a perfect extractor), so they are not the numbers you get from the live pipeline.
 - **The leak check finds tokens, not paraphrases.** A restricted fact reworded without its token would not be caught. Paraphrase probes are Round 3 commitment 2.

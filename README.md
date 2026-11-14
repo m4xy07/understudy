@@ -4,6 +4,10 @@ A handover that finds what the leaving person actually did, tests the draft agai
 
 Team DRACONIX (CodersInPune) · Knowledge Handover challenge · Round 2 build
 
+[![CI](https://github.com/m4xy07/understudy/actions/workflows/ci.yml/badge.svg)](https://github.com/m4xy07/understudy/actions/workflows/ci.yml)
+
+Every push and pull request to `main` runs the test suites, a production build and the browser judge path on GitHub Actions, with no secrets and no live model.
+
 - **Live app:** https://understudy-lyart.vercel.app
 - **Repository:** https://github.com/m4xy07/understudy
 - **Click-by-click guide:** [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md)
