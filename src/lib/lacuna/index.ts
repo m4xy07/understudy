@@ -39,9 +39,10 @@ export type { ReleaseState } from "./core/plan";
 export {
   recoveryState, setLeaverUnreachable, buildLadder, listLadder, questionsForRole, answerAsNeighbour, declineAsNeighbour,
   recoveryComparison, listTraces, recoverySurfaces, precomputeRecovery, measureLeaverRun, recoverySamples, askedRoles,
+  repliesByRole,
 } from "./recovery";
 export type {
-  RecoveryState, LadderGap, LadderStep, NeighbourQuestion, TraceView, RecoveryComparison, RecoverySample,
+  RecoveryState, LadderGap, LadderStep, NeighbourQuestion, NeighbourReply, TraceView, RecoveryComparison, RecoverySample,
 } from "./recovery";
 
 const MODEL_CONCURRENCY = 6;

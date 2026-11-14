@@ -202,7 +202,7 @@ function canonMap(byRole: Map<RoleKey, string[]>, pack: ResolvedPack, people: re
   return canon;
 }
 
-interface TraceStepView {
+export interface TraceStepView {
   n: number;
   text: string;
   kind: "quoted" | "derived";
@@ -332,7 +332,7 @@ async function storeTraces(
   return out;
 }
 
-interface OptionDetail {
+export interface OptionDetail {
   value: string;
   sources: OptionSource[];
   why?: string;
@@ -842,6 +842,49 @@ export async function questionsForRole(ws: string, role: RoleKey): Promise<Neigh
     responsibilityTitle: q.responsibilityTitle, checkLabel: q.checkLabel, text: q.text, reason: q.reason,
     defaultRoles: q.defaultRoles, keep: q.keep, sample: q.sample,
   }));
+}
+
+export interface NeighbourReply {
+  stepId: string;
+  personName: string;
+  responsibilityKey: string;
+  responsibilityTitle: string;
+  checkLabel: string;
+  text: string;
+  status: "answered" | "declined";
+  /** The re-test sentence stored with an answer, e.g. "B 7 (no change) · C 61% → 63% · K 91% → 88%". */
+  scoreDelta: string | null;
+  statement: string | null;
+}
+
+/** What `role` already answered or declined (read under RLS), so the page can confirm it after a refresh. */
+export async function repliesByRole(ws: string, role: RoleKey): Promise<NeighbourReply[]> {
+  if (!(await recoveryState(ws)).on) return [];
+  const pack = await getWorkspacePack(ws);
+  const lpack = toLacunaPack(pack);
+  const rows = await withRole(ws, role, (tx) => tx`
+    SELECT s.*, c.statement AS statement
+    FROM recovery_steps s
+    LEFT JOIN claims c ON c.workspace_id = s.workspace_id AND c.id = s.claim_id AND c.state <> 'dropped'
+    WHERE s.workspace_id = ${ws} AND s.rung = 1 AND s.kind = 'neighbour' AND s.target_role = ${role}
+      AND s.status IN ('answered', 'declined')
+    ORDER BY s.updated_at DESC, s.id`);
+  if (rows.length === 0) return [];
+  const [resps, names] = await Promise.all([listResponsibilities(ws), peopleNamesFor(ws)]);
+  const out: NeighbourReply[] = [];
+  for (const r of rows) {
+    const resp = resps.find((x) => x.id === String(r.responsibility_id));
+    const check = resp ? checksFor(resp, lpack).find((c) => c.key === String(r.check_key)) : undefined;
+    if (!resp || !check) continue;
+    const d = (typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail ?? {}) as { scoreDelta?: string };
+    out.push({
+      stepId: String(r.id), personName: names[String(r.target_person ?? "")] ?? "A colleague", responsibilityKey: resp.key,
+      responsibilityTitle: resp.title, checkLabel: check.label, text: String(r.question_text ?? ""),
+      status: r.status === "answered" ? "answered" : "declined", scoreDelta: d.scoreDelta ?? null,
+      statement: (r.statement as string | null) ?? null,
+    });
+  }
+  return out;
 }
 
 /** Roles that are the target of at least one asked step (the only roles "Switch to ... to answer" accepts). */
