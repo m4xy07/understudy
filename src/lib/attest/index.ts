@@ -21,7 +21,8 @@ import { norm, sha256Hex } from "@/lib/text/norm";
 import type { Attribute, Claim, ResponsibilityKind, ReviewTier, RoleKey, Segment, SourceKind } from "@/lib/types";
 import { extractClaims, type BatchReport } from "./core/extract";
 import { structuredClaims, matchEntity as matchPackEntity } from "./core/structured";
-import { OTHER_ENTITY, type DraftClaim, type ExtractionPack, type OffListClaim } from "./core/schema";
+import { OTHER_ENTITY, resolvePromptVariant, type DraftClaim, type ExtractionPack, type OffListClaim, type PromptVariant } from "./core/schema";
+import { consolidate, type ConsolidationFiring, type ConsolidationRule } from "./core/consolidate";
 import {
   claimId as coreClaimId,
   intersectRoleSets,
@@ -41,6 +42,10 @@ export interface ReconstructResult {
   total: number;         // drafts stored for verify()
   modelUsed: boolean;
   modelNote: string | null;
+  /** The extraction prompt this run used ("v2": two passes; "r2": the Round 2 prompt). */
+  variant: PromptVariant;
+  /** What the consolidation pass did; null when it did not run. */
+  consolidation: { counts: Record<ConsolidationRule, number>; firings: ConsolidationFiring[]; before: number; after: number } | null;
 }
 
 export interface VerifyResult {
@@ -62,6 +67,22 @@ export interface ReconstructOptions {
   /** false: structured sources only. */
   useModel?: boolean;
   concurrency?: number;
+  /** Default: the environment (ATTEST_PROMPT), then the pack (extraction.prompt), then "v2". */
+  variant?: PromptVariant;
+  /** Run the consolidation pass. Default: on for "v2", off for "r2" (ATTEST_CONSOLIDATE=1|0 overrides). */
+  consolidate?: boolean;
+}
+
+/** The extraction variant for a pack: ATTEST_PROMPT first, then the pack's `extraction.prompt`. */
+export function promptVariantFor(pack: Pick<ExtractionPack, "prompt">): PromptVariant {
+  return resolvePromptVariant(process.env.ATTEST_PROMPT, pack.prompt);
+}
+
+function consolidationOn(variant: PromptVariant): boolean {
+  const v = (process.env.ATTEST_CONSOLIDATE ?? "").trim().toLowerCase();
+  if (v === "1" || v === "true" || v === "on") return true;
+  if (v === "0" || v === "false" || v === "off") return false;
+  return variant === "v2";
 }
 
 export interface VerifyOptions {
@@ -80,10 +101,20 @@ export function claimId(entity: string, attribute: string, value: string, segmen
 /** The part of the pack extraction reads: entities, and the pack's own prompt examples and hints. */
 export function extractionPack(pack: Pack): ExtractionPack {
   return {
-    entities: pack.entities.map((e) => ({ key: e.key, label: e.label, aliases: [...(e.aliases ?? [])] })),
+    entities: pack.entities.map((e) => {
+      const partOf = (e as { partOf?: unknown }).partOf;
+      return {
+        key: e.key,
+        label: e.label,
+        aliases: [...(e.aliases ?? [])],
+        ...(typeof partOf === "string" ? { partOf } : {}),
+      };
+    }),
     examples: pack.extraction?.examples as ExtractionPack["examples"],
     entityHint: pack.extraction?.entityHint,
     contactExample: pack.extraction?.contactExample,
+    promptExamples: pack.extraction?.promptExamples as ExtractionPack["promptExamples"],
+    prompt: typeof pack.extraction?.prompt === "string" ? pack.extraction.prompt : undefined,
   };
 }
 
@@ -196,6 +227,7 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
   const segsById = new Map(segments.map((s) => [s.id, s]));
   const names = await peopleNames(ws).catch(() => ({}) as Record<string, string>);
 
+  const variant = opts.variant ?? promptVariantFor(xpack);
   const structured = structuredClaims(segments, xpack, { now: newestTs(segments) ?? undefined });
 
   let batches: BatchReport[] = [];
@@ -220,6 +252,7 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
       roleOrder: pack.roleOrder,
       skipKinds: EXTRACTION_SKIP_KINDS,
       authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
+      variant,
     };
     const res = await extractClaims(segments, xpack, call, xopts);
     batches = res.batches;
@@ -240,7 +273,12 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
     }
   }
 
-  const drafts = normaliseDrafts([...structured, ...modelDrafts], segsById);
+  const normalised = normaliseDrafts([...structured, ...modelDrafts], segsById);
+  // Second pass (code only): tidy the candidates before the verifier and the rules see them.
+  const pass2 = (opts.consolidate ?? consolidationOn(variant))
+    ? consolidate(normalised, { entities: xpack.entities, segmentsById: segsById, roleOrder: pack.roleOrder })
+    : null;
+  const drafts = pass2 ? pass2.drafts : normalised;
   const modelUsed = batches.some((b) => b.ok);
   const ms = Date.now() - t0;
   await sql`
@@ -251,7 +289,14 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
       drafts = EXCLUDED.drafts, batches = EXCLUDED.batches, off_list = EXCLUDED.off_list,
       model_used = EXCLUDED.model_used, model_note = EXCLUDED.model_note, extract_ms = EXCLUDED.extract_ms,
       extracted_at = now()`;
-  return { claims: drafts.length, total: drafts.length, modelUsed, modelNote };
+  return {
+    claims: drafts.length,
+    total: drafts.length,
+    modelUsed,
+    modelNote,
+    variant,
+    consolidation: pass2 ? { counts: pass2.counts, firings: pass2.firings, before: normalised.length, after: drafts.length } : null,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------

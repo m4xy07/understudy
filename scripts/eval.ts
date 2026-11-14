@@ -3,6 +3,7 @@
 // (pnpm db:seed), then the live model. The default pack writes docs/EVALUATION.md; any other pack
 // writes docs/EVALUATION.<pack>.md. Notes on the numbers come from docs/eval-notes/<pack>.md.
 // Exits 1 and leaves the report alone when any extraction batch failed (--allow-failed writes it).
+// The extraction prompt comes from ATTEST_PROMPT (v2 = two passes, r2 = the Round 2 prompt), then the pack.
 // Usage: pnpm tsx scripts/eval.ts [--pack <id>] [--keep] [--no-write] [--no-support] [--verbose] [--allow-failed]
 import "./load-env";
 import fs from "node:fs";
@@ -43,10 +44,22 @@ async function main() {
     console.log(`workspace ${ws}`);
     console.log(`reconstruct ${t1 - t0} ms (${e.batches} batches, ${e.cachedBatches} cached, ${e.failedBatches} failed); verify ${t2 - t1} ms`);
     console.log(`model note: ${r.modelNote}`);
+    const cons = r.consolidation;
+    const consLine = cons
+      ? `${cons.before} candidates -> ${cons.after} drafts; ` + Object.entries(cons.counts).map(([k, n]) => `${k} ${n}`).join(", ")
+      : "off";
+    console.log(`extraction prompt: ${r.variant}; consolidation: ${consLine}`);
     console.log(`verify: ${JSON.stringify(v)}`);
     console.log(`precision strict ${pct(rep.precision)} (${rep.precision.num}/${rep.precision.den}), on answer-key topics ${pct(rep.topicPrecision)} (${rep.topicPrecision.num}/${rep.topicPrecision.den}), recall ${pct(rep.recall)} (${rep.recall.num}/${rep.recall.den})`);
     console.log(`citation pass ${pct(rep.citationPassRate)}, from record ${pct(rep.fromRecordShare)}, false conflicts ${rep.falseConflicts.count}, supersessions ${rep.supersessions.found}/${rep.supersessions.expected}, planted conflicts ${rep.plantedConflicts.found}/${rep.plantedConflicts.expected}, secrets ${rep.secretsLeaked.count}, restricted ${rep.restrictedViolations.count}`);
+    console.log(
+      "recall per entity: " +
+        Object.entries(rep.perEntity).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, x]) => `${k} ${x.matched}/${x.expected}`).join(", "),
+    );
     if (args.has("--verbose")) {
+      for (const f of cons?.firings ?? []) console.log(`  ${f.rule} ${f.entity}/${f.attribute} = ${f.value} :: ${f.detail}`);
+      for (const m of rep.supersessions.missing) console.log(`  missed supersession ${m.entity}/${m.attribute}: ${m.old} -> ${m.new}`);
+      for (const m of rep.plantedConflicts.missing) console.log(`  missed planted conflict ${m.entity}/${m.attribute}: ${m.values.join(" vs ")}`);
       for (const u of rep.unmatched) console.log(`  missed ${u.id} ${u.entity}/${u.attribute} = ${u.value}`);
       for (const p of rep.falseConflicts.pairs) console.log(`  false conflict ${p.entity}/${p.attribute}: ${p.values.join(" vs ")}`);
     }
@@ -71,6 +84,7 @@ async function main() {
         "",
         `- Model: \`${modelTag()}\` (answers replayed from \`${dataDir}/model_cache.json\` when cached)`,
         `- Extraction: ${e.batches} model batches (${e.cachedBatches} from the cache, ${e.failedBatches} failed), ${t1 - t0} ms; verify incl. support check ${t2 - t1} ms`,
+        `- Extraction prompt: \`${r.variant}\` (ATTEST_PROMPT=v2|r2); consolidation: ${consLine}`,
         `- Verify: ${v.checked} claims, ${v.fromRecord} from record, ${v.corroborated} corroborated, ${v.inferred} inferred, ${v.dropped} drafts dropped, ${v.superseded} superseded, ${v.conflicting} conflicting, ${v.firings} rule firings, support check ${v.supportChecked} checked / ${v.supportLowered} lowered`,
         "",
         ...(notes.length ? [...notes, ""] : []),
