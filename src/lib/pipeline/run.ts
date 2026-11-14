@@ -15,7 +15,7 @@ import { getRunStatus, listSources, audit } from "@/lib/db/queries";
 import { getWorkspacePack, type ResolvedPack } from "@/lib/pack";
 import { reconstruct, verify } from "@/lib/attest";
 import { buildInventory, buildQuestions, runTest } from "@/lib/lacuna";
-import { modelAvailable, runWithModelContext, type ModelContext } from "@/lib/model/client";
+import { DEFAULT_TIMEOUT_MS, modelAvailable, runWithModelContext, type ModelContext } from "@/lib/model/client";
 import { chargeModelCall } from "./guard";
 import { reclassify } from "@/lib/tether/visibility";
 import type { RoleKey } from "@/lib/types";
@@ -320,6 +320,8 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
         let lastSave = 0;
         const ctx: ModelContext = {
           deadline,
+          // A call that started just before the budget ran out gets one request timeout, no more.
+          hardDeadline: deadline + DEFAULT_TIMEOUT_MS,
           retries: opts.retries ?? 0,
           gate: async (key) => {
             if ((attempts[key] ?? 0) >= MAX_ATTEMPTS) return `this call failed ${MAX_ATTEMPTS} times and was not tried again`;
