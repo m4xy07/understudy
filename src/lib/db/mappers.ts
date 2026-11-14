@@ -256,11 +256,29 @@ export interface RunStep {
 export interface RunStatus {
   id: string;
   workspaceId: string;
-  status: "running" | "done" | "failed";
+  /** "paused": the run stopped at its time budget and continues in another slice (same run id). */
+  status: "running" | "paused" | "done" | "failed";
   steps: RunStep[];
   error: string | null;
   startedAt: string;
   finishedAt: string | null;
+  /** Function invocations this run has used so far. */
+  slices: number;
+  /** Model-call progress of the step in hand. */
+  progress: RunProgress | null;
+  /** True when nobody is working on a live run (paused, or its worker died): a POST continues it. */
+  resumable: boolean;
+}
+
+export interface RunProgress {
+  step: RunStepKey;
+  done: number;
+  /** Known after the first full pass over the step; null before. */
+  total: number | null;
+  cached: number;
+  failed: number;
+  retry: number;
+  refused: number;
 }
 
 export function toRun(r: Row): RunStatus {
@@ -272,5 +290,8 @@ export function toRun(r: Row): RunStatus {
     error: (r.error as string | null) ?? null,
     startedAt: iso(r.started_at),
     finishedAt: isoOrNull(r.finished_at),
+    slices: Number(r.slices ?? 0),
+    progress: json<{ progress?: RunProgress | null }>(r.cursor, {}).progress ?? null,
+    resumable: r.resumable === true,
   };
 }

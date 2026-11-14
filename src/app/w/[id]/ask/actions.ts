@@ -8,6 +8,10 @@ import { isUuid } from "@/lib/db/withRole";
 import { viewingRole, roleCookieName } from "@/lib/session";
 import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { answerQuestion } from "@/lib/lacuna";
+import { after } from "next/server";
+import { exclusive } from "@/lib/pipeline/guard";
+import { busyMessage } from "@/lib/pipeline/once";
+import { fastFirst, liveStandin, scheduleRejudge } from "@/lib/pipeline/rejudge";
 import type { RoleKey } from "@/lib/types";
 
 export interface ActionState {
@@ -33,10 +37,22 @@ export async function answerQuestionAction(_prev: ActionState, form: FormData): 
   const picked = form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
   // All boxes ticked means "no narrowing"; fewer means narrow to those (never wider than the default).
   const narrow = picked.length > 0 && picked.length < base.length ? picked : undefined;
-  const res = await answerQuestion(ws, String(form.get("questionId") ?? ""), String(form.get("answer") ?? ""), role, narrow);
+  const questionId = String(form.get("questionId") ?? "");
+  // The first result is the rule-based reading (milliseconds, cached model answers replay); the
+  // live model then re-checks it in the background and the page updates by itself.
+  const live = liveStandin();
+  const save = () => answerQuestion(ws, questionId, String(form.get("answer") ?? ""), role, narrow);
+  // One save per question at a time: a second click or a second tab cannot store two answers.
+  const res = await exclusive(ws, `answer:${questionId}`, () => (live ? fastFirst(save) : save()),
+    { ok: false as const, error: busyMessage("This answer") });
   if (!res.ok) return fail(res.error);
+  const recheck = live ? await scheduleRejudge(ws) : null;
+  if (recheck) after(recheck);
   refresh();
-  return { ok: true, message: `Saved as "Leaver said". Re-test: ${res.delta}` };
+  return {
+    ok: true,
+    message: `Saved as "Leaver said". Re-test: ${res.delta}${live ? " This is the first reading; the model is re-checking it now and the scores update by themselves." : ""}`,
+  };
 }
 
 /** "Switch to <the leaver> to answer": sets the viewing role cookie to the pack's leaver role. */
