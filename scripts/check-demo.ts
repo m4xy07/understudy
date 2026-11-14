@@ -1,35 +1,63 @@
-// Validates the demo setting pack and the synthetic robotics-club dataset.
-// Run from the repo root: pnpm tsx scripts/check-demo.ts
-// Contract: docs/ARCHITECTURE.md sections 1a, 2, 4 and 7a.
+// Validates one setting pack and its synthetic demo dataset against the demo's answer key, before
+// any model runs. Works for any pack: roles, folders and dates come from the pack; what a given demo
+// must contain comes from its answer key (<demo.dataDir>/ground_truth.json) and from the optional
+// `demo.expect` block of the pack (counts, the task cards that stay active, footprint evidence).
+// Run from the repo root: pnpm tsx scripts/check-demo.ts [--pack <id>]   (default: packs/index.json)
+// Contract: docs/ARCHITECTURE.md sections 1, 1a, 2, 4 and 7a.
+import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
 import Papa from "papaparse";
 import matter from "gray-matter";
+import { defaultPackId, getPack } from "@/lib/pack";
 import type { Attribute, RoleKey, SourceKind } from "../src/lib/types";
 
 const ROOT = process.cwd();
-const DEMO = path.join(ROOT, "data", "demo");
-const TODAY = new Date("2026-11-11T00:00:00+05:30");
+const packArg = process.argv.indexOf("--pack");
+const PACK_ID = packArg === -1 ? defaultPackId() : (process.argv[packArg + 1] ?? "");
+// getPack validates the schema and every loader rule (role flags, known roles, entities, demo folder).
+const resolved = getPack(PACK_ID);
+if (!resolved.demo) throw new Error(`Setting pack "${PACK_ID}" has no demo to check.`);
+const PACK_FILE = `packs/${PACK_ID}.json`;
+const DEMO = path.join(ROOT, resolved.demo.dataDir);
+const TODAY = new Date(resolved.demo.today);
+const SUCCESSOR = resolved.successorRole;
+/** Roles a "restricted" source is hidden from: the successor and every restricted audience role. */
+const OUTSIDERS: readonly RoleKey[] = resolved.testRoles;
+const LEAVER_NAMES: readonly string[] = resolved.roleHolders[resolved.leaverRole] ?? [resolved.leaverPerson.name];
 
-const ROLE_KEYS: readonly RoleKey[] = ["president", "tech_lead", "new_member", "treasurer", "leaver"];
+/** Optional expectations about this demo, kept in the pack (setting data), never in this script. */
+interface FootprintExpectation {
+  label: string;
+  source: "commits" | "whatsapp" | "ics";
+  pathPrefix?: string;        // commits: share of commits touching this path that the leaver wrote
+  pattern?: string;           // whatsapp: regex on the leaver's messages; ics: regex on the event SUMMARY
+  minShare?: number;
+  minCount?: number;
+  minWeeks?: number;
+}
+interface DemoExpect {
+  entities?: [number, number];
+  responsibilities?: number;
+  claims?: [number, number];
+  readbackItems?: number;
+  activeTaskIds?: string[];
+  footprint?: FootprintExpectation[];
+}
+const EXPECT = ((resolved.demo as Record<string, unknown>).expect ?? {}) as DemoExpect;
+
+const ROLE_KEYS: readonly RoleKey[] = resolved.roleOrder;
 const ATTRS: readonly Attribute[] = [
   "owner", "status", "deadline", "location", "procedure", "access",
   "decision", "reason", "dependency", "contact", "risk",
 ];
 const KINDS: readonly SourceKind[] = ["whatsapp", "slack", "github", "tasks_csv", "markdown", "ics", "interview"];
+/** Kinds a pack may also rank: a successor finding (never imported, so it is not in KINDS). */
+const EXTRA_AUTHORITY_KINDS: readonly SourceKind[] = ["finding"];
 const RESP_KINDS = ["deploy_operate", "external_relationship", "recurring_obligation", "open_decision", "unfinished_work"] as const;
 type RespKind = (typeof RESP_KINDS)[number];
 const TASK_HEADER = "id,title,status,owner,owner_email,due,labels,updated_at,description";
 const CANARY_RE = /CANARY-[A-Z0-9]{4}/g;
-
-// Section 4 of ARCHITECTURE.md: [key, wTag, weight]
-const EXPECTED_CHECKS: Record<RespKind, [string, string, number][]> = {
-  deploy_operate: [["access_path", "WHERE", 3], ["steps", "HOW", 3], ["how_to_verify", "HOW", 3], ["rollback", "HOW", 5], ["credential_owner", "WHO", 5]],
-  external_relationship: [["contact_person", "WHO", 5], ["last_interaction", "WHEN", 1], ["open_commitments", "WHY", 3], ["next_date", "WHEN", 3]],
-  recurring_obligation: [["cadence", "WHEN", 3], ["next_due_date", "WHEN", 5], ["how_to_do_it", "HOW", 3], ["consequence_if_missed", "WHY", 1]],
-  open_decision: [["current_state", "WHERE", 3], ["options_considered", "WHY", 1], ["owner", "WHO", 5], ["deadline", "WHEN", 3]],
-  unfinished_work: [["where_it_lives", "WHERE", 3], ["last_state", "WHERE", 3], ["next_concrete_step", "HOW", 5], ["who_reviews_it", "WHO", 1]],
-};
 
 const errors: string[] = [];
 const fail = (msg: string): void => {
@@ -63,32 +91,17 @@ function walk(dir: string): string[] {
 }
 
 // ---------------------------------------------------------------- pack
-const pack = readJson(path.join(ROOT, "packs", "club.json"));
+const pack = readJson(path.join(ROOT, PACK_FILE));
 const entityKeys = new Set<string>();
 const checklist = new Map<RespKind, { key: string; weight: number; attributes: string[] }[]>();
 const readbackKeys: string[] = [];
 
 if (!isObj(pack)) {
-  fail("packs/club.json is not an object");
+  fail(`${PACK_FILE} is not an object`);
 } else {
-  check(pack.id === "club" && isStr(pack.name), "pack: id must be 'club' and name a string");
-  const labels: Record<RoleKey, string> = {
-    president: "Club President", tech_lead: "Incoming tech lead", new_member: "New member",
-    treasurer: "Treasurer", leaver: "Priya (outgoing tech lead)",
-  };
-  const roles = Array.isArray(pack.roles) ? pack.roles : [];
-  check(roles.length === 5, "pack: exactly five roles");
-  for (const r of roles) {
-    if (!isObj(r) || !isStr(r.key) || !(ROLE_KEYS as readonly string[]).includes(r.key)) {
-      fail(`pack: bad role ${JSON.stringify(r)}`);
-      continue;
-    }
-    check(r.label === labels[r.key as RoleKey], `pack: role ${r.key} label must be "${labels[r.key as RoleKey]}"`);
-  }
-  check(pack.approverRole === "president" && pack.successorRole === "tech_lead" && pack.leaverRole === "leaver",
-    "pack: approver/successor/leaver roles");
-  check(isRoleSet(pack.contactsRoles) && sameSet(pack.contactsRoles, ["president", "tech_lead", "treasurer", "leaver"]),
-    "pack: contactsRoles must be president, tech_lead, treasurer, leaver");
+  check(pack.id === PACK_ID && isStr(pack.name), `pack: id must be '${PACK_ID}' and name a string`);
+  // Roles, flags and every role reference were validated by the loader (getPack above).
+  check(isRoleSet(pack.contactsRoles), "pack: contactsRoles must be roles of this pack");
 
   for (const e of Array.isArray(pack.entities) ? pack.entities : []) {
     if (!isObj(e) || !isStr(e.key) || !isStr(e.label) || !isStrArr(e.aliases) || e.aliases.length === 0) {
@@ -99,7 +112,11 @@ if (!isObj(pack)) {
     check(!entityKeys.has(e.key), `pack: duplicate entity ${e.key}`);
     entityKeys.add(e.key);
   }
-  check(entityKeys.size >= 12 && entityKeys.size <= 16, `pack: expected 12-16 entities, got ${entityKeys.size}`);
+  check(entityKeys.size > 0, "pack: no entities");
+  if (EXPECT.entities) {
+    check(entityKeys.size >= EXPECT.entities[0] && entityKeys.size <= EXPECT.entities[1],
+      `pack: expected ${EXPECT.entities[0]}-${EXPECT.entities[1]} entities, got ${entityKeys.size}`);
+  }
 
   const sa = pack.sourceAuthority;
   if (!isObj(sa)) fail("pack: sourceAuthority missing");
@@ -108,7 +125,8 @@ if (!isObj(pack)) {
     for (const a of ATTRS) {
       const row = sa[a];
       if (!isObj(row)) { fail(`pack: sourceAuthority.${a} missing`); continue; }
-      check(sameSet(Object.keys(row), KINDS), `pack: sourceAuthority.${a} must cover the 7 source kinds`);
+      check(subset(KINDS, Object.keys(row)) && subset(Object.keys(row), [...KINDS, ...EXTRA_AUTHORITY_KINDS]),
+        `pack: sourceAuthority.${a} must cover the 7 source kinds (and may rank: ${EXTRA_AUTHORITY_KINDS.join(", ")})`);
       const nums = KINDS.map((k) => row[k]);
       if (!nums.every((n) => typeof n === "number" && Number.isFinite(n) && n >= 0)) {
         fail(`pack: sourceAuthority.${a} values must be numbers`);
@@ -127,18 +145,18 @@ if (!isObj(pack)) {
       const list = cl[kind];
       if (!Array.isArray(list)) { fail(`pack: checklist ${kind} missing`); continue; }
       const parsed: { key: string; weight: number; attributes: string[] }[] = [];
-      const expected = EXPECTED_CHECKS[kind];
-      check(list.length === expected.length, `pack: checklist ${kind} must have ${expected.length} checks`);
-      list.forEach((c, i) => {
-        const exp = expected[i];
+      // A pack defines its own checks per kind; each needs a unique key, a W tag and a weight of 1, 3 or 5.
+      check(list.length > 0, `pack: checklist ${kind} has no checks`);
+      const keysSeen = new Set<string>();
+      list.forEach((c) => {
         if (!isObj(c) || !isStr(c.key) || !isStr(c.label) || !isStrArr(c.attributes) || c.attributes.length === 0) {
           fail(`pack: bad check in ${kind}: ${JSON.stringify(c)}`);
           return;
         }
-        if (exp) {
-          check(c.key === exp[0] && c.wTag === exp[1] && c.weight === exp[2],
-            `pack: ${kind}[${i}] must be ${exp.join("/")}, got ${String(c.key)}/${String(c.wTag)}/${String(c.weight)}`);
-        }
+        check(!keysSeen.has(c.key), `pack: duplicate check ${kind}.${c.key}`);
+        keysSeen.add(c.key);
+        check(["WHO", "WHERE", "HOW", "WHY", "WHEN"].includes(String(c.wTag)) && [1, 3, 5].includes(Number(c.weight)),
+          `pack: ${kind}.${c.key} needs a W tag and a weight of 1, 3 or 5`);
         check(subset(c.attributes, ATTRS), `pack: ${kind}.${c.key} has unknown attributes`);
         parsed.push({ key: c.key, weight: Number(c.weight), attributes: c.attributes });
       });
@@ -146,11 +164,9 @@ if (!isObj(pack)) {
     }
   }
 
-  const rt = isObj(pack.roleTemplates) ? pack.roleTemplates.tech_lead : undefined;
-  if (!Array.isArray(rt)) fail("pack: roleTemplates.tech_lead missing");
+  const rt = isObj(pack.roleTemplates) ? pack.roleTemplates[SUCCESSOR] : undefined;
+  if (!Array.isArray(rt)) fail(`pack: roleTemplates.${SUCCESSOR} (the successor role) missing`);
   else {
-    check(sameSet(rt.map((t) => (isObj(t) ? String(t.key) : "")), ["R02", "R03", "R10"]),
-      "pack: roleTemplates.tech_lead must be R02, R03, R10");
     for (const t of rt) {
       if (!isObj(t) || !isStr(t.title) || !(RESP_KINDS as readonly string[]).includes(String(t.kind)) || !isStrArr(t.entities)) {
         fail(`pack: bad role template ${JSON.stringify(t)}`);
@@ -161,11 +177,12 @@ if (!isObj(pack)) {
   }
 
   const fp = pack.footprint;
-  check(isObj(fp) && fp.repeatMin === 3 && fp.distinctWeeksMin === 2 && fp.ownershipShare === 0.8 && fp.windowMonths === 6,
-    "pack: footprint thresholds must be 3 / 2 / 0.8 / 6");
+  check(isObj(fp) && [fp.repeatMin, fp.distinctWeeksMin, fp.ownershipShare, fp.windowMonths].every((n) => typeof n === "number" && n > 0)
+    && Number(fp.ownershipShare) <= 1, "pack: footprint needs repeatMin, distinctWeeksMin, ownershipShare (0 to 1] and windowMonths");
 
   const rb = Array.isArray(pack.readback) ? pack.readback : [];
-  check(rb.length === 5, "pack: readback must have exactly five items");
+  check(rb.length > 0, "pack: readback has no items");
+  if (EXPECT.readbackItems !== undefined) check(rb.length === EXPECT.readbackItems, `pack: readback must have exactly ${EXPECT.readbackItems} items`);
   for (const r of rb) {
     if (!isObj(r) || !isStr(r.key) || !isStr(r.label) || !isStr(r.entity) || !isStr(r.attribute)) {
       fail(`pack: bad readback ${JSON.stringify(r)}`);
@@ -176,13 +193,14 @@ if (!isObj(pack)) {
     check((ATTRS as readonly string[]).includes(r.attribute), `pack: readback ${r.key} unknown attribute`);
     readbackKeys.push(r.key);
   }
-  check(sameSet(readbackKeys, ["competition_date", "firmware_rollback", "sponsor_contact", "domain_renewal_date", "lab_booking_day"]),
-    "pack: readback keys");
+  check(new Set(readbackKeys).size === readbackKeys.length, "pack: duplicate readback key");
   const ud = pack.uploadDefaults;
-  check(isObj(ud) && isRoleSet(ud.roleSet) && sameSet(ud.roleSet, ROLE_KEYS), "pack: uploadDefaults.roleSet must be all roles");
+  check(isObj(ud) && isRoleSet(ud.roleSet), "pack: uploadDefaults.roleSet must be roles of this pack");
 }
 
 // ---------------------------------------------------------------- sources
+// A source path is relative to the demo folder, or to the project root (the first demo was written that way).
+const sourcePath = (p: string): string => (fs.existsSync(path.join(DEMO, p)) ? path.join(DEMO, p) : path.join(ROOT, p));
 interface SourceEntry { kind: SourceKind; name: string; path: string; roleSet: RoleKey[] }
 const sourcesRaw = readJson(path.join(DEMO, "sources.json"));
 const sources: SourceEntry[] = [];
@@ -193,7 +211,7 @@ else {
       fail(`sources.json: bad entry ${JSON.stringify(s)}`);
       continue;
     }
-    if (!fs.existsSync(path.join(ROOT, s.path))) { fail(`sources.json: path not found ${s.path}`); continue; }
+    if (!fs.existsSync(sourcePath(s.path))) { fail(`sources.json: path not found ${s.path}`); continue; }
     sources.push({ kind: s.kind as SourceKind, name: s.name, path: s.path, roleSet: s.roleSet });
   }
 }
@@ -209,7 +227,7 @@ const WA_MSG = /^(\d{2})\/(\d{2})\/(\d{2}), (\d{2}):(\d{2}) - ([^:]+?): (.*)$/;
 const WA_SYS = /^(\d{2})\/(\d{2})\/(\d{2}), (\d{2}):(\d{2}) - (.*)$/;
 
 for (const s of sources) {
-  const abs = path.join(ROOT, s.path);
+  const abs = sourcePath(s.path);
   const files = fs.statSync(abs).isDirectory() ? walk(abs) : [abs];
   for (const f of files) fileRoles.set(f, s.roleSet);
 
@@ -264,8 +282,8 @@ for (const s of sources) {
         }
         check(!seen.has(m.ts), `slack ${s.path}/${ch}: duplicate ts ${m.ts}`);
         seen.add(m.ts);
-        // Restricted channels (hidden from tech_lead and new_member): every message carries a canary token.
-        if (!s.roleSet.includes("tech_lead") && !s.roleSet.includes("new_member")) {
+        // Restricted channels (hidden from the successor and every restricted audience role): every message carries a canary token.
+        if (OUTSIDERS.every((r) => !s.roleSet.includes(r))) {
           check(new RegExp(CANARY_RE.source).test(m.text), `slack ${s.path}/${ch}: restricted message without canary: ${m.text}`);
         }
       }
@@ -308,7 +326,7 @@ for (const s of sources) {
     rows.forEach((r, i) => {
       if (r.length !== 9) { fail(`tasks: row ${i + 2} has ${r.length} fields`); return; }
       const [id, title, status, , , due, , updatedAt] = r;
-      check(/^T-\d{3}$/.test(id) && !taskIds.has(id), `tasks: bad or duplicate id ${id}`);
+      check(id.trim() !== "" && !taskIds.has(id), `tasks: bad or duplicate id ${id}`);
       taskIds.add(id);
       check(title !== "" && status !== "", `tasks: ${id} needs title and status`);
       check(due === "" || /^\d{4}-\d{2}-\d{2}$/.test(due), `tasks: ${id} bad due ${due}`);
@@ -318,7 +336,10 @@ for (const s of sources) {
     counts["tasks open"] = rows.filter((r) => r[2] !== "Done").length;
     // Inventory takes open cards plus Done cards updated within 30 days: keep that set to the planted R-cards.
     const active = rows.filter((r) => r[2] !== "Done" || TODAY.getTime() - Date.parse(r[7]) <= 30 * 86_400_000).map((r) => r[0]);
-    check(sameSet(active, ["T-018", "T-024", "T-031", "T-036"]), `tasks: open or recently active cards must be T-018, T-024, T-031, T-036; got ${active.join(", ")}`);
+    if (EXPECT.activeTaskIds) {
+      check(sameSet(active, EXPECT.activeTaskIds), `tasks: open or recently active cards must be ${EXPECT.activeTaskIds.join(", ")}; got ${active.join(", ")}`);
+    }
+    counts["tasks active"] = active.length;
   }
 
   if (s.kind === "markdown") {
@@ -395,7 +416,8 @@ for (const r of Array.isArray(gtObj.responsibilities) ? gtObj.responsibilities :
   for (const e of r.entities) check(entityKeys.has(e), `gt: ${r.key} unknown entity ${e}`);
   respKind.set(r.key, r.kind as RespKind);
 }
-check(respKind.size === 10, `gt: expected 10 responsibilities, got ${respKind.size}`);
+check(respKind.size > 0, "gt: no responsibilities");
+if (EXPECT.responsibilities !== undefined) check(respKind.size === EXPECT.responsibilities, `gt: expected ${EXPECT.responsibilities} responsibilities, got ${respKind.size}`);
 const checkDef = (resp: string, key: string) => {
   const kind = respKind.get(resp);
   return kind ? checklist.get(kind)?.find((c) => c.key === key) : undefined;
@@ -435,19 +457,20 @@ for (const c of Array.isArray(gtObj.claims) ? gtObj.claims : []) {
   check(["active", "superseded", "conflicting"].includes(String(c.state)), `gt: ${c.id} bad state`);
   claims.push({ id: c.id, entity: c.entity, attribute: c.attribute, roleSet: c.roleSet, state: String(c.state), check: chk });
 }
-check(claims.length >= 60 && claims.length <= 80, `gt: expected 60-80 claims, got ${claims.length}`);
+check(claims.length > 0, "gt: no planted claims");
+if (EXPECT.claims) check(claims.length >= EXPECT.claims[0] && claims.length <= EXPECT.claims[1], `gt: expected ${EXPECT.claims[0]}-${EXPECT.claims[1]} claims, got ${claims.length}`);
 
-// Planted coverage for the successor (tech_lead) must agree with the gaps list.
+// Planted coverage for the successor role must agree with the gaps list.
 const gaps = Array.isArray(gtObj.gaps) ? gtObj.gaps.filter(isObj) : [];
 let blocking = 0;
 for (const [resp, kind] of respKind) {
   for (const def of checklist.get(kind) ?? []) {
     const gap = gaps.find((g) => g.responsibility === resp && g.checkKey === def.key);
     const forCheck = claims.filter((c) => c.check?.responsibility === resp && c.check.checkKey === def.key);
-    const visible = forCheck.filter((c) => c.roleSet.includes("tech_lead"));
+    const visible = forCheck.filter((c) => c.roleSet.includes(SUCCESSOR));
     const visibleActive = visible.filter((c) => c.state === "active");
     if (!gap) {
-      check(visibleActive.length > 0, `coverage: ${resp}.${def.key} has no gap but no active claim visible to tech_lead`);
+      check(visibleActive.length > 0, `coverage: ${resp}.${def.key} has no gap but no active claim visible to ${SUCCESSOR}`);
       continue;
     }
     const cov = String(gap.coverage);
@@ -465,7 +488,9 @@ for (const [resp, kind] of respKind) {
   }
 }
 for (const g of gaps) check(checkDef(String(g.responsibility), String(g.checkKey)) && isStr(g.why), `gaps: bad gap ${JSON.stringify(g)}`);
-check(blocking === gtObj.expectedTechLeadBlockingGaps, `gaps: ${blocking} blocking gaps but expectedTechLeadBlockingGaps = ${String(gtObj.expectedTechLeadBlockingGaps)}`);
+// The answer key states how many blocking gaps the successor has (older keys name the field after the club's successor).
+const expectedBlocking = gtObj.expectedSuccessorBlockingGaps ?? gtObj.expectedTechLeadBlockingGaps;
+check(blocking === expectedBlocking, `gaps: ${blocking} blocking gaps but the answer key expects ${String(expectedBlocking)}`);
 
 for (const r of Array.isArray(gtObj.restrictedChecks) ? gtObj.restrictedChecks : []) {
   check(isObj(r) && checkDef(String(r.responsibility), String(r.checkKey)) && isRoleSet(r.visibleTo), `gt: bad restrictedCheck ${JSON.stringify(r)}`);
@@ -494,58 +519,68 @@ check(sameSet(rbGt.map((r) => String(r.key)), readbackKeys), "gt: readback keys 
 for (const r of rbGt) {
   check(isStr(r.expected), `gt: readback ${String(r.key)} needs expected`);
   const ids = isStrArr(r.claims) ? r.claims : [];
-  check(ids.some((id) => claims.find((c) => c.id === id)?.roleSet.includes("tech_lead")),
-    `gt: readback ${String(r.key)} must be backed by a claim visible to tech_lead`);
+  check(ids.some((id) => claims.find((c) => c.id === id)?.roleSet.includes(SUCCESSOR)),
+    `gt: readback ${String(r.key)} must be backed by a claim visible to ${SUCCESSOR}`);
 }
 const offBoard = Array.isArray(gtObj.offBoard) ? gtObj.offBoard : [];
 for (const o of offBoard) check(isObj(o) && respKind.has(String(o.responsibility)) && isStr(o.rule) && isStr(o.evidence), `gt: bad offBoard ${JSON.stringify(o)}`);
 
-// ---------------------------------------------------------------- footprint thresholds
+// ---------------------------------------------------------------- footprint evidence
+// What the leaver did off the board must really be in the data, at the pack's own thresholds.
+// Each expectation comes from the pack's demo.expect.footprint; the leaver is the pack's role holder.
 const windowStart = new Date(TODAY);
-windowStart.setMonth(windowStart.getMonth() - 6);
+windowStart.setMonth(windowStart.getMonth() - resolved.footprint.windowMonths);
 const inWindow = commits.filter((c) => new Date(c.date) >= windowStart);
-const shareOf = (prefix: string) => {
-  const touching = inWindow.filter((c) => c.files.some((f) => f.path.startsWith(prefix)));
-  const priya = touching.filter((c) => c.author_name === "Priya Nair");
-  return { share: touching.length ? priya.length / touching.length : 0, n: touching.length, priya: priya.length,
-    weeks: new Set(priya.map((c) => weekKey(new Date(c.date)))).size };
-};
-const fw = shareOf("firmware/");
-const wf = shareOf(".github/workflows/deploy.yml");
-const dns = shareOf("dns/");
-check(fw.share >= 0.8 && fw.weeks >= 2, `footprint: Priya firmware/ share ${fw.priya}/${fw.n}`);
-check(wf.share >= 0.8 && wf.weeks >= 2, `footprint: Priya deploy.yml share ${wf.priya}/${wf.n}`);
-check(dns.share >= 0.8, `footprint: Priya dns/ share ${dns.priya}/${dns.n}`);
-const late = whatsappMsgs.filter((m) => m.author === "Priya Nair" && /^Pawar sir,/.test(m.text) && /late/i.test(m.text));
-const lateWeeks = new Set(late.map((m) => weekKey(m.ts))).size;
-check(late.length >= 3 && lateWeeks >= 2, `footprint: late-access requests ${late.length} in ${lateWeeks} weeks`);
-const bookings = icsText.split("BEGIN:VEVENT").slice(1).filter((e) => /SUMMARY:Book Workshop Lab 3/.test(e));
-const bookingWeeks = new Set(bookings.map((e) => {
-  const m = /DTSTART;VALUE=DATE:(\d{4})(\d{2})(\d{2})/.exec(e);
-  return m ? weekKey(new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`)) : -1;
-})).size;
-check(bookings.length >= 3 && bookingWeeks >= 3, `footprint: lab bookings ${bookings.length} in ${bookingWeeks} weeks`);
+const isLeaver = (name: string) => LEAVER_NAMES.includes(name);
+const footprintSummary: Record<string, string> = {};
+for (const f of EXPECT.footprint ?? []) {
+  if (f.source === "commits") {
+    const touching = inWindow.filter((c) => c.files.some((x) => x.path.startsWith(f.pathPrefix ?? "")));
+    const mine = touching.filter((c) => isLeaver(c.author_name));
+    const share = touching.length ? mine.length / touching.length : 0;
+    const weeks = new Set(mine.map((c) => weekKey(new Date(c.date)))).size;
+    check(share >= (f.minShare ?? resolved.footprint.ownershipShare) && weeks >= (f.minWeeks ?? 0),
+      `footprint: ${f.label}: leaver share ${mine.length}/${touching.length} in ${weeks} weeks`);
+    footprintSummary[`footprint ${f.label}`] = `${mine.length}/${touching.length}`;
+  } else if (f.source === "whatsapp") {
+    const re = new RegExp(f.pattern ?? "", "i");
+    const hits = whatsappMsgs.filter((m) => isLeaver(m.author) && re.test(m.text));
+    const weeks = new Set(hits.map((m) => weekKey(m.ts))).size;
+    check(hits.length >= (f.minCount ?? resolved.footprint.repeatMin) && weeks >= (f.minWeeks ?? resolved.footprint.distinctWeeksMin),
+      `footprint: ${f.label}: ${hits.length} messages in ${weeks} weeks`);
+    footprintSummary[`footprint ${f.label}`] = `${hits.length} messages, ${weeks} weeks`;
+  } else if (f.source === "ics") {
+    const re = new RegExp(`SUMMARY:.*${f.pattern ?? ""}`, "i");
+    const events = icsText.split("BEGIN:VEVENT").slice(1).filter((e) => re.test(e));
+    const weeks = new Set(events.map((e) => {
+      const m = /DTSTART(?:;[^:]*)?:(\d{4})(\d{2})(\d{2})/.exec(e);
+      return m ? weekKey(new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`)) : -1;
+    })).size;
+    check(events.length >= (f.minCount ?? resolved.footprint.repeatMin) && weeks >= (f.minWeeks ?? resolved.footprint.distinctWeeksMin),
+      `footprint: ${f.label}: ${events.length} events in ${weeks} weeks`);
+    footprintSummary[`footprint ${f.label}`] = `${events.length} events, ${weeks} weeks`;
+  } else {
+    fail(`pack: demo.expect.footprint has an unknown source ${JSON.stringify(f)}`);
+  }
+}
 
 // ---------------------------------------------------------------- report
 const summary = {
   ...counts,
   "gt claims": claims.length,
   "gt gaps": gaps.length,
-  "gt blocking gaps (tech_lead)": blocking,
+  [`gt blocking gaps (${SUCCESSOR})`]: blocking,
   "gt supersessions": sup.length,
   "gt conflicts": conf.length,
   "canary tokens": tokens.size,
   secrets: secrets.length,
-  "footprint firmware/": `${fw.priya}/${fw.n}`,
-  "footprint deploy.yml": `${wf.priya}/${wf.n}`,
-  "footprint dns/": `${dns.priya}/${dns.n}`,
-  "footprint late access": `${late.length} requests, ${lateWeeks} weeks`,
-  "footprint lab bookings": `${bookings.length} events, ${bookingWeeks} weeks`,
+  ...footprintSummary,
 };
+console.log(`pack ${PACK_ID} (${PACK_FILE}), demo data in ${rel(DEMO)}\n`);
 for (const [k, v] of Object.entries(summary)) console.log(`${k.padEnd(30)} ${String(v)}`);
 if (errors.length) {
   console.error(`\n${errors.length} problem(s):`);
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log("\ncheck-demo: OK");
+console.log(`\ncheck-demo: OK (${PACK_ID})`);

@@ -144,7 +144,21 @@
     "pendingText": "Creating your private copy…",
     "title": "College robotics club",
     "blurb": "A fictional college robotics club: Priya, the outgoing tech lead, graduates; the incoming tech lead must take over.",
-    "sampleAnswer": "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat."
+    "sampleAnswer": "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat.",
+    "expect": {
+      "entities": [12, 16],
+      "responsibilities": 10,
+      "claims": [60, 80],
+      "readbackItems": 5,
+      "activeTaskIds": ["T-018", "T-024", "T-031", "T-036"],
+      "footprint": [
+        { "label": "firmware/", "source": "commits", "pathPrefix": "firmware/", "minShare": 0.8, "minWeeks": 2 },
+        { "label": "deploy.yml", "source": "commits", "pathPrefix": ".github/workflows/deploy.yml", "minShare": 0.8, "minWeeks": 2 },
+        { "label": "dns/", "source": "commits", "pathPrefix": "dns/", "minShare": 0.8 },
+        { "label": "late access", "source": "whatsapp", "pattern": "^Pawar sir,.*late", "minCount": 3, "minWeeks": 2 },
+        { "label": "lab bookings", "source": "ics", "pattern": "Book Workshop Lab 3", "minCount": 3, "minWeeks": 3 }
+      ]
+    }
   },
   "forbiddenInCore": ["Priya", "Club President", "robotics", "RoboLeague", "Vertex", "Pawar", "Kulkarni", "Rahul Desai"]
 }
