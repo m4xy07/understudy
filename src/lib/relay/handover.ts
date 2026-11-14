@@ -1,6 +1,8 @@
 // Relay handover: per-role compile under RLS, typed read-back, acknowledgements, export, leak check.
 // Contract: docs/ARCHITECTURE.md section 4 "Review and Handover" and "Canary tests", section 5.
 //
+// The leak check grid itself lives in ./probes (it loops over the surface registry in ./surfaces);
+// this file keeps the token and probe-fact lists and the export guard.
 // Role-scoped reads (the snapshot's claims, the withheld counts, which read-back items a role can see)
 // all run inside withRole(ws, role). Admin reads here are limited to: the snapshot header (hash,
 // version, plan), responsibilities (filtered again by the core compile), resolving which snapshot claim
@@ -10,17 +12,18 @@ import path from "node:path";
 import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { iso, toSnapshot } from "@/lib/db/mappers";
-import { audit, getWorkspace, listGapQuestions, listResponsibilities, peopleNames } from "@/lib/db/queries";
+import { audit, getWorkspace, listResponsibilities, peopleNames } from "@/lib/db/queries";
 import { getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
 import type {
   Attribute, Citation, Claim, ReadbackItem, ReadbackVerdict, RoleKey, Scores, Snapshot, Trust,
 } from "@/lib/types";
 import {
-  compileHandover as coreCompile, formatScores, renderMarkdown, stubText,
+  compileHandover as coreCompile, renderMarkdown, stubText,
   type HandoverDoc, type WithheldCounts,
 } from "./core/compile";
 import { ackRecord, checkReadback, parseDate, type Acknowledgement } from "./core/readback";
-import { scanForCanaries, surfacesOf, type Surface } from "./core/canary";
+import { scanForCanaries } from "./core/canary";
+import { scanForFacts, type ProbeFact } from "./core/probes";
 import { releaseLabel, SNAPSHOT_SCHEMA, verifySnapshot, type SnapshotPayload } from "./core/snapshot";
 import { TRUST_ORDER } from "./core/labels";
 
@@ -433,7 +436,7 @@ export async function compileHandover(ws: string, role: RoleKey): Promise<Handov
 // Canary tokens and the leak check
 // ---------------------------------------------------------------------------------------------
 
-interface TokenSet {
+export interface TokenSet {
   source: "ground_truth" | "pattern";
   all: string[];
   allowed: Map<RoleKey, Set<string>>;
@@ -470,8 +473,47 @@ function tokensIn(rows: readonly Row[]): Set<string> {
   return out;
 }
 
+/** A probe fact as the demo's probes.json holds it: the fact, its key terms, and its rewordings. */
+export interface DemoProbeFact extends ProbeFact {
+  canary?: string;
+  rewordings?: string[];
+  hardRewordings?: string[];
+}
+
+const probeCache = new Map<string, DemoProbeFact[]>();
+
+/** The reworded-fact probes of a pack's demo (<demo.dataDir>/probes.json), cached per pack id. Empty when there are none. */
+export function demoProbeFacts(pack: Pick<ResolvedPack, "id" | "demo">): DemoProbeFact[] {
+  const hit = probeCache.get(pack.id);
+  if (hit) return hit;
+  let out: DemoProbeFact[] = [];
+  try {
+    if (!pack.demo) throw new Error("no demo");
+    const file = path.join(process.cwd(), pack.demo.dataDir, "probes.json");
+    const raw = JSON.parse(fs.readFileSync(file, "utf8")) as { facts?: Partial<DemoProbeFact>[] };
+    out = (raw.facts ?? [])
+      .filter((f) => typeof f.id === "string" && Array.isArray(f.roleSet) && Array.isArray(f.termGroups))
+      .map((f) => ({
+        ...(f as DemoProbeFact),
+        mustGroups: Array.isArray(f.mustGroups) ? f.mustGroups : [],
+        minGroups: typeof f.minGroups === "number" ? f.minGroups : 1,
+      }));
+  } catch {
+    out = [];
+  }
+  probeCache.set(pack.id, out);
+  return out;
+}
+
+/** The probe facts that apply to a workspace: the demo's planted facts for a demo workspace, none otherwise. */
+export async function probeFacts(ws: string): Promise<DemoProbeFact[]> {
+  const w = await getWorkspace(ws);
+  if (w?.kind !== "demo") return [];
+  return demoProbeFacts(await getWorkspacePack(ws));
+}
+
 /** Demo workspaces: the planted tokens from the demo's answer key. Others: any CANARY-shaped token in the sources. */
-async function canaryTokens(ws: string): Promise<TokenSet> {
+export async function canaryTokens(ws: string): Promise<TokenSet> {
   const pack = await getWorkspacePack(ws);
   const roles = pack.roles.map((r) => r.key as RoleKey);
   const w = await getWorkspace(ws);
@@ -504,82 +546,17 @@ export async function exportMarkdown(
   const markdown = renderMarkdown(h.doc);
   const tokens = await canaryTokens(ws);
   const leaks = scanForCanaries([{ surface: "export", text: markdown }], tokens.allowed.get(role) ?? new Set(), tokens.all);
-  if (leaks.length) {
-    await audit(ws, "system", "export_blocked", { role, leaks: leaks.length });
-    return { ok: false, status: 500, error: "Export blocked: the leak check found a restricted token in this export." };
+  // The same guard for reworded facts: a claim written in new words carries no token.
+  const reworded = scanForFacts([{ surface: "export", text: markdown }], role, await probeFacts(ws));
+  if (leaks.length || reworded.length) {
+    await audit(ws, "system", "export_blocked", { role, leaks: leaks.length, reworded: reworded.length });
+    return {
+      ok: false, status: 500,
+      error: leaks.length
+        ? "Export blocked: the leak check found a restricted token in this export."
+        : "Export blocked: the leak check found a restricted fact in this export.",
+    };
   }
   await audit(ws, role, "export_handover", { snapshotId: h.snapshot.id, version: h.snapshot.version });
   return { ok: true, markdown, filename: `handover-${role}-v${h.snapshot.version}.md` };
-}
-
-export const LEAK_SURFACES = ["handover", "export", "stubs", "scores", "timeline", "questions"] as const;
-export type LeakSurface = (typeof LEAK_SURFACES)[number];
-
-export interface LeakCell {
-  role: RoleKey;
-  surface: LeakSurface;
-  texts: number;
-  leaks: number;
-}
-
-export interface LeakReport {
-  source: "ground_truth" | "pattern";
-  tokenCount: number;
-  compiled: boolean;
-  roles: { key: RoleKey; label: string; maySee: number }[];
-  surfaces: readonly LeakSurface[];
-  cells: LeakCell[];
-  allPass: boolean;
-}
-
-function surfaceOf(name: string): LeakSurface {
-  if (name === "handover:timeline" || name === "timeline") return "timeline";
-  if (name.startsWith("handover:")) return "handover";
-  return name as LeakSurface;
-}
-
-/**
- * Run scanForCanaries over every surface for every role: handover text, export, stubs, scores,
- * timeline and gap questions. A token may only appear for roles allowed to see it.
- */
-export async function runLeakCheck(ws: string): Promise<LeakReport> {
-  const pack = await getWorkspacePack(ws);
-  const tokens = await canaryTokens(ws);
-  const questions = (await listGapQuestions(ws)).map((q) => q.text);
-  const roles = pack.roles.map((r) => r.key as RoleKey);
-  const cells: LeakCell[] = [];
-  let compiled = false;
-  for (const role of roles) {
-    const h = await compileHandover(ws, role);
-    const texts: Surface[] = [];
-    if (h.doc) {
-      compiled = true;
-      const stubs = h.doc.sections.flatMap((s) => s.lines.filter((l) => l.kind === "stub").map((l) => l.text));
-      if (h.stubLine) stubs.push(h.stubLine);
-      const timeline = h.doc.sections.find((s) => s.key === "timeline")?.lines.map((l) => l.text) ?? [];
-      const scores = h.scores ? [formatScores(h.scores), h.doc.snapshot.releaseLabel] : [h.doc.snapshot.releaseLabel];
-      texts.push(...surfacesOf(h.doc, { stubs, scores, timeline, questions, export: renderMarkdown(h.doc) }));
-      for (const g of h.groups) for (const it of g.items) texts.push({ surface: "handover:groups", text: `${it.entityLabel} ${it.statement}` });
-    } else {
-      for (const q of questions) texts.push({ surface: "questions", text: q });
-    }
-    const leaks = scanForCanaries(texts, tokens.allowed.get(role) ?? new Set(), tokens.all);
-    for (const surface of LEAK_SURFACES) {
-      cells.push({
-        role,
-        surface,
-        texts: texts.filter((t) => surfaceOf(t.surface) === surface).length,
-        leaks: leaks.filter((l) => surfaceOf(l.surface) === surface).length,
-      });
-    }
-  }
-  return {
-    source: tokens.source,
-    tokenCount: tokens.all.length,
-    compiled,
-    roles: roles.map((key) => ({ key, label: roleLabel(key, pack), maySee: tokens.allowed.get(key)?.size ?? 0 })),
-    surfaces: LEAK_SURFACES,
-    cells,
-    allPass: cells.every((c) => c.leaks === 0),
-  };
 }

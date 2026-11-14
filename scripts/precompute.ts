@@ -9,6 +9,10 @@
 // The re-test of the answered responsibility cannot replay: its prompt holds the new answer claim,
 // whose id comes from the answer's time. Every other responsibility replays.
 // The sample leaver answer is the pack's demo.sampleAnswer.
+// Content-level confidentiality adds two things to one run: the classifier's model calls during
+// ingest are recorded too, and when the demo's answer key plants a deliberate false positive
+// (decoys with group "false_positive"), the approver widens it and the pipeline re-runs, so the
+// scripted widening of the walkthrough replays from the cache as well.
 // Usage: pnpm tsx scripts/precompute.ts [--pack <id>] [--keep]
 import "./load-env";
 import fs from "node:fs";
@@ -22,6 +26,7 @@ import { answerQuestion } from "@/lib/lacuna";
 import { getLatestTestRun, listGapQuestions } from "@/lib/db/queries";
 import { modelAvailable, modelTag, startRecording, stopRecording, type CallRecord } from "@/lib/model/client";
 import { defaultPackId, getPack } from "@/lib/pack";
+import { setSegmentVisibility } from "@/lib/tether/visibility";
 
 const keep = process.argv.includes("--keep");
 const PRODUCTION_TAG = "qwen/qwen3-32b@openrouter.ai";
@@ -42,9 +47,49 @@ async function purge(ws: string) {
 const s = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 const calls = (r: CallRecord) => `${r.calls} calls (${r.cached} cached, ${r.live} live, ${r.failed} failed)`;
 
-async function runOnce(label: string, allKeys: Set<string>) {
-  const ws = (await createDemoWorkspace(pack.id)).id;
+/** The text of the demo's deliberate false positive (the message the walkthrough widens), if it plants one. */
+function plantedFalsePositive(): string | null {
+  try {
+    const gt = JSON.parse(fs.readFileSync(path.join(process.cwd(), pack.demo!.dataDir, "ground_truth.json"), "utf8")) as {
+      decoys?: { group?: string; containsText?: string }[];
+    };
+    return gt.decoys?.find((d) => d.group === "false_positive")?.containsText ?? null;
+  } catch {
+    return null;
+  }
+}
 
+/** The approver widens the planted false positive and the pipeline re-runs. Returns the keys it used. */
+async function widenFalsePositive(label: string, ws: string): Promise<Set<string>> {
+  const text = plantedFalsePositive();
+  if (!text) return new Set();
+  const [seg] = await db()`
+    SELECT id FROM segments WHERE workspace_id = ${ws} AND position(${text} in text) > 0 AND role_set_original IS NOT NULL
+    ORDER BY version DESC LIMIT 1`;
+  if (!seg) {
+    console.log(`[${label}]   widening: the planted false positive is not limited in this run; skipped`);
+    return new Set();
+  }
+  const res = await setSegmentVisibility(ws, String(seg.id), { action: "widen", roles: "source", reason: "Routine and useful: it backs a procedure everyone needs." }, pack.approverRole);
+  if (!res.ok || !res.runId) {
+    console.log(`[${label}]   widening failed: ${res.ok ? "no run started" : res.error}`);
+    return new Set();
+  }
+  const rec = startRecording();
+  const t0 = Date.now();
+  const run = await executeRun(ws, res.runId);
+  stopRecording();
+  console.log(`[${label}]   widening + re-run ${s(Date.now() - t0)}: run ${run?.status}; ${calls(rec)}`);
+  return rec.keys;
+}
+
+async function runOnce(label: string, allKeys: Set<string>) {
+  // The content classifier asks the model about borderline segments during ingest: record that too.
+  const ingestRec = startRecording();
+  const ws = (await createDemoWorkspace(pack.id)).id;
+  stopRecording();
+  for (const k of ingestRec.keys) allKeys.add(k);
+  console.log(`[${label}] ingest classifier: ${calls(ingestRec)}`);
   const pipeRec = startRecording();
   const t0 = Date.now();
   const { runId } = await startRun(ws);
@@ -105,7 +150,8 @@ async function runOnce(label: string, allKeys: Set<string>) {
   for (const k of pipeRec.keys) allKeys.add(k);
   const reused = [...answerRec.keys].filter((k) => pipeRec.keys.has(k)).length;
   console.log(`[${label}]   re-test prompts identical to the pipeline's: ${reused} of ${answerRec.keys.size}`);
-  return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation };
+  const widenKeys = await widenFalsePositive(label, ws);
+  return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation, widenKeys };
 }
 
 function fingerprint(rows: Record<string, unknown>[]): string {
@@ -125,6 +171,10 @@ async function main() {
   const stableRetest = [...cold.answerRec.keys].filter((k) => warm.answerRec.keys.has(k) && !keys.has(k));
   for (const k of stableRetest) keys.add(k);
   console.log(`answer re-test prompts sent by both runs (exported too): ${stableRetest.length} beyond the pipeline's`);
+  // The same rule for the scripted widening: prompts both runs sent replay in the demo.
+  const stableWiden = [...cold.widenKeys].filter((k) => warm.widenKeys.has(k) && !keys.has(k));
+  for (const k of stableWiden) keys.add(k);
+  console.log(`widening re-run prompts sent by both runs (exported too): ${stableWiden.length} beyond the others`);
 
   const sameClaims = fingerprint(cold.claims) === fingerprint(warm.claims);
   const sameScores = JSON.stringify(cold.scores) === JSON.stringify(warm.scores);

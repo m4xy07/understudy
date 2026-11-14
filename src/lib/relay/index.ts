@@ -34,9 +34,13 @@ import { parsePayload } from "./handover";
 
 export {
   compileHandover, checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown,
-  runLeakCheck, resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
-  type Handover, type HandoverItem, type ReadbackCheck, type AckRow, type LeakReport, type LeakCell,
+  resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
+  type Handover, type HandoverItem, type ReadbackCheck, type AckRow,
 } from "./handover";
+export {
+  runLeakCheck, runProbes, latestProbeRun,
+  type LeakReport, type LeakCell, type LeakFinding, type LeakRow, type ProbeRun,
+} from "./probes";
 
 export type ActionResult = { ok: true } | { ok: false; error: string; code?: string };
 

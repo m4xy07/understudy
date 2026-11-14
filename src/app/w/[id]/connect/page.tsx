@@ -10,8 +10,10 @@ import { UploadForm } from "@/components/UploadForm";
 import { RoleChip } from "@/components/chips";
 import { EmptyState, Notice } from "@/components/Notice";
 import type { SourceKind } from "@/lib/types";
+import { limitedPerSource, SensitivePanel } from "./SensitivePanel";
 
-export const maxDuration = 60;
+// Widening a message re-runs the pipeline inside after(): the same limit as the run route.
+export const maxDuration = 300;
 
 const KIND_LABEL: Record<SourceKind, string> = {
   tasks_csv: "Task board",
@@ -40,8 +42,10 @@ export default function ConnectPage({ params }: { params: WsParams }) {
 }
 
 async function Connect({ params }: { params: WsParams }) {
-  const { id, pack } = await loadWorkspace(params);
-  const [sources, run, modelUp] = await Promise.all([listSources(id), getRunStatus(id), modelAvailable()]);
+  const { id, pack, role } = await loadWorkspace(params);
+  const [sources, run, modelUp, limited] = await Promise.all([
+    listSources(id), getRunStatus(id), modelAvailable(), limitedPerSource(id, role),
+  ]);
   const level = dataLevel(sources.map((s) => s.kind));
   // Answers and findings are a person's words collected by Understudy, not connected sources.
   const imported = sources.filter((s) => s.kind !== "interview" && s.kind !== "finding");
@@ -101,7 +105,10 @@ async function Connect({ params }: { params: WsParams }) {
                             ))}
                           </span>
                         </td>
-                        <td className="mono text-right">{s.segmentCount}</td>
+                        <td className="mono text-right">
+                          {s.segmentCount}
+                          {limited[s.id] ? <span className="block font-sans text-xs text-muted">{limited[s.id]} limited</span> : null}
+                        </td>
                         <td className="whitespace-nowrap text-right text-xs">
                           <span className="block">{s.maskedSecrets} {s.maskedSecrets === 1 ? "secret" : "secrets"}</span>
                           <span className="block text-muted">{s.maskedContacts} {s.maskedContacts === 1 ? "contact" : "contacts"}</span>
@@ -132,7 +139,14 @@ async function Connect({ params }: { params: WsParams }) {
             )}
           </section>
 
-          <RunPanel ws={id} initial={run} hasSources={imported.length > 0} />
+          {sources.length > 0 && (
+            <Suspense fallback={<section className="card p-4 sm:p-5" aria-busy="true"><h2 className="text-xl">Sensitive content</h2></section>}>
+              <SensitivePanel ws={id} role={role} pack={pack} running={run?.status === "running"} />
+            </Suspense>
+          )}
+
+          {/* Keyed by run: a run started by a widen (a server action) gets a fresh, polling panel. */}
+          <RunPanel key={run?.id ?? "none"} ws={id} initial={run} hasSources={imported.length > 0} />
         </div>
 
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
