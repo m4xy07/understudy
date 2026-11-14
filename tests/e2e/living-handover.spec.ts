@@ -222,7 +222,8 @@ test("living handover: finding, review, snapshot v2, what changed, roles", async
     await expect(panel).toContainText(`Added: Incoming tech lead found: ${NOTE}`);
     await expect(panel).toContainText(/Gap closed: Late-night lab access.*: Next due date/);
     await expect(panel).toContainText(`B went from ${b1} to ${b1 - 1}. 1 blocking gap is now covered by a successor finding.`);
-    await expect(panel).toContainText(/C went from \d+% to \d+%\. 1 more check is covered\./);
+    // The finding closes the date; the re-test may also read its cadence ("every Wednesday") as covered.
+    await expect(panel).toContainText(/C went from \d+% to \d+%\. (1 more check is|\d+ more checks are) covered\./);
     await expect(panel).toContainText(/K (stayed at \d+%\.|went from \d+% to \d+%\. K counts only covered work that a record backs\.)/);
     await expect(panel).toContainText("This is a new version. Read back again to acknowledge v2.");
     await expect(panel).not.toContainText("restricted change");

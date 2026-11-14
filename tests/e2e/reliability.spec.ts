@@ -298,7 +298,8 @@ test("the same action twice: answer, plan, snapshot, in one tab and in two", asy
     await viewAs(page, "Incoming tech lead");
     await expect(page.getByRole("heading", { name: "Handover for Incoming tech lead" })).toBeVisible();
     await page.getByRole("button", { name: "Check my read-back" }).click(); // empty read-back: a verdict, not an error
-    await expect(page.getByText(/\d+ of \d+ items match the snapshot\./)).toBeVisible({ timeout: 30_000 });
+    // Which read-back items have an approved claim depends on what tier A holds in this run: either way a verdict.
+    await expect(page.getByText(/\d+ of \d+ items match the snapshot\.|Nothing to check for this role\./)).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Acknowledge receipt" }).dblclick();
     await expect(page.getByText(/Receipt acknowledged/).first()).toBeVisible({ timeout: 30_000 });
 
