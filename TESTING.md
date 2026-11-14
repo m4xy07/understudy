@@ -1,81 +1,69 @@
 # Testing
 
-How we test Understudy: automated suites per module, an evaluation harness against planted ground truth, permission and leak tests, and manual checks on the live link.
+How we test Understudy, ordered by what was tested: rules in isolation, the database boundary, the product in a browser, abuse, extraction quality against planted answer keys, leaks, and an independent code review.
+
+## Totals
+
+From a fresh clone of `main`, following the README, with no model key (2026-11-14, Windows 11, Node 26, local Postgres 16 in Docker):
+
+| Command | Result |
+|---|---|
+| `pnpm test` | 73 test files, 967 tests passed, 1 skipped, 62 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
+| `pnpm test:e2e` against `pnpm dev` | 5 spec files, 9 tests passed, 3.2 min, no retry |
+
+`pnpm test` prints the totals on its last lines, so these numbers are easy to check.
 
 ## How to run
 
 ```bash
 pnpm install
 pnpm db:up          # Postgres 16 in Docker on localhost:45432
-pnpm db:migrate     # the integration, permission and pool suites need the schema
-pnpm test           # vitest run, all suites
-pnpm test:watch     # while working
-pnpm test:e2e       # Playwright, the judge path in Chromium (see "End-to-end suite" below)
+pnpm db:migrate     # the database suites need the schema
+pnpm db:seed        # the pack suites replay the committed model answers
+pnpm test           # the literal check, then vitest
+pnpm test:e2e       # Playwright; needs `pnpm dev` running (see section 3)
 ```
 
-- Tests read `.env.local` (through `scripts/load-env.ts`). `DATABASE_URL` must point at a migrated database; the Docker default from `.env.example` works.
-- Tests never call a live model. `vitest.config.mts` sets `MODEL_DISABLED=1` and `LACUNA_MODEL=off`: the model client answers from the cache or fails fast, and integration suites inject a fake model or run the deterministic successor. Results do not depend on the network.
-- Files run one at a time (`fileParallelism: false`) because the database suites share one Postgres.
-- The count grows as suites are added, so no number is kept here: `pnpm test` prints the totals (test files and tests) on its last two lines. After the Round 3 integration (recovery, confidentiality, living handover and the reliability fixes on one branch) the run was 64 test files, 868 tests passed and 1 skipped (the pooler check, which needs `POOLER_TEST_URL`), in under two minutes on a laptop with a local database.
-- Optional: set `POOLER_TEST_URL` to a Supabase transaction-pooler URL to also run the pooler regression check against the real pooler (see below).
+- Tests read `.env.local`. The README's setup creates it.
+- No test calls a live model. `vitest.config.mts` sets `MODEL_DISABLED=1` and `LACUNA_MODEL=off`: the model client answers from the cache or fails fast, and suites that need model answers inject a fake one. Results do not depend on the network.
+- Test files run one at a time, because the database suites share one Postgres.
 
-## What the suites cover
+## 1. Unit tests: the rules, with no database
 
-| Folder | Module | What it checks |
+Pure functions with fixtures, in six folders.
+
+| Folder | Files | What it checks |
 |---|---|---|
-| `tests/tether/` | Tether | Each adapter (WhatsApp, Slack, GitHub, task CSV, Markdown, ICS) on fixtures: parsing, rejected rows with reasons, threads and reply links, RRULE expansion. Masking: GitHub, AWS, Slack, OpenAI-style keys, private keys, `password=` / `token=` / `secret=` values, high-entropy tokens, emails and phone numbers; credential names kept, values dropped; normal text, slugs and commit SHAs left alone; contact decryption fails with the wrong key. Identity: merge only on exact email via HMAC, name matches are suggestions only. Footprint thresholds, including negative cases. Stable segment IDs, `norm()`, data level, public GitHub fetch (mocked). |
-| `tests/attest/` | Attest | Batching never mixes role sets and keeps reply chains together. The exact-quote verifier: a quote with "not" removed fails, citations outside the batch are rejected, a claim without an accepted citation is dropped and counted, role set is the intersection of cited segments. Support check can only lower trust. Supersession rules 1 to 4, corroboration, importance and tier. Structured claims from the task board and calendar without a model. Prompt injection: segment text cannot fake segment headers or the end-of-data marker; labels the model adds are ignored. Fewer false conflicts (board rows, separate occurrences, recurring events). Integration on the demo pack with a fake model. |
-| `tests/lacuna/` | Lacuna | Inventory from the board, footprint and role template, with origins and part-of entities. Stand-in successor: code decides coverage and drops citations to claims that are missing, hidden or superseded; deterministic fallback. Scores B, C, K and their deltas. Gap ranking (weight × uncertainty × urgency), at most ten, never about restricted checks. Answers: only the leaver answers, "Leaver said" raises C not K, narrowing never widens. Continuation plan and release state. Integration on the demo pack with the planted claims. |
-| `tests/relay/` | Relay | Review tiers A, B, C; tier C needs evidence opened and a written reason; edits keep citations and are labelled. Canonical JSON and SHA-256 hash: stable across key order, changes when one statement changes, tampering detected, versions diff. Release rule and approval. Per-role compile in I-PASS order, stub text, Markdown export. Read-back parsers (dates to ISO, text, commands, contacts) and per-item verdicts. Canary scanning. Integration against the database. |
-| `tests/db/` | Foundation | RLS through `withRole`, append-only and immutable tables, the walking-skeleton pipeline end to end (ingest, run, answer, review, snapshot, per-role handover), and the pool regression. |
-| `tests/pipeline/` | Reliability | **The run lease:** five starts at the same moment make one run and four attach; the database refuses a second live run; a slice that died is continued once its lease expires, not before. **Resumable slices** (fake model endpoint, tiny time budget): a run pauses, continues, and stores the same drafts as a one-shot run, with every batch read live once; progress never goes down; a batch that always fails is tried three times, then named; the slice limit ends a run with a message; the per-workspace cap stops live calls and says so. **Repeats:** two saves of one answer store one; approving an approved claim is a no-op; three snapshot approvals at once make one version, a repeat makes none, a real change makes v2; one model re-check at a time. **Bad input:** empty, binary, wrong-shape and oversized uploads refused with a reason and no source left behind; plan dates must be real dates. **Cleanup:** an old demo copy is deleted with every child row; fresh, active, locked and approved workspaces stay; dry mode deletes nothing; the route answers 401 without the secret. |
-| `tests/model/` | Foundation | The model client in tests: no probe, no network, a fast typed failure on a cache miss. |
+| `tests/tether/` | 11 | Each adapter (WhatsApp, Slack, GitHub, task CSV, Markdown, ICS): parsing, rejected rows with reasons, threads, recurring events. Masking of keys, tokens, passwords, emails and phone numbers; credential names kept, values dropped. Identity merges only on an exact email. Footprint thresholds. The sensitivity classifier: every rule, borderline cases, fail closed, narrowing never adds a role. The collaboration graph gives the same result with all message text removed. The trace reader on workflow files, CI runs and commits. GitHub URL validation. |
+| `tests/attest/` | 17 | Batching never mixes role sets. The exact-quote verifier: a quote with "not" removed fails, citations outside the batch are rejected, a claim with no accepted citation is dropped. The support check can only lower trust. Supersession rules 1 to 4, corroboration. Both extraction prompts and the consolidation pass. Prompt injection: segment text cannot fake a header or the end marker. Flag visibility for conflicts with a hidden side. The evaluation page filters its lists by role. |
+| `tests/lacuna/` | 10 | Inventory from the board, the footprint and the role template. The stand-in successor: code decides coverage and drops citations to claims that are missing, hidden or superseded. Scores B, C, K. Gap ranking, at most ten, never about restricted checks. The recovery ladder: who is asked, who is skipped, how options are ranked. |
+| `tests/relay/` | 11 | Review tiers; tier C needs the evidence opened and a reason. Canonical JSON and the SHA-256 hash. The release rule. Per-role compile and stub text. Read-back parsers. Findings: form rules, fixed evidence layout, narrowing. "What changed": every reason sentence. Canary scanning across case and markup. Probe key-term matching. |
+| `tests/pack/` | 5 | The pack loader's rules. Golden hashes: the prompts of both demos, for both extraction variants, are byte-stable, so the committed caches still match. The literal check: core names no setting. The zero-core check from the commit history. |
+| `tests/model/` | 2 | The model client in tests: no probe, no network, a fast typed failure on a cache miss; request deadlines. |
 
-## Evaluation harness
+Some files in `tests/attest/`, `tests/lacuna/` and `tests/relay/` are integration suites that also use the database.
 
-`pnpm tsx scripts/eval.ts` builds a fresh demo workspace, runs Attest (cache first, then the live model), and compares the claims with `data/demo/ground_truth.json`: claim precision and recall, citation pass rate, trust mix, role-set and source correctness, supersessions and planted conflicts found, false conflicts, leaked secrets and restricted-token violations (both must be 0). It writes the report to **[docs/EVALUATION.md](docs/EVALUATION.md)**. The same numbers are on the in-app **Evaluation** page (button on the Claims page).
+## 2. Database tests: row-level security and the whole pipeline
 
-`pnpm tsx scripts/precompute.ts` runs the pipeline twice against the live model, checks the second run is fully cached with identical claims, and merges the cache into `data/demo/model_cache.json`. `pnpm tsx scripts/check-demo.ts` validates the setting pack and the demo dataset against the contract.
+These run against a real Postgres (`tests/db/`, 11 files, plus the integration suites above). They are the tests behind "each role sees only what it may see".
 
-The ground truth holds planted claims, gaps, supersessions, conflicts, restricted items with canary tokens, off-board duties, fake secrets and the five read-back answers.
+**Row-level security is the boundary** (`tests/db/rls.test.ts`, run once per pack)
+- A role outside a row's role set reads nothing from `segments`, `claims`, `contacts` or `snapshot_claims`. Rows from another workspace are invisible even with a matching role.
+- The policies know no role key: the same fixture passes with the club's roles and the lab's, and a role key of another pack reads nothing.
+- `count_withheld()` returns an integer only.
+- The reader role cannot write. `claim_events` rejects UPDATE and DELETE; `audit_log` and `acknowledgements` reject UPDATE; segments are immutable.
 
-## Permission tests
+**Who may do what**
+- The leaver can never review or approve; nobody but the approver can. Checked in code and by a database trigger (`tests/relay/snapshot.test.ts`, `tests/relay/integration.test.ts`, `tests/db/pipeline.test.ts`).
+- Only the leaver answers gap questions; only the successor records findings; only the approver widens or limits a message (`tests/db/visibility.test.ts`).
 
-These are the tests behind "shows each role only what it may see".
+**Grants** (`tests/db/grants.test.ts`): the Supabase Data API roles hold nothing in the schema, no function is executable by PUBLIC, every SECURITY DEFINER function has a fixed search path, and `count_withheld()` answers only for the workspace in the request.
 
-**RLS is the boundary** (`tests/db/rls.test.ts`)
-- New member cannot read a finance-only segment or claim; the Club President can read both.
-- Rows from another workspace are invisible even with a matching role.
-- `count_withheld()` returns only the right integer.
-- `us_reader` cannot write; the app user still can for admin steps.
-- `claim_events` rejects UPDATE and DELETE; `audit_log` and `acknowledgements` reject UPDATE; segments are immutable.
-- Lacuna decides Restricted from the metadata function, without reading the hidden rows (`tests/lacuna/integration.test.ts`).
+**The whole product on each demo, model off, committed cache** (`tests/db/pipeline.packs.test.ts`, 12 tests per pack): every extraction batch replays from the pack's `model_cache.json`; no planted secret is stored; the inventory matches the answer key; per-role handover; the leak check passes for every role; the read-back asks the pack's items.
 
-**The leaver cannot approve**
-- Unit: the leaver and every non-president role are refused; the president is refused while the release rule is not met (`tests/relay/snapshot.test.ts`).
-- Server, against the database: the leaver can never review or approve, and nobody but the president can (`tests/relay/integration.test.ts`, `tests/db/pipeline.test.ts`).
-- Related: only the president confirms the inventory and saves plan items; only the leaver answers questions (`tests/lacuna/integration.test.ts`).
+**Round 3 flows against the database**: recovery (`tests/db/recovery.test.ts`), visibility changes (`tests/db/visibility.test.ts`), the living handover chain from finding to snapshot v2 (`tests/relay/living.integration.test.ts`), and the wiring between the three improvements (`tests/db/round3-wiring.test.ts`).
 
-**Canary leak check across roles and surfaces**
-- Restricted demo sources carry `CANARY-XXXX` tokens. For every role, every surface (handover sections, read-back form, stubs, scores, timeline, questions, Markdown export) is scanned; a token may appear only for roles allowed to see it (`tests/relay/integration.test.ts`).
-- The scanner matches across case and Markdown markup and also catches unlisted CANARY-shaped tokens (`tests/relay/canary.test.ts`).
-- The New member's compiled handover never contains a canary, and its stub count comes from `count_withheld()`.
-- The same check runs in the app as the **Leak check** grid at the bottom of the Handover page.
-
-## Second setting (Round 3): the research group
-
-The university research group (`packs/lab.json`, `data/lab/`) is tested as one more row of the same suites, never as a special case.
-
-| What | Where | What it proves |
-|---|---|---|
-| Corpus against its answer key, before any model runs | `pnpm tsx scripts/check-demo.ts --pack lab` (then its adapters stage, `scripts/check-demo-adapters.ts`) | The pack loads; 191 segments through the real adapters with 0 rejected rows; 8 planted secrets and 4 contacts masked, credential names kept; 6 canary tokens only in sources with the right role set; every planted sentence is in a masked segment; the footprint and the inventory give exactly the answer key's 10 responsibilities |
-| The whole product on each demo pack, model off, committed cache | `tests/db/pipeline.packs.test.ts` (12 tests per pack) | Every extraction batch replays from the pack's `model_cache.json`; no planted secret is stored; the inventory matches the key; only the leaver answers; only the pack's approver approves; per-role handover with the pack's stub text ("Ask the approver (Principal investigator)."); RLS returns no row with a token outside a role's set; the leak check passes on every surface for every role; read-back asks the pack's items |
-| RLS with each pack's role keys | `tests/db/rls.test.ts` (11 tests per pack) | The policies know no role key: the same fixture passes with the club's keys and the lab's; a role key of another pack reads nothing; the database refuses a snapshot approved by anyone but the workspace's approver |
-| Browser walk of the lab | `tests/e2e/lab-path.spec.ts` | Two demo cards on the landing page; the lab demo opens in one click; the role switcher lists the five lab roles; claims, evaluation (76 planted facts), test, ask as the leaver, review as the PI, handover, read-back with the lab items, restricted stub for the PhD student, leak check |
-| Zero setting-specific core code | `pnpm tsx scripts/check-zero-core.ts`, `tests/pack/zero-core.test.ts`, `pnpm check:literals` | From the git history: the pack's branch changed no core file; the 3 core files changed since are listed in [docs/round3/ZERO_CORE_CHANGES.md](docs/round3/ZERO_CORE_CHANGES.md); no added core line names the lab |
-| Extraction quality on a hold-out | `pnpm tsx scripts/eval.ts --pack lab` → [docs/EVALUATION.lab.md](docs/EVALUATION.lab.md) | One cold run per extraction variant, nothing tuned to this answer key; the shipped variant (v2) reads recall 72.4% (55/76), citations 99.1% exact, 2 false conflicts, supersessions 3/4, planted conflicts 2/3, 0 secrets leaked, 0 restricted violations |
-
-## The production bug we found and fixed
+### The Round 2 production bug, and its regression test
 
 **Symptom.** On the live Vercel deployment, workspace pages sometimes never finished loading. The HTML stream stayed open until the function timed out, and different pages hung at different times. Local runs talk to Docker Postgres directly, with no pooler in between, so they did not show it.
 
@@ -91,113 +79,107 @@ The university research group (`packs/lab.json`, `data/lab/`) is tested as one m
 - six copies of a cold page's query mix (plain reads plus `withRole` transactions) finish within 15 seconds on a 2-connection pool, so a hang fails the test instead of timing it out;
 - with `POOLER_TEST_URL` set, three rounds on a fresh pool through the real transaction pooler. This check fails on the old configuration.
 
-## End-to-end suite (Playwright)
+## 3. End to end in a browser (Playwright)
 
-`tests/e2e/judge-path.spec.ts` walks the five-minute path from [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) in Chromium, on a fresh private copy of the demo:
+Five specs in `tests/e2e/`, Chromium, one worker. Each opens a fresh private copy of a demo.
 
-1. Open the demo and wait for the run panel to say the run finished. The header stepper must show Reconstruct and Test as Done without a reload.
-2. Claims (From record): a citation opens its source with the exact quote highlighted.
-3. Test: the scores read B · C · K for the Incoming tech lead.
-4. Ask as Priya: answer the top question; the "Re-test after this answer" line shows a change (an arrow in B, C or K).
-5. Review as Club President: approve tier A from "Where to start", save an owner, due date and risk note for every open blocking gap, approve snapshot v1. The history shows "Released with N open blocking gaps".
-6. Handover as Incoming tech lead: the five I-PASS sections and the release label (never "complete").
-7. Handover as New member: the stub "N restricted items. Ask the approver (Club President)." and no `CANARY-` token in the page text.
-8. Leak check: "All N checks pass".
+| Spec | What it walks |
+|---|---|
+| `judge-path.spec.ts` | The club demo: run, a citation with its quote highlighted, B · C · K, an answer as the leaver, review and plan as the approver, snapshot v1, handover as two roles, the restricted stub, no canary token, the leak check |
+| `lab-path.spec.ts` | The research-group demo: two cards on the landing page, the five lab roles, claims, evaluation, test, ask, review as the PI, handover, read-back with the lab's items, the stub for the PhD student, the leak check |
+| `recovery.spec.ts` | The approver switches recovery on; three rungs per gap; a skipped neighbour; rebuilt procedures with quoted steps; fewer gaps close without the leaver; a neighbour answers with the sample and it is saved as Second-hand with B unchanged; "I don't know" stores nothing; switching back |
+| `living-handover.spec.ts` | First weeks is empty before a snapshot; the successor records a finding with a link and a file; nothing moves while it waits; the leaver and the successor cannot approve; the approver approves; snapshot v2; "What changed in v2"; every role's handover on v2 |
+| `reliability.spec.ts` (5 tests) | The abuse cases in section 4; fails on any page error or 5xx answer |
 
 ```bash
-pnpm exec playwright install chromium                           # once
-pnpm dev                                                        # in another terminal, for a local run
-pnpm test:e2e                                                   # baseURL http://localhost:3000
-E2E_BASE_URL=https://understudy-lyart.vercel.app pnpm test:e2e  # against the live app
+pnpm dev                                    # terminal 1
+pnpm exec playwright install chromium       # terminal 2, once
+pnpm test:e2e                               # terminal 2
 ```
 
-`tests/e2e/reliability.spec.ts` does what a judge does to break things, and fails on any page error or 5xx answer:
+Set `E2E_BASE_URL` to run against another address, for example the live app. A failure leaves a screenshot and a trace in `test-results/` and a report in `playwright-report/`.
 
-1. Unknown and malformed workspace ids, on every page and API route: a not-found page with a way back, JSON 404s.
-2. An empty workspace, every page, every role: an empty state that names the next step.
-3. Uploads: a zero-byte file, a file over 4.5 MB (both stopped in the browser), a PNG, a malformed CSV, malformed JSON, a malformed calendar (each refused in words, nothing stored); a good file with a double click on Upload (one request), then again (nothing new). Bad GitHub URLs.
-4. The pipeline started by a double click plus three more starts at once, with a refresh mid-run: one run.
-5. On the demo: a blank answer; one question answered from two tabs at the same moment (stored once); blank and over-long plan fields; the snapshot approved from two tabs at once, one with a double click (one version), then approved again with nothing changed (a note, no new version); back after an action; an acknowledgement pressed twice; two more pipeline starts after approval (the handover and the export still work).
+Results on 2026-11-14:
 
-`playwright.config.ts`: Chromium only, one worker, one retry, a screenshot and a trace on failure (in `test-results/`), an HTML report in `playwright-report/`. The answer step allows two minutes because the live re-test calls the model. Vitest ignores `tests/e2e`.
-
-**Result (2026-11-11), against https://understudy-lyart.vercel.app:**
-
-```text
-$ E2E_BASE_URL=https://understudy-lyart.vercel.app pnpm test:e2e
-Running 1 test using 1 worker
-  ✓  1 [chromium] › tests\e2e\judge-path.spec.ts:35:1 › judge path: demo, claims, test, ask, review, handover, leak check (25.1s)
-  1 passed (29.1s)
-
-$ E2E_BASE_URL=https://understudy-lyart.vercel.app npx playwright test --retries=0 --repeat-each=2
-  ✓  1 [chromium] › tests\e2e\judge-path.spec.ts:35:1 › judge path: demo, claims, test, ask, review, handover, leak check (25.2s)
-  ✓  2 [chromium] › tests\e2e\judge-path.spec.ts:35:1 › judge path: demo, claims, test, ask, review, handover, leak check (24.4s)
-  2 passed (51.3s)
-```
-
-The same suite passed against a local production build (`pnpm build && pnpm start`) in 19.8 s. The whole path takes about 25 s on the live app because the demo replays cached model answers.
-
-### Round 3 integration run (2026-11-14)
-
-All five specs against a local production build (`pnpm build && pnpm start`) of the integration
-branch, live model for anything not in the cache (the single final precompute had not run yet):
-
-| Spec | Result |
+| Target | Result |
 |---|---|
-| `judge-path.spec.ts` | passed (1.2 min) |
-| `lab-path.spec.ts` | passed (1.6 min) |
-| `reliability.spec.ts` (5 tests) | passed |
-| `living-handover.spec.ts` | passed (27 s) |
-| `recovery.spec.ts` | failed at its last panel check: with uncached stand-in prompts the live model read `R01 credential owner` as covered, so the neighbour the sample answers are written for was not asked about it, the spec typed its fallback answer, and that answer was not cited as Second-hand. Re-run after the final precompute. |
+| `pnpm dev` on a fresh clone, no model key | 9 passed, 3.2 min |
+| Local production build with `MODEL_DISABLED=1`, freshly seeded database | 9 passed, 1.3 min |
 
-### After the final precompute (2026-11-14)
+## 4. Abuse cases
 
-All five specs against a local production build started with `MODEL_DISABLED=1`, on a database that
-was created, migrated and seeded from the committed caches just before (no live model anywhere):
+What a judge does to break things. In the browser: `tests/e2e/reliability.spec.ts`. Against the server: `tests/pipeline/` (6 files).
 
-| Spec | Result |
+- **Bad addresses.** Unknown and malformed workspace ids on every page and API route give a not-found page with a way back, or a JSON 404.
+- **Empty workspace.** Every page, for every role, shows an empty state that names the next step.
+- **Bad uploads.** A zero-byte file, a file over 4.5 MB, a PNG, a malformed CSV, malformed JSON and a malformed calendar are each refused in words, with nothing stored. Bad GitHub URLs are refused.
+- **The same thing twice.** A double click on Upload sends one request. Five pipeline starts at the same moment make one run. One answer saved from two tabs is stored once. A snapshot approved from two tabs at once makes one version; approving again with nothing changed makes none.
+- **Interrupted runs.** A run with a tiny time budget pauses, continues, and stores the same drafts as a one-shot run. A slice that died is continued once its lease expires, not before. A batch that always fails is tried three times, then named.
+- **Spend.** The per-workspace cap stops live model calls and says so.
+- **Cleanup.** An old demo copy is deleted with every child row; active, locked and approved workspaces stay. The cleanup route answers 401 without its secret.
+
+## 5. Evaluation against planted answer keys
+
+The suites above fake or disable the model, so they test the rules around it. Extraction quality is measured separately. Each demo has an answer key (`ground_truth.json`) of planted facts, gaps, supersessions, conflicts, fake secrets and canary tokens. `pnpm tsx scripts/eval.ts` (add `--pack lab`) builds a fresh workspace, runs extraction and compares.
+
+| | Robotics club | Research group (hold-out) |
+|---|---|---|
+| Planted facts | 80 | 76 |
+| Recall | 77.5% (62/80) | 72.4% (55/76) |
+| Citations that quote the source exactly | 98.8% | 99.1% |
+| False conflicts | 1 | 2 |
+| Planted conflicts found | 1 of 3 | 2 of 3 |
+| Supersessions found | 1 of 4 | 3 of 4 |
+| Secrets leaked, restricted violations | 0, 0 | 0, 0 |
+
+- The research group is the hold-out: its pack and corpus were written after the prompts were fixed, and nothing was tuned to its answer key. We chose the shipped extraction prompt there, by a rule fixed before the runs.
+- Round 2 recall on the club was 57.7%.
+- Full reports: [docs/EVALUATION.md](docs/EVALUATION.md), [docs/EVALUATION.lab.md](docs/EVALUATION.lab.md). Notes per variant: `docs/eval-notes/`. The same numbers are on the in-app Evaluation page.
+- `pnpm tsx scripts/check-demo.ts` (add `--pack lab`) checks each corpus against its answer key before any model runs: every planted sentence is in a masked segment, every planted secret is masked, and each canary token sits only in sources with the right role set.
+
+## 6. Leak grid and probes
+
+**Exact tokens.** Restricted demo sources carry `CANARY-XXXX` tokens. For every role and every output (handover text, export, stubs, scores, timeline, questions, conflict flags, the claim list, test notes, the sensitive panel, the people graph, neighbour questions, traces, ranked options, what changed), no token outside that role's visibility may appear. This runs in `pnpm test` (`tests/relay/integration.test.ts`, `tests/relay/leak-wide.test.ts`) and in the app as the Leak check grid on the Handover page.
+
+**Reworded facts.** Nine restricted facts are planted in the club demo with rewordings. Two checks look for them in every role's outputs: key terms, then a model judge that can only add findings. `pnpm tsx scripts/probe-eval.ts` scores all of it and writes [docs/PROBE_RESULTS.md](docs/PROBE_RESULTS.md):
+
+| Measure | Result |
 |---|---|
-| `judge-path.spec.ts` | passed (14 s) |
-| `lab-path.spec.ts` | passed (8 s) |
-| `living-handover.spec.ts` | passed (16 s) |
-| `recovery.spec.ts` | passed (7 s) |
-| `reliability.spec.ts` (5 tests) | passed |
+| Output checks (role, output, row) | 94, 0 failing |
+| Exact token leaks | 0 |
+| Confirmed reworded leaks | 0 (4 unconfirmed judge findings, listed in the report) |
+| Detector check: 36 reworded leaks fed straight in | 31 caught (key terms 27, model judge 4 more) |
+| Classifier on 40 labelled messages | Precision 87%, recall 72%. With the rules alone recall is 50%, and 6 borderline messages are then held for the approver. |
+| Model calls with a limited message in a batch for a wider role set | 0 of 31 |
 
-9 tests passed in 1.3 min, no retry. The recovery samples were rewritten to the steps the cached
-run asks (`data/demo/recovery.json`), so the neighbour's sample answer replays and is cited as
-Second-hand. Two assertions were loosened because they named a count that depends on the run: the
-"What changed" line now accepts "N more checks are covered", and an empty read-back accepts
-"Nothing to check for this role." as its verdict. `pnpm test` on the same fresh database: 64 test
-files, 881 tests passed and 1 skipped.
+The report lists every miss with the wording that got through.
 
+## 7. Independent code review, and the fixes
 
-### Living handover (Round 3)
+Before the final merge, the Round 3 branch went through a separate review pass for correctness and for security. It raised 13 correctness findings and 8 security findings. We fixed each one and added a regression test for each (merge `4d09ae3`). The larger ones:
 
-`tests/e2e/living-handover.spec.ts` walks the First weeks flow on a fresh club demo: empty state before a snapshot, snapshot v1, the successor records the example finding with a link and a small file (a past date is refused first), nothing moves while it waits, the leaver and the successor cannot approve, the approver opens the evidence and approves, snapshot v2, version history with the stored diff, the "What changed in v2" panel, the gap closed on First weeks, every role's handover on v2, and the leak check.
-
-```bash
-pnpm build && PORT=45617 pnpm start                                     # another terminal
-E2E_BASE_URL=http://localhost:45617 pnpm exec playwright test living-handover
-```
-
-Result (2026-11-14, local production build, warm model cache): 1 passed, 47.3 s. Scores in that run: B 6 → 5, C 66% → 70%, K 100% → 94%.
-
-Unit and database tests: `tests/relay/finding.test.ts` (form rules, fixed evidence layout, narrowing, a finding under the Attest rules), `tests/relay/changes.test.ts` (gaps closed and opened, every reason sentence) and `tests/relay/living.integration.test.ts` (the whole chain against Postgres, masking, role scoping with a canary token, withdraw, reject, release blocked, corroboration by a later record, pipeline re-run).
-
-Stated limits: a finding moves no score until the approver decides (stricter than leaver answers, on purpose). An attached file stays inside the finding and can never corroborate it; a record that arrives through Connect can, and Understudy cannot tell who wrote an uploaded file.
+| Finding | Fix | Test |
+|---|---|---|
+| Limiting a message did not reach recovery rows and findings built from it | The limit narrows them in the same transaction; a ladder rebuild takes role sets from the claims as they are now | `tests/db/sec-limit-recovery.test.ts` |
+| Tables created after the first migration kept Supabase's default grants | Migration `0012_grants.sql` revokes them, forces row-level security on three admin tables, and fixes the search path of SECURITY DEFINER functions | `tests/db/grants.test.ts` |
+| The evaluation page listed answer-key items a role may not see | Lists are filtered by the viewing role | `tests/attest/sec-evaluation-view.test.ts` |
+| A saved answer could be reported as an error when the re-test after it failed | The write is reported as saved; the re-test result is reported separately | `tests/db/review-fixes.test.ts` |
+| A background re-check could store a run older than the evidence | Every writer bumps a generation; a stale run is refused | `tests/db/review-fixes.test.ts` |
+| Approve and reject did not re-test, so a rejected claim kept its better result | Every review decision re-tests | `tests/db/review-fixes.test.ts` |
+| Two answers saved at the same moment could share a contact placeholder | A per-workspace counter, advanced atomically (`0013_contact_counters.sql`) | `tests/db/review-fixes.test.ts` |
+| A model call could outlive its slice or server action | Request timeouts are cut to the hard deadline | `tests/model/deadline.test.ts`, `tests/pipeline/action-limits.test.ts` |
+| Ingest routes ran outside the spend cap; odd repository URLs were accepted | Routes run under the cap; URLs are validated | `tests/pipeline/sec-routes.test.ts`, `tests/tether/sec-github-url.test.ts` |
 
 ## CI (GitHub Actions)
 
-`.github/workflows/ci.yml` runs on every push and pull request to `main`; a newer run cancels the older run of the same branch. It needs no secrets and never calls a live model (`MODEL_DISABLED=1`).
+`.github/workflows/ci.yml` runs on every push and pull request to `main`. A newer run cancels the older run of the same branch. It needs no secrets and never calls a live model (`MODEL_DISABLED=1`).
 
 | Job | Steps |
 |---|---|
 | test and build | Postgres 16 service, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm test`, `pnpm build` |
-| e2e (local server, model disabled) | Same database setup, `pnpm build`, `pnpm start`, then `pnpm test:e2e` in Chromium against `localhost:3000`. The Playwright report is uploaded when the job fails. |
+| e2e (local server, model disabled) | The same database setup, `pnpm build`, `pnpm start`, then `pnpm test:e2e` in Chromium against `localhost:3000`. The Playwright report is uploaded when the job fails. |
 
-- `IDENTITY_KEY` and `CONTACTS_KEY` are dummy values written in the workflow. `MODEL_NAME` and `MODEL_BASE_URL` are set only because they form the cache tag: with them the seeded answers in `data/demo/model_cache.json` are found, and no request is sent.
-- The e2e suite runs unchanged with the model disabled. The demo run replays the seeded cache, and the re-test after the leaver's answer falls back to the deterministic stand-in, which still moves the scores. Checked locally on 2026-11-14 against `pnpm start` with a freshly migrated and seeded database: 1 passed in 9.3 s.
-- `pnpm staging:setup` (`scripts/staging.ts`) prepares the rehearsal database: it reads `STAGING_POOLER_URL` from `.env.local`, applies the migrations, seeds the model cache and prints row counts. It refuses to run if that URL is the production project.
+`IDENTITY_KEY` and `CONTACTS_KEY` are dummy values written in the workflow. `MODEL_NAME` and `MODEL_BASE_URL` are set only because they are part of the cache key: with them the seeded answers are found and no request is sent.
 
 ## Manual end-to-end checks on the live link
 
@@ -223,16 +205,11 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 | Download handover (Markdown) | File matches the role's view; no canary outside that role's visibility | Pass (2026-11-11). handover-tech_lead-v1.md (3 KB), no CANARY token. |
 | Start empty and upload a file | Upload accepted (4.5 MB max per upload) or rejected with a reason; run works on the upload | Pass (2026-11-11). A 3-row task CSV was accepted (3 segments, 0 rejected); the run finished in about 7 s with 9 claims. |
 
-## Known limits
+## Known imperfections
 
-- **Your own uploads call the model live.** The demo replays precomputed model answers (23 of 23 extraction batches from the cache) and finishes in a few seconds. A run on files you upload has no cached answers, so it can take a few minutes. A run that needs more than one function invocation is read in parts: the run panel shows how many model calls are finished and asks for the next part by itself. **This needs the Connect page (or any workspace page) open in a browser**; with every tab closed a paused run waits and continues when the workspace is opened again. There is no time-left estimate.
-- **Limits on uploads and model use.** One upload is at most 4.5 MB and 20,000 entries. Each workspace may make 400 live model calls a day (`MODEL_CALLS_PER_WORKSPACE_PER_DAY`), the whole deployment 4,000 (`MODEL_CALLS_PER_DAY`); past that, cached answers still replay and the run says how many calls were skipped.
-- **After an answer, the first score is the rule-based reading.** The model re-check runs in the background (a header pill says so) and can lower it a few seconds later. If two answers are saved close together, the "re-test after this answer" sentence of the earlier one keeps its rule-based reading; the scores themselves always come from the latest run.
-- **The browser suite covers the judge path and the abuse cases above.** It does not cover tier C review or the read-back values; those are in the manual table above. Each run creates workspaces on the target site.
-- **Invite links are not built.** Roles stay open (the role switcher); the cleanup rule already protects a workspace marked locked, but nothing in the app locks one yet.
-- **CI covers tests, build and the judge path only.** Lint, the type check and the evaluation gate are not CI jobs yet.
-- **Model quality is measured, not unit-tested.** The suites fake or disable the model, so they test the rules around it. Extraction quality comes from the evaluation harness. Extraction misses some planted facts and produces extra claims, and supersession and conflict detection miss some planted cases; [docs/EVALUATION.md](docs/EVALUATION.md) has the current numbers.
-- **Lacuna's integration numbers use the planted claims** (a perfect extractor), so they are not the numbers you get from the live pipeline.
-- **The leak check finds tokens, not paraphrases.** A restricted fact reworded without its token would not be caught. Paraphrase probes are Round 3 commitment 2.
-- **The role switcher is not sign-in.** Anyone with the workspace link can pick any role. RLS enforces what the selected role sees; it does not prove who the visitor is.
-- **The pooler check against the real pooler is opt-in** (`POOLER_TEST_URL`); the default run checks the options and the concurrency behaviour on local Postgres.
+- **Model quality is measured, not unit-tested.** Extraction misses some planted facts and produces claims outside the answer key. Section 5 has the numbers.
+- **The reworded-fact check is not complete.** 5 of 36 planted rewordings got past both detectors. The approver can limit a message by hand.
+- **The role switcher is not sign-in.** Row-level security enforces what the chosen role sees; it does not prove who the visitor is.
+- **CI covers tests, the build and the browser suite.** Lint, the type check and the evaluation are run by hand.
+- **The pooler regression against a real pooler is opt-in** (`POOLER_TEST_URL`). The default run checks the pool options and the concurrency behaviour on local Postgres.
+- **Each browser run creates workspaces on its target.** The daily cleanup removes them.
