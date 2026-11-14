@@ -41,10 +41,10 @@ export async function peopleNames(ws: string): Promise<Record<string, string>> {
 export async function listClaims(ws: string, opts: { role?: RoleKey } = {}): Promise<Claim[]> {
   if (opts.role) {
     const rows = await withRole(ws, opts.role, (tx) =>
-      tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from`);
+      tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from, id`);
     return rows.map(toClaim);
   }
-  const rows = await db()`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from`;
+  const rows = await db()`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from, id`;
   return rows.map(toClaim);
 }
 

@@ -175,10 +175,10 @@ export async function claimMeta(ws: string, role?: RoleKey): Promise<Map<string,
   return out;
 }
 
-/** Claims `role` may see, read under RLS. */
+/** Claims `role` may see, read under RLS. The order is total (id breaks ties), so prompts built from it are deterministic. */
 export async function visibleClaims(ws: string, role: RoleKey): Promise<Claim[]> {
   const rows = await withRole(ws, role, (tx) =>
-    tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from`);
+    tx`SELECT * FROM claims WHERE workspace_id = ${ws} ORDER BY entity, attribute, valid_from, id`);
   return rows.map(toClaim);
 }
 
