@@ -463,7 +463,13 @@ for (const c of Array.isArray(gtObj.claims) ? gtObj.claims : []) {
 check(claims.length > 0, "gt: no planted claims");
 if (EXPECT.claims) check(claims.length >= EXPECT.claims[0] && claims.length <= EXPECT.claims[1], `gt: expected ${EXPECT.claims[0]}-${EXPECT.claims[1]} claims, got ${claims.length}`);
 
-// Planted coverage for the successor role must agree with the gaps list.
+const conflictsRaw = Array.isArray(gtObj.conflicts) ? gtObj.conflicts.filter(isObj) : [];
+/** True when the claim is in a planted conflict that also has a side the successor cannot read. */
+const hiddenSideConflict = (claimId: string): boolean =>
+  conflictsRaw.some((c) => isStrArr(c.claims) && c.claims.includes(claimId)
+    && c.claims.some((id) => claims.find((x) => x.id === id)?.roleSet.includes(SUCCESSOR) === false));
+
+// Planted coverage for the successor must agree with the gaps list.
 const gaps = Array.isArray(gtObj.gaps) ? gtObj.gaps.filter(isObj) : [];
 let blocking = 0;
 for (const [resp, kind] of respKind) {

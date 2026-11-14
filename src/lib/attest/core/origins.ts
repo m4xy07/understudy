@@ -42,9 +42,12 @@ export const PERSON_SEGMENT_KINDS: readonly SegmentKind[] = ["answer", "finding"
 /** Kinds that produce claims deterministically (structured.ts), never through the model. */
 export const DETERMINISTIC_KINDS: readonly SegmentKind[] = ["task", "event"];
 
+/** Machine history read only by the recovery trace reader (CI runs). Never sent to the model. */
+export const TRACE_ONLY_KINDS: readonly SegmentKind[] = ["run"];
+
 /**
- * Kinds the model extraction skips: structured rows (read by code) and a person's own words.
+ * Kinds the model extraction skips: structured rows (read by code), a person's own words and CI runs.
  * Without the second group a pipeline re-run would send a leaver's answer to the model and
  * could store it again as a "From record" claim quoted from the answer itself.
  */
-export const EXTRACTION_SKIP_KINDS: readonly SegmentKind[] = [...DETERMINISTIC_KINDS, ...PERSON_SEGMENT_KINDS];
+export const EXTRACTION_SKIP_KINDS: readonly SegmentKind[] = [...DETERMINISTIC_KINDS, ...PERSON_SEGMENT_KINDS, ...TRACE_ONLY_KINDS];

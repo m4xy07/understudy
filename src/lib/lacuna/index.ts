@@ -16,14 +16,14 @@ import { withRole } from "@/lib/db/withRole";
 import { getWorkspacePack, entityLabel, roleLabel, type ResolvedPack } from "@/lib/pack";
 import { claimId as makeClaimId, tierFor } from "@/lib/attest";
 import { computeFootprint } from "@/lib/tether/footprint";
-import { maskText } from "@/lib/tether/mask";
+import { maskAnswer, persistAnswer } from "./persist";
 import { callJson, modelAvailable } from "@/lib/model/client";
 import type {
-  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun,
+  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun, Trust,
 } from "@/lib/types";
 import { buildInventory as coreInventory } from "./core/inventory";
 import { checksByResp, checksFor, findCheck } from "./core/checks";
-import { RECORD_TRUST, gapKey, type LacunaCheck, type LacunaPack } from "./core/pack";
+import { RECORD_TRUST, gapKey, strongestTrust, type LacunaCheck, type LacunaPack } from "./core/pack";
 import { computeScores, scoreDelta } from "./core/scores";
 import {
   runStandin, STANDIN_JSON_SCHEMA, type ClaimMeta, type VisibleClaim,
@@ -35,6 +35,15 @@ import { dropFinishedFootprint, leaverName, leaverPersonIds, markPartlyRestricte
 
 export { toLacunaPack, leaverPersonIds, leaverName } from "./adapt";
 export type { ReleaseState } from "./core/plan";
+// Unreachable-leaver recovery (docs/ARCHITECTURE.md section 4, "Recovery").
+export {
+  recoveryState, setLeaverUnreachable, buildLadder, listLadder, questionsForRole, answerAsNeighbour, declineAsNeighbour,
+  recoveryComparison, listTraces, recoverySurfaces, precomputeRecovery, measureLeaverRun, recoverySamples, askedRoles,
+  repliesByRole,
+} from "./recovery";
+export type {
+  RecoveryState, LadderGap, LadderStep, NeighbourQuestion, NeighbourReply, TraceView, RecoveryComparison, RecoverySample,
+} from "./recovery";
 
 const MODEL_CONCURRENCY = 6;
 
@@ -202,6 +211,12 @@ export interface RunTestOptions {
   model?: "auto" | "off" | "cache";
   /** What triggered the run, stored with it (e.g. "pipeline", "re-run", "answer gq_…"). */
   trigger?: string;
+  /**
+   * Responsibility ids to re-judge. Results for every other responsibility are copied from the
+   * latest run of this role (one answer changes one responsibility, so the rest need no model call).
+   * Ignored when the role has no earlier run.
+   */
+  only?: string[];
 }
 
 /** Is the workspace's current state covered by an approved snapshot? */
@@ -234,7 +249,12 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
   const checks = checksByResp(resps, lpack);
 
   const today = await workspaceNow(ws);
-  const det = await runStandin({ resps, role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, today });
+  // `only`: re-judge these responsibilities (and any the earlier run does not know), copy the rest.
+  const prev = opts.only && opts.only.length > 0 ? await getLatestTestRun(ws, role) : null;
+  const prevResps = new Set((prev?.results ?? []).map((r) => r.responsibilityId));
+  const allResps = resps;
+  const judged = prev ? allResps.filter((r) => opts.only!.includes(r.id) || !prevResps.has(r.id)) : allResps;
+  const det = await runStandin({ resps: judged, role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, today });
   let results = det.results;
   let modelUsed = false;
   let modelNote: string | null = null;
@@ -245,7 +265,7 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     let call: ModelCall | undefined;
     if (mode === "cache") call = cachedStandinCall;
     else call = (await modelAvailable()) ? standinCall : cachedStandinCall;
-    const perResp = await mapLimit(resps, MODEL_CONCURRENCY, (r) =>
+    const perResp = await mapLimit(judged, MODEL_CONCURRENCY, (r) =>
       runStandin({ resps: [r], role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, call, today }));
     const modelResults = perResp.filter((p) => p.modelUsed).flatMap((p) => p.results);
     const errors = perResp.flatMap((p) => p.errors);
@@ -259,6 +279,35 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     }
   }
 
+  // The label of a result is the strongest trust among the claims it cites, not among every claim
+  // that could have satisfied the check. So a check the stand-in closes on a colleague's answer
+  // reads Second-hand even when a record on the same topic exists, and K does not count it.
+  const trustOf = new Map(usable.map((c) => [c.id, c.trust]));
+  results = results.map((r) => {
+    if (r.claimIds.length === 0 || (r.coverage !== "covered" && r.coverage !== "partial")) return r;
+    const cited = r.claimIds.map((id) => trustOf.get(id)).filter((t): t is Trust => !!t);
+    return cited.length > 0 ? { ...r, bestTrust: strongestTrust(cited) } : r;
+  });
+
+  if (prev) {
+    // A re-test of one responsibility follows new evidence (an answer, a trace). New evidence cannot
+    // take away what the record already supported: a check keeps its earlier, better result as long
+    // as every claim it rested on is still live and visible. This also keeps the model's judgement
+    // of the unchanged checks from drifting when the prompt gains a claim.
+    const liveIds = new Set(usable.map((c) => c.id));
+    const before = new Map(prev.results.map((r) => [gapKey(r.responsibilityId, r.checkKey), r]));
+    const rank: Record<Coverage, number> = { covered: 3, partial: 2, conflicting: 1, missing: 0, restricted: 0 };
+    results = results.map((r) => {
+      const was = before.get(gapKey(r.responsibilityId, r.checkKey));
+      if (!was || rank[was.coverage] <= rank[r.coverage]) return r;
+      if (was.claimIds.length === 0 || !was.claimIds.every((id) => liveIds.has(id))) return r;
+      return was;
+    });
+    // Keep the inventory order: fresh results for the judged responsibilities, the earlier ones for the rest.
+    const judgedIds = new Set(judged.map((r) => r.id));
+    results = allResps.flatMap((r) =>
+      judgedIds.has(r.id) ? results.filter((x) => x.responsibilityId === r.id) : prev.results.filter((x) => x.responsibilityId === r.id));
+  }
   results = markPartlyRestricted(results, resps, checks, meta, role);
   const named = namedOwnersFromPlan(openBlockingGaps(results, checks), plan);
   const scores = computeScores(results, checks, named);
@@ -412,6 +461,13 @@ export async function answerQuestion(
   const leaverRole = pack.leaverRole as RoleKey;
   const successor = pack.successorRole as RoleKey;
   if (actor !== leaverRole) return { ok: false, error: "Only the leaver can answer gap questions." };
+  // Recovery: while the approver has marked the leaver as unreachable, the leaver's answer boxes are closed.
+  if ((await getWorkspace(ws))?.leaverUnreachable) {
+    return {
+      ok: false,
+      error: `${leaverName(pack) || "The leaver"} is marked as unreachable. ${roleLabel(pack.approverRole, pack)} can switch this off.`,
+    };
+  }
   const text = (answer ?? "").trim();
   if (text.length < 2) return { ok: false, error: "Write an answer first." };
   if (text.length > 4000) return { ok: false, error: "Keep the answer under 4000 characters." };
@@ -434,18 +490,8 @@ export async function answerQuestion(
     : null;
 
   // Mask before storage. Contact placeholders get workspace-unique numbers.
-  const masked = maskText(text, { contactsKey: process.env.CONTACTS_KEY ?? "", people: null });
-  let maskedText = masked.text;
-  const contacts = [] as { token: string; kind: "email" | "phone"; valueEnc: string }[];
-  if (masked.contacts.length) {
-    const [{ n }] = await sql`SELECT count(*)::int AS n FROM contacts WHERE workspace_id = ${ws}`;
-    const renum = new Map<string, string>();
-    for (const c of masked.contacts) {
-      if (!renum.has(c.token)) renum.set(c.token, `[CONTACT:c-${9000 + Number(n) + renum.size + 1}]`);
-      contacts.push({ token: renum.get(c.token)!, kind: c.kind, valueEnc: c.valueEnc });
-    }
-    for (const [from, to] of renum) maskedText = maskedText.split(from).join(to);
-  }
+  const masked = await maskAnswer(ws, text);
+  const maskedText = masked.text;
 
   const people = await listPeople(ws);
   const leaverIds = leaverPersonIds(people, leaverName(pack), pack.leaverPerson.aliases);
@@ -471,36 +517,18 @@ export async function answerQuestion(
 
   const before = await getLatestTestRun(ws, successor);
   await sql.begin(async (tx) => {
-    await tx`
-      INSERT INTO sources (workspace_id, id, kind, name, role_set, origin)
-      VALUES (${ws}, ${INTERVIEW_SOURCE}, 'interview', 'Gap interview', ${base}::text[], 'interview')
-      ON CONFLICT (workspace_id, id) DO NOTHING`;
-    await tx`
-      INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta)
-      VALUES (${ws}, ${segment.id}, 1, ${INTERVIEW_SOURCE}, 'interview', 'answer', ${ts}, ${leaverId}, ${segment.thread}, 0,
-        ${segment.text}, ${segment.textHash}, ${roleSet}::text[], ${JSON.stringify(segment.meta)}::jsonb)
-      ON CONFLICT DO NOTHING`;
-    await tx`UPDATE sources SET segment_count = segment_count + 1, masked_secrets = masked_secrets + ${masked.secrets},
-      masked_contacts = masked_contacts + ${contacts.length} WHERE workspace_id = ${ws} AND id = ${INTERVIEW_SOURCE}`;
-    const contactRoles = (pack.contactsRoles as RoleKey[]).filter((r) => roleSet.includes(r));
-    for (const c of contacts) {
-      await tx`
-        INSERT INTO contacts (workspace_id, token, kind, person_id, value_enc, role_set, source_id)
-        VALUES (${ws}, ${c.token}, ${c.kind}, ${null}, ${c.valueEnc}, ${contactRoles}::text[], ${INTERVIEW_SOURCE})
-        ON CONFLICT DO NOTHING`;
-    }
-    await tx`
-      INSERT INTO claims (workspace_id, id, entity, entity_label, attribute, value, statement, citations, trust, state,
-        role_set, valid_from, author_id, source_kinds, importance, tier, review, origin, source_ids)
-      VALUES (${ws}, ${claim.id}, ${claim.entity}, ${claim.entityLabel}, ${claim.attribute}, ${claim.value}, ${claim.statement},
-        ${JSON.stringify(claim.citations)}::jsonb, 'leaver_said', 'active', ${roleSet}::text[], ${ts}, ${leaverId},
-        ${["interview"]}::text[], ${claim.importance}, ${claim.tier}, 'pending', 'leaver_answer', ${[INTERVIEW_SOURCE]}::text[])
-      ON CONFLICT (workspace_id, id) DO NOTHING`;
-    await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
-      VALUES (${ws}, ${claim.id}, 'created', ${JSON.stringify({
+    await persistAnswer(tx, ws, {
+      source: { id: INTERVIEW_SOURCE, name: "Gap interview", roleSet: base },
+      segment,
+      claim,
+      masked,
+      contactRoles: (pack.contactsRoles as RoleKey[]).filter((r) => roleSet.includes(r)),
+      event: {
         origin: "leaver_answer", questionId, segmentId: segment.id, trust: "leaver_said", roleSet,
         narrowed: roleSet.length < base.length,
-      })}::jsonb, ${actor})`;
+      },
+      actor,
+    });
     await tx`UPDATE gap_questions SET answered_claim_id = ${claim.id}, answered_at = now()
       WHERE workspace_id = ${ws} AND id = ${questionId}`;
   });

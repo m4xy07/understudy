@@ -1,9 +1,17 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { listResponsibilities } from "@/lib/db/queries";
-import { isRoleOf, roleLabel, roleShort } from "@/lib/pack";
+import { listResponsibilities, peopleNames } from "@/lib/db/queries";
+import { roleLabel, roleShort } from "@/lib/pack";
 import { loadWorkspace, roleOptions, type WsParams } from "@/lib/page";
-import { listQuestions, testHistory, toLacunaPack, type QuestionView } from "@/lib/lacuna";
+import {
+  leaverName, listLadder, listQuestions, listTraces, questionsForRole, recoveryComparison, recoveryState, repliesByRole,
+  testHistory, toLacunaPack, type QuestionView,
+} from "@/lib/lacuna";
+import { BeforeAfter } from "./BeforeAfter";
+import { Ladder } from "./Ladder";
+import { NeighbourQuestions } from "./NeighbourQuestions";
+import { RebuiltProcedures } from "./RebuiltProcedures";
+import { RecoveryBanner, RecoverySwitchCard } from "./RecoverySwitch";
 import { checksFor } from "@/lib/lacuna/core/checks";
 import { questionText, UNCERTAINTY } from "@/lib/lacuna/core/questions";
 import { answerQuestionAction, switchToLeaverAction } from "./actions";
@@ -61,6 +69,50 @@ async function Ask({ params }: { params: WsParams }) {
   const latest = history[history.length - 1];
   const base = pack.uploadDefaults.roleSet as RoleKey[];
   const always = new Set<RoleKey>([leaver, approver]);
+  const recovery = await recoveryState(id);
+  const leaverPerson = leaverName(pack) || roleShort(leaver, pack);
+
+  if (recovery.on) {
+    // Recovery: the leaver cannot be reached. Every read below runs under RLS as the viewing role.
+    const [gaps, traces, comparison, mine, replies, names] = await Promise.all([
+      listLadder(id, role), listTraces(id, role), recoveryComparison(id), questionsForRole(id, role), repliesByRole(id, role),
+      peopleNames(id),
+    ]);
+    const approverLabel = roleLabel(approver, pack);
+    return (
+      <>
+        <PageHead module="lacuna" step="Step 5" title="Ask only what the record cannot answer">
+          Gaps {leaverPerson} would have answered. Each one goes down three rungs: people, files, then possible answers.
+          Nothing here counts as much as {leaverPerson}&apos;s own word.
+        </PageHead>
+        <RecoveryBanner
+          ws={id} state={recovery} leaver={leaverPerson} approver={approverLabel}
+          isApprover={role === approver} isLeaver={isLeaver}
+        />
+        <section className="card mb-5 p-4" aria-label="Successor scores">
+          <p className="eyebrow">{roleLabel(successor, pack)} now</p>
+          <p className="mt-1 text-lg">
+            <ScoreLine scores={latest?.scores ?? null} provisional={latest?.provisional ?? true} />
+          </p>
+        </section>
+        {comparison && <BeforeAfter comparison={comparison} leaver={leaverPerson} approver={approverLabel} />}
+        <NeighbourQuestions
+          ws={id} questions={mine} replies={replies} roles={roleOptions(pack)} leaver={leaverPerson} approver={approverLabel}
+        />
+        {gaps.length === 0 ? (
+          <EmptyState title="No open gaps to work on.">
+            Every gap question is answered. {approverLabel} can switch recovery off above.
+          </EmptyState>
+        ) : (
+          <Ladder
+            ws={id} gaps={gaps} traces={traces} viewingRole={role} names={names}
+            roleLabels={Object.fromEntries(pack.roles.map((r) => [r.key, r.label]))}
+          />
+        )}
+        <RebuiltProcedures ws={id} traces={traces} />
+      </>
+    );
+  }
 
   const textFor = (q: QuestionView, r: Responsibility | undefined): string => {
     if (fullText || q.gapType !== "conflicting" || !r) return q.text;
@@ -99,6 +151,8 @@ async function Ask({ params }: { params: WsParams }) {
           </Notice>
         </div>
       )}
+
+      {role === approver && <RecoverySwitchCard ws={id} leaver={leaverPerson} />}
 
       {questions.length === 0 ? (
         <EmptyState title="No gap questions yet.">

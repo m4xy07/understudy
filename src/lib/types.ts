@@ -10,7 +10,8 @@ export type RoleKey = string;
 export type SourceKind = "whatsapp" | "slack" | "github" | "tasks_csv" | "markdown" | "ics" | "interview" | "finding";
 
 /** "answer" and "finding" hold a person's own words (a gap answer, a successor finding); extraction never reads them. */
-export type SegmentKind = "message" | "commit" | "file" | "task" | "note" | "event" | "answer" | "finding";
+/** "run" is one CI run from a code host's run history; only the recovery trace reader reads it. */
+export type SegmentKind = "message" | "commit" | "file" | "task" | "note" | "event" | "answer" | "finding" | "run";
 
 export type Attribute =
   | "owner" | "status" | "deadline" | "location" | "procedure" | "access"
