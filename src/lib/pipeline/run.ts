@@ -251,6 +251,7 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
       // Out of time before this step even starts: leave it for the next slice.
       if (ranOne && Date.now() >= deadline) {
         paused = `Paused before "${step.label}" at the time limit of one slice: it continues by itself.`;
+        step.note = paused;
         break;
       }
       ranOne = true;

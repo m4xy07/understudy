@@ -1,6 +1,6 @@
 "use client";
 // A form bound to a server action that returns { ok, message }; shows the message inline.
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import clsx from "clsx";
 
@@ -66,12 +66,44 @@ export function SubmitButton({
   );
 }
 
+/**
+ * Put what the person typed back into the form. React clears a form when its action finishes,
+ * also when the action refused the input: without this a rejected answer or plan entry is lost.
+ */
+export function restoreFields(form: HTMLFormElement, data: FormData): void {
+  for (const el of Array.from(form.elements)) {
+    if (el instanceof HTMLInputElement) {
+      if (!el.name || el.type === "hidden" || el.type === "file" || el.type === "submit" || el.type === "button") continue;
+      if (el.type === "checkbox" || el.type === "radio") el.checked = data.getAll(el.name).includes(el.value);
+      else {
+        const v = data.get(el.name);
+        if (typeof v === "string") el.value = v;
+      }
+    } else if (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+      const v = el.name ? data.get(el.name) : null;
+      if (typeof v === "string") el.value = v;
+    }
+  }
+}
+
 export function ActionForm({
   action, hidden, children, className,
 }: { action: Action; hidden: Record<string, string>; children: React.ReactNode; className?: string }) {
-  const [state, formAction] = useSafeActionState<ActionState>(action, { ok: true, message: null });
+  const formRef = useRef<HTMLFormElement>(null);
+  const sent = useRef<FormData | null>(null);
+  const [state, formAction] = useSafeActionState<ActionState>(async (prev, form) => {
+    sent.current = form;
+    return action(prev, form);
+  }, { ok: true, message: null });
+  // A refused submit keeps the person's input (see restoreFields).
+  useEffect(() => {
+    const [form, data] = [formRef.current, sent.current];
+    if (state.ok || !form || !data) return;
+    const t = setTimeout(() => restoreFields(form, data), 0);
+    return () => clearTimeout(t);
+  }, [state]);
   return (
-    <form action={formAction} className={className}>
+    <form ref={formRef} action={formAction} className={className}>
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}

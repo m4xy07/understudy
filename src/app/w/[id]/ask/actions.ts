@@ -10,7 +10,7 @@ import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { answerQuestion } from "@/lib/lacuna";
 import { after } from "next/server";
 import { exclusive } from "@/lib/pipeline/guard";
-import { busyMessage } from "@/lib/pipeline/once";
+import { busyMessage, REPEAT_WAIT_MS } from "@/lib/pipeline/once";
 import { fastFirst, liveStandin, scheduleRejudge } from "@/lib/pipeline/rejudge";
 import type { RoleKey } from "@/lib/types";
 
@@ -43,9 +43,13 @@ export async function answerQuestionAction(_prev: ActionState, form: FormData): 
   const live = liveStandin();
   const save = () => answerQuestion(ws, questionId, String(form.get("answer") ?? ""), role, narrow);
   // One save per question at a time: a second click or a second tab cannot store two answers.
+  // The second waits for the first and is then refused by the question's own state.
   const res = await exclusive(ws, `answer:${questionId}`, () => (live ? fastFirst(save) : save()),
-    { ok: false as const, error: busyMessage("This answer") });
-  if (!res.ok) return fail(res.error);
+    { ok: false as const, error: busyMessage("This answer") }, 120_000, REPEAT_WAIT_MS);
+  if (!res.ok) {
+    refresh(); // a refused repeat still brings the page up to date (the question may be answered now)
+    return fail(res.error);
+  }
   const recheck = live ? await scheduleRejudge(ws) : null;
   if (recheck) after(recheck);
   refresh();

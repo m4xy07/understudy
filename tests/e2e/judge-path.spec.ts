@@ -120,6 +120,7 @@ test("judge path: demo, claims, test, ask, review, handover, leak check", async 
     await viewAs(page, "Incoming tech lead");
     await expect(page.getByRole("heading", { name: "Handover for Incoming tech lead" })).toBeVisible();
     const release = page.locator("#release-h");
+    await expect(release).toHaveCount(1); // streamed content has settled: one banner, the new role's
     await expect(release).toContainText(RELEASE);
     await expect(release).not.toContainText(/complete/i);
     for (const title of [
@@ -142,6 +143,9 @@ test("judge path: demo, claims, test, ask, review, handover, leak check", async 
 
   await test.step("Leak check: every role and surface passes", async () => {
     const leak = page.locator('section[aria-labelledby="leak-h"]');
+    // While the page streams in, React holds the arriving section in a hidden container for a
+    // moment: wait until there is exactly one.
+    await expect(leak).toHaveCount(1, { timeout: 60_000 });
     await expect(leak).toBeVisible({ timeout: 60_000 });
     await expect(leak.getByText(/All \d+ checks pass$/)).toBeVisible();
     await expect(leak).not.toContainText(/\d+ leaks?/);

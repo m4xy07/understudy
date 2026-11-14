@@ -9,7 +9,7 @@ import { getWorkspacePack } from "@/lib/pack";
 import { runTest, savePlanItem } from "@/lib/lacuna";
 import { bulkApprove, reviewClaim } from "@/lib/relay";
 import { exclusive } from "@/lib/pipeline/guard";
-import { approveSnapshotOnce, busyMessage, planProblem, reviewAlreadyDone, reviewTextProblem } from "@/lib/pipeline/once";
+import { approveSnapshotOnce, busyMessage, planProblem, REPEAT_WAIT_MS, reviewAlreadyDone, reviewTextProblem } from "@/lib/pipeline/once";
 import type { ActionState } from "@/components/ActionForm";
 
 const fail = (message: string): ActionState => ({ ok: false, message });
@@ -31,13 +31,18 @@ export async function reviewClaimAction(_prev: ActionState, form: FormData): Pro
   const [note, statement] = [String(form.get("note") ?? ""), String(form.get("statement") ?? "")];
   const tooLong = reviewTextProblem(note, statement);
   if (tooLong) return fail(tooLong);
-  // A repeat (second click, second tab, stale page) changes nothing and says so.
-  const already = await reviewAlreadyDone(ws, claimId, decision);
-  if (already) return done(already);
-  const res = await exclusive(ws, `review:${claimId}`, () => reviewClaim(ws, claimId, decision, role, {
-    note, statement, evidenceOpened: form.get("evidenceOpened") === "true",
-  }), { ok: false as const, error: busyMessage("This decision") });
+  // A repeat (second click, second tab, stale page) changes nothing and says so. The second of
+  // two at once waits for the first, then sees its result.
+  const res = await exclusive(ws, `review:${claimId}`, async () => {
+    const already = await reviewAlreadyDone(ws, claimId, decision);
+    if (already) return { ok: true as const, already };
+    return reviewClaim(ws, claimId, decision, role, { note, statement, evidenceOpened: form.get("evidenceOpened") === "true" });
+  }, { ok: false as const, error: busyMessage("This decision") }, 60_000, REPEAT_WAIT_MS);
   if (!res.ok) return fail(res.error);
+  if ("already" in res) {
+    refresh();
+    return done(res.already);
+  }
   if (decision === "edited") {
     // Any edit triggers a re-test (scores stay provisional until the snapshot is approved).
     try {

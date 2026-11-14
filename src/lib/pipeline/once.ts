@@ -52,6 +52,9 @@ export function reviewTextProblem(note: string, statement: string): string | nul
  * A decision that is already in place: approving an approved claim, rejecting a rejected one
  * (a stale tab, or the second of two clicks). Returns the sentence to show, or null to go on.
  */
+/** How long the second of two identical actions waits for the first before it is told to reload. */
+export const REPEAT_WAIT_MS = 20_000;
+
 export async function reviewAlreadyDone(ws: string, claimId: string, decision: string): Promise<string | null> {
   if (decision !== "approved" && decision !== "rejected") return null;
   const [row] = await db()`SELECT review FROM claims WHERE workspace_id = ${ws} AND id = ${claimId}`;
@@ -68,7 +71,8 @@ export type SnapshotOnce =
 
 /**
  * approveSnapshot, but a repeat does not mint a second version of the same thing:
- *   * two approvals at once (two tabs, a double click): one runs, the other is told so;
+ *   * two approvals at once (two tabs, a double click): one runs; the other waits for it and
+ *     then gets the "nothing changed" reply below (or, if the wait runs out, is told to reload);
  *   * nothing changed since the latest snapshot (same claims, plan and scores, so the same
  *     SHA-256): no new version, and the reply names the version that already covers it.
  * The first approval, and any approval after a real change, goes through as before.
@@ -85,5 +89,5 @@ export async function approveSnapshotOnce(ws: string, actor: RoleKey): Promise<S
       if (same) return { ok: true, unchanged: { version: Number(latest.version), hash: String(latest.hash) } };
     }
     return approveSnapshot(ws, actor);
-  }, busy, 60_000);
+  }, busy, 60_000, 20_000);
 }

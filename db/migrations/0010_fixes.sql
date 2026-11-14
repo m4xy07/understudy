@@ -70,8 +70,10 @@ ALTER TABLE workspaces ADD CONSTRAINT workspaces_access_mode_chk CHECK (access_m
 --   locked (access_mode = 'invite')   never
 --   has an approved snapshot          never
 -- Oldest first, at most max_n per call. dry = true deletes nothing and returns the same ids.
+-- only_ids (optional) limits the call to the listed workspaces (tests use it to leave the rest alone).
 CREATE OR REPLACE FUNCTION purge_stale_workspaces(
-  demo_days integer DEFAULT 7, idle_days integer DEFAULT 14, max_n integer DEFAULT 200, dry boolean DEFAULT false
+  demo_days integer DEFAULT 7, idle_days integer DEFAULT 14, max_n integer DEFAULT 200, dry boolean DEFAULT false,
+  only_ids uuid[] DEFAULT NULL
 ) RETURNS SETOF uuid
 LANGUAGE plpgsql AS $$
 DECLARE
@@ -80,6 +82,7 @@ BEGIN
   SELECT coalesce(array_agg(id), '{}') INTO ids FROM (
     SELECT w.id FROM workspaces w
     WHERE w.access_mode = 'open'
+      AND (only_ids IS NULL OR w.id = ANY(only_ids))
       AND NOT EXISTS (SELECT 1 FROM snapshots s WHERE s.workspace_id = w.id)
       AND ((w.kind = 'demo' AND w.created_at < now() - make_interval(days => greatest(demo_days, 1)))
         OR (w.kind <> 'demo' AND greatest(w.last_active_at, w.created_at) < now() - make_interval(days => greatest(idle_days, 1))))
