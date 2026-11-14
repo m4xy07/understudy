@@ -12,9 +12,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/lib/db/client";
-import { toClaim } from "@/lib/db/mappers";
+import { toClaim, toSegment } from "@/lib/db/mappers";
 import {
-  audit, getLatestTestRun, getWorkspace, listClaims, listPeople, listPlanItems, listResponsibilities, listSegments,
+  audit, getLatestTestRun, getWorkspace, listClaims, listPeople, listPlanItems, listResponsibilities,
 } from "@/lib/db/queries";
 import { withRole } from "@/lib/db/withRole";
 import { authority, entityLabel, getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
@@ -51,7 +51,7 @@ import { evidenceMix, scoreDelta } from "./core/scores";
 import {
   answerQuestion, buildQuestions, claimMeta, listQuestions, runTest, visibleClaims, workspaceNow, type QuestionView,
 } from "./index";
-import { maskAnswer, persistAnswer } from "./persist";
+import { maskAnswer, persistAnswer, RETEST_FAILED } from "./persist";
 
 const RECOVERY_SOURCE = "src_recovery";
 const RECOVERY_SOURCE_NAME = "Recovery answers";
@@ -388,6 +388,24 @@ async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (x: T) => 
   return out;
 }
 
+/** The segment kinds a trace is read from (src/lib/tether/traces.ts). */
+export const TRACE_SEGMENT_KINDS: readonly Segment["kind"][] = ["file", "run", "commit", "event"];
+
+/** Head versions of the segments traces are read from, with text. No message, answer or task is read. */
+export async function loadTraceSegments(ws: string): Promise<Segment[]> {
+  const rows = await db()`
+    SELECT DISTINCT ON (id) * FROM segments
+    WHERE workspace_id = ${ws} AND kind = ANY(${TRACE_SEGMENT_KINDS as string[]}::text[])
+    ORDER BY id, version DESC`;
+  return rows.map(toSegment);
+}
+
+/** Segment id -> source id for the whole workspace: two short columns, no text. */
+export async function loadSegmentSources(ws: string): Promise<Map<string, string>> {
+  const rows = await db()`SELECT DISTINCT id, source_id FROM segments WHERE workspace_id = ${ws}`;
+  return new Map(rows.map((r) => [String(r.id), String(r.source_id)]));
+}
+
 export interface BuildLadderOptions {
   /**
    * Ask the model for option proposals (default true). They are asked once, at switch-on; a
@@ -418,8 +436,10 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
   const successor = pack.successorRole as RoleKey;
   const ctx: LadderContext = { ws, pack, now, roles, leaver: leaverName(pack) };
 
-  const [questions, resps, people, segments, holders] = await Promise.all([
-    listQuestions(ws), listResponsibilities(ws), listPeople(ws), listSegments(ws), ensureRoleHolders(ws),
+  // Only what the ladder reads: the text of the kinds a trace is built from, and for every other
+  // segment just its source (never every message with its text inside a server action).
+  const [questions, resps, people, segments, segSource, holders] = await Promise.all([
+    listQuestions(ws), listResponsibilities(ws), listPeople(ws), loadTraceSegments(ws), loadSegmentSources(ws), ensureRoleHolders(ws),
   ]);
   const open = questions.filter((q) => !q.answeredClaimId);
   const respById = new Map(resps.map((r) => [r.id, r]));
@@ -500,7 +520,6 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
   const coverageOf = new Map((latest?.results ?? []).map((r) => [gapKey(r.responsibilityId, r.checkKey), r.coverage]));
   const meta = await claimMeta(ws);
   const sourceNames = new Map((await sql`SELECT id, name FROM sources WHERE workspace_id = ${ws}`).map((r) => [String(r.id), String(r.name)]));
-  const segSource = new Map(segments.map((s) => [s.id, s.sourceId]));
   const visibleByRole = new Map<RoleKey, Claim[]>();
   const visibleFor = async (role: RoleKey): Promise<Claim[]> => {
     if (!visibleByRole.has(role)) visibleByRole.set(role, await visibleClaims(ws, role));
@@ -522,6 +541,7 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
   const wantModel = opts.model !== false;
   const modelOff = process.env.LACUNA_MODEL === "off"; // same switch the stand-in honours: no model call at all
   const modelUp = wantModel && !modelOff ? await modelAvailable() : false;
+  const claimsNow = new Map(allClaims.map((c) => [c.id, c]));
   const existingModel = new Map<string, OptionCandidate[]>();
   const existingRulesOnly = new Set<string>();
   if (!wantModel) {
@@ -534,7 +554,14 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
       const k = gapKey(String(r.responsibility_id), String(r.check_key));
       if (d.rulesOnly === true) existingRulesOnly.add(k);
       if (!d.sources?.includes("model") || !d.value || !d.evidence?.length) continue;
-      existingModel.set(k, [...(existingModel.get(k) ?? []), { value: d.value, source: "model", evidence: d.evidence, why: d.why }]);
+      // A kept proposal rests on claims as they are now: a claim limited since (or gone) must not
+      // bring its old, wider role set back. Without all of its evidence the proposal is dropped.
+      const current = d.evidence.map((e) => {
+        const c = claimsNow.get(e.claimId);
+        return c && (c.state === "active" || c.state === "conflicting") ? { ...e, roleSet: c.roleSet } : null;
+      });
+      if (current.some((e) => e === null)) continue;
+      existingModel.set(k, [...(existingModel.get(k) ?? []), { value: d.value, source: "model", evidence: current as OptionEvidence[], why: d.why }]);
     }
   }
 
@@ -760,6 +787,13 @@ async function readSteps(ws: string, role: RoleKey): Promise<Record<string, unkn
     ORDER BY s.responsibility_id, s.check_key, s.rung, s.position, s.id`);
 }
 
+/** False for an option row with evidence this role cannot read in full (see listLadder). */
+export function optionEvidenceReadable(step: Pick<LadderStep, "kind" | "detail">, readable: ReadonlySet<string>): boolean {
+  if (step.kind !== "option") return true;
+  const evidence = (step.detail as { evidence?: { claimId?: string }[] }).evidence ?? [];
+  return evidence.every((e) => !e.claimId || readable.has(e.claimId));
+}
+
 async function peopleNamesFor(ws: string): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const p of await listPeople(ws)) out[p.id] = p.displayName;
@@ -779,7 +813,12 @@ export async function listLadder(ws: string, role: RoleKey): Promise<LadderGap[]
   ]);
   const respById = new Map(resps.map((r) => [r.id, r]));
   const coverage = new Map((latest?.results ?? []).map((r) => [gapKey(r.responsibilityId, r.checkKey), r.coverage]));
-  const steps = rowsRaw.map((r) => ({ key: gapKey(String(r.responsibility_id), String(r.check_key)), step: toStep(r, names) }));
+  // Defence in depth: an option card quotes its evidence claims, so it is shown only when this
+  // role may read every one of them today, whatever role set the stored row carries.
+  const readable = new Set((await withRole(ws, role, (tx) => tx`SELECT id FROM claims WHERE workspace_id = ${ws}`)).map((r) => String(r.id)));
+  const steps = rowsRaw
+    .map((r) => ({ key: gapKey(String(r.responsibility_id), String(r.check_key)), step: toStep(r, names) }))
+    .filter(({ step }) => optionEvidenceReadable(step, readable));
   const fullText = role === pack.leaverRole || role === pack.approverRole || role === pack.successorRole;
   const out: LadderGap[] = [];
   for (const q of questions.filter((x) => !x.answeredClaimId)) {
@@ -917,7 +956,12 @@ export async function askedRoles(ws: string): Promise<RoleKey[]> {
 // ---------------------------------------------------------------------------
 
 export type NeighbourAnswerResult =
-  | { ok: true; declined: false; claimId: string; delta: string; before: Scores | null; after: Scores; /** Set when the answer was limited as sensitive. */ limited?: string | null }
+  | {
+    ok: true; declined: false; claimId: string; delta: string; before: Scores | null; after: Scores;
+    /** Set when the answer was limited as sensitive. */ limited?: string | null;
+    /** True when the answer is saved but the re-test after it could not run. */
+    retestFailed?: boolean;
+  }
   | { ok: true; declined: true }
   | { ok: false; error: string };
 
@@ -1027,24 +1071,38 @@ export async function answerAsNeighbour(
     });
   });
   if (!won) return { ok: false, error: "You already answered this." };
-  await audit(ws, actor, "neighbour_answer", { stepId: String(step.id), claimId: claim.id, roleSet: claim.roleSet });
 
-  // Re-test only the answered responsibility, as the successor and as every other role the pack tests.
-  const trigger = `recovery answer ${String(step.id)}`;
-  const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger, only: [resp.id] })));
-  const checks = checksByResp(resps, lpack);
-  const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
-  // The re-test sentence is kept with the step, so the page can show it again after a refresh.
+  // The answer is committed. Whatever fails from here on (the audit row, the re-test, the detail
+  // update, the ladder refresh) must not read as "the answer failed": the page would show an error
+  // after a success, and a retry would be told "You already answered this."
   const priorDetail = (typeof step.detail === "string" ? JSON.parse(step.detail) : step.detail ?? {}) as Record<string, unknown>;
-  await sql`UPDATE recovery_steps SET detail = ${JSON.stringify({ ...priorDetail, answeredAt, scoreDelta: delta })}::jsonb
-    WHERE workspace_id = ${ws} AND id = ${String(step.id)}`;
-  // Rule-based options for the gaps are refreshed; model proposals are kept as they were.
+  let after: TestRun | null = null;
+  let delta = RETEST_FAILED;
   try {
+    await audit(ws, actor, "neighbour_answer", { stepId: String(step.id), claimId: claim.id, roleSet: claim.roleSet });
+    // Re-test only the answered responsibility, as the successor and as every other role the pack tests.
+    const trigger = `recovery answer ${String(step.id)}`;
+    [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger, only: [resp.id] })));
+    const checks = checksByResp(resps, lpack);
+    delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
+  } catch (err) {
+    after = null;
+    console.error(`[recovery ${ws}] re-test after answer ${String(step.id)} failed`, err);
+  }
+  try {
+    // The re-test sentence is kept with the step, so the page can show it again after a refresh.
+    await sql`UPDATE recovery_steps SET detail = ${JSON.stringify({ ...priorDetail, answeredAt, scoreDelta: delta })}::jsonb
+      WHERE workspace_id = ${ws} AND id = ${String(step.id)}`;
+    // Rule-based options for the gaps are refreshed; model proposals are kept as they were.
     await buildLadder(ws, { model: false });
   } catch (err) {
     console.error(`[recovery ${ws}] ladder refresh after an answer failed`, err);
   }
-  return { ok: true, declined: false, claimId: claim.id, delta, before: before?.scores ?? null, after: after.scores, limited: limitedNote(sensitivity) };
+  return {
+    ok: true, declined: false, claimId: claim.id, delta, before: before?.scores ?? null,
+    after: after?.scores ?? before?.scores ?? { b: 0, c: 0, k: null }, limited: limitedNote(sensitivity),
+    ...(after ? {} : { retestFailed: true }),
+  };
 }
 
 /** "I don't know": the step is closed, nothing is stored as evidence, and no score moves. */
@@ -1271,10 +1329,13 @@ export async function recoverySamples(ws: string): Promise<{ answers: RecoverySa
       // The demo folder ships through outputFileTracingIncludes (next.config.ts), not through tracing this call.
       const dir = path.resolve(/* turbopackIgnore: true */ process.cwd(), pack.demo.dataDir);
       file = JSON.parse(fs.readFileSync(path.join(dir, "recovery.json"), "utf8")) as RecoveryDemoFile;
-    } catch {
+      sampleCache.set(pack.id, file);
+    } catch (err) {
+      // Not cached: one failed read (a cold file system, a deploy in progress) must not empty the
+      // demo's samples for the life of the process. The next call reads again.
+      console.error(`[recovery] could not read the samples of pack ${pack.id}`, err);
       file = {};
     }
-    sampleCache.set(pack.id, file);
   }
   return {
     answers: Array.isArray(file.sampleAnswers) ? file.sampleAnswers : [],

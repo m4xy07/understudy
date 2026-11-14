@@ -169,7 +169,8 @@ describe("T5: narrowRoleSet never adds a role", () => {
     for (const current of subsets(ALL)) {
       for (const cats of mixes) {
         const out = narrowRoleSet(current, cats, PACK);
-        expect(out.every((r) => current.includes(r))).toBe(true);
+        // The one exception is the approver, when no role of the input may see the content.
+        expect(out.every((r) => current.includes(r) || (r === CLUB.approverRole && out.length === 1))).toBe(true);
       }
     }
   });
@@ -179,9 +180,25 @@ describe("T5: narrowRoleSet never adds a role", () => {
     expect(narrowRoleSet(ALL, ["finance", "hr"], PACK)).toEqual(ALL.filter((r) => PACK.roles.finance.includes(r) && PACK.roles.hr.includes(r)));
   });
 
-  it("an empty intersection leaves the role set as it is", () => {
-    const outsiders = ALL.filter((r) => !PACK.roles.hr.includes(r)).slice(0, 2);
-    expect(narrowRoleSet(outsiders, ["hr"], PACK)).toEqual(outsiders);
+  it("an empty intersection fails closed: the approver alone, never the unchanged set (review finding a)", () => {
+    const outsiders = ALL.filter((r) => !PACK.roles.hr.includes(r) && r !== CLUB.approverRole).slice(0, 2);
+    expect(outsiders.length).toBeGreaterThan(0);
+    // Before the fix this returned `outsiders`: HR content stayed readable by roles the pack keeps it from.
+    expect(narrowRoleSet(outsiders, ["hr"], PACK)).toEqual([CLUB.approverRole]);
+    // No role of the input that is outside the category survives, for any category mix.
+    for (const current of subsets(ALL)) {
+      for (const cats of mixes) {
+        if (cats.length === 0) continue;
+        const out = narrowRoleSet(current, cats, PACK);
+        const allowed = (r: RoleKey) => cats.every((c) => PACK.roles[c].includes(r));
+        expect(out.every((r) => allowed(r) || r === CLUB.approverRole)).toBe(true);
+        if (current.length > 0) expect(out.length).toBeGreaterThan(0);
+      }
+    }
+    // A pack that names no approver limits such content to nobody.
+    expect(narrowRoleSet(outsiders, ["hr"], { roles: PACK.roles })).toEqual([]);
+    // No category: nothing to limit.
+    expect(narrowRoleSet(outsiders, [], PACK)).toEqual(outsiders);
   });
 
   it("a pack with no sensitivity map keeps every category for its approver", () => {
@@ -309,9 +326,12 @@ describe("narrowForSensitivity (segments made outside ingest)", () => {
     expect(clear).toEqual({ roleSet: ALL, categories: [], stage: null, reason: null, roleSetOriginal: null });
   });
 
-  it("never returns a role that was not passed in", () => {
+  it("never returns a role that was not passed in, except the approver when nobody passed in may read it", () => {
     const two = ALL.slice(1, 3);
     const out = narrowForSensitivity("I am in hospital until Friday.", "answer", two, PACK, NAMES);
-    expect(out.roleSet.every((r) => two.includes(r))).toBe(true);
+    expect(out.roleSet.every((r) => two.includes(r) || r === CLUB.approverRole)).toBe(true);
+    // Health content is never left with roles outside the pack's health list (it used to be: fail open).
+    expect(out.roleSet.every((r) => PACK.roles.health.includes(r))).toBe(true);
+    expect(out.roleSet.length).toBeGreaterThan(0);
   });
 });

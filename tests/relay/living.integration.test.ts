@@ -508,6 +508,35 @@ describe("withdraw and reject", () => {
   });
 });
 
+describe("review finding 5: an approval that is saved is reported as saved", () => {
+  it("when the re-test fails after the approval, the reply is ok with what is left; approving again finishes it", async () => {
+    const gap = await freeGap(used, { blocking: false, text: true });
+    const count = await snapshotCount();
+    const res = await recordFinding(ws, "tech_lead", { responsibilityId: gap.responsibilityId, checkKey: gap.checkKey, answer: "On the shelf by the door", note: fresh(7) });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    await sql.unsafe("ALTER TABLE test_runs DROP CONSTRAINT IF EXISTS tmp_living_f5");
+    await sql.unsafe("ALTER TABLE test_runs ADD CONSTRAINT tmp_living_f5 CHECK (trigger NOT LIKE 'finding %') NOT VALID");
+    let out;
+    try {
+      // Before the fix this threw: the page showed an error although the approval was stored.
+      out = await decideFinding(ws, "president", res.findingId, "approved", OPENED);
+    } finally {
+      await sql.unsafe("ALTER TABLE test_runs DROP CONSTRAINT IF EXISTS tmp_living_f5");
+    }
+    expect(out.ok).toBe(true);
+    expect(out.unfinished).toMatch(/re-test could not run/);
+    expect(out.snapshot).toBeUndefined();
+    expect(await snapshotCount()).toBe(count);
+    expect((await listFindings(ws, "president")).find((f) => f.id === res.findingId)!.status).toBe("approved");
+    // The same click again does the rest.
+    const again = await decideFinding(ws, "president", res.findingId, "approved", OPENED);
+    expect(again.ok).toBe(true);
+    expect(again.unfinished).toBeUndefined();
+    expect(again.snapshot?.version).toBe(count + 1);
+  });
+});
+
 describe("the release rule still gates every version", () => {
   it("when the plan has a hole the finding is approved, the snapshot waits and the blocker is named", async () => {
     const gap = await freeGap(used, { blocking: false, text: true });

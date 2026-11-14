@@ -11,6 +11,9 @@ import type { RoleKey } from "@/lib/types";
 import { withdrawFindingAction } from "./actions";
 import { GapRow } from "./GapRow";
 
+// Server actions of this page re-test with the model (pipeline/guard.ts: ACTION_MAX_DURATION_S).
+export const maxDuration = 300;
+
 export default function FirstWeeksPage({ params }: { params: WsParams }) {
   return (
     <Suspense fallback={<PageLoading />}>

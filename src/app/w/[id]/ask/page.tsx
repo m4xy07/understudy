@@ -22,6 +22,9 @@ import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { EmptyState, Notice } from "@/components/Notice";
 import type { Responsibility, RoleKey } from "@/lib/types";
 
+// Server actions of this page re-test with the model (pipeline/guard.ts: ACTION_MAX_DURATION_S).
+export const maxDuration = 300;
+
 const GAP = {
   missing: { symbol: "○", label: "Missing", tone: "bad" as const },
   partial: { symbol: "◐", label: "Partial", tone: "warn" as const },

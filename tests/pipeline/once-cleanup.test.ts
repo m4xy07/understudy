@@ -12,6 +12,7 @@ import { approveSnapshotOnce, busyMessage, reviewAlreadyDone } from "@/lib/pipel
 import { fastFirst, liveStandin, REJUDGE_KEY, scheduleRejudge } from "@/lib/pipeline/rejudge";
 import { purgeStale, touchWorkspace } from "@/lib/pipeline/cleanup";
 import { GET as purgeRoute } from "@/app/api/cron/purge/route";
+import { setSegmentVisibility, visibilityChangedSinceSnapshot } from "@/lib/tether/visibility";
 import { CLUB, CLUB_ID } from "../helpers/club";
 import { useFakeModel } from "../helpers/fake-model";
 
@@ -131,6 +132,30 @@ describe("reviewing and approving once", () => {
     expect((await reviewClaim(ws, pending!.id, "approved", approver, { note: "Checked.", evidenceOpened: true })).ok).toBe(true);
     const next = await approveSnapshotOnce(ws, approver);
     expect(next.ok && !next.unchanged && next.snapshot?.version).toBe(2);
+  }, 60_000);
+});
+
+describe("finding 6: the visibility notice clears with the next approval", () => {
+  it("a visibility change that leaves the payload as it was still lets the approver make a new version", async () => {
+    expect(await visibilityChangedSinceSnapshot(ws)).toBe(false);
+    const cited = new Set((await listClaims(ws)).flatMap((c) => c.citations.map((x) => x.segmentId)));
+    const rows = await sql`
+      SELECT DISTINCT ON (id) id, role_set, sensitivity FROM segments
+      WHERE workspace_id = ${ws} AND kind = 'message' ORDER BY id, version DESC`;
+    const seg = rows.find((r) => !cited.has(String(r.id)) && (r.sensitivity as string[]).length === 0 && (r.role_set as string[]).length === CLUB.roleOrder.length)!;
+    expect(seg).toBeDefined();
+    const before = Number((await sql`SELECT max(version) AS v FROM snapshots WHERE workspace_id = ${ws}`)[0].v);
+    const res = await setSegmentVisibility(ws, String(seg.id), { action: "limit", categories: ["hr"], reason: "A remark about a member, not for everyone." }, approver);
+    expect(res.ok && res.changed).toBe(true);
+    // The pipeline run the change asks for is not part of this test.
+    await sql`UPDATE runs SET status = 'failed', lease_until = NULL WHERE workspace_id = ${ws} AND status IN ('running', 'paused')`;
+    expect(await visibilityChangedSinceSnapshot(ws)).toBe(true);
+    // Before the fix: "already covers exactly this state", no new version, and the notice stayed for ever.
+    const next = await approveSnapshotOnce(ws, approver);
+    expect(next.ok && !next.unchanged && next.snapshot?.version).toBe(before + 1);
+    expect(await visibilityChangedSinceSnapshot(ws)).toBe(false);
+    // And a repeat after that is again a no-op.
+    expect(await approveSnapshotOnce(ws, approver)).toMatchObject({ ok: true, unchanged: { version: before + 1 } });
   }, 60_000);
 });
 

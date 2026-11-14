@@ -27,13 +27,17 @@ const MAX_FILE_BYTES = 50 * 1024;
 const TEXT_EXT = /\.(md|markdown|txt|ya?ml|json|toml|ini|cfg|conf|env\.example|sh|py|js|ts|c|h|cpp|hpp|ino|rs|go|java|kt|rb|csv|ics|xml|properties|gradle|cmake|mk)$/i;
 const TEXT_NAMES = /(^|\/)(Makefile|Dockerfile|CODEOWNERS|LICENSE|\.env\.example|\.gitignore|platformio\.ini)$/i;
 
+// An owner or repository name starts with a letter or digit, so "." and ".." (which would climb
+// out of /repos/<owner>/<repo> in the API path) can never be one.
 export function parseRepoUrl(url: string): { owner: string; repo: string } {
   const s = url.trim().replace(/\.git$/i, "").replace(/\/+$/, "");
   const m =
-    /^(?:https?:\/\/)?(?:www\.)?github\.com[/:]([A-Za-z0-9-_.]+)\/([A-Za-z0-9-_.]+)(?:\/.*)?$/i.exec(s) ??
-    /^(?:git@github\.com:)([A-Za-z0-9-_.]+)\/([A-Za-z0-9-_.]+)$/i.exec(s) ??
-    /^([A-Za-z0-9-_.]+)\/([A-Za-z0-9-_.]+)$/.exec(s);
-  if (!m) throw new GithubFetchError("bad_url", `Not a GitHub repository URL: "${url}". Use https://github.com/<owner>/<repo>.`);
+    /^(?:https?:\/\/)?(?:www\.)?github\.com[/:]([A-Za-z0-9][A-Za-z0-9-_.]*)\/([A-Za-z0-9][A-Za-z0-9-_.]*)(?:\/.*)?$/i.exec(s) ??
+    /^(?:git@github\.com:)([A-Za-z0-9][A-Za-z0-9-_.]*)\/([A-Za-z0-9][A-Za-z0-9-_.]*)$/i.exec(s) ??
+    /^([A-Za-z0-9][A-Za-z0-9-_.]*)\/([A-Za-z0-9][A-Za-z0-9-_.]*)$/.exec(s);
+  if (!m || m[1].includes("..") || m[2].includes("..")) {
+    throw new GithubFetchError("bad_url", `Not a GitHub repository URL: "${url}". Use https://github.com/<owner>/<repo>.`);
+  }
   return { owner: m[1], repo: m[2] };
 }
 

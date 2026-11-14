@@ -19,12 +19,16 @@ export type CallOutcome = "cached" | "live" | "failed" | "deferred" | "refused";
  * Limits for every callJson made inside runWithModelContext(ctx, fn), however deep (extraction,
  * support check, stand-in). Cached answers are always served; the limits only stop new live calls.
  *   deadline  no live call starts after this time: the call returns { ok: false, error: DEFERRED }.
+ *             A call in flight is not tried a second time (retry, invalid JSON) once it has passed.
+ *   hardDeadline  no request runs past this time: each request's timeout is cut to what is left,
+ *             so a call that started just before `deadline` cannot outlive the slice or the route.
  *   retries   replaces the per-call retry count (a sliced run retries across slices, not inside one).
  *   gate      asked before each live call; a string refuses the call with that message (spend cap).
  *   onResult  told the outcome of every call (progress counts).
  */
 export interface ModelContext {
   deadline?: number;
+  hardDeadline?: number;
   retries?: number;
   gate?: (key: string) => Promise<string | null>;
   onResult?: (key: string, outcome: CallOutcome, info: { error?: string; transient?: boolean }) => void;
@@ -74,6 +78,8 @@ export const DEFAULT_MAX_TOKENS = 4_096;
 export const DEFAULT_RETRIES = 3;
 const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
+/** A request with less time than this left before the hard deadline is not sent. */
+export const MIN_REQUEST_MS = 1_000;
 const PROBE_TIMEOUT_MS = 3_000;
 const PROBE_TTL_MS = 30_000;
 
@@ -246,12 +252,14 @@ export function parseRetryAfter(value: string | null, now: number = Date.now()):
  */
 export async function withRetries(
   attempt: () => Promise<ChatResult>,
-  opts: { retries: number; sleep?: (ms: number) => Promise<void>; random?: () => number },
+  opts: { retries: number; sleep?: (ms: number) => Promise<void>; random?: () => number; /** No retry starts after this time. */ until?: number },
 ): Promise<ChatResult> {
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   let res = await attempt();
   for (let i = 0; i < opts.retries && !res.ok && isTransientFailure(res.status, res.error); i++) {
-    await sleep(backoffMs(i, res.retryAfterMs, opts.random));
+    const wait = backoffMs(i, res.retryAfterMs, opts.random);
+    if (opts.until !== undefined && Date.now() + wait >= opts.until) break;
+    await sleep(wait);
     res = await attempt();
   }
   return res;
@@ -373,13 +381,22 @@ async function callJsonInner<T>(opts: CallOpts<T>, ctx?: ModelContext): Promise<
 
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const retries = Math.max(0, Math.floor(ctx?.retries ?? opts.retries ?? DEFAULT_RETRIES));
+    // The surrounding slice or action ends at a fixed time: a request never gets more time than is
+    // left of it, and with too little left it is not sent at all (the next slice asks again).
+    const hard = ctx?.hardDeadline;
     const ask = () =>
       withRetries(
-        () => chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0, timeoutMs),
-        { retries },
+        () => {
+          const left = hard === undefined ? timeoutMs : Math.min(timeoutMs, hard - Date.now());
+          if (left < MIN_REQUEST_MS) return Promise.resolve<ChatResult>({ ok: false, status: 0, error: "model timed out" });
+          return chat(opts.system, user, preferredFormat, opts.jsonSchemaName, jsonSchema, opts.temperature ?? 0, left);
+        },
+        { retries, until: ctx?.deadline },
       );
     let lastError = "invalid JSON";
     for (let attempt = 0; attempt < 2; attempt++) {
+      // The second try (after invalid JSON) is a new live call: none starts after the deadline.
+      if (attempt > 0 && ctx?.deadline !== undefined && Date.now() >= ctx.deadline) break;
       let res = await ask();
       // Endpoints without json_schema support answer 400/422: fall back once, remember it.
       while (!res.ok && (res.status === 400 || res.status === 422) && preferredFormat !== "none") {

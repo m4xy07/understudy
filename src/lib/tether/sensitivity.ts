@@ -57,6 +57,8 @@ export interface SensitivityDecision {
 /** The part of the pack the classifier reads. */
 export interface PackSensitivity {
   roles: Record<SensitivityCategory, RoleKey[]>;
+  /** The approver: the one role any content may always be limited to. */
+  approverRole?: RoleKey;
   extraTerms?: Partial<Record<SensitivityCategory, { strong?: string[]; weak?: string[] }>>;
 }
 
@@ -81,7 +83,7 @@ export function packSensitivity(pack: {
   for (const c of CATEGORIES) roles[c] = [...(pack.sensitivity?.[c] ?? [pack.approverRole])];
   const extraTerms: PackSensitivity["extraTerms"] = {};
   for (const c of CATEGORIES) if (pack.sensitivityTerms?.[c]) extraTerms[c] = pack.sensitivityTerms[c];
-  return { roles, extraTerms };
+  return { roles, extraTerms, approverRole: pack.approverRole };
 }
 
 /** Lowercase name parts of the given display names (first names, last names; no titles). */
@@ -358,7 +360,11 @@ export function narrowRoleSet(
     const allowed = pack.roles[c] ?? [];
     out = out.filter((r) => allowed.includes(r));
   }
-  return out.length ? out : [...current];
+  if (out.length || categories.length === 0) return out.length ? out : [...current];
+  // No role of the source is allowed this kind of content. Leaving the set as it was would show
+  // sensitive content to exactly the roles the pack keeps it from (fail open). Fail closed: the
+  // approver alone, who can widen it with a written reason; nobody when the pack names no approver.
+  return pack.approverRole ? [pack.approverRole] : [];
 }
 
 /** The sensitivity fields of a segment row, set from a decision. Roles are only ever removed. */

@@ -17,7 +17,9 @@ import { getWorkspacePack, entityLabel, roleLabel, type ResolvedPack } from "@/l
 import { claimId as makeClaimId, tierFor } from "@/lib/attest";
 import { computeFootprint } from "@/lib/tether/footprint";
 import { limitedNote, narrowTypedText } from "@/lib/tether/visibility";
-import { maskAnswer, persistAnswer } from "./persist";
+import { maskAnswer, persistAnswer, RETEST_FAILED } from "./persist";
+
+export { RETEST_FAILED } from "./persist";
 import { callJson, modelAvailable } from "@/lib/model/client";
 import type {
   CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun, Trust,
@@ -218,7 +220,47 @@ export interface RunTestOptions {
    * Ignored when the role has no earlier run.
    */
   only?: string[];
+  /**
+   * With `only`: do not keep an earlier, better result. For the background model re-check, whose
+   * whole point is that the model may lower the first, rule-based reading of the same evidence.
+   */
+  rejudge?: boolean;
+  /**
+   * Refuse to store the run when the evidence changed while it was being judged (a decision, an
+   * answer or a plan entry saved meanwhile): throws StaleTestError instead of inserting a run that
+   * is older than what the page already shows. For background work; a foreground action reads
+   * its own write and needs no check. Pass a fingerprint (testInputFingerprint) taken earlier to
+   * compare against that moment instead of the start of this run.
+   */
+  refuseStale?: boolean | string;
 }
+
+/** Thrown by runTest({ refuseStale: true }) when its inputs changed while it ran. Nothing was stored. */
+export class StaleTestError extends Error {
+  constructor() {
+    super("The evidence changed while the test ran; the run was not stored.");
+    this.name = "StaleTestError";
+  }
+}
+
+/**
+ * A fingerprint of everything a test run reads: claims (state, review, role set, text), the plan
+ * and the inventory. Two equal fingerprints mean a run started at the first is still current.
+ */
+export async function testInputFingerprint(ws: string): Promise<string> {
+  const [row] = await db()`
+    SELECT
+      (SELECT coalesce(md5(string_agg(md5(id || '|' || state || '|' || review || '|' || array_to_string(role_set, ',') || '|' || trust
+          || '|' || coalesce(value, '') || '|' || statement), ',' ORDER BY id)), '') FROM claims WHERE workspace_id = ${ws}) AS claims,
+      (SELECT coalesce(md5(string_agg(responsibility_id || '|' || check_key || '|' || owner || '|' || coalesce(due_date::text, '') || '|' || risk_note,
+          ',' ORDER BY responsibility_id, check_key)), '') FROM plan_items WHERE workspace_id = ${ws}) AS plan,
+      (SELECT coalesce(md5(string_agg(id || '|' || kind || '|' || array_to_string(entities, ','), ',' ORDER BY id)), '')
+        FROM responsibilities WHERE workspace_id = ${ws}) AS resps`;
+  return `${String(row?.claims ?? "")}.${String(row?.plan ?? "")}.${String(row?.resps ?? "")}`;
+}
+
+/** Spend-cap refusals and calls left for a later slice: the model was not asked, by our own limits. */
+const BUDGET_ERROR = /live model budget|left for later/i;
 
 /** Is the workspace's current state covered by an approved snapshot? */
 async function isProvisional(ws: string): Promise<boolean> {
@@ -238,6 +280,8 @@ async function isProvisional(ws: string): Promise<boolean> {
 export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = {}): Promise<TestRun> {
   const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
+  const startedOn = typeof opts.refuseStale === "string" ? opts.refuseStale
+    : opts.refuseStale ? await testInputFingerprint(ws) : null;
   const [resps, visible, meta, plan] = await Promise.all([
     listResponsibilities(ws),
     visibleClaims(ws, role),
@@ -272,12 +316,7 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     const errors = perResp.flatMap((p) => p.errors);
     modelUsed = modelResults.length > 0;
     results = mergeJudgements(modelResults, det.results);
-    if (errors.length) {
-      const unavailable = errors.filter((e) => /not in cache|not configured|timed out|HTTP|fetch/i.test(e.error)).length;
-      modelNote = unavailable === errors.length
-        ? `Model unavailable for ${errors.length} responsibilit${errors.length === 1 ? "y" : "ies"}: deterministic reading used.`
-        : `Model answer unusable for ${errors.map((e) => e.responsibilityKey).join(", ")}: deterministic reading used.`;
-    }
+    if (errors.length) modelNote = standinErrorNote(errors);
   }
 
   // The label of a result is the strongest trust among the claims it cites, not among every claim
@@ -295,10 +334,14 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     // take away what the record already supported: a check keeps its earlier, better result as long
     // as every claim it rested on is still live and visible. This also keeps the model's judgement
     // of the unchanged checks from drifting when the prompt gains a claim.
-    const liveIds = new Set(usable.map((c) => c.id));
+    // "Live" means active: a claim that a new claim now contradicts (state conflicting) no longer
+    // carries its earlier result, so a new conflict shows in the scores and in "what changed".
+    // Nor does a claim the approver rejected since.
+    const liveIds = new Set(usable.filter((c) => c.state === "active" && c.review !== "rejected").map((c) => c.id));
     const before = new Map(prev.results.map((r) => [gapKey(r.responsibilityId, r.checkKey), r]));
     const rank: Record<Coverage, number> = { covered: 3, partial: 2, conflicting: 1, missing: 0, restricted: 0 };
     results = results.map((r) => {
+      if (opts.rejudge) return r;
       const was = before.get(gapKey(r.responsibilityId, r.checkKey));
       if (!was || rank[was.coverage] <= rank[r.coverage]) return r;
       if (was.claimIds.length === 0 || !was.claimIds.every((id) => liveIds.has(id))) return r;
@@ -313,6 +356,7 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
   const named = namedOwnersFromPlan(openBlockingGaps(results, checks), plan);
   const scores = computeScores(results, checks, named);
   const provisional = await isProvisional(ws);
+  if (startedOn !== null && (await testInputFingerprint(ws)) !== startedOn) throw new StaleTestError();
   const id = `trn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}_${role}`;
   const [row] = await db()`
     INSERT INTO test_runs (workspace_id, id, role, scores, results, provisional, model_used, trigger, model_note)
@@ -320,6 +364,30 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
       ${provisional}, ${modelUsed}, ${opts.trigger ?? "run"}, ${modelNote})
     RETURNING *`;
   return toTestRun(row);
+}
+
+/**
+ * The note stored with a run when the stand-in model could not be used for some responsibilities.
+ * Three different things, said apart: our own budget or time limit stopped the call, the model
+ * could not be reached, or it answered something unusable.
+ */
+export function standinErrorNote(errors: { responsibilityKey: string; error: string }[]): string | null {
+  if (errors.length === 0) return null;
+  const n = (k: number) => `${k} responsibilit${k === 1 ? "y" : "ies"}`;
+  const budget = errors.filter((e) => BUDGET_ERROR.test(e.error));
+  const rest = errors.filter((e) => !BUDGET_ERROR.test(e.error));
+  const unavailable = rest.filter((e) => /not in cache|not configured|timed out|HTTP|fetch|disabled/i.test(e.error));
+  const unusable = rest.filter((e) => !unavailable.includes(e));
+  const parts: string[] = [];
+  if (budget.length) {
+    const cap = budget.some((e) => /live model budget/i.test(e.error));
+    parts.push(cap
+      ? `Today's live model budget is used: the model was not asked for ${n(budget.length)}.`
+      : `The model was not asked for ${n(budget.length)} in the time allowed; press Re-run test to finish.`);
+  }
+  if (unavailable.length) parts.push(`Model unavailable for ${n(unavailable.length)}.`);
+  if (unusable.length) parts.push(`Model answer unusable for ${unusable.map((e) => e.responsibilityKey).join(", ")}.`);
+  return `${parts.join(" ")} Deterministic reading used.`;
 }
 
 export interface TestRunSummary {
@@ -442,7 +510,14 @@ export async function buildQuestions(ws: string): Promise<GapQuestion[]> {
 // ---------------------------------------------------------------------------
 
 export type AnswerResult =
-  | { ok: true; claimId: string; before: Scores | null; after: Scores; delta: string; /** Set when the answer was limited as sensitive. */ limited?: string | null }
+  | {
+    ok: true; claimId: string; before: Scores | null; after: Scores; delta: string;
+    /** Set when the answer was limited as sensitive. */ limited?: string | null;
+    /** The responsibility the answer is about (for a re-check narrowed to it). */
+    responsibilityId: string;
+    /** True when the answer is saved but the re-test after it could not run. */
+    retestFailed?: boolean;
+  }
   | { ok: false; error: string };
 
 const INTERVIEW_SOURCE = "src_interview";
@@ -539,13 +614,23 @@ export async function answerQuestion(
   });
   await audit(ws, actor, "answer_question", { questionId, claimId: claim.id, roleSet });
 
-  const trigger = `answer ${questionId}`;
-  // Re-test as the successor (the score shown) and as every other role the pack tests.
-  const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger })));
-  const checks = checksByResp(await listResponsibilities(ws), lpack);
-  const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
-  await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
-  return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta, limited: limitedNote(sensitivity) };
+  // The answer is committed. Whatever fails from here on must not read as "the answer failed":
+  // a retry would be told the question is already answered.
+  try {
+    const trigger = `answer ${questionId}`;
+    // Re-test as the successor (the score shown) and as every other role the pack tests.
+    const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger })));
+    const checks = checksByResp(await listResponsibilities(ws), lpack);
+    const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
+    await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
+    return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta, limited: limitedNote(sensitivity), responsibilityId: resp.id };
+  } catch (err) {
+    console.error(`[lacuna ${ws}] re-test after answer ${questionId} failed`, err);
+    return {
+      ok: true, claimId: claim.id, before: before?.scores ?? null, after: before?.scores ?? { b: 0, c: 0, k: null },
+      delta: RETEST_FAILED, limited: limitedNote(sensitivity), responsibilityId: resp.id, retestFailed: true,
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------

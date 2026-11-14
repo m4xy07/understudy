@@ -11,6 +11,7 @@ import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { RunPill } from "@/components/RunPanel";
 import { leaseHeld } from "@/lib/pipeline/guard";
 import { REJUDGE_KEY } from "@/lib/pipeline/rejudge";
+import { publicRun } from "@/lib/pipeline/public-run";
 import { touchWorkspace } from "@/lib/pipeline/cleanup";
 
 export default function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: WsParams }) {
@@ -60,7 +61,7 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
             <span className="truncate text-sm text-muted" title={workspace.name}>
               {workspace.name}
             </span>
-            <RunPill ws={id} initial={run} background={background} />
+            <RunPill ws={id} initial={publicRun(run)} background={background} />
           </div>
           <RoleSwitcher ws={id} role={role} roles={roleOptions(pack)} />
         </div>

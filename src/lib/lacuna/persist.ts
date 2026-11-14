@@ -15,13 +15,32 @@ export interface MaskedAnswer {
   contacts: { token: string; kind: "email" | "phone"; valueEnc: string }[];
 }
 
+/** What a save says when it is stored but the re-test after it could not run. */
+export const RETEST_FAILED = "The re-test could not run; use Re-run test.";
+
+/**
+ * Reserve `count` contact placeholder numbers for text typed into the app and return the number
+ * before the first one. One atomic statement on a per-workspace counter row: two answers saved at
+ * the same moment can never get the same number (count(*) read outside the insert could).
+ * The counter follows the number of stored contacts, so numbering is unchanged when nothing overlaps.
+ */
+export async function reserveContactNumbers(ws: string, count: number): Promise<number> {
+  const [row] = await db()`
+    INSERT INTO contact_counters (workspace_id, next)
+    VALUES (${ws}, (SELECT count(*)::int FROM contacts WHERE workspace_id = ${ws}) + ${count})
+    ON CONFLICT (workspace_id) DO UPDATE SET
+      next = GREATEST(contact_counters.next, (SELECT count(*)::int FROM contacts WHERE workspace_id = ${ws})) + ${count}
+    RETURNING next`;
+  return Number(row.next) - count;
+}
+
 /** Mask an answer before storage (Tether). Contact placeholders get workspace-unique numbers. */
 export async function maskAnswer(ws: string, text: string): Promise<MaskedAnswer> {
   const masked = maskText(text, { contactsKey: process.env.CONTACTS_KEY ?? "", people: null });
   let maskedText = masked.text;
   const contacts: MaskedAnswer["contacts"] = [];
   if (masked.contacts.length) {
-    const [{ n }] = await db()`SELECT count(*)::int AS n FROM contacts WHERE workspace_id = ${ws}`;
+    const n = await reserveContactNumbers(ws, new Set(masked.contacts.map((c) => c.token)).size);
     const renum = new Map<string, string>();
     for (const c of masked.contacts) {
       if (!renum.has(c.token)) renum.set(c.token, `[CONTACT:c-${9000 + Number(n) + renum.size + 1}]`);

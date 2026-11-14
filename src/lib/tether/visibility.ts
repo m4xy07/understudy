@@ -177,12 +177,14 @@ export async function sensitiveSummary(ws: string, role: RoleKey): Promise<Sensi
 
 /** True when a segment's visibility changed after the latest snapshot was approved. */
 export async function visibilityChangedSinceSnapshot(ws: string): Promise<boolean> {
+  // Compared in the database: a JavaScript date string drops the milliseconds, so a change made in
+  // the same second as the approval used to look "not after" it.
   const [row] = await db()`
-    SELECT
-      (SELECT max(approved_at) FROM snapshots WHERE workspace_id = ${ws}) AS approved,
-      (SELECT max(created_at) FROM segments WHERE workspace_id = ${ws} AND sensitivity_stage IN ('manual', 'widened')) AS changed`;
-  if (!row?.approved || !row?.changed) return false;
-  return new Date(String(row.changed)) > new Date(String(row.approved));
+    SELECT coalesce(
+      (SELECT max(created_at) FROM segments WHERE workspace_id = ${ws} AND sensitivity_stage IN ('manual', 'widened'))
+        > (SELECT max(approved_at) FROM snapshots WHERE workspace_id = ${ws}),
+      false) AS changed`;
+  return row?.changed === true;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -193,7 +195,16 @@ export type VisibilityChange =
   | { action: "limit"; categories: SensitivityCategory[]; reason: string };
 
 export type VisibilityResult =
-  | { ok: true; version: number; runId: string | null; changed: boolean }
+  | {
+    ok: true; version: number; changed: boolean;
+    /** The run to execute, or null when there is nothing for the caller to execute. */
+    runId: string | null;
+    /**
+     * True when a run was already live: the caller must NOT execute. The change is applied by a
+     * full run that starts by itself when the live one ends (requestRerun).
+     */
+    queued: boolean;
+  }
   | { ok: false; error: string };
 
 export const MIN_REASON_CHARS = 10;
@@ -243,7 +254,9 @@ function parseResults(v: unknown): { claimIds?: string[]; note?: string }[] {
  * A segment's role set got smaller: everything derived from it shrinks in the same transaction,
  * with no re-run needed. Claims that cite it (and their frozen copies in every snapshot) lose the
  * removed roles; open gap questions are rebuilt by the next run; stand-in notes that may quote
- * those claims are blanked. Returns the ids of the claims it narrowed.
+ * those claims are blanked. Recovery rows (option cards with quotes, rebuilt procedures, the
+ * question written for a neighbour) and successor findings that rest on the segment or on those
+ * claims shrink too. Returns the ids of the claims it narrowed.
  */
 async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: readonly RoleKey[]): Promise<string[]> {
   const like = `%${segmentId}%`;
@@ -255,6 +268,7 @@ async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: r
   await sql`
     UPDATE attest_dropped SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${roleSet as RoleKey[]}::text[]))
     WHERE workspace_id = ${ws} AND citations::text LIKE ${like}`;
+  await narrowRecoveryAndFindings(sql, ws, segmentId, ids, roleSet);
   if (!ids.length) return ids;
   await sql`
     UPDATE snapshot_claims SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${roleSet as RoleKey[]}::text[]))
@@ -278,14 +292,74 @@ async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: r
   return ids;
 }
 
-async function startRerun(ws: string): Promise<string | null> {
+/**
+ * The re-run after a visibility change. `runId` is set only when the caller must execute it; when
+ * a run is already live nothing is executed here (a second slice on the same run would do its
+ * steps twice) and a full run is queued behind it instead.
+ */
+/**
+ * Recovery rows and findings keep their own role sets (RLS reads those, not the claim's), so a
+ * limit has to reach them in the same transaction:
+ *   * a row that points at a narrowed claim, or whose stored detail quotes the segment or one of
+ *     those claims (option evidence, trace steps), loses the removed roles;
+ *   * every option row of a gap those claims belong to loses them too (a proposal is written from
+ *     all the record claims of its gap);
+ *   * the question written for a neighbour on such a gap is built from those claims: the row loses
+ *     the removed roles, and if the neighbour who was asked is one of them the row is removed
+ *     (they can no longer be asked about it; the next ladder build decides again);
+ *   * a finding whose evidence is the segment, or whose claim was narrowed, loses the removed roles.
+ */
+async function narrowRecoveryAndFindings(
+  sql: Sql, ws: string, segmentId: string, claimIds: readonly string[], roleSet: readonly RoleKey[],
+): Promise<void> {
+  const keep = roleSet as RoleKey[];
+  const ids = claimIds as string[];
+  const patterns = [`%${segmentId}%`, ...ids.map((id) => `%${id}%`)];
+  await sql`
+    UPDATE recovery_steps SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${keep}::text[])), updated_at = now()
+    WHERE workspace_id = ${ws} AND (claim_id = ANY(${ids}::text[]) OR detail::text LIKE ANY(${patterns}::text[]))`;
+  await sql`
+    UPDATE findings SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${keep}::text[]))
+    WHERE workspace_id = ${ws} AND (segment_id = ${segmentId} OR attachment_segment_id = ${segmentId} OR claim_id = ANY(${ids}::text[]))`;
+  if (!ids.length) return;
+  // The gaps those claims belong to: by the open question that names them, and by entity.
+  const gaps = await sql`
+    SELECT DISTINCT r.id AS responsibility_id FROM responsibilities r
+    WHERE r.workspace_id = ${ws} AND (
+      r.entities && ARRAY(SELECT entity FROM claims WHERE workspace_id = ${ws} AND id = ANY(${ids}::text[]))
+      OR r.id IN (SELECT responsibility_id FROM gap_questions WHERE workspace_id = ${ws} AND claim_ids && ${ids}::text[]))`;
+  const respIds = gaps.map((g) => String(g.responsibility_id));
+  if (!respIds.length) return;
+  await sql`
+    DELETE FROM recovery_steps
+    WHERE workspace_id = ${ws} AND responsibility_id = ANY(${respIds}::text[]) AND kind = 'neighbour' AND status = 'asked'
+      AND question_text IS NOT NULL AND NOT (target_role = ANY(${keep}::text[]))`;
+  await sql`
+    UPDATE recovery_steps SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${keep}::text[])), updated_at = now()
+    WHERE workspace_id = ${ws} AND responsibility_id = ANY(${respIds}::text[])
+      AND (kind = 'option' OR (kind = 'neighbour' AND question_text IS NOT NULL))`;
+}
+
+async function startRerun(ws: string): Promise<{ runId: string | null; queued: boolean }> {
   try {
-    const { startRun } = await import("@/lib/pipeline/run");
-    return (await startRun(ws)).runId;
+    const { requestRerun } = await import("@/lib/pipeline/run");
+    const started = await requestRerun(ws);
+    return { runId: started.alreadyRunning ? null : started.runId, queued: started.queued };
   } catch (err) {
     console.error(`[visibility ${ws}] could not start the re-run`, err);
-    return null;
+    return { runId: null, queued: false };
   }
+}
+
+/** What the approver is told. A change made while a run is working is applied by the run after it. */
+export function visibilityMessage(verb: "Widened" | "Limited", res: { changed: boolean; runId: string | null; queued: boolean }): string {
+  if (!res.changed) return `Already ${verb.toLowerCase()}.`;
+  if (res.queued) {
+    const now = verb === "Limited" ? " The message is already hidden from the roles you removed." : "";
+    return `${verb}.${now} A run is in progress, so the change applies at the next run, which starts by itself when this one ends.`;
+  }
+  if (!res.runId) return `${verb}. The re-run could not be started: press Run to apply the change.`;
+  return `${verb}. Re-running the steps that used this message.`;
 }
 
 function orderRoles(roles: readonly RoleKey[], pack: Pick<ResolvedPack, "roleOrder">): RoleKey[] {
@@ -320,7 +394,7 @@ export async function setSegmentVisibility(
     const target = orderRoles(wanted, pack);
     if (sameSet(target, head.roleSet)) {
       // A second click on the same form: the first one already did it.
-      if (head.sensitivityStage === "widened") return { ok: true, version: head.version, runId: null, changed: false };
+      if (head.sensitivityStage === "widened") return { ok: true, version: head.version, runId: null, queued: false, changed: false };
       return { ok: false, error: "Pick at least one more role to widen to." };
     }
     const inserted = await insertVersion(sql, ws, head, {
@@ -332,12 +406,12 @@ export async function setSegmentVisibility(
       note: reason,
       actor,
     });
-    if (!inserted) return { ok: true, version: head.version + 1, runId: null, changed: false };
+    if (!inserted) return { ok: true, version: head.version + 1, runId: null, queued: false, changed: false };
     await audit(ws, actor, "widen_segment", {
       segmentId, fromVersion: head.version, toVersion: head.version + 1,
       from: head.roleSet, to: target, categories: head.sensitivity ?? [], reason,
     });
-    return { ok: true, version: head.version + 1, runId: await startRerun(ws), changed: true };
+    return { ok: true, version: head.version + 1, ...(await startRerun(ws)), changed: true };
   }
 
   const categories = CATEGORIES.filter((c) => (change.categories ?? []).includes(c));
@@ -345,7 +419,7 @@ export async function setSegmentVisibility(
   const ps = packSensitivity(pack);
   const target = orderRoles(narrowRoleSet(head.roleSet, categories, ps), pack);
   if (sameSet(target, head.roleSet)) {
-    if (head.sensitivityStage === "manual") return { ok: true, version: head.version, runId: null, changed: false };
+    if (head.sensitivityStage === "manual") return { ok: true, version: head.version, runId: null, queued: false, changed: false };
     return { ok: false, error: "This message is already limited to those roles." };
   }
   const narrowed = await sql.begin(async (tx) => {
@@ -361,12 +435,12 @@ export async function setSegmentVisibility(
     if (!inserted) return null;
     return narrowDerived(tx as unknown as Sql, ws, segmentId, target);
   }) as string[] | null;
-  if (narrowed === null) return { ok: true, version: head.version + 1, runId: null, changed: false };
+  if (narrowed === null) return { ok: true, version: head.version + 1, runId: null, queued: false, changed: false };
   await audit(ws, actor, "limit_segment", {
     segmentId, fromVersion: head.version, toVersion: head.version + 1,
     from: head.roleSet, to: target, categories, reason, claims: narrowed.length,
   });
-  return { ok: true, version: head.version + 1, runId: await startRerun(ws), changed: true };
+  return { ok: true, version: head.version + 1, ...(await startRerun(ws)), changed: true };
 }
 
 // ---------------------------------------------------------------------------------------------

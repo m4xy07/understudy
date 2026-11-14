@@ -9,7 +9,7 @@ import { isUuid } from "@/lib/db/withRole";
 import { executeRun } from "@/lib/pipeline/run";
 import { viewingRole } from "@/lib/session";
 import { CATEGORIES } from "@/lib/tether/sensitivity";
-import { setSegmentVisibility } from "@/lib/tether/visibility";
+import { setSegmentVisibility, visibilityMessage } from "@/lib/tether/visibility";
 import type { RoleKey, SensitivityCategory } from "@/lib/types";
 
 export interface ActionState {
@@ -50,7 +50,7 @@ export async function widenAction(_prev: ActionState, form: FormData): Promise<A
   if (!res.ok) return fail(res.error);
   rerun(ws, res.runId);
   refresh();
-  return done(res.changed ? "Widened. Re-running the steps that used this message." : "Already widened.");
+  return done(visibilityMessage("Widened", res));
 }
 
 /** Limit one message to the roles allowed for the chosen kind of content. Takes effect at once. */
@@ -68,5 +68,5 @@ export async function limitAction(_prev: ActionState, form: FormData): Promise<A
   if (!res.ok) return fail(res.error);
   rerun(ws, res.runId);
   refresh();
-  return done(res.changed ? "Limited. Re-running the steps that used this message." : "Already limited.");
+  return done(visibilityMessage("Limited", res));
 }

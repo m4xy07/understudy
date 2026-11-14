@@ -14,8 +14,8 @@ import type { RunProgress, RunStatus, RunStep, RunStepKey } from "@/lib/db/mappe
 import { getRunStatus, listSources, audit } from "@/lib/db/queries";
 import { getWorkspacePack, type ResolvedPack } from "@/lib/pack";
 import { reconstruct, verify } from "@/lib/attest";
-import { buildInventory, buildQuestions, runTest } from "@/lib/lacuna";
-import { modelAvailable, runWithModelContext, type ModelContext } from "@/lib/model/client";
+import { buildInventory, buildLadder, buildQuestions, recoveryState, runTest } from "@/lib/lacuna";
+import { DEFAULT_TIMEOUT_MS, modelAvailable, runWithModelContext, type ModelContext } from "@/lib/model/client";
 import { chargeModelCall } from "./guard";
 import { reclassify } from "@/lib/tether/visibility";
 import type { RoleKey } from "@/lib/types";
@@ -44,6 +44,8 @@ export const LEASE_MS = 45_000;
 export const MAX_SLICES = 40;
 /** A model call that fails for a passing reason is tried again in a later pass, this many times in all. */
 export const MAX_ATTEMPTS = 3;
+/** A queued re-run starts in the slice that ended the run before it only with this much time left. */
+const MIN_FOLLOW_UP_MS = 5_000;
 const PROGRESS_SAVE_MS = 1_200;
 const RETRY_PASS_BASE_MS = 1_500;
 const RETRY_PASS_MAX_MS = 8_000;
@@ -91,6 +93,38 @@ export async function startRun(ws: string): Promise<StartedRun> {
   const [row] = await sql`SELECT id FROM runs WHERE workspace_id = ${ws} ORDER BY started_at DESC LIMIT 1`;
   if (!row) throw new Error("Could not start a run. Try again.");
   return { runId: String(row.id), alreadyRunning: true, resumed: false };
+}
+
+export interface RequestedRerun extends StartedRun {
+  /**
+   * True when a run was already live (in progress, or paused part-way): the change that asked for
+   * this re-run is not in the steps that run has finished, so a full run is queued to start when
+   * the live one ends.
+   */
+  queued: boolean;
+}
+
+/**
+ * Ask for a run that is guaranteed to start after this moment (a visibility change, say). With
+ * no live run this is startRun. With a live run the run is marked: when it ends, executeRun starts
+ * one more full run. The caller executes only when `alreadyRunning` is false, as with startRun.
+ * Safe against the live run ending at the same moment: the mark and the run's last write lock the
+ * same row, so either the run sees the mark or this call starts the next run itself.
+ */
+export async function requestRerun(ws: string): Promise<RequestedRerun> {
+  const sql = db();
+  let started = await startRun(ws);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (!started.alreadyRunning && !started.resumed) return { ...started, queued: false };
+    const marked = await sql`
+      UPDATE runs SET cursor = (coalesce(cursor, '{}'::jsonb) #>> '{}')::jsonb || '{"rerun": true}'::jsonb
+      WHERE workspace_id = ${ws} AND id = ${started.runId} AND status IN ('running', 'paused')
+      RETURNING id`;
+    if (marked.length) return { ...started, queued: true };
+    // The live run ended between the two statements: start the next one ourselves.
+    started = await startRun(ws);
+  }
+  return { ...started, queued: false };
 }
 
 interface Cursor {
@@ -176,13 +210,18 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
     const cur: Cursor = { progress, attempts, totals };
     const status = extra.status ?? "running";
     const ended = status === "done" || status === "failed";
-    await sql`
-      UPDATE runs SET steps = ${JSON.stringify(steps)}::jsonb, cursor = ${JSON.stringify(cur)}::jsonb, heartbeat_at = now(),
+    const rows = await sql`
+      UPDATE runs SET steps = ${JSON.stringify(steps)}::jsonb,
+        cursor = (${JSON.stringify(cur)}::jsonb #>> '{}')::jsonb
+          || jsonb_strip_nulls(jsonb_build_object('rerun', (coalesce(cursor, '{}'::jsonb) #>> '{}')::jsonb -> 'rerun')),
+        heartbeat_at = now(),
         status = ${status},
         lease_until = CASE WHEN ${extra.release === true || ended} THEN NULL ELSE now() + make_interval(secs => ${LEASE_MS / 1000}) END,
         error = ${extra.error ?? null},
         finished_at = CASE WHEN ${ended} THEN now() ELSE NULL END
-      WHERE workspace_id = ${ws} AND id = ${runId} AND status = 'running'`;
+      WHERE workspace_id = ${ws} AND id = ${runId} AND status = 'running'
+      RETURNING (cursor -> 'rerun')::text AS rerun`;
+    return rows.length > 0 && rows[0].rerun === "true";
   };
   const heartbeat = setInterval(() => {
     save().catch(() => {});
@@ -235,6 +274,9 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
     },
     ask: async () => {
       const qs = await buildQuestions(ws);
+      // With recovery on, the ladder is rebuilt from the questions and claims as they are now (a
+      // visibility change may have narrowed them). No new model proposals: the stored ones are kept.
+      if ((await recoveryState(ws)).on) await buildLadder(ws, { model: false });
       return { counts: { questions: qs.filter((q) => !q.answeredClaimId).length } };
     },
   };
@@ -281,6 +323,8 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
         let lastSave = 0;
         const ctx: ModelContext = {
           deadline,
+          // A call that started just before the budget ran out gets one request timeout, no more.
+          hardDeadline: deadline + DEFAULT_TIMEOUT_MS,
           retries: opts.retries ?? 0,
           gate: async (key) => {
             if ((attempts[key] ?? 0) >= MAX_ATTEMPTS) return `this call failed ${MAX_ATTEMPTS} times and was not tried again`;
@@ -361,11 +405,30 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
 
   const status = errors.length ? "failed" : "done";
   progress = null;
+  let rerun = false;
   try {
-    await save({ status, error: errors.join("\n").slice(0, 2000) || null });
+    rerun = await save({ status, error: errors.join("\n").slice(0, 2000) || null });
     await audit(ws, "system", "pipeline_run", { runId, status, slices });
   } catch (err) {
     console.error(`[pipeline ${ws}] could not record run end`, err);
+  }
+  // Something changed while this run worked (requestRerun): one more full run, so the change is
+  // applied. It starts in this slice when time is left; otherwise it waits, paused, for the next
+  // POST (the run panel sends it by itself).
+  if (rerun) {
+    try {
+      const next = await startRun(ws);
+      if (!next.alreadyRunning) {
+        await audit(ws, "system", "pipeline_rerun_queued", { after: runId, runId: next.runId });
+        const left = deadline - Date.now();
+        if (left > MIN_FOLLOW_UP_MS) return executeRun(ws, next.runId, { ...opts, budgetMs: left });
+        await sql`
+          UPDATE runs SET status = 'paused', lease_until = NULL
+          WHERE workspace_id = ${ws} AND id = ${next.runId} AND status = 'running'`;
+      }
+    } catch (err) {
+      console.error(`[pipeline ${ws}] could not start the queued re-run`, err);
+    }
   }
   return getRunStatus(ws).catch(() => null);
 }
