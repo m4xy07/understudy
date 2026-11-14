@@ -10,8 +10,11 @@ import { OpenGapsNote, ScoreLine } from "@/components/Scores";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { EmptyState, Notice } from "@/components/Notice";
 import type { Claim, ReviewTier, RoleKey } from "@/lib/types";
+import { listChanges, listFindings } from "@/lib/relay/living";
+import { WhatChanged } from "@/components/WhatChanged";
 import { approveSnapshotAction, bulkApproveAction, reviewClaimAction, savePlanAction } from "./actions";
 import { TierCReview, type EvidenceItem } from "./TierCReview";
+import { FindingsGroup } from "./FindingsGroup";
 
 export default function ReviewPage({ params, searchParams }: { params: WsParams; searchParams: SearchParams }) {
   return (
@@ -48,11 +51,16 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
   const isApprover = role === pack.approverRole;
   const isLeaver = role === pack.leaverRole;
 
-  const [claims, release, history] = await Promise.all([
+  const [allClaims, release, history, findings, changes] = await Promise.all([
     listReviewClaims(id, role),
     getReleaseInfo(id),
     listSnapshotHistory(id),
+    listFindings(id, role),
+    listChanges(id, role),
   ]);
+  // Successor findings are reviewed in their own group (approval there also re-tests and releases the next version).
+  const claims = allClaims.filter((c) => c.origin !== "successor_finding");
+  const changeOf = new Map(changes.map((c) => [c.snapshotId, c]));
   const reviewable = claims.filter((c) => c.state !== "dropped" && c.state !== "superseded");
   const pending = reviewable.filter((c) => c.review === "pending");
   const pendingBy = (t: ReviewTier) => pending.filter((c) => c.tier === t).length;
@@ -163,6 +171,17 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
           )}
         </section>
       )}
+
+      {/* Successor findings (living handover): above the tier lists */}
+      <FindingsGroup
+        ws={id}
+        findings={findings}
+        isApprover={isApprover}
+        isLeaver={isLeaver}
+        approverLabel={approverName}
+        successorLabel={roleLabel(pack.successorRole as RoleKey, pack)}
+        nextVersion={(history[0]?.snapshot.version ?? 0) + 1}
+      />
 
       {/* Claims */}
       <section id="claims" aria-labelledby="claims-h" className="scroll-mt-4">
@@ -311,7 +330,9 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
                   <th scope="col">Approved</th>
                   <th scope="col">Release</th>
                   <th scope="col">Claims</th>
+                  <th scope="col">Why</th>
                   <th scope="col">Since previous</th>
+                  <th scope="col">What changed</th>
                 </tr>
               </thead>
               <tbody>
@@ -329,6 +350,7 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
                     <td className="text-sm">{when(h.snapshot.approvedAt)}</td>
                     <td className="text-sm">{h.label}</td>
                     <td className="mono">{h.claimCount}</td>
+                    <td className="text-sm">{changeOf.get(h.snapshot.id)?.why ?? "n/a"}</td>
                     <td className="text-sm">
                       {h.diff ? (
                         h.diff.fromVersion === null ? (
@@ -341,6 +363,16 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
                             {h.diff.planChanged && " · plan changed"}
                           </span>
                         )
+                      ) : (
+                        <span className="text-muted">n/a</span>
+                      )}
+                    </td>
+                    <td className="min-w-72 text-sm">
+                      {changeOf.has(h.snapshot.id) ? (
+                        <details>
+                          <summary className="cursor-pointer text-attest underline">Show what changed in v{h.snapshot.version}</summary>
+                          <WhatChanged view={changeOf.get(h.snapshot.id)!} ws={id} compact />
+                        </details>
                       ) : (
                         <span className="text-muted">n/a</span>
                       )}

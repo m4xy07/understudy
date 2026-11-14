@@ -11,6 +11,8 @@ import { Chip, TrustChip } from "@/components/chips";
 import { OpenGapsNote, ScoreLine } from "@/components/Scores";
 import { EmptyState } from "@/components/Notice";
 import type { RoleKey } from "@/lib/types";
+import { latestChange } from "@/lib/relay/living";
+import { WhatChanged } from "@/components/WhatChanged";
 import { ReadbackForm, type ReadbackField } from "./ReadbackForm";
 
 export default function HandoverPage({ params }: { params: WsParams }) {
@@ -48,7 +50,9 @@ async function Handover({ params }: { params: WsParams }) {
   }
 
   const { doc, snapshot } = h;
-  const [acks, resolved] = await Promise.all([listAcknowledgements(id), resolveReadbackItems(id, snapshot.id)]);
+  const [acks, resolved, change] = await Promise.all([
+    listAcknowledgements(id), resolveReadbackItems(id, snapshot.id), latestChange(id, role),
+  ]);
   const hasRecord = new Map(resolved.items.map((i) => [i.key, i.expectedClaimId !== null]));
   const fields: ReadbackField[] = doc.readbackForm.map((f) => ({ ...f, hasRecord: hasRecord.get(f.key) ?? false }));
   const synthesis = doc.sections.find((s) => s.key === "synthesis");
@@ -107,6 +111,18 @@ async function Handover({ params }: { params: WsParams }) {
           )}
         </div>
       </section>
+
+      {/* Living handover: the way to First weeks, and what the latest version changed (role-scoped) */}
+      {blocking > 0 && (
+        <p className="mb-6 text-sm text-ink-2">
+          Some gaps are still open.{" "}
+          {role === pack.successorRole
+            ? "Record what you find in your first weeks."
+            : `${roleLabel(pack.successorRole as RoleKey, pack)} records what they find in their first weeks.`}{" "}
+          <Link className="font-medium text-attest underline" href={`/w/${id}/first-weeks`}>Go to First weeks</Link>
+        </p>
+      )}
+      {change && change.version > 1 && <WhatChanged view={change} ws={id} />}
 
       {/* The I-PASS document */}
       <article className="card p-4 sm:p-8" aria-label={`Handover document for ${roleName}`}>
