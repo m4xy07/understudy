@@ -18,7 +18,23 @@ export interface ClaimMeta {
 }
 
 /** The fields of a visible claim the stand-in needs. A full Claim satisfies it. */
-export type VisibleClaim = Pick<Claim, "id" | "entity" | "attribute" | "value" | "statement" | "trust" | "state" | "roleSet">;
+export type VisibleClaim =
+  Pick<Claim, "id" | "entity" | "attribute" | "value" | "statement" | "trust" | "state" | "roleSet"> & Partial<Pick<Claim, "review">>;
+
+/**
+ * The credit rule for weaker evidence (recovery). Does this claim count as full evidence for
+ * this check?
+ *   - a record or a named person's direct word: yes;
+ *   - Second-hand: yes on a check of weight 1 or 3. On a blocking check (weight 5) only once the
+ *     approver has confirmed the claim in review; until then the check stays Partial;
+ *   - Inferred: never (always Partial). Ranked options are not evidence at all.
+ */
+export function countsFully(claim: Pick<VisibleClaim, "trust" | "review">, check: Pick<CheckDef, "weight">): boolean {
+  if (STRONG_TRUST.has(claim.trust)) return true;
+  if (claim.trust !== "second_hand") return false;
+  if (check.weight < 5) return true;
+  return claim.review === "approved" || claim.review === "edited";
+}
 
 export type ClaimMetaIndex = ReadonlyMap<string, ClaimMeta> | Readonly<Record<string, ClaimMeta>>;
 
@@ -112,7 +128,7 @@ function isPastIsoDate(value: string, today: string | undefined): boolean {
   return m[1] < new Date(t).toISOString().slice(0, 10);
 }
 
-function satisfies(
+export function satisfies(
   claim: { attribute: Attribute; value?: string; statement?: string },
   check: LacunaCheck,
   today?: string,
@@ -156,8 +172,10 @@ function visibleSatisfying(
   visibleClaims: readonly VisibleClaim[],
   today?: string,
 ): VisibleClaim[] {
+  // Ranked options are leads, never evidence: a claim stored with that trust by mistake earns nothing.
   return visibleClaims.filter(
-    (c) => isLive(c.state) && c.roleSet.includes(role) && resp.entities.includes(c.entity) && satisfies(c, check, today),
+    (c) => c.trust !== "ranked_options" && isLive(c.state) && c.roleSet.includes(role) && resp.entities.includes(c.entity)
+      && satisfies(c, check, today),
   );
 }
 
@@ -223,8 +241,8 @@ export function evaluateStandin(output: StandinOutput, ctx: StandinContext): Che
     const status = answer?.status ?? "cannot";
     if (status === "cannot") return result(ctx.resp, check, "missing", active, blocker || "The stand-in could not do this.");
     if (status === "partial") return result(ctx.resp, check, "partial", active, blocker || "Only part of this is on record.");
-    // can_do: only strong evidence makes it covered; inferred or second-hand stays partial.
-    const strong = active.filter((c) => STRONG_TRUST.has(c.trust));
+    // can_do: only evidence that counts fully makes it covered (see countsFully); the rest stays partial.
+    const strong = active.filter((c) => c.trust !== "ranked_options" && countsFully(c, check));
     if (strong.length === 0) return result(ctx.resp, check, "partial", active, WEAK_ONLY_NOTE);
     return result(ctx.resp, check, "covered", active, "");
   });
@@ -243,7 +261,7 @@ export function deterministicStandin(
   return checks.map((check) => {
     const hits = visibleSatisfying(resp, check, role, visibleClaims, today);
     const active = hits.filter((c) => c.state === "active");
-    const strong = active.filter((c) => STRONG_TRUST.has(c.trust));
+    const strong = active.filter((c) => countsFully(c, check));
     if (strong.length > 0) return result(resp, check, "covered", strong, "");
     if (active.length > 0) return result(resp, check, "partial", active, WEAK_ONLY_NOTE);
     const conflicting = hits.filter((c) => c.state === "conflicting");
