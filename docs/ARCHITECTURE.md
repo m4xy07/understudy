@@ -31,45 +31,102 @@ each role only what it may see.
   tests that need model answers inject a fake call.
 - No vector search. No Python at runtime.
 
-## 1. The demo setting (setting pack `packs/club.json`)
+## 1. Settings and setting packs
 
-A fictional college robotics club. Priya (leaver) is the outgoing tech lead and graduates. Roles
-(`RoleKey`):
+A setting is one kind of organisation (a college club, a research group). Everything Understudy
+knows about a setting lives in a **setting pack**, `packs/<id>.json`, and in that pack's demo data
+under `data/`. Core code (everything under `src/`, plus `db/migrations/` and `next.config.ts`) never
+names a role key, a role label, a pack id, a person or a place from any setting: it reads the pack.
+`scripts/check-literals.ts` enforces this and runs with `pnpm test`.
 
-| key | label | notes |
+A workspace belongs to one pack for life. `workspaces.pack_id` is set when the workspace is created
+and cannot change; `getWorkspacePack(ws)` returns that pack. `packs/index.json`
+(`{ "default": "<id>", "demos": ["<id>", ...] }`) is how core learns which packs exist: the default
+is used for an empty workspace, and each demo pack gets a button on the landing page.
+
+**Roles are defined by the pack.** A `RoleKey` is a string matching `^[a-z][a-z0-9_]{1,31}$`. A role
+gets its job in core from flags on the pack's role list, never from its key:
+
+| flag | job | how many |
 |---|---|---|
-| `president` | Club President | the approver; sees everything |
-| `tech_lead` | Incoming tech lead | the successor tested by default |
-| `new_member` | New member | sees least |
-| `treasurer` | Treasurer | holds finance |
-| `leaver` | Priya (outgoing tech lead) | answers gap questions; can never approve |
+| `approver` | the only role that reviews claims and approves snapshots | exactly one |
+| `successor` | the role the stand-in successor is tested as; its scores gate release | exactly one |
+| `leaver` | the leaving person: answers gap questions, can never review or approve | exactly one |
+| `restrictedAudience` | "sees least": a claim hidden from such a role is sensitive (tier C); also tested | at least one, never the approver or the leaver |
 
-The setting pack holds: roles, source-to-role defaults, the closed attribute list with per-attribute
-source authority, the five checklist kinds with checks and weights, role templates, footprint
-thresholds, the five critical read-back items, review-tier rules. Core code never branches on the
-setting; it reads the pack.
+From the flags the loader derives `approverRole`, `successorRole`, `leaverRole`,
+`restrictedAudienceRoles`, `testRoles` (the successor, then every restricted audience role) and
+`roleOrder` (the order of `roles`, the canonical order of any role set).
 
-### 1a. Setting pack shape (`packs/club.json`, validated by zod in `src/lib/pack/`)
+The first pack is `packs/club.json`, a fictional college robotics club (the Round 2 demo):
+
+| key | label | flag |
+|---|---|---|
+| `president` | Club President | approver; sees everything |
+| `tech_lead` | Incoming tech lead | successor |
+| `new_member` | New member | restricted audience; sees least |
+| `treasurer` | Treasurer | none; holds finance |
+| `leaver` | Priya (outgoing tech lead) | leaver |
+
+### 1a. Setting pack shape (`packs/<id>.json`, validated by zod in `src/lib/pack/`)
+
+Objects are loose: a key a module adds later is kept. The loader (`resolvePack`) rejects a pack that
+breaks a rule below with a readable message, at load.
 
 ```jsonc
 {
   "id": "club", "name": "College robotics club",
-  "roles": [{ "key": "president", "label": "Club President" }, ...],   // all five RoleKeys
-  "approverRole": "president", "successorRole": "tech_lead", "leaverRole": "leaver",
+  "roles": [                                              // order = canonical role order
+    { "key": "president", "label": "Club President", "short": "Club President", "approver": true },
+    { "key": "tech_lead", "label": "Incoming tech lead", "short": "the incoming tech lead", "successor": true },
+    { "key": "new_member", "label": "New member", "short": "a new member", "restrictedAudience": true },
+    { "key": "treasurer", "label": "Treasurer", "short": "the Treasurer" },
+    { "key": "leaver", "label": "Priya (outgoing tech lead)", "short": "Priya", "leaver": true }
+  ],
+  "approverRole": "president", "successorRole": "tech_lead", "leaverRole": "leaver",   // legacy, optional; must agree with the flags
+  "leaverPerson": { "name": "Priya", "aliases": [] },     // the leaver's name as the sources show it (footprint, role holders)
+  "roleHolders": { "president": ["Rohan Mehta"], "tech_lead": ["Arjun Rao"], ... },    // who holds which role, by full name; a role nobody holds is left out
   "contactsRoles": ["president", "tech_lead", "treasurer", "leaver"],
   "entities": [{ "key": "firmware-deploy", "label": "Firmware deploy to the robot",
                  "aliases": ["deploy", "flash", "firmware"] }, ...],      // canonical entity keys for extraction
-  "sourceAuthority": { "deadline": { "tasks_csv": 3, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 1, "interview": 1 }, ... },  // all 11 attributes
+  "sourceAuthority": { "deadline": { "tasks_csv": 3, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 1, "interview": 1, "finding": 1 }, ... },  // all 11 attributes
   "checklists": { "deploy_operate": [{ "key": "rollback", "label": "Rollback", "wTag": "HOW", "weight": 5,
                    "attributes": ["procedure"] }, ...], ... },            // the five kinds from section 4
   "roleTemplates": { "tech_lead": [{ "key": "R03", "title": "Book the workshop lab each term",
                      "kind": "recurring_obligation", "entities": ["lab-booking"] }] },
   "footprint": { "repeatMin": 3, "distinctWeeksMin": 2, "ownershipShare": 0.8, "windowMonths": 6 },
   "readback": [{ "key": "competition_date", "label": "Competition date", "type": "date",
-                 "entity": "competition", "attribute": "deadline" }, ...],   // exactly five
-  "uploadDefaults": { "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"] }
+                 "entity": "competition", "attribute": "deadline" }, ...],   // the critical read-back items
+  "uploadDefaults": { "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"] },   // must include the approver
+  "extraction": {                                         // optional; every string is part of the model cache key
+    "examples": { "owner": "value \"...\", statement \"...\"", ... },   // one example line per attribute
+    "entityHint": "an entry fee is entry-fee, not competition",
+    "contactExample": "Rahul Desai"
+  },
+  "demo": {                                               // optional; a pack without it is for empty workspaces only
+    "dataDir": "data/demo",                               // holds sources.json, ground_truth.json, model_cache.json
+    "today": "2026-11-11T12:00:00+05:30",                 // the fixed "now" of the demo story
+    "button": "Open the robotics-club demo", "pendingText": "Creating your private copy…",
+    "title": "College robotics club", "blurb": "...", "sampleAnswer": "..."
+  },
+  "kindLabels": { ... },                                  // optional display names for the five responsibility kinds
+  "kindOverrides": { ... },                               // optional; pins a responsibility kind per entity or card
+  "sensitivity": { "<class>": ["<role>", ...] },          // optional; owned by the confidentiality work
+  "forbiddenInCore": ["Priya", "Club President", ...]     // proper nouns the literal check must never find in core
 }
 ```
+
+Loader rules: role keys unique; exactly one approver, one successor and one leaver, all different;
+at least one restricted audience role, not the approver or the leaver; every role named in
+`contactsRoles`, `uploadDefaults.roleSet`, `roleTemplates`, `roleHolders` and `sensitivity` is a role
+of this pack; `uploadDefaults.roleSet` includes the approver; legacy `approverRole` and friends agree
+with the flags; `readback[].entity` and `roleTemplates[].entities[]` exist in `entities`;
+`extraction.examples` keys are attributes; `demo.dataDir` exists and holds `sources.json`.
+
+The extraction prompt prints `Example: <text>` after an attribute's definition only when the pack
+gives one, and the entity hint and contact example in brackets only when present. The club's values
+were moved from code byte for byte, so the club's prompts and model cache keys are unchanged
+(`tests/pack/golden.test.ts`).
 
 ## 2. Vocabulary (exact strings, used in UI and code)
 
@@ -77,8 +134,14 @@ Coverage of a check, per role: `covered` "Covered", `partial` "Partial", `missin
 `restricted` "Restricted", plus `conflicting` "Conflicting".
 
 Trust (strongest first): `from_record` "From record", `corroborated` "Corroborated",
-`leaver_said` "Leaver said", `second_hand` "Second-hand", `inferred` "Inferred",
-`ranked_options` "Ranked options". Nothing a person said is ever labelled verified.
+`leaver_said` "Leaver said", `successor_found` "Successor found", `second_hand` "Second-hand",
+`inferred` "Inferred", `ranked_options` "Ranked options". Nothing a person said is ever labelled
+verified. The ladder is written once in `src/lib/trust.ts`: `STRONG_TRUST` (covers a check, raises C)
+is the record plus "Leaver said" and "Successor found"; `RECORD_TRUST` (raises K) is the record only.
+
+Claim origin: `extracted` and `structured` are read from the record by Attest. `leaver_answer`,
+`neighbour_answer`, `trace` and `successor_finding` are written by other modules and carried across
+re-runs (`src/lib/attest/core/origins.ts`).
 
 Claim states: `active`, `superseded` "Superseded", `conflicting` "Conflicting", `dropped`.
 
@@ -88,8 +151,9 @@ Closed attribute list (11): `owner`, `status`, `deadline`, `location`, `procedur
 
 ## 3. Core types (`src/lib/types.ts`, the only shared type file)
 
-See the file itself; it is the source of truth. Summary: `RoleKey`, `SourceKind`
-(`whatsapp | slack | github | tasks_csv | markdown | ics | interview`), `Segment`, `Source`,
+See the file itself; it is the source of truth. Summary: `RoleKey` (a pack-defined string),
+`SourceKind` (`whatsapp | slack | github | tasks_csv | markdown | ics | interview | finding`),
+`SegmentKind` (`message | commit | file | task | note | event | answer | finding`), `Segment`, `Source`,
 `Person`, `Attribute`, `Trust`, `Coverage`, `Claim`, `Citation`, `Responsibility`, `CheckDef`,
 `CheckResult`, `TestRun`, `GapQuestion`, `Snapshot`, `ReadbackItem`.
 
@@ -111,7 +175,9 @@ Role set of a segment = the source's role set from the pack (notes may narrow it
 **Claims (Attest).** Extraction runs per thread, batched by role set: a model call only ever sees
 segments with one identical role set. Output schema: `{ claims: [{ entity, attribute, value,
 statement, citations: [{ segment_id, quote }] }] }`. Structured sources (task CSV, ICS) produce claims
-deterministically (no model). Verifier:
+deterministically (no model). A person's own words are never sent to extraction: segments of kind
+`answer` (gap answers) and `finding` (successor findings) are skipped, so a re-run cannot turn an
+answer into a "From record" claim quoted from the answer itself. Verifier:
 - `norm(x)` = lowercase(NFKC(x)), markdown markup removed, whitespace collapsed.
 - citation accepted iff segment exists in this workspace AND was in the batch the model saw.
 - trust `from_record` iff accepted AND quote given AND `norm(quote)` is a substring of `norm(segment)`.
@@ -131,6 +197,11 @@ t1 < t2, authority from the pack per attribute:
 2. equal authority AND (same author OR claim 2 replies to/quotes claim 1): claim 1 superseded, "updated on t2".
 3. equal authority, different authors, no link: both `conflicting`, ask a person.
 4. authority(src2) < authority(src1): both `conflicting`, newer marked "possibly outdated owner".
+Carry-over: `verify()` re-derives only the claims Attest owns (origin `extracted` or `structured`); one
+of those that a later run no longer produces is marked `dropped`. Claims of every other origin are
+written by other modules and are never dropped or rewritten by a re-run. `leaver_answer` and
+`successor_finding` claims take part in the rules above; `neighbour_answer` and `trace` claims do not
+(they are weaker than any record and never supersede or conflict with one).
 Every change is a row in `claim_events` (append-only: no UPDATE/DELETE grants). The `claims` table
 is the current projection.
 
@@ -159,17 +230,21 @@ corroborated / Σ w·s (n/a when nothing covered). UI shows B, then C, then K; n
 Scores are provisional until review; any edit triggers a re-test.
 Gap questions: rank gaps by weight × uncertainty (missing 1, conflicting 0.8, partial 0.5) × urgency
 (due within 14 days 1.5, else 1); top 10; text from a template per check kind and gap type; built only
-from claims the leaver may see. An answer becomes a segment (kind `interview`, author = leaver) and a
+from claims the leaver may see. An answer becomes a segment (segment kind `answer` in a source of
+kind `interview`, author = leaver) and a
 claim with trust `leaver_said`; it raises C but not K until a record backs it (then `corroborated`).
 The leaver may narrow an answer's role set, never widen it.
 Continuation plan: every open blocking gap needs owner, due date and the approver's risk note.
 
-**Review and Handover (Relay).** Tiers: C = sensitive (role set excludes `new_member`), conflicting,
+**Review and Handover (Relay).** Tiers: C = sensitive (the role set leaves out a role the pack flags
+`restrictedAudience`), conflicting,
 or blocking importance; A = corroborated, normal, no flags (bulk approve); B = everything else
 (approve / edit / reject one by one). Tier C needs evidence opened and a written reason.
 Snapshot: canonical JSON of approved claim statements + evidence segment IDs and versions +
-continuation plan, hashed SHA-256, versioned v1, v2, ... Approver must be `president`; `leaver` can
-never approve (server-side check + test). Release rule: B > 0 cannot be approved until every blocking
+continuation plan, hashed SHA-256, versioned v1, v2, ... Only the pack's approver role approves; its
+leaver role can never approve. Checked on the server (`checkApprover(by, roles)`) and in the database:
+a trigger on `snapshots` compares `approved_by` with the workspace's `approver_role` and
+`leaver_role`, which are copied from the pack at creation and never change. Release rule: B > 0 cannot be approved until every blocking
 gap has owner, due date and risk note; then shown everywhere as "Released with N open blocking gaps",
 never as complete.
 Compile per role: inside `withRole(workspaceId, role)` read the snapshot's approved claims; render
@@ -177,7 +252,8 @@ through fixed templates (no model rewrites handover text) in I-PASS order:
 I Workstream status (B, C, K and release state), P Project summary, A Action list (owners, dates),
 S Situation awareness and contingency (risks, dependencies, conflicts), S Synthesis by receiver
 (typed read-back). Plus a decision timeline (decision + reason claims by time), open items, and stubs.
-Stub text exactly: "N restricted items. Ask the approver (Club President)." It never shows topic,
+Stub text exactly: "N restricted items. Ask the approver (<approver label from the pack>)." ("1
+restricted item." for one; for the club: "Ask the approver (Club President)."). It never shows topic,
 compartment, owning role or any value. Its count comes from `count_withheld()` (SECURITY DEFINER,
 returns an integer only). Read-back: the successor types the five critical items from the pack; typed
 parsers normalise (dates to ISO, strings via norm); code compares exactly with the snapshot; verdict per
