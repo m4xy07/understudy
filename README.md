@@ -236,7 +236,7 @@ $env:E2E_BASE_URL="https://understudy-lyart.vercel.app"; pnpm test:e2e
 
 ## Troubleshooting
 
-Problems we hit while following these steps on a clean clone.
+Problems we hit while following these steps on clean clones, and a few more the setup can run into.
 
 | Problem | Fix |
 |---|---|
