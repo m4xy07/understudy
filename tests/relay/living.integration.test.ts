@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
-import { getLatestTestRun, listClaims } from "@/lib/db/queries";
+import { getLatestTestRun, listClaims, listResponsibilities } from "@/lib/db/queries";
 import { buildInventory, claimMeta, listBlockingGaps, runTest, savePlanItem } from "@/lib/lacuna";
 import { getExtraction, reconstruct, rerunRules, verify } from "@/lib/attest";
 import { approveSnapshot, compileHandover, listSnapshotHistory, parsePayload } from "@/lib/relay";
@@ -16,7 +16,7 @@ import { diffSnapshots, verifySnapshot } from "@/lib/relay/core/snapshot";
 import { REASONS } from "@/lib/relay/core/changes";
 import { FINDING_ERRORS } from "@/lib/relay/core/finding";
 import {
-  changeTexts, decideFinding, firstWeeks, firstWeeksTexts, listFindings, listOpenGaps, recordFinding, whatChanged,
+  changeTexts, decideFinding, firstWeeks, firstWeeksTexts, listFindings, listOpenGaps, recordFinding, retestOptions, whatChanged,
   withdrawFinding, type OpenGapRow,
 } from "@/lib/relay/living";
 import type { RoleKey, TestRun } from "@/lib/types";
@@ -76,6 +76,21 @@ afterAll(async () => {
     });
   }
   await sql.end();
+});
+
+describe("retestOptions: which responsibilities a finding re-tests", () => {
+  const resps = [
+    { id: "r1", entities: ["lab-late-access"] },
+    { id: "r2", entities: ["budget"] },
+    { id: "r3", entities: ["keys", "lab-late-access"] },
+  ];
+  it("its own responsibility and any that share an entity; the trigger names the finding", () => {
+    expect(retestOptions("fnd_1", "r1", resps)).toEqual({ trigger: "finding fnd_1", only: ["r1", "r3"] });
+    expect(retestOptions("fnd_2", "r2", resps)).toEqual({ trigger: "finding fnd_2", only: ["r2"] });
+  });
+  it("an unknown responsibility re-tests everything", () => {
+    expect(retestOptions("fnd_3", "gone", resps)).toEqual({ trigger: "finding fnd_3" });
+  });
 });
 
 describe("before the first snapshot", () => {
@@ -275,6 +290,15 @@ describe("the approver decides", () => {
     const check = after.results.find((r) => r.responsibilityId === lateGap.responsibilityId && r.checkKey === lateGap.checkKey)!;
     expect(check).toMatchObject({ coverage: "covered", bestTrust: "successor_found" });
     expect(after.provisional).toBe(false);
+    // Only the finding's responsibility (and any that share its entities) was judged again: the
+    // result of every other one is the earlier run's, unchanged.
+    const affected = new Set(retestOptions(exampleFindingId, lateGap.responsibilityId, await listResponsibilities(ws)).only);
+    expect(affected.has(lateGap.responsibilityId)).toBe(true);
+    const untouched = (r: { responsibilityId: string }) => !affected.has(r.responsibilityId);
+    expect(after.results.filter(untouched).length).toBeGreaterThan(0);
+    const core = (r: { responsibilityId: string; checkKey: string; coverage: string; claimIds: string[] }) =>
+      [r.responsibilityId, r.checkKey, r.coverage, r.claimIds];
+    expect(after.results.filter(untouched).map(core)).toEqual(v1Run.results.filter(untouched).map(core));
 
     const claim = (await listClaims(ws)).find((c) => c.id === exampleClaimId)!;
     expect(claim).toMatchObject({ review: "approved", trust: "successor_found", state: "active" });

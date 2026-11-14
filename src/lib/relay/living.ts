@@ -684,13 +684,22 @@ export type DecideResult = ActionResult & {
 };
 
 /**
- * Re-test options after a finding. The one place to change when the test can be limited to one
- * responsibility (improvement 1 adds RunTestOptions.only): pass `responsibilityId` there.
- * Until then every responsibility is re-tested, which gives the same result.
+ * Re-test options after a finding: only the responsibilities the finding can change are judged
+ * again (RunTestOptions.only); the results of every other one are copied from the latest run, so
+ * approving a finding costs one model call per tested role instead of one per responsibility.
+ * Affected = the finding's own responsibility and any other that shares an entity with it (the
+ * rules that re-run on approval work per entity, so a superseded or conflicting record can only
+ * sit under those). An unknown responsibility id falls back to the full test.
  */
-function retestOptions(findingId: string, responsibilityId: string): RunTestOptions {
-  void responsibilityId;
-  return { trigger: `finding ${findingId}` };
+export function retestOptions(
+  findingId: string, responsibilityId: string, resps: Pick<Responsibility, "id" | "entities">[],
+): RunTestOptions {
+  const trigger = `finding ${findingId}`;
+  const own = resps.find((r) => r.id === responsibilityId);
+  if (!own) return { trigger };
+  const entities = new Set(own.entities);
+  const only = resps.filter((r) => r.id === own.id || r.entities.some((e) => entities.has(e))).map((r) => r.id);
+  return { trigger, only };
 }
 
 async function loadFinding(ws: string, findingId: string): Promise<FindingRow | null> {
@@ -721,7 +730,7 @@ async function releaseAfterApproval(ws: string, actor: RoleKey, pack: ResolvedPa
   }
 
   await rerunRules(ws, actor);
-  const opts = retestOptions(f.id, f.responsibilityId);
+  const opts = retestOptions(f.id, f.responsibilityId, await listResponsibilities(ws));
   await Promise.all(pack.testRoles.map((role) => runTest(ws, role, opts)));
   const release = await getReleaseInfo(ws);
   const nextVersion = Number(latest?.version ?? 0) + 1;
