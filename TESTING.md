@@ -8,7 +8,7 @@ From a fresh clone of `main`, following the README, with no model key (2026-11-1
 
 | Command | Result |
 |---|---|
-| `pnpm test` | 77 test files, 992 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
+| `pnpm test` | 79 test files, 1025 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
 | `pnpm test:e2e` against `pnpm dev` | 5 spec files, 9 tests passed, 3.2 min, no retry |
 
 `pnpm test` prints the totals on its last lines, so these numbers are easy to check.

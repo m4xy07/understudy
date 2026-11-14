@@ -211,7 +211,7 @@ Then on the landing page press **Start empty and upload my files**. One upload i
 pnpm test
 ```
 
-Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **77 test files, 992 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
+Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **79 test files, 1025 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
 
 End-to-end tests drive a real browser through both demos, recovery, First weeks and the abuse cases. Keep `pnpm dev` running in one terminal, then in a second one:
 
