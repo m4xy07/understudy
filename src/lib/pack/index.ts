@@ -161,6 +161,8 @@ export interface PackListing {
   name: string;
   /** The demo block when the pack is offered as a demo, else null. */
   demo: DemoBlock | null;
+  /** Role labels of the pack, in pack order. */
+  roles: string[];
 }
 
 /** Every pack named in packs/index.json (the default first, then the demos in file order). */
@@ -168,7 +170,7 @@ export function listPacks(): PackListing[] {
   const index = packIndex();
   return [...new Set([index.default, ...index.demos])].map((id) => {
     const pack = getPack(id);
-    return { id, name: pack.name, demo: index.demos.includes(id) ? (pack.demo ?? null) : null };
+    return { id, name: pack.name, demo: index.demos.includes(id) ? (pack.demo ?? null) : null, roles: pack.roles.map((r) => r.label) };
   });
 }
 

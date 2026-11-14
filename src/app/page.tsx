@@ -20,7 +20,7 @@ export default function Home() {
         <p className="text-xs text-muted">Team DRACONIX · Knowledge Handover</p>
       </header>
 
-      <section className="mt-12 max-w-3xl sm:mt-20">
+      <section className="mt-12 max-w-4xl sm:mt-20">
         <p className="eyebrow">Handover, checked</p>
         <h1 className="mt-3 text-4xl leading-[1.1] sm:text-5xl">
           A handover that knows what the leaving person actually did.
@@ -31,7 +31,14 @@ export default function Home() {
         </p>
         <div className="mt-8">
           <LandingActions
-            demos={demos.map((d) => ({ packId: d.id, label: d.demo.button, pendingText: d.demo.pendingText ?? "Creating your private copy…" }))}
+            demos={demos.map((d) => ({
+              packId: d.id,
+              label: d.demo.button,
+              pendingText: d.demo.pendingText ?? "Creating your private copy…",
+              title: d.demo.title,
+              blurb: d.demo.blurb,
+              roles: d.roles,
+            }))}
           />
         </div>
         <p className="mt-4 flex items-start gap-2 text-sm text-muted">
@@ -54,12 +61,7 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto pt-16 text-xs text-muted">
-        {demos.map((d) => (
-          <p key={d.id}>
-            <span className="font-medium text-ink-2">{d.demo.title}.</span> {d.demo.blurb}
-          </p>
-        ))}
-        <p className={demos.length ? "mt-1" : undefined}>You get a private copy; nobody else sees your approvals.</p>
+        <p>{demos.length > 1 ? "Every demo is" : "The demo is"} fictional and fully synthetic. You get a private copy; nobody else sees your approvals.</p>
       </footer>
     </main>
   );
