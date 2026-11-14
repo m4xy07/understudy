@@ -1,10 +1,11 @@
-// Loads data/demo/model_cache.json (if present) into model_cache so the demo replays
-// model outputs instantly and identically. Usage: pnpm db:seed
+// Loads every demo pack's <demo.dataDir>/model_cache.json (if present) into model_cache so the
+// demos replay model outputs instantly and identically. Usage: pnpm db:seed
 import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { cacheOutputText } from "@/lib/model/client";
+import { listDemoPacks } from "@/lib/pack";
 
 interface CacheRow {
   input_hash: string;
@@ -16,13 +17,20 @@ interface CacheRow {
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set (see .env.example)");
-  const file = path.join(process.cwd(), "data", "demo", "model_cache.json");
-  if (!fs.existsSync(file)) {
-    console.log("no data/demo/model_cache.json yet; nothing to seed");
-    return;
+  // One cache file per demo pack; rows are keyed by input hash, so the files never collide.
+  const rows: CacheRow[] = [];
+  for (const p of listDemoPacks()) {
+    const file = path.join(process.cwd(), p.demo.dataDir, "model_cache.json");
+    if (!fs.existsSync(file)) {
+      console.log(`no ${path.relative(process.cwd(), file)} yet; nothing to seed for pack ${p.id}`);
+      continue;
+    }
+    const raw = JSON.parse(fs.readFileSync(file, "utf8")) as CacheRow[] | { rows: CacheRow[] };
+    const list = Array.isArray(raw) ? raw : raw.rows;
+    console.log(`pack ${p.id}: ${list.length} row(s) in ${path.relative(process.cwd(), file)}`);
+    rows.push(...list);
   }
-  const raw = JSON.parse(fs.readFileSync(file, "utf8")) as CacheRow[] | { rows: CacheRow[] };
-  const rows = Array.isArray(raw) ? raw : raw.rows;
+  if (!rows.length) return;
   const sql = postgres(url, {
     prepare: false,
     max: 1,

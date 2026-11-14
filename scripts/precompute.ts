@@ -1,14 +1,15 @@
-// Precomputes every model answer the demo needs and commits them as data/demo/model_cache.json.
+// Precomputes every model answer one pack's demo needs and writes them to <demo.dataDir>/model_cache.json.
 // One run covers every callJson the demo makes: Attest extraction and the support check, the Lacuna
-// stand-in successor for the tech lead and the new member, and the re-test after a leaver answer.
+// stand-in successor for every role the pack tests, and the re-test after a leaver answer.
 //  1. a fresh demo workspace runs the full pipeline against the live model (cold), then the leaver
 //     answers the top gap question (the re-test runs the stand-in again);
 //  2. a second fresh demo workspace does the same and must replay the pipeline 100% from the cache
 //     with identical claims, scores and questions;
-//  3. the cache rows used are merged (union by input_hash) into data/demo/model_cache.json.
+//  3. the cache rows used are merged (union by input_hash) into <demo.dataDir>/model_cache.json.
 // The re-test of the answered responsibility cannot replay: its prompt holds the new answer claim,
 // whose id comes from the answer's time. Every other responsibility replays.
-// Usage: pnpm tsx scripts/precompute.ts [--keep]
+// The sample leaver answer is the pack's demo.sampleAnswer.
+// Usage: pnpm tsx scripts/precompute.ts [--pack <id>] [--keep]
 import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
@@ -20,11 +21,14 @@ import { evaluateWorkspace } from "@/lib/attest/evaluation";
 import { answerQuestion } from "@/lib/lacuna";
 import { getLatestTestRun, listGapQuestions } from "@/lib/db/queries";
 import { modelAvailable, modelTag, startRecording, stopRecording, type CallRecord } from "@/lib/model/client";
-import type { RoleKey } from "@/lib/types";
+import { defaultPackId, getPack } from "@/lib/pack";
 
 const keep = process.argv.includes("--keep");
 const PRODUCTION_TAG = "qwen/qwen3-32b@openrouter.ai";
-const ANSWER = "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat.";
+const packArg = process.argv.indexOf("--pack");
+const pack = getPack(packArg === -1 ? defaultPackId() : (process.argv[packArg + 1] ?? ""));
+if (!pack.demo) throw new Error(`Setting pack "${pack.id}" has no demo to precompute.`);
+const ANSWER = String(pack.demo.sampleAnswer ?? "I handed it over in person. Ask the new owner.");
 
 interface CacheRow { input_hash: string; model_tag: string; output: unknown; created_at?: string }
 
@@ -39,7 +43,7 @@ const s = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 const calls = (r: CallRecord) => `${r.calls} calls (${r.cached} cached, ${r.live} live, ${r.failed} failed)`;
 
 async function runOnce(label: string, allKeys: Set<string>) {
-  const ws = (await createDemoWorkspace()).id;
+  const ws = (await createDemoWorkspace(pack.id)).id;
 
   const pipeRec = startRecording();
   const t0 = Date.now();
@@ -70,7 +74,7 @@ async function runOnce(label: string, allKeys: Set<string>) {
 
   const scores: Record<string, unknown> = {};
   const notes: string[] = [];
-  for (const role of ["tech_lead", "new_member"] as RoleKey[]) {
+  for (const role of pack.testRoles) {
     const t = await getLatestTestRun(ws, role);
     scores[role] = t?.scores ?? null;
     const [m] = await db()`SELECT model_used, model_note FROM test_runs WHERE workspace_id = ${ws} AND role = ${role} ORDER BY created_at DESC LIMIT 1`;
@@ -88,7 +92,7 @@ async function runOnce(label: string, allKeys: Set<string>) {
   const answerRec = startRecording();
   const t1 = Date.now();
   const [q] = (await listGapQuestions(ws)).filter((x) => !x.answeredClaimId);
-  const ans = q ? await answerQuestion(ws, q.id, ANSWER, "leaver") : null;
+  const ans = q ? await answerQuestion(ws, q.id, ANSWER, pack.leaverRole) : null;
   const answerMs = Date.now() - t1;
   stopRecording();
   console.log(
@@ -143,7 +147,7 @@ async function main() {
   // Union by input_hash: rows already in the file are kept; every row this run used is added.
   const rows = await db()<CacheRow[]>`
     SELECT input_hash, model_tag, output, created_at FROM model_cache WHERE input_hash = ANY(${[...keys]}::text[])`;
-  const file = path.join(process.cwd(), "data", "demo", "model_cache.json");
+  const file = path.join(process.cwd(), pack.demo!.dataDir, "model_cache.json");
   const existing: CacheRow[] = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
   const byHash = new Map(existing.map((x) => [x.input_hash, x]));
   for (const r2 of rows) {

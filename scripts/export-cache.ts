@@ -1,9 +1,12 @@
-// Dumps the model_cache table to data/demo/model_cache.json (sorted, stable) so the
-// precomputed demo outputs can be committed and replayed by pnpm db:seed.
+// Dumps the model_cache table to one pack's <demo.dataDir>/model_cache.json (sorted, stable) so
+// the precomputed demo outputs can be committed and replayed by pnpm db:seed.
+// Usage: pnpm db:export-cache [--pack <id>]   (scripts/precompute.ts is the normal way: it
+// writes only the rows that pack's demo used)
 import "./load-env";
 import fs from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
+import { defaultPackId, getPack } from "@/lib/pack";
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -25,7 +28,10 @@ async function main() {
       output: r.output,
       created_at: r.created_at.toISOString(),
     }));
-    const file = path.join(process.cwd(), "data", "demo", "model_cache.json");
+    const packArg = process.argv.indexOf("--pack");
+    const pack = getPack(packArg === -1 ? defaultPackId() : (process.argv[packArg + 1] ?? ""));
+    if (!pack.demo) throw new Error(`Setting pack "${pack.id}" has no demo.`);
+    const file = path.join(process.cwd(), pack.demo.dataDir, "model_cache.json");
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(out, null, 1) + "\n");
     console.log(`wrote ${out.length} row(s) to ${path.relative(process.cwd(), file)}`);

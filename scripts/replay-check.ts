@@ -1,11 +1,12 @@
 // Replays a fresh demo workspace against the committed model cache with the live model off,
 // and prints a fingerprint of what came out (claims, scores, questions, cache hits).
 // Two runs of this script on two commits must print the same fingerprint when no prompt changed.
-// Usage: pnpm db:seed && MODEL_DISABLED=1 pnpm tsx scripts/replay-check.ts [--out file.json] [--keep]
+// Usage: pnpm db:seed && MODEL_DISABLED=1 pnpm tsx scripts/replay-check.ts [--pack id] [--out file.json] [--keep]
 import "./load-env";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { db } from "@/lib/db/client";
+import { defaultPackId } from "@/lib/pack";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
 import { executeRun, startRun } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
@@ -20,7 +21,7 @@ const sha = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).diges
 
 async function main() {
   process.env.MODEL_DISABLED = "1";
-  const ws = (await createDemoWorkspace()).id;
+  const ws = (await createDemoWorkspace(arg("--pack") ?? defaultPackId())).id;
   const rec = startRecording();
   const { runId } = await startRun(ws);
   const run = await executeRun(ws, runId);
