@@ -40,6 +40,12 @@ export interface Workspace {
   kind: "demo" | "empty";
   packId: string;
   createdAt: string;
+  /** Recovery switch (0007): the approver marked the leaver as unreachable. */
+  leaverUnreachable: boolean;
+  leaverUnreachableAt: string | null;
+  leaverUnreachableNote: string | null;
+  /** The successor run that was latest when the switch went on. */
+  recoveryBaselineRun: string | null;
 }
 
 export function toWorkspace(r: Row): Workspace {
@@ -49,6 +55,10 @@ export function toWorkspace(r: Row): Workspace {
     kind: r.kind as Workspace["kind"],
     packId: String(r.pack_id),
     createdAt: iso(r.created_at),
+    leaverUnreachable: Boolean(r.leaver_unreachable),
+    leaverUnreachableAt: isoOrNull(r.leaver_unreachable_at),
+    leaverUnreachableNote: (r.leaver_unreachable_note as string | null) ?? null,
+    recoveryBaselineRun: (r.recovery_baseline_run as string | null) ?? null,
   };
 }
 
