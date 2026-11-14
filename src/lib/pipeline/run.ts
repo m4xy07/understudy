@@ -260,13 +260,18 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
     },
     verify: async () => {
       const v = await verify(ws);
-      return { counts: { ...v } };
+      // "dropped" alone read as one number next to the Claims page's own count: name the two parts.
+      const { dropped: _total, ...counts } = v;
+      void _total;
+      return { counts };
     },
     test: async () => {
       const inv = await buildInventory(ws);
       const counts: Record<string, number> = { responsibilities: inv.responsibilities };
       for (const role of roles) {
-        const t = await runTest(ws, role);
+        // A re-run (after a widened message, a new upload) judges everything again but keeps a
+        // check's earlier, better result while the claims it rested on are still live and visible.
+        const t = await runTest(ws, role, { keepEarlier: true });
         counts[`B_${role}`] = t.scores.b;
         counts[`C_${role}`] = Math.round(t.scores.c * 100);
       }

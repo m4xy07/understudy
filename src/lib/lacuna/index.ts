@@ -34,7 +34,9 @@ import {
 import type { ModelCall } from "./core/model";
 import { answerToDrafts, questionText, rankGaps } from "./core/questions";
 import { namedOwnersFromPlan, openBlockingGaps, releaseState, type ReleaseState } from "./core/plan";
-import { dropFinishedFootprint, leaverName, leaverPersonIds, markPartlyRestricted, mergeJudgements, toLacunaPack } from "./adapt";
+import {
+  dropFinishedFootprint, leaverName, leaverPersonIds, loweredChecks, markPartlyRestricted, mergeJudgements, standDirectAnswers, toLacunaPack,
+} from "./adapt";
 
 export { toLacunaPack, leaverPersonIds, leaverName } from "./adapt";
 export type { ReleaseState } from "./core/plan";
@@ -233,6 +235,13 @@ export interface RunTestOptions {
    * compare against that moment instead of the start of this run.
    */
   refuseStale?: boolean | string;
+  /**
+   * A full run that follows an action which adds or reveals evidence (an answer, a widened message,
+   * a pipeline re-run): every responsibility is judged again, and a check keeps its earlier, better
+   * result while every claim it rested on is still live and visible, exactly as with `only`.
+   * So such an action cannot make a score worse unless a claim was lost or a new conflict appeared.
+   */
+  keepEarlier?: boolean;
 }
 
 /** Thrown by runTest({ refuseStale: true }) when its inputs changed while it ran. Nothing was stored. */
@@ -259,6 +268,25 @@ export async function testInputFingerprint(ws: string): Promise<string> {
   return `${String(row?.claims ?? "")}.${String(row?.plan ?? "")}.${String(row?.resps ?? "")}`;
 }
 
+/**
+ * The claims given as a direct answer to a check: the leaver's answer to its gap question and a
+ * colleague's answer to its recovery question. Gap key -> claim ids (see standDirectAnswers).
+ */
+export async function directAnswers(ws: string): Promise<Map<string, Set<string>>> {
+  const rows = await db()`
+    SELECT responsibility_id, check_key, answered_claim_id AS claim_id FROM gap_questions
+    WHERE workspace_id = ${ws} AND answered_claim_id IS NOT NULL
+    UNION
+    SELECT responsibility_id, check_key, claim_id FROM recovery_steps
+    WHERE workspace_id = ${ws} AND kind = 'neighbour' AND claim_id IS NOT NULL`;
+  const out = new Map<string, Set<string>>();
+  for (const r of rows) {
+    const key = gapKey(String(r.responsibility_id), String(r.check_key));
+    out.set(key, (out.get(key) ?? new Set<string>()).add(String(r.claim_id)));
+  }
+  return out;
+}
+
 /** Spend-cap refusals and calls left for a later slice: the model was not asked, by our own limits. */
 const BUDGET_ERROR = /live model budget|left for later/i;
 
@@ -282,11 +310,12 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
   const lpack = lacunaPack(pack);
   const startedOn = typeof opts.refuseStale === "string" ? opts.refuseStale
     : opts.refuseStale ? await testInputFingerprint(ws) : null;
-  const [resps, visible, meta, plan] = await Promise.all([
+  const [resps, visible, meta, plan, direct] = await Promise.all([
     listResponsibilities(ws),
     visibleClaims(ws, role),
     claimMeta(ws, role),
     listPlanItems(ws),
+    directAnswers(ws),
   ]);
   // A successor finding counts only once the approver has let it in (approved or edited).
   const usable: VisibleClaim[] = visible.filter((c) => (c.state === "active" || c.state === "conflicting")
@@ -295,10 +324,11 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
 
   const today = await workspaceNow(ws);
   // `only`: re-judge these responsibilities (and any the earlier run does not know), copy the rest.
-  const prev = opts.only && opts.only.length > 0 ? await getLatestTestRun(ws, role) : null;
+  const narrowed = !!opts.only && opts.only.length > 0;
+  const prev = narrowed || opts.keepEarlier ? await getLatestTestRun(ws, role) : null;
   const prevResps = new Set((prev?.results ?? []).map((r) => r.responsibilityId));
   const allResps = resps;
-  const judged = prev ? allResps.filter((r) => opts.only!.includes(r.id) || !prevResps.has(r.id)) : allResps;
+  const judged = prev && narrowed ? allResps.filter((r) => opts.only!.includes(r.id) || !prevResps.has(r.id)) : allResps;
   const det = await runStandin({ resps: judged, role, visibleClaims: usable, allClaimsMeta: meta, pack: lpack, today });
   let results = det.results;
   let modelUsed = false;
@@ -315,7 +345,8 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     const modelResults = perResp.filter((p) => p.modelUsed).flatMap((p) => p.results);
     const errors = perResp.flatMap((p) => p.errors);
     modelUsed = modelResults.length > 0;
-    results = mergeJudgements(modelResults, det.results);
+    // A direct answer to a check stands at the record's reading of it (see standDirectAnswers).
+    results = standDirectAnswers(mergeJudgements(modelResults, det.results), det.results, direct);
     if (errors.length) modelNote = standinErrorNote(errors);
   }
 
@@ -353,6 +384,20 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
       judgedIds.has(r.id) ? results.filter((x) => x.responsibilityId === r.id) : prev.results.filter((x) => x.responsibilityId === r.id));
   }
   results = markPartlyRestricted(results, resps, checks, meta, role);
+  if (prev && opts.rejudge) {
+    // The model re-check may lower the first, rule-based reading. When it does, the run says which
+    // checks and why, so a score that moved without a click is explained on the Test page.
+    const lowered = loweredChecks(prev.results, results);
+    if (lowered.length > 0) {
+      const respKey = new Map(resps.map((r) => [r.id, r.key]));
+      const label = (r: CheckResult) => checks[r.responsibilityId]?.find((c) => c.key === r.checkKey)?.label ?? r.checkKey;
+      const list = lowered.slice(0, 3).map((r) =>
+        `${respKey.get(r.responsibilityId) ?? ""} ${label(r)} is now ${r.coverage}${r.note ? ` (${r.note.replace(/[.\s]+$/, "")})` : ""}`.trim());
+      const more = lowered.length > 3 ? ` and ${lowered.length - 3} more` : "";
+      const why = `The model re-check read ${lowered.length === 1 ? "one check" : `${lowered.length} checks`} lower than the first reading: ${list.join("; ")}${more}.`;
+      modelNote = modelNote ? `${modelNote} ${why}` : why;
+    }
+  }
   const named = namedOwnersFromPlan(openBlockingGaps(results, checks), plan);
   const scores = computeScores(results, checks, named);
   const provisional = await isProvisional(ws);
@@ -538,7 +583,8 @@ export async function answerQuestion(
   const successor = pack.successorRole as RoleKey;
   if (actor !== leaverRole) return { ok: false, error: "Only the leaver can answer gap questions." };
   // Recovery: while the approver has marked the leaver as unreachable, the leaver's answer boxes are closed.
-  if ((await getWorkspace(ws))?.leaverUnreachable) {
+  const workspace = await getWorkspace(ws);
+  if (workspace?.leaverUnreachable) {
     return {
       ok: false,
       error: `${leaverName(pack) || "The leaver"} is marked as unreachable. ${roleLabel(pack.approverRole, pack)} can switch this off.`,
@@ -573,7 +619,13 @@ export async function answerQuestion(
   const leaverIds = leaverPersonIds(people, leaverName(pack), pack.leaverPerson.aliases);
   // No person record for the leaver (an uploaded workspace): no author id; the role is in the audit row.
   const leaverId = people.find((p) => leaverIds.includes(p.id) && p.emailHmac)?.id ?? leaverIds[0] ?? null;
-  const ts = new Date().toISOString();
+  // The demo's sample answer gets a fixed time (the demo's "today"), so its claim id is the same in
+  // every demo workspace and the re-tests that follow it (the model re-check, a re-run after a
+  // widened message, the recovery traces) replay from the model cache instead of calling the model
+  // live each time. The example finding does the same. A typed answer uses the real time.
+  const sample = workspace?.kind === "demo" ? String(pack.demo?.sampleAnswer ?? "").trim() : "";
+  const fixed = sample && text === sample ? new Date(pack.demo!.today) : null;
+  const ts = fixed && !Number.isNaN(fixed.getTime()) ? fixed.toISOString() : new Date().toISOString();
   const { segment, claim: draft } = answerToDrafts(
     maskedText,
     { id: q.id, text: q.text, resp, check, roleSet: base, entityLabel: entityLabel(resp.entities[0] ?? "", pack) || resp.title },
@@ -619,7 +671,7 @@ export async function answerQuestion(
   try {
     const trigger = `answer ${questionId}`;
     // Re-test as the successor (the score shown) and as every other role the pack tests.
-    const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger })));
+    const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger, keepEarlier: true })));
     const checks = checksByResp(await listResponsibilities(ws), lpack);
     const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
     await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;

@@ -145,6 +145,40 @@ export function mergeJudgements(model: readonly CheckResult[], deterministic: re
   });
 }
 
+/**
+ * A person's direct answer to the question asked for a check stands at the record's reading of it.
+ * The stand-in model judges whether evidence found in the record is enough; it does not overrule
+ * what a named person answered when asked exactly this (their word keeps its label, K does not
+ * count it, and the approver can still reject it in review, which takes it out of the test).
+ * Without this the first, rule-based reading closed a gap and the model's re-check seconds later
+ * reopened it, on the same answer.
+ * `direct`: gap key ("<responsibilityId>|<checkKey>") -> ids of the claims given as its answer.
+ */
+export function standDirectAnswers(
+  merged: readonly CheckResult[],
+  deterministic: readonly CheckResult[],
+  direct: ReadonlyMap<string, ReadonlySet<string>>,
+): CheckResult[] {
+  if (direct.size === 0) return [...merged];
+  const byKey = new Map(deterministic.map((r) => [`${r.responsibilityId}|${r.checkKey}`, r]));
+  return merged.map((r) => {
+    const key = `${r.responsibilityId}|${r.checkKey}`;
+    const d = byKey.get(key);
+    const ids = direct.get(key);
+    if (!d || !ids || COVERAGE_RANK[d.coverage] <= COVERAGE_RANK[r.coverage]) return r;
+    return d.claimIds.some((id) => ids.has(id)) ? d : r;
+  });
+}
+
+/** Checks whose coverage is lower in `after` than in `before` (same responsibility and check). */
+export function loweredChecks(before: readonly CheckResult[], after: readonly CheckResult[]): CheckResult[] {
+  const was = new Map(before.map((r) => [`${r.responsibilityId}|${r.checkKey}`, r]));
+  return after.filter((r) => {
+    const b = was.get(`${r.responsibilityId}|${r.checkKey}`);
+    return !!b && COVERAGE_RANK[r.coverage] < COVERAGE_RANK[b.coverage];
+  });
+}
+
 export const PARTLY_RESTRICTED_NOTE = "Part of this is visible only to other roles";
 
 /**
