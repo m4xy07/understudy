@@ -7,6 +7,9 @@ import { isUuid } from "@/lib/db/withRole";
 import { viewingRole } from "@/lib/session";
 import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { buildQuestions, confirmInventory, runTest, savePlanItem } from "@/lib/lacuna";
+import { runWithModelContext } from "@/lib/model/client";
+import { exclusive, spendContext } from "@/lib/pipeline/guard";
+import { busyMessage, planProblem } from "@/lib/pipeline/once";
 import type { RoleKey } from "@/lib/types";
 
 export interface ActionState {
@@ -35,15 +38,18 @@ export async function rerunTestAction(_prev: ActionState, form: FormData): Promi
   const successor = pack.successorRole;
   const asked = String(form.get("target") ?? "");
   const target: RoleKey = isRoleOf(pack, asked) ? asked : successor;
-  try {
-    const t = await runTest(ws, target, { trigger: "re-run" });
-    if (target !== successor) await runTest(ws, successor, { trigger: "re-run" });
-    await buildQuestions(ws);
-    refresh();
-    return done(`Re-tested: B ${t.scores.b} · C ${pct(t.scores.c)} · K ${pct(t.scores.k)}.`);
-  } catch (err) {
-    return fail(`The test could not run: ${err instanceof Error ? err.message : String(err)}`);
-  }
+  // One re-test at a time per workspace; live model calls count against the workspace's budget.
+  return exclusive(ws, "retest", () => runWithModelContext(spendContext(ws), async () => {
+    try {
+      const t = await runTest(ws, target, { trigger: "re-run" });
+      if (target !== successor) await runTest(ws, successor, { trigger: "re-run" });
+      await buildQuestions(ws);
+      refresh();
+      return done(`Re-tested: B ${t.scores.b} · C ${pct(t.scores.c)} · K ${pct(t.scores.k)}.`);
+    } catch (err) {
+      return fail(`The test could not run: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }), fail(busyMessage("A re-test")), 180_000);
 }
 
 export async function confirmInventoryAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -62,7 +68,8 @@ export async function savePlanItemAction(_prev: ActionState, form: FormData): Pr
   const owner = String(form.get("owner") ?? "").trim();
   const dueDate = String(form.get("dueDate") ?? "").trim();
   const riskNote = String(form.get("riskNote") ?? "").trim();
-  if (!owner || !dueDate || !riskNote) return fail("Owner, due date and risk note are all required.");
+  const bad = planProblem(owner, dueDate, riskNote);
+  if (bad) return fail(bad);
   const res = await savePlanItem(ws, {
     responsibilityId: String(form.get("responsibilityId") ?? ""),
     checkKey: String(form.get("checkKey") ?? ""),

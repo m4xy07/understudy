@@ -7,7 +7,9 @@ import { isUuid } from "@/lib/db/withRole";
 import { viewingRole } from "@/lib/session";
 import { getWorkspacePack } from "@/lib/pack";
 import { runTest, savePlanItem } from "@/lib/lacuna";
-import { approveSnapshot, bulkApprove, reviewClaim } from "@/lib/relay";
+import { bulkApprove, reviewClaim } from "@/lib/relay";
+import { exclusive } from "@/lib/pipeline/guard";
+import { approveSnapshotOnce, busyMessage, planProblem, reviewAlreadyDone, reviewTextProblem } from "@/lib/pipeline/once";
 import type { ActionState } from "@/components/ActionForm";
 
 const fail = (message: string): ActionState => ({ ok: false, message });
@@ -25,11 +27,16 @@ export async function reviewClaimAction(_prev: ActionState, form: FormData): Pro
   const role = await viewingRole(ws);
   const decision = String(form.get("decision") ?? "");
   if (decision !== "approved" && decision !== "rejected" && decision !== "edited") return fail("Unknown decision.");
-  const res = await reviewClaim(ws, String(form.get("claimId") ?? ""), decision, role, {
-    note: String(form.get("note") ?? ""),
-    statement: String(form.get("statement") ?? ""),
-    evidenceOpened: form.get("evidenceOpened") === "true",
-  });
+  const claimId = String(form.get("claimId") ?? "");
+  const [note, statement] = [String(form.get("note") ?? ""), String(form.get("statement") ?? "")];
+  const tooLong = reviewTextProblem(note, statement);
+  if (tooLong) return fail(tooLong);
+  // A repeat (second click, second tab, stale page) changes nothing and says so.
+  const already = await reviewAlreadyDone(ws, claimId, decision);
+  if (already) return done(already);
+  const res = await exclusive(ws, `review:${claimId}`, () => reviewClaim(ws, claimId, decision, role, {
+    note, statement, evidenceOpened: form.get("evidenceOpened") === "true",
+  }), { ok: false as const, error: busyMessage("This decision") });
   if (!res.ok) return fail(res.error);
   if (decision === "edited") {
     // Any edit triggers a re-test (scores stay provisional until the snapshot is approved).
@@ -58,7 +65,8 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
   const owner = String(form.get("owner") ?? "").trim();
   const dueDate = String(form.get("dueDate") ?? "").trim();
   const riskNote = String(form.get("riskNote") ?? "").trim();
-  if (!owner || !dueDate || !riskNote) return fail("Owner, due date and risk note are all required.");
+  const bad = planProblem(owner, dueDate, riskNote);
+  if (bad) return fail(bad);
   const res = await savePlanItem(ws, {
     responsibilityId: String(form.get("responsibilityId") ?? ""),
     checkKey: String(form.get("checkKey") ?? ""),
@@ -72,9 +80,12 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
 export async function approveSnapshotAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await approveSnapshot(ws, await viewingRole(ws));
+  const res = await approveSnapshotOnce(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
+  if (res.unchanged) {
+    return done(`Snapshot v${res.unchanged.version} already covers exactly this state (SHA-256 ${res.unchanged.hash.slice(0, 12)}…). No new version was created.`);
+  }
   const s = res.snapshot!;
   return done(`Snapshot v${s.version} approved · SHA-256 ${s.hash.slice(0, 12)}… · ${res.label}.`);
 }
