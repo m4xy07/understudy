@@ -48,9 +48,14 @@ export interface ExtractionPack {
  * by code (./consolidate).
  */
 export type PromptVariant = "v2" | "r2";
-export const DEFAULT_PROMPT_VARIANT: PromptVariant = "v2";
+/**
+ * Round 3 measured "v2" on the club demo (docs/EVALUATION.md): better recall and conflicts than
+ * "r2", but it found 2 of 4 supersessions where the acceptance rule asks for 3, so it is not the
+ * default. Select it with ATTEST_PROMPT=v2 or the pack's `extraction.prompt`.
+ */
+export const DEFAULT_PROMPT_VARIANT: PromptVariant = "r2";
 
-/** The variant in force: the environment value first, then the pack's, then the default. */
+/** The variant in force: the environment value first, then the pack's, then DEFAULT_PROMPT_VARIANT. */
 export function resolvePromptVariant(envValue?: string | null, packValue?: string | null): PromptVariant {
   for (const v of [envValue, packValue]) {
     const t = (v ?? "").trim().toLowerCase();

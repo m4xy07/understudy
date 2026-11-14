@@ -4,6 +4,7 @@ import { extractClaims } from "@/lib/attest/core/extract";
 import { CANDIDATE_GUIDE, SEGMENTS_END, buildSystemPrompt, buildUserPrompt, renderSegment } from "@/lib/attest/core/prompts";
 import {
   ATTRIBUTES,
+  DEFAULT_PROMPT_VARIANT,
   EXTRACTION_JSON_SCHEMA_NAME,
   EXTRACTION_V2_JSON_SCHEMA_NAME,
   STANCES,
@@ -17,12 +18,13 @@ import { getPack, listPacks } from "@/lib/pack";
 import { ALL, at, fakeModel, pack, seg } from "./fixtures/segments";
 
 describe("variant switch", () => {
-  it("the environment wins, then the pack, then v2", () => {
-    expect(resolvePromptVariant(undefined, undefined)).toBe("v2");
+  it("the environment wins, then the pack, then the default", () => {
+    expect(resolvePromptVariant(undefined, undefined)).toBe(DEFAULT_PROMPT_VARIANT);
     expect(resolvePromptVariant("r2", "v2")).toBe("r2");
     expect(resolvePromptVariant("", "r2")).toBe("r2");
     expect(resolvePromptVariant(" V2 ", "r2")).toBe("v2");
-    expect(resolvePromptVariant("nonsense", null)).toBe("v2");
+    expect(resolvePromptVariant("nonsense", null)).toBe(DEFAULT_PROMPT_VARIANT);
+    expect(resolvePromptVariant(null, "v2")).toBe("v2");
   });
 
   it("each variant has its own schema name, so their cached answers never mix", () => {

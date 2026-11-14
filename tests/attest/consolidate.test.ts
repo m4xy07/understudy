@@ -196,6 +196,21 @@ describe("rule: bind dates and places to named events", () => {
     expect(r.firings.find((f) => f.rule === "bind_event")?.detail).toContain("never names watering");
   });
 
+  it("an event that shares a word with an event naming the entity is the entity's own event", () => {
+    const s1 = seg({ text: "Next walk-round of the open day site is on 20 March." });
+    const s2 = seg({ text: "Update: the open day walk-round moved to 27 March." });
+    const r = run(
+      [
+        draft("open-day", "deadline", "2026-03-20", [[s1, "Next walk-round of the open day site is on 20 March"]], { event: "walk-round of the open day site" }),
+        draft("open-day", "deadline", "2026-03-27", [[s2, "walk-round moved to 27 March"]], { event: "walk-round" }),
+      ],
+      [s1, s2],
+    );
+    // Both stay bare, so the rules can see the second as an update of the first.
+    expect(r.drafts.map((d) => d.value)).toEqual(["2026-03-20", "2026-03-27"]);
+    expect(r.counts.bind_event).toBe(0);
+  });
+
   it("an owner named in a text about the entity stays", () => {
     const s = seg({ text: "Sam looks after the pump and the hoses." });
     const r = run([draft("watering", "owner", "Sam", [[s, "Sam looks after the pump"]])], [s]);
@@ -241,6 +256,25 @@ describe("rule: fold considered and rejected options into one claim", () => {
     const s = seg({ text: "The open day will be in the car park or the old orchard." });
     const r = run([draft("open-day", "location", "the car park or the old orchard", [[s, "in the car park or the old orchard"]])], [s]);
     expect(r.drafts.map((d) => [d.attribute, d.value])).toEqual([["decision", "Options: the car park or the old orchard"]]);
+  });
+
+  it("a hedged quote, or a value already listed as an option, is not settled", () => {
+    const s1 = seg({ text: "Open day place is still not final. The orchard is preferred." });
+    const s2 = seg({ text: "Yes, and the orchard has shade for the open day stalls." });
+    const s3 = seg({ text: "The open day is at the allotments this year." });
+    const r = run(
+      [
+        draft("open-day", "location", "the orchard", [[s1, "place is still not final. The orchard is preferred"]]),
+        draft("open-day", "location", "the orchard", [[s2, "the orchard has shade"]], { batchId: "batch_2" }),
+        draft("open-day", "location", "the allotments", [[s3, "The open day is at the allotments"]]),
+      ],
+      [s1, s2, s3],
+    );
+    expect(r.drafts.map((d) => [d.attribute, d.value])).toEqual([
+      ["decision", "Options: the orchard"],
+      ["location", "the allotments"],
+    ]);
+    expect(r.drafts[0].citations).toHaveLength(2);
   });
 
   it("a decided value is never folded, and options never cross role sets", () => {

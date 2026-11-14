@@ -203,6 +203,8 @@ function timeOf(ts: string): number {
 }
 
 interface Ctx {
+  /** Per entity and attribute: the entity's name words plus the words of every event tied to them. */
+  ownWords: Map<string, Set<string>>;
   entities: (PackEntity & { partOf?: string })[];
   byKey: Map<string, PackEntity & { partOf?: string }>;
   segs: Map<string, Segment>;
@@ -342,7 +344,7 @@ function bindEvent(d: DraftClaim, ctx: Ctx, firings: ConsolidationFiring[]): Dra
   const what = d.attribute === "deadline" ? "date" : d.attribute === "location" ? "place" : "owner";
   const event = d.attribute === "owner" ? "" : (d.event ?? "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
   const words = contentTokens(event);
-  const own = new Set(namesOf(chosen).flatMap(contentTokens));
+  const own = ctx.ownWords.get(`${d.entity}\u0000${d.attribute}`) ?? new Set(namesOf(chosen).flatMap(contentTokens));
   if (words.some((w) => own.has(w))) return d;
 
   const quote = quotesOf(d);
@@ -387,6 +389,38 @@ function bindEvent(d: DraftClaim, ctx: Ctx, firings: ConsolidationFiring[]): Dra
   return { ...d, entity: target, entityRaw: null };
 }
 
+/**
+ * The words that mean "this entity's own event", per entity and attribute: the words of its key,
+ * label and aliases, plus the words of every candidate event that shares a word with them, to a
+ * fixed point. "check-in with Sam" names the entity through "Sam"; a later "check-in" is then the
+ * same event, not a new one.
+ */
+function ownEventWords(drafts: DraftClaim[], ctx: Ctx): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  const events = new Map<string, string[][]>();
+  for (const d of drafts) {
+    if (!isCandidate(d) || !d.event || (d.attribute !== "deadline" && d.attribute !== "location")) continue;
+    const chosen = ctx.byKey.get(d.entity);
+    if (!chosen) continue;
+    const key = `${d.entity}\u0000${d.attribute}`;
+    if (!out.has(key)) out.set(key, new Set(namesOf(chosen).flatMap(contentTokens)));
+    const words = contentTokens(d.event);
+    if (words.length) events.set(key, [...(events.get(key) ?? []), words]);
+  }
+  for (const [key, own] of out) {
+    const list = events.get(key) ?? [];
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (const words of list) {
+        if (!words.some((w) => own.has(w)) || words.every((w) => own.has(w))) continue;
+        for (const w of words) own.add(w);
+        changed = true;
+      }
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Rule 3: fold considered and rejected options into one claim
 
@@ -402,6 +436,14 @@ function listsAlternatives(d: DraftClaim): boolean {
   if (d.attribute === "decision") return false;
   if (d.attribute === "deadline" && !DATE_VALUE.test(d.value.trim())) return false;
   return /\S\s+or\s+\S/i.test(baseValue(d.value));
+}
+
+const HEDGE =
+  /\b(not (?:yet )?(?:final|decided|confirmed|settled|fixed)|undecided|tentative(?:ly)?|preferred|prefer|proposed?|proposal|to be (?:confirmed|decided)|tbc|tbd|might|maybe|shortlist(?:ed)?)\b/i;
+
+/** The cited quote itself says the matter is open ("not final", "preferred", "to be confirmed"). */
+function hedged(d: DraftClaim): boolean {
+  return d.attribute !== "decision" && HEDGE.test(quotesOf(d));
 }
 
 function distinctValues(ds: DraftClaim[]): string[] {
@@ -423,9 +465,26 @@ function distinctValues(ds: DraftClaim[]): string[] {
 function foldOptions(drafts: DraftClaim[], ctx: Ctx, firings: ConsolidationFiring[]): DraftClaim[] {
   const groups = new Map<string, DraftClaim[]>();
   const keep: (DraftClaim | { fold: string })[] = [];
+  const open = (d: DraftClaim) =>
+    isCandidate(d) && FOLDED.includes(d.attribute) && d.entity !== OTHER_ENTITY &&
+    (stanceOf(d) !== "decided" || listsAlternatives(d) || hedged(d));
+  // Values already under consideration, per entity and attribute: the same value stated flatly
+  // elsewhere ("Hall 2 has the better power") is still an option, not the settled answer.
+  const optionValues = new Map<string, string[]>();
   for (const d of drafts) {
-    const foldable =
-      isCandidate(d) && FOLDED.includes(d.attribute) && d.entity !== OTHER_ENTITY && (stanceOf(d) !== "decided" || listsAlternatives(d));
+    if (!open(d) || d.attribute === "decision") continue;
+    const key = `${d.entity}\u0000${d.attribute}`;
+    optionValues.set(key, [...(optionValues.get(key) ?? []), flat(baseValue(d.value))]);
+  }
+  const listed = (d: DraftClaim) => {
+    if (!isCandidate(d) || d.attribute === "decision" || !FOLDED.includes(d.attribute)) return false;
+    const v = flat(baseValue(d.value));
+    if (v.length < 3) return false;
+    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(v)}(?![\\p{L}\\p{N}])`, "u");
+    return (optionValues.get(`${d.entity}\u0000${d.attribute}`) ?? []).some((o) => re.test(o));
+  };
+  for (const d of drafts) {
+    const foldable = open(d) || (d.entity !== OTHER_ENTITY && listed(d));
     if (!foldable) {
       keep.push(d);
       continue;
@@ -597,6 +656,7 @@ export function consolidate(drafts: DraftClaim[], opts: ConsolidateOptions): Con
     byKey: new Map(opts.entities.map((e) => [e.key, e])),
     segs: opts.segmentsById,
     roleOrder: opts.roleOrder,
+    ownWords: new Map(),
   };
   const firings: ConsolidationFiring[] = [];
   const echoes = new Set((opts.exampleValues ?? []).map(flat).filter(Boolean));
@@ -612,6 +672,7 @@ export function consolidate(drafts: DraftClaim[], opts: ConsolidateOptions): Con
     return false;
   });
   out = out.map((d) => refile(d, ctx, firings));
+  ctx.ownWords = ownEventWords(out, ctx);
   out = out.map((d) => bindEvent(d, ctx, firings));
   out = foldOptions(out, ctx, firings);
   out = mergeDuplicates(out, ctx, firings);

@@ -67,9 +67,9 @@ export interface ReconstructOptions {
   /** false: structured sources only. */
   useModel?: boolean;
   concurrency?: number;
-  /** Default: the environment (ATTEST_PROMPT), then the pack (extraction.prompt), then "v2". */
+  /** Default: the environment (ATTEST_PROMPT), then the pack (extraction.prompt), then DEFAULT_PROMPT_VARIANT. */
   variant?: PromptVariant;
-  /** Run the consolidation pass. Default: on for "v2", off for "r2" (ATTEST_CONSOLIDATE=1|0 overrides). */
+  /** Run the consolidation pass. Default: on for both prompts (ATTEST_CONSOLIDATE=0 turns it off). */
   consolidate?: boolean;
 }
 
@@ -78,11 +78,10 @@ export function promptVariantFor(pack: Pick<ExtractionPack, "prompt">): PromptVa
   return resolvePromptVariant(process.env.ATTEST_PROMPT, pack.prompt);
 }
 
-function consolidationOn(variant: PromptVariant): boolean {
+/** Consolidation runs after either prompt; ATTEST_CONSOLIDATE=0 gives the bare drafts of the prompt. */
+function consolidationOn(): boolean {
   const v = (process.env.ATTEST_CONSOLIDATE ?? "").trim().toLowerCase();
-  if (v === "1" || v === "true" || v === "on") return true;
-  if (v === "0" || v === "false" || v === "off") return false;
-  return variant === "v2";
+  return !(v === "0" || v === "false" || v === "off");
 }
 
 export interface VerifyOptions {
@@ -281,7 +280,7 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
 
   const normalised = normaliseDrafts([...structured, ...modelDrafts], segsById);
   // Second pass (code only): tidy the candidates before the verifier and the rules see them.
-  const pass2 = (opts.consolidate ?? consolidationOn(variant))
+  const pass2 = (opts.consolidate ?? consolidationOn())
     ? consolidate(normalised, {
         entities: xpack.entities,
         segmentsById: segsById,
