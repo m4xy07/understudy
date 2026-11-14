@@ -35,6 +35,14 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 - A counter of dropped claims per source.
 - Optional: the **Evaluation** button shows how the claims compare with the planted ground truth.
 
+**Claim history.** Every claim row has a **History** link.
+**Do:** on **Reconstruct**, set the State filter to **superseded**, press **Filter**, then press **History** on any claim.
+**Look for:**
+- A timeline, oldest first: what happened, when, and by which role ("System" for the pipeline).
+- For a superseded or conflicting claim, the rule that fired, for example "Rule: the task board owns deadlines". When the role can see the winning claim, a link to it.
+- **Open source** links for each citation. A claim with no changes says "No changes since this claim was created."
+- As Club President, open the history of a claim that cites Slack #finance. Switch **Viewing as** to **New member** and reload: the page says "Claim not found", the same as for an id that does not exist. The database decides, not the page.
+
 ### 4. Test (role: Club President, testing the Incoming tech lead)
 **Do:** open **Test**. "Testing as" is set to Incoming tech lead (successor).
 **Look for:**
