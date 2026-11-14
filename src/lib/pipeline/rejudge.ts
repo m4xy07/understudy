@@ -10,21 +10,42 @@
 // It works on whatever runTest does: a full run today, or a run narrowed to one responsibility.
 // Safe because: one re-check at a time per workspace (a lease); an answer saved while a re-check
 // is running bumps a generation counter, and the worker goes round again, so the last stored run
-// always started after the last answer.
+// always started after the last answer. Every writer of evidence (an answer, a neighbour's answer,
+// a review decision, a finding, a plan entry) calls evidenceChanged(ws), which bumps the same
+// counter; and the re-check refuses to store a run whose inputs changed while it was judging
+// (runTest refuseStale), so it can never put an older reading on top of newer evidence.
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db/client";
 import { toTestRun } from "@/lib/db/mappers";
 import { listResponsibilities } from "@/lib/db/queries";
 import { getWorkspacePack } from "@/lib/pack";
-import { runTest, toLacunaPack } from "@/lib/lacuna";
+import { runTest, StaleTestError, testInputFingerprint, toLacunaPack } from "@/lib/lacuna";
+import { audit } from "@/lib/db/queries";
 import { checksByResp } from "@/lib/lacuna/core/checks";
 import { scoreDelta } from "@/lib/lacuna/core/scores";
 import { modelDisabled, runWithModelContext } from "@/lib/model/client";
-import { spendContext } from "./guard";
+import { ACTION_LEASE_MS, actionContext } from "./guard";
 
 export const REJUDGE_KEY = "rejudge";
-const REJUDGE_TTL_S = 150;
-const MAX_ROUNDS = 3;
+/** At least as long as the function that runs the re-check may live (it renews it every round). */
+const REJUDGE_TTL_S = ACTION_LEASE_MS / 1000;
+export const MAX_ROUNDS = 3;
+
+export type RejudgeOutcome = "settled" | "not_settled" | "lost" | "failed";
+
+/**
+ * Tell a running re-check that the evidence changed (a decision, an answer, a plan entry): it goes
+ * round again. A no-op when no re-check is running. Never throws.
+ */
+export async function evidenceChanged(ws: string): Promise<void> {
+  try {
+    await db()`
+      UPDATE action_leases SET generation = generation + 1
+      WHERE workspace_id = ${ws} AND key = ${REJUDGE_KEY} AND expires_at > now()`;
+  } catch (err) {
+    console.error(`[rejudge ${ws}] could not note the change`, err);
+  }
+}
 
 /** True when a live stand-in model could change a rule-based reading (so a re-check is worth it). */
 export function liveStandin(): boolean {
@@ -40,11 +61,16 @@ export function fastFirst<T>(fn: () => Promise<T>): Promise<T> {
 /**
  * Ask for a background model re-check. Returns the work to run inside after(), or null when
  * another re-check is already running (it will pick this request up) or none is needed.
+ * `only`: the responsibilities the answer changed. The first round judges just those (the rest is
+ * copied from the latest run); if anything else changed meanwhile, the next round judges everything.
  */
-export async function scheduleRejudge(ws: string): Promise<(() => Promise<void>) | null> {
-  if (!liveStandin()) return null;
+export async function scheduleRejudge(
+  ws: string, only?: string[], opts: { force?: boolean } = {},
+): Promise<(() => Promise<RejudgeOutcome>) | null> {
+  if (!opts.force && !liveStandin()) return null;
   const holder = randomUUID();
   let mine = false;
+  let startGeneration = 0;
   try {
     const [row] = await db()`
       INSERT INTO action_leases (workspace_id, key, holder, generation, expires_at)
@@ -53,29 +79,47 @@ export async function scheduleRejudge(ws: string): Promise<(() => Promise<void>)
         generation = action_leases.generation + 1,
         holder = CASE WHEN action_leases.expires_at < now() THEN EXCLUDED.holder ELSE action_leases.holder END,
         expires_at = EXCLUDED.expires_at
-      RETURNING holder`;
+      RETURNING holder, generation`;
     mine = String(row?.holder) === holder;
+    startGeneration = Number(row?.generation ?? 0);
   } catch (err) {
     console.error(`[rejudge ${ws}] could not schedule`, err);
     return null;
   }
   if (!mine) return null;
-  return () => rejudge(ws, holder);
+  return () => rejudge(ws, holder, only && only.length > 0 ? { only, generation: startGeneration } : null);
 }
 
-async function rejudge(ws: string, holder: string): Promise<void> {
+async function rejudge(ws: string, holder: string, narrow: { only: string[]; generation: number } | null): Promise<RejudgeOutcome> {
   const sql = db();
+  let outcome: RejudgeOutcome = "not_settled";
   try {
     for (let round = 0; round < MAX_ROUNDS; round++) {
       const [lease] = await sql`
         UPDATE action_leases SET expires_at = now() + make_interval(secs => ${REJUDGE_TTL_S})
         WHERE workspace_id = ${ws} AND key = ${REJUDGE_KEY} AND holder = ${holder} RETURNING generation`;
-      if (!lease) return; // the lease expired and someone else took over
+      if (!lease) return "lost"; // the lease expired and someone else took over
       const generation = Number(lease.generation);
 
       const pack = await getWorkspacePack(ws);
-      const runs = await runWithModelContext(spendContext(ws), () =>
-        Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger: "model re-check" }))));
+      // Narrowed to the changed responsibility only while nothing else has changed since it was asked for.
+      const only = narrow && generation === narrow.generation ? narrow.only : undefined;
+      // One fingerprint for every role of this round, taken before any of them reads.
+      const inputs = await testInputFingerprint(ws);
+      let runs;
+      try {
+        runs = await runWithModelContext(actionContext(ws), () =>
+          Promise.all(pack.testRoles.map((role) => runTest(ws, role, {
+            trigger: "model re-check", refuseStale: inputs, ...(only ? { only, rejudge: true } : {}),
+          }))));
+      } catch (err) {
+        if (!(err instanceof StaleTestError)) throw err;
+        // The evidence changed while the model was judging: nothing was stored. Go round again,
+        // whether or not the writer bumped the counter.
+        await sql`UPDATE action_leases SET generation = generation + 1
+          WHERE workspace_id = ${ws} AND key = ${REJUDGE_KEY} AND holder = ${holder}`;
+        continue;
+      }
       const after = runs[0];
 
       // The sentence under the newest answer: from the run before that answer to the model's run.
@@ -99,10 +143,16 @@ async function rejudge(ws: string, holder: string): Promise<void> {
         DELETE FROM action_leases
         WHERE workspace_id = ${ws} AND key = ${REJUDGE_KEY} AND holder = ${holder} AND generation = ${generation}
         RETURNING key`;
-      if (gone.length) return;
+      if (gone.length) return "settled";
     }
   } catch (err) {
+    outcome = "failed";
     console.error(`[rejudge ${ws}] failed; the rule-based reading stays`, err);
   }
+  // Not settled: evidence kept changing for MAX_ROUNDS rounds (or the re-check failed). The lease
+  // is given up so the next answer can start a re-check, and the fact is recorded, not dropped:
+  // the stored reading is the rule-based one (the upper reading) until a re-test runs.
   await sql`DELETE FROM action_leases WHERE workspace_id = ${ws} AND key = ${REJUDGE_KEY} AND holder = ${holder}`.catch(() => {});
+  await audit(ws, "system", "rejudge_not_settled", { outcome, rounds: MAX_ROUNDS }).catch(() => {});
+  return outcome;
 }
