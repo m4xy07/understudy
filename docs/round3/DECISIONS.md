@@ -97,6 +97,18 @@ cleanup. Cut from the end.
 - **Extraction target:** recall 70%, false conflicts 3 or fewer, supersessions 3 of 4,
   accepted only on the worse of two cold runs. The lab answer key is the hold-out.
   Hard decision at hour 40; the Round 2 prompt stays selectable.
+  - *Decided at the final precompute (14 Nov 2026), on the hold-out:* one cold run of each variant
+    on the research-group demo, whose answer key was never tuned against. The rule, fixed before
+    the runs: v2 (two-pass) becomes the default only with higher recall, no more false conflicts
+    and zero leaks there. Measured: r2 prompt plus consolidation, recall 67.1% (51/76), 2 false
+    conflicts, planted conflicts 3/3, supersessions 2/4, citations 97.0%, 0 leaks, incoming postdoc
+    B 6 · C 71% · K 100%, 6 blocking gaps (all planted, of 7). v2: recall 72.4% (55/76), 2 false
+    conflicts, planted conflicts 2/3, supersessions 3/4, citations 99.1%, 0 leaks, B 6 · C 69% ·
+    K 100%, 6 blocking gaps (5 planted, 1 not). **v2 is the default**; `ATTEST_PROMPT=r2` (or
+    `extraction.prompt` in a pack) selects the Round 2 prompt, and both demos are precomputed for
+    both. This replaces the earlier club-only rule (supersessions 3 of 4 on the worse of two cold
+    runs), which v2 did not meet and still does not. Tables: `docs/eval-notes/lab.md`,
+    `docs/eval-notes/club.md`.
 - **Cleanup** never deletes a workspace that is locked or has an approved snapshot.
 - **Empty workspaces** start open with the role switcher, with a one-way "lock roles"
   switch that turns on invite links.

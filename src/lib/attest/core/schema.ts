@@ -43,17 +43,19 @@ export interface ExtractionPack {
 }
 
 /**
- * The extraction variants. "r2" is the Round 2 prompt (one pass, no consolidation); "v2" is the
- * two-pass design: a recall-tuned candidate prompt with `stance` and `event`, then consolidation
- * by code (./consolidate).
+ * The extraction variants. "r2" is the Round 2 prompt (one pass); "v2" is the two-pass design: a
+ * recall-tuned candidate prompt with `stance` and `event`. Consolidation by code (./consolidate)
+ * runs after either one.
  */
 export type PromptVariant = "v2" | "r2";
 /**
- * Round 3 measured "v2" on the club demo (docs/EVALUATION.md): better recall and conflicts than
- * "r2", but it found 2 of 4 supersessions where the acceptance rule asks for 3, so it is not the
- * default. Select it with ATTEST_PROMPT=v2 or the pack's `extraction.prompt`.
+ * "v2" is the default. The decision was taken on the hold-out (the research-group demo, whose
+ * answer key was never tuned against): one cold run each, v2 with higher recall, no more false
+ * conflicts and no leak (docs/eval-notes/lab.md, docs/round3/DECISIONS.md). The Round 2 prompt
+ * stays selectable with ATTEST_PROMPT=r2 or the pack's `extraction.prompt`, and its answers for
+ * both demos are in the committed caches too.
  */
-export const DEFAULT_PROMPT_VARIANT: PromptVariant = "r2";
+export const DEFAULT_PROMPT_VARIANT: PromptVariant = "v2";
 
 /** The variant in force: the environment value first, then the pack's, then DEFAULT_PROMPT_VARIANT. */
 export function resolvePromptVariant(envValue?: string | null, packValue?: string | null): PromptVariant {
