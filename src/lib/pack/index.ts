@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ATTRIBUTE_KEYS } from "./attributes";
-import { PACK_ID_RE, PackZ, ROLE_KEY_RE, type Pack } from "./schema";
+import { PACK_ID_RE, PackZ, ROLE_KEY_RE, type Pack, type PackRole } from "./schema";
 import type { RoleKey, ResponsibilityKind, CheckDef } from "@/lib/types";
 
 export { PackZ, type Pack, type PackRole } from "./schema";
@@ -49,12 +49,11 @@ export function resolvePack(raw: unknown, opts: { checkFiles?: boolean } = {}): 
   const dup = keys.find((k, i) => keys.indexOf(k) !== i);
   if (dup) throw new PackError(`roles: duplicate key "${dup}"`);
 
-  const flagged = (flag: "approver" | "successor" | "leaver" | "restrictedAudience") =>
-    pack.roles.filter((r) => r[flag] === true).map((r) => r.key);
-  const approvers = flagged("approver");
-  const successors = flagged("successor");
-  const leavers = flagged("leaver");
-  const restricted = flagged("restrictedAudience");
+  const flagged = (flag: (r: PackRole) => boolean | undefined) => pack.roles.filter((r) => flag(r) === true).map((r) => r.key);
+  const approvers = flagged((r) => r.approver);
+  const successors = flagged((r) => r.successor);
+  const leavers = flagged((r) => r.leaver);
+  const restricted = flagged((r) => r.restrictedAudience);
   if (approvers.length !== 1 || successors.length !== 1 || leavers.length !== 1 ||
       new Set([approvers[0], successors[0], leavers[0]]).size !== 3) {
     throw new PackError("roles: need exactly one approver, one successor and one leaver");
@@ -63,14 +62,10 @@ export function resolvePack(raw: unknown, opts: { checkFiles?: boolean } = {}): 
   if (!restricted.length || restricted.includes(approverRole) || restricted.includes(leaverRole)) {
     throw new PackError("roles: flag at least one restrictedAudience role");
   }
-  const legacy = [
-    ["approverRole", "approver", approverRole],
-    ["successorRole", "successor", successorRole],
-    ["leaverRole", "leaver", leaverRole],
-  ] as const;
-  for (const [key, flag, value] of legacy) {
+  const legacy = [["approverRole", approverRole], ["successorRole", successorRole], ["leaverRole", leaverRole]] as const;
+  for (const [key, value] of legacy) {
     if (pack[key] !== undefined && pack[key] !== value) {
-      throw new PackError(`${key} disagrees with the role flagged ${flag}`);
+      throw new PackError(`${key} disagrees with the role flagged ${key.replace(/Role$/, "")}`);
     }
   }
 

@@ -13,7 +13,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:export-cache": "tsx scripts/export-cache.ts",
     "staging:setup": "tsx scripts/staging.ts",
-    "test": "vitest run",
+    "check:literals": "tsx scripts/check-literals.ts",
+    "test": "pnpm check:literals && vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },

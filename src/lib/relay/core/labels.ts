@@ -4,7 +4,7 @@ import type { Attribute, RoleKey } from "@/lib/types";
 /**
  * The role facts the approval rules need, read from the workspace's pack (approvalRoles(pack)):
  * `approver` is the only role that may review claims and approve snapshots (ARCHITECTURE
- * section 4); `leaver` is the leaving person, who can never review or approve.
+ * section 4); the leaver role is the leaving person, who can never review or approve.
  */
 export interface ApprovalRoles {
   approver: RoleKey;

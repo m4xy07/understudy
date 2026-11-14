@@ -5,7 +5,7 @@
 // states that by full name (pack.roleHolders); this file matches those names to the person
 // records Tether found in the sources and stores the result in `role_holders`.
 //
-// A role nobody holds (for example a generic "new member" audience) has no rows.
+// A role nobody holds (for example a generic audience role) has no rows.
 // Admin path only: the table is not readable by the role-scoped reader.
 import { db } from "@/lib/db/client";
 import { getWorkspacePack, type ResolvedPack } from "@/lib/pack";
@@ -19,7 +19,7 @@ export interface RoleHolder {
   source: "pack" | "approver";
 }
 
-/** Lower case, single spaces, no punctuation at the ends: "Rohan  Mehta." equals "rohan mehta". */
+/** Lower case, single spaces, no punctuation: "Asha  Rao." equals "asha rao". */
 function nameKey(s: string): string {
   return s.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }

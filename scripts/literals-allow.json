@@ -1,0 +1,27 @@
+[
+  {
+    "file": "db/migrations/0001_core.sql",
+    "token": "club",
+    "reason": "Historic default on workspaces.pack_id. Applied migrations are never edited; 0006_packs.sql drops the default."
+  },
+  {
+    "file": "db/migrations/0001_core.sql",
+    "token": "president",
+    "reason": "Historic CHECK on snapshots.approved_by. Applied migrations are never edited; 0006_packs.sql drops it for a trigger that reads the workspace's approver role."
+  },
+  {
+    "file": "db/migrations/0006_packs.sql",
+    "token": "club",
+    "reason": "One-time backfill: every workspace that existed before this migration used the only pack there was."
+  },
+  {
+    "file": "db/migrations/0006_packs.sql",
+    "token": "president",
+    "reason": "One-time backfill of approver_role for workspaces created before this migration."
+  },
+  {
+    "file": "db/migrations/0006_packs.sql",
+    "token": "leaver",
+    "reason": "One-time backfill of leaver_role for workspaces created before this migration."
+  }
+]
