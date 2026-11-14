@@ -10,6 +10,13 @@ const STEPS = [
   { n: "3", title: "Ask only what the record cannot answer", body: "Up to ten ranked questions for the leaver, then an approved snapshot that shows each role only what it may see.", accent: "var(--relay)" },
 ];
 
+// Round 3 additions and where to find each one in a demo.
+const NEW = [
+  { title: "When the leaver has already left", where: "Ask", body: "The approver presses “can't be reached”. Understudy asks the teammates who worked on each gap, reads the files and history, and lists possible answers. Each result carries a weaker trust label." },
+  { title: "Sensitive messages in open channels", where: "Connect, Handover", body: "Messages about money, people or health are limited to the right roles, with the reason shown. The leak check tests every role and every output, for exact tokens and reworded facts." },
+  { title: "A handover that keeps improving", where: "First weeks, Review", body: "After approval the successor records what they find. The approver reviews it, and the next version says what changed and why the scores moved. The second demo is a different setting on the same code." },
+];
+
 export default function Home() {
   // The demos on offer come from packs/index.json; each pack words its own button and blurb.
   const demos = listDemoPacks();
@@ -55,6 +62,19 @@ export default function Home() {
               <p className="mono text-muted">{s.n}</p>
               <h3 className="mt-1 text-lg">{s.title}</h3>
               <p className="mt-2 text-sm text-ink-2">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="new-h" className="mt-12 sm:mt-16">
+        <h2 id="new-h" className="eyebrow">New in Round 3</h2>
+        <ol className="mt-4 grid gap-4 sm:grid-cols-3">
+          {NEW.map((n) => (
+            <li key={n.title} className="card p-5">
+              <h3 className="text-lg">{n.title}</h3>
+              <p className="mt-2 text-sm text-ink-2">{n.body}</p>
+              <p className="mt-3 text-xs text-muted"><span className="font-medium text-ink-2">Where:</span> {n.where}</p>
             </li>
           ))}
         </ol>

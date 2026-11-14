@@ -7,6 +7,7 @@ import {
   leaverName, listLadder, listQuestions, listTraces, questionsForRole, recoveryComparison, recoveryState, repliesByRole,
   testHistory, toLacunaPack, type QuestionView,
 } from "@/lib/lacuna";
+import { AnswerBox } from "./AnswerBox";
 import { BeforeAfter } from "./BeforeAfter";
 import { Ladder } from "./Ladder";
 import { NeighbourQuestions } from "./NeighbourQuestions";
@@ -52,7 +53,7 @@ export default function AskPage({ params }: { params: WsParams }) {
 }
 
 async function Ask({ params }: { params: WsParams }) {
-  const { id, role, pack } = await loadWorkspace(params);
+  const { id, role, pack, workspace } = await loadWorkspace(params);
   const lpack = toLacunaPack(pack);
   const successor = pack.successorRole as RoleKey;
   const leaver = pack.leaverRole as RoleKey;
@@ -116,6 +117,9 @@ async function Ask({ params }: { params: WsParams }) {
       </>
     );
   }
+
+  // The pack's sample answer is written for the top question of a fresh demo (scripts/precompute.ts).
+  const sampleFor = workspace.kind === "demo" && answered.length === 0 && pack.demo?.sampleAnswer ? open[0]?.id : undefined;
 
   const textFor = (q: QuestionView, r: Responsibility | undefined): string => {
     if (fullText || q.gapType !== "conflicting" || !r) return q.text;
@@ -189,10 +193,7 @@ async function Ask({ params }: { params: WsParams }) {
                   </p>
                   {isLeaver && (
                     <ActionForm action={answerQuestionAction} hidden={{ ws: id, questionId: q.id }} className="mt-3 grid gap-2">
-                      <label className="grid gap-1 text-sm">
-                        <span className="font-medium">Your answer</span>
-                        <textarea name="answer" required minLength={2} maxLength={4000} rows={3} className="field" />
-                      </label>
+                      <AnswerBox sample={q.id === sampleFor ? pack.demo?.sampleAnswer : undefined} />
                       <fieldset className="text-sm">
                         <legend className="text-muted">Narrow who can see this answer (untick to hide it from a role)</legend>
                         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">

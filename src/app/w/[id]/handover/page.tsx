@@ -48,7 +48,8 @@ async function Handover({ params }: { params: WsParams }) {
           Compiled from the approved snapshot, read under this role&apos;s permissions.
         </PageHead>
         <EmptyState title="The approver hasn't approved a handover yet.">
-          Switch to {approverName} and go to <Link className="underline" href={`/w/${id}/review`}>Review</Link>.
+          {role === pack.approverRole ? "Go to " : `Switch “Viewing as” to ${approverName} and go to `}
+          <Link className="underline" href={`/w/${id}/review`}>Review</Link> to approve a snapshot.
         </EmptyState>
       </>
     );
