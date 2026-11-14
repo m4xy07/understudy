@@ -24,6 +24,7 @@ import { withRole } from "@/lib/db/withRole";
 import { claimId as makeClaimId, rerunRules, tierFor } from "@/lib/attest";
 import { comparable } from "@/lib/attest/core/rules";
 import { runTest, toLacunaPack, workspaceNow, type RunTestOptions } from "@/lib/lacuna";
+import { reserveContactNumbers } from "@/lib/lacuna/persist";
 import { checksByResp, findCheck } from "@/lib/lacuna/core/checks";
 import type { LacunaCheck } from "@/lib/lacuna/core/pack";
 import { approvalRoles, entityLabel, getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
@@ -475,7 +476,7 @@ async function maskFinding(ws: string, parts: { answer: string; note: string; li
   let text = masked.text;
   const contacts: { token: string; kind: "email" | "phone"; valueEnc: string }[] = [];
   if (masked.contacts.length) {
-    const [{ n }] = await db()`SELECT count(*)::int AS n FROM contacts WHERE workspace_id = ${ws}`;
+    const n = await reserveContactNumbers(ws, new Set(masked.contacts.map((c) => c.token)).size);
     const renum = new Map<string, string>();
     for (const c of masked.contacts) {
       if (!renum.has(c.token)) renum.set(c.token, `[CONTACT:c-${9000 + Number(n) + renum.size + 1}]`);
@@ -692,6 +693,8 @@ export type DecideResult = ActionResult & {
   blocked?: string;
   /** The version the waiting snapshot will get. */
   nextVersion?: number;
+  /** The decision is saved, but the work after it (rules, re-test, snapshot) did not finish. */
+  unfinished?: string;
 };
 
 /**
@@ -826,9 +829,15 @@ async function decide(
     if (!res.ok) return { ok: false, code: res.code, error: REVIEW_ERRORS[res.code ?? ""] ?? res.error };
     await sql`UPDATE findings SET status = 'rejected', review_note = ${note || null}, decided_at = now()
       WHERE workspace_id = ${ws} AND id = ${findingId} AND status = 'pending'`;
-    // A rejected claim leaves any conflict it was part of.
-    await rerunRules(ws, actor);
-    await audit(ws, actor, "decide_finding", { findingId, decision: "rejected" });
+    // The rejection is committed. A rejected claim leaves any conflict it was part of; if that
+    // step fails the decision still stands and is reported as saved.
+    try {
+      await rerunRules(ws, actor);
+      await audit(ws, actor, "decide_finding", { findingId, decision: "rejected" });
+    } catch (err) {
+      console.error(`[living ${ws}] rules after rejecting ${findingId} failed`, err);
+      return { ok: true, unfinished: "The rules did not re-run; press Re-run test." };
+    }
     return { ok: true };
   }
 
@@ -839,7 +848,15 @@ async function decide(
     await sql`UPDATE findings SET status = 'approved', review_note = ${note || null}, decided_at = now()
       WHERE workspace_id = ${ws} AND id = ${findingId} AND status = 'pending'`;
   }
-  return releaseAfterApproval(ws, actor, pack, findingId);
+  // The approval is committed. If the rules, the re-test or the snapshot fail now, saying "failed"
+  // would be wrong (and a retry finds the finding approved): say what is saved and what is left.
+  // Approving again finishes the rest (releaseAfterApproval is safe to repeat).
+  try {
+    return await releaseAfterApproval(ws, actor, pack, findingId);
+  } catch (err) {
+    console.error(`[living ${ws}] release after approving ${findingId} failed`, err);
+    return { ok: true, unfinished: "The re-test could not run, so the next snapshot is not released yet; use Re-run test, then approve the snapshot." };
+  }
 }
 
 // ---------------------------------------------------------------------------------------------

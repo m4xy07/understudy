@@ -162,6 +162,16 @@ async function loadSegments(ws: string): Promise<Segment[]> {
   return rows.map(toSegment);
 }
 
+/** Head versions of the named segments only (the ones a set of claims cites). */
+export async function loadSegmentsByIds(ws: string, ids: readonly string[]): Promise<Segment[]> {
+  const wanted = [...new Set(ids)];
+  if (wanted.length === 0) return [];
+  const rows = await db()`
+    SELECT DISTINCT ON (id) * FROM segments WHERE workspace_id = ${ws} AND id = ANY(${wanted}::text[])
+    ORDER BY id, version DESC`;
+  return rows.map(toSegment);
+}
+
 function newestTs(segs: Segment[]): string | null {
   let best: string | null = null;
   for (const s of segs) if (!best || Date.parse(s.ts) > Date.parse(best)) best = s.ts;
@@ -616,7 +626,9 @@ export async function rerunRules(ws: string, actor: string): Promise<{ changed: 
       const base = PERSON_BASE_TRUST[c.origin];
       return base && c.trust === "corroborated" ? { ...c, trust: base } : c;
     });
-  const segsById = new Map((await loadSegments(ws)).map((s) => [s.id, s]));
+  // The rules look a segment up only through a claim's citations: read those, not every segment.
+  const cited = input.flatMap((c) => c.citations.map((x) => x.segmentId));
+  const segsById = new Map((await loadSegmentsByIds(ws, cited)).map((s) => [s.id, s]));
   const entityKinds = await entityKindsFor(ws, pack);
   const ruled = applyRules(input, pack, { segmentsById: segsById, entityKinds });
   const firingByOlder = new Map(ruled.firings.map((f) => [f.olderId, f]));
