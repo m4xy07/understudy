@@ -560,3 +560,14 @@ export async function exportMarkdown(
   await audit(ws, role, "export_handover", { snapshotId: h.snapshot.id, version: h.snapshot.version });
   return { ok: true, markdown, filename: `handover-${role}-v${h.snapshot.version}.md` };
 }
+
+/**
+ * The Leak check grid. It lives in ./probes (surface registry, exact tokens and reworded facts);
+ * this keeps the old import path working. Loaded on call, so the two files do not import each
+ * other at load time.
+ */
+export async function runLeakCheck(
+  ws: string, opts: { judge?: "stored" | "off" } = {},
+): Promise<import("./probes").LeakReport> {
+  return (await import("./probes")).runLeakCheck(ws, opts);
+}
