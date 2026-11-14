@@ -170,7 +170,7 @@
     "button": "Open the research-group demo",
     "blurb": "Farhan, a postdoc, leaves for a new post. The incoming postdoc must take over the analysis pipeline, the sequencing bookings and the approvals.",
     "pendingText": "Creating your private copy…",
-    "sampleAnswer": "Gauri holds it in the lab password manager. I showed her on 6 Nov. Ask her, never post it in a channel.",
+    "sampleAnswer": "The six excluded samples came from run SR-0391. The sample sheet for that run and the checksum manifest MANIFEST.sha256 are in /project/bio-142/raw_v3.",
     "expect": { "responsibilities": 10, "claims": [60, 85], "readbackItems": 5, "adapters": true }
   },
   "sensitivity": {

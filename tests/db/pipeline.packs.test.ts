@@ -136,7 +136,8 @@ describe.each(PACKS)("pipeline on the $id pack: model off, committed cache", ({ 
     const [q] = (await listGapQuestions(ws)).filter((x) => !x.answeredClaimId);
     expect((await answerQuestion(ws, q.id, "Some answer", approver)).ok).toBe(false);
     expect((await answerQuestion(ws, q.id, "Some answer", successor)).ok).toBe(false);
-    const text = key.demoAnswer?.text ?? String(pack.demo!.sampleAnswer ?? "I handed it over in person. Ask the new owner.");
+    // The pack's sample answer is written for the top question of its demo.
+    const text = String(pack.demo!.sampleAnswer ?? key.demoAnswer?.text ?? "I handed it over in person. Ask the new owner.");
     const res = await answerQuestion(ws, q.id, text, leaver);
     expect(res.ok).toBe(true);
     if (!res.ok) return;

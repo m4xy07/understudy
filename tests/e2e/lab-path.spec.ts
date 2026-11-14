@@ -18,8 +18,19 @@ const READBACK = [
   "Date the manuscript revision is due",
   "Day the lab meeting is held each week",
 ];
-/** The leaver's answer to the top gap question (the answer key's demoAnswer). */
-const ANSWER = "Gauri holds it in the lab password manager. I showed her on 6 Nov. Ask her, never post it in a channel.";
+/** A plausible leaver answer for the demo's top gap questions; anything else gets a generic reply. */
+function answerFor(question: string): string {
+  if (/sequencing run|sample sheet|checksum|manifest/i.test(question)) {
+    return "The six excluded samples came from run SR-0391. The sample sheet for that run and the checksum manifest MANIFEST.sha256 are in /project/bio-142/raw_v3.";
+  }
+  if (/freezer/i.test(question)) {
+    return "The freezer check is every Monday morning. The next one is Monday 16 Nov 2026; Gauri keeps the rota.";
+  }
+  if (/credential|token|login|key/i.test(question)) {
+    return "Gauri holds it in the lab password manager. I showed her on 6 Nov. Ask her, never post it in a channel.";
+  }
+  return "Gauri knows this one. I walked her through it on 6 Nov and the steps are in docs/RUNBOOK.md.";
+}
 
 /** Switch "Viewing as" in the header and wait until the server has stored the new role. */
 async function viewAs(page: Page, label: string) {
@@ -48,7 +59,7 @@ test("lab path: research-group demo, claims, test, ask, review, handover, read-b
     await page.getByRole("button", { name: "Open the research-group demo" }).click();
     await page.waitForURL(/\/w\/[0-9a-f-]{36}\/connect/, { timeout: 90_000 });
     ws = /\/w\/([0-9a-f-]{36})\//.exec(page.url())![1];
-    await expect(page.locator("header")).toContainText("University research group (demo)");
+    await expect(page.getByRole("banner")).toContainText("University research group (demo)");
 
     // The demo replays precomputed model answers (seconds); allow minutes in case the cache is cold.
     await expect(page.getByText("Run finished. Open Reconstruct to see the claims.")).toBeVisible({ timeout: 300_000 });
@@ -102,7 +113,8 @@ test("lab path: research-group demo, claims, test, ask, review, handover, read-b
     await expect(page.getByRole("heading", { name: /^Open questions \([1-9]\d*\)$/ })).toBeVisible();
 
     const first = page.locator("ol > li", { has: page.getByRole("button", { name: "Save answer" }) }).first();
-    await first.getByLabel("Your answer").fill(ANSWER);
+    const question = (await first.locator("p").first().textContent()) ?? "";
+    await first.getByLabel("Your answer").fill(answerFor(question));
     await first.getByRole("button", { name: "Save answer" }).click();
 
     const retest = page.getByText(/^Re-test after this answer:/).first();
@@ -113,7 +125,7 @@ test("lab path: research-group demo, claims, test, ask, review, handover, read-b
 
   await test.step("Review: the leaver is refused; the PI approves tier A, plans the gaps, approves the snapshot", async () => {
     await page.goto(`/w/${ws}/review`);
-    await expect(page.locator("main")).toContainText("Switch to Principal investigator");
+    await expect(page.locator("main")).toContainText("Review and approval belong to Principal investigator");
     await viewAs(page, "Principal investigator");
 
     const start = page.getByRole("region", { name: "Where to start" });
