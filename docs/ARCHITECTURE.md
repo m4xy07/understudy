@@ -304,6 +304,16 @@ releases carries it. A rejected finding leaves its claim rejected and the gap op
 snapshot. A finding is upgraded to `corroborated` only by an independent record with the same entity,
 attribute and normalised value; another finding, a leaver answer, its own link or its own file never
 upgrade it, and a claim that began as a finding never enters tier A.
+Review by responsibility: pending tier B claims are grouped by the responsibility their entity belongs
+to (`groupTierB`), then by topic for claims outside every responsibility. `approveGroup` approves one
+group: approver only, only after the list was opened, only the claims that were on screen, never tier C,
+a conflict, a superseded claim or a successor finding; one `claim_events` row per claim, one audit row,
+one re-test for the group under the "retest" lease. A repeat approves nothing.
+Score stability: a person's direct answer to the question asked for a check stands at the record's
+reading of it (`standDirectAnswers`); the stand-in model does not overrule it, the approver can reject
+it. A full re-run after an action that adds or reveals evidence keeps a check's earlier, better result
+while every claim it rested on is still live and visible (`keepEarlier`). The background model re-check
+may still lower a rule-based first reading of record evidence; the run then names the checks and why.
 Every snapshot has one `snapshot_changes` row, written in the same transaction: the claim diff of the
 two hashed payloads (`diffSnapshots`), the gaps closed and opened between the two successor runs, the
 B, C and K sentences (fixed text chosen by code, never a model) and the cause (`first`, `finding`,

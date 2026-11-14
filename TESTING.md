@@ -8,7 +8,7 @@ From a fresh clone of `main`, following the README, with no model key (2026-11-1
 
 | Command | Result |
 |---|---|
-| `pnpm test` | 73 test files, 967 tests passed, 1 skipped, 62 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
+| `pnpm test` | 77 test files, 992 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
 | `pnpm test:e2e` against `pnpm dev` | 5 spec files, 9 tests passed, 3.2 min, no retry |
 
 `pnpm test` prints the totals on its last lines, so these numbers are easy to check.
@@ -233,6 +233,17 @@ Run on https://understudy-lyart.vercel.app on 14 Nov 2026, after the last deploy
 | 375 px wide, ten pages | Pass. No horizontal page scroll. Wide tables scroll inside their own box. |
 | Console errors and failed requests during the walks | None, apart from the expected 400 and 404 answers to the bad uploads and the unknown page. |
 | Opening a demo while other heavy actions run | One failure in 13 opens: the first research-group open was cancelled by the database after a long wait. The next 12 opens, 8 of them at once, took 1 to 2 s each. Opening a demo now retries once and, if it still fails, says "Press the button again". |
+
+## Final polish pass (14 Nov 2026), and its tests
+
+A walkthrough of the live link found seven things. Each fix has a test.
+
+| Found | Fix | Test |
+|---|---|---|
+| Approving only tier A left the handover thin: few claims, read-back items with no approved claim, one dated action listed twice | Review groups pending tier B claims by responsibility. A group is approved in one go after its list was opened; the server takes the approver only, never tier C, a conflict or a superseded claim, and only the claims that were on screen; a repeat approves nothing; one re-test per group. The handover lists the same action once and labels a passed date "Past due" | `tests/relay/group-review.test.ts`, `tests/db/group-approve.test.ts`, and the grouped approval in `judge-path.spec.ts` and `lab-path.spec.ts` (read-back resolves at least 3 of 5 items) |
+| B went from 3 back to 4 after the leaver had closed a gap | Root cause: the first reading after an answer is rule-based; the model re-check seconds later read the same answer as only partly enough and reopened the gap, while the approver was already widening a message or switching recovery on. Now a direct answer to a check stands at the record's reading until the approver rejects it, a re-run keeps a check's earlier, better result while its claims are live, and a re-check that does lower a check says which and why | `tests/db/score-stability.test.ts` (leaver answers, approver widens, recovery on; a new conflict still reopens the check) |
+| The leak grid needed sideways scroll | Roles across, outputs down, a tick and a word per cell | Checked at 1440, 1280 and 375 px with a script: no overflow |
+| The first open of a demo once failed under load | One retry, then one plain sentence | `tests/pipeline/open-demo-retry.test.ts` |
 
 ## Known imperfections
 

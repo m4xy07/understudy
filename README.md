@@ -29,7 +29,7 @@ Priya, the outgoing tech lead of a college robotics club, graduates. The incomin
 3. **Reconstruct.** Open any claim's citation. The source opens with the exact quote highlighted.
 4. **Test.** Scores for the Incoming tech lead read **B · C · K**: blocking gaps, coverage, and the share of coverage backed by a record.
 5. **Ask.** Switch **Viewing as** to **Priya (outgoing tech lead)**, answer one question and press **Save answer**. The answer is labelled "Leaver said" and the scores move.
-6. **Review.** Switch to **Club President**. Press **Approve N tier A claims**, give each open blocking gap an owner, a due date and a risk note, then press **Approve snapshot v1**.
+6. **Review.** Switch to **Club President**. Press **Approve N tier A claims**, open a few groups under **Tier B by responsibility** and approve them, give each open blocking gap an owner, a due date and a risk note, then press **Approve snapshot v1**.
 7. **Handover.** Switch to **Incoming tech lead**, then to **New member**, and compare. Restricted items become a count: "N restricted items. Ask the approver (Club President)."
 
 ### The three Round 3 improvements, and where to see each
@@ -210,7 +210,7 @@ Then on the landing page press **Start empty and upload my files**. One upload i
 pnpm test
 ```
 
-Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **73 test files, 967 tests passed, 1 skipped, in 62 seconds**. The skipped test needs a Supabase pooler URL.
+Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **77 test files, 992 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
 
 End-to-end tests drive a real browser through both demos, recovery, First weeks and the abuse cases. Keep `pnpm dev` running in one terminal, then in a second one:
 

@@ -53,10 +53,12 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 
 ### 6. Review (switch to: Club President)
 **Do:** set **Viewing as** to **Club President** and open **Review**.
+The **Where to start** box lists the five steps in order and ticks each one off.
 1. Press **Approve N tier A claims** (corroborated, low-risk claims in bulk).
-2. Optional: approve a tier C claim. It needs the evidence opened and a written reason.
-3. Under **Continuation plan**, give every open blocking gap an owner, a due date and a risk note.
-4. Press **Approve snapshot v1**.
+2. Under **Tier B by responsibility**, open a group, read its claims (each has an **Open evidence** link), then press **Approve these N claims**. The button stays off until the list was opened. Do this for as many groups as you like; the read-back on Handover fills in as its claims are approved (competition date, domain renewal date, the weekly lab day).
+3. Optional: approve a tier C claim. It needs the evidence opened and a written reason, one claim at a time.
+4. Under **Continuation plan**, give every open blocking gap an owner, a due date and a risk note.
+5. Press **Approve snapshot v1**.
 
 **Look for:**
 - Before the plan is complete, approval is blocked and the page lists what is missing.
