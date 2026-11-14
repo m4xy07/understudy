@@ -95,7 +95,7 @@ async function Test({ params, searchParams }: { params: WsParams; searchParams: 
       </PageHead>
 
       <nav aria-label="Role being tested" className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted">Testing as:</span>
+        <span className="text-sm text-muted" aria-hidden="true">Testing as:</span>
         {targets.map((t) => (
           <Link
             key={t}
@@ -110,10 +110,13 @@ async function Test({ params, searchParams }: { params: WsParams; searchParams: 
       </nav>
 
       <section className="card mb-6 p-4 sm:p-5" aria-label="Scores">
-        <p className="eyebrow">Scores for {roleLabel(target, pack)}</p>
-        <p className="mt-2 text-xl">
-          <ScoreLine scores={run?.scores ?? null} provisional={run?.provisional ?? true} />
-        </p>
+        {/* A live region: a re-test (after an answer or a finding) is read out when the scores change. */}
+        <div role="status" aria-atomic="true">
+          <p className="eyebrow">Scores for {roleLabel(target, pack)}</p>
+          <p className="mt-2 text-xl">
+            <ScoreLine scores={run?.scores ?? null} provisional={run?.provisional ?? true} />
+          </p>
+        </div>
         <div className="mt-2">
           <ScoreLegend />
         </div>
@@ -209,9 +212,13 @@ async function Test({ params, searchParams }: { params: WsParams; searchParams: 
                                 {segFor[cid] ? (
                                   <Link href={`/w/${id}/source/${segFor[cid]}?claim=${cid}`} className="mono text-attest underline">
                                     {cid}
+                                    <span className="sr-only"> (evidence for {check.label})</span>
                                   </Link>
                                 ) : (
-                                  <span className="mono text-muted" title="Not visible to your role">{cid}</span>
+                                                  <span className="mono text-muted" title="Not visible to your role">
+                                    {cid}
+                                    <span className="sr-only"> (not visible to your role)</span>
+                                  </span>
                                 )}
                               </span>
                             ))}

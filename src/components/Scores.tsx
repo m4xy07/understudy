@@ -14,13 +14,12 @@ export function ScoreLine({ scores, provisional = true }: { scores: ScoresT | nu
   if (!scores) return <span className="text-muted">No test yet</span>;
   return (
     <span className="inline-flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span
-        className="mono text-base text-ink"
-        aria-label={`B ${scores.b} blocking gaps, C ${pct(scores.c)} coverage, K ${pct(scores.k)} backed by records`}
-      >
-        <strong className="font-semibold">B {scores.b}</strong>
-        <span aria-hidden="true"> · </span>C {pct(scores.c)}
-        <span aria-hidden="true"> · </span>K {pct(scores.k)}
+      {/* aria-label is not allowed on a plain span, so the full sentence is hidden text and the short form is for the eye. */}
+      <span className="sr-only">
+        {`B ${scores.b} blocking gaps, C ${pct(scores.c)} coverage, K ${pct(scores.k)} backed by records`}
+      </span>
+      <span className="mono text-base text-ink" aria-hidden="true">
+        <strong className="font-semibold">B {scores.b}</strong> · C {pct(scores.c)} · K {pct(scores.k)}
       </span>
       {provisional && <span className="text-xs text-muted">provisional until review</span>}
     </span>
