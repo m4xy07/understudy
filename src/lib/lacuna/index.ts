@@ -228,7 +228,9 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     claimMeta(ws, role),
     listPlanItems(ws),
   ]);
-  const usable: VisibleClaim[] = visible.filter((c) => c.state === "active" || c.state === "conflicting");
+  // A successor finding counts only once the approver has let it in (approved or edited).
+  const usable: VisibleClaim[] = visible.filter((c) => (c.state === "active" || c.state === "conflicting")
+    && !(c.origin === "successor_finding" && c.review !== "approved" && c.review !== "edited"));
   const checks = checksByResp(resps, lpack);
 
   const today = await workspaceNow(ws);

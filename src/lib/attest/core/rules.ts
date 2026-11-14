@@ -14,6 +14,7 @@ import type {
 import { MULTI_VALUED, type RoleKey } from "@/lib/types";
 import { norm } from "@/lib/text/norm";
 import type { AttestPack } from "./verify";
+import { isPersonOrigin } from "./origins";
 
 /** One supersession/conflict decision, for the claim_events audit log. */
 export interface RuleFiring {
@@ -322,8 +323,13 @@ export function applySupersession(
 // ---------------------------------------------------------------------------------------------
 // Corroboration
 
-const isRecord = (c: Claim) => (c.trust === "from_record" || c.trust === "corroborated") && c.supportCheck !== "no";
-const UPGRADEABLE: readonly Trust[] = ["from_record", "leaver_said", "inferred"];
+// A person's word that a record once corroborated is still not a record: it can never upgrade
+// another person's word (no laundering through a second finding or a leaver answer).
+const isRecord = (c: Claim) =>
+  (c.trust === "from_record" || c.trust === "corroborated") && c.supportCheck !== "no" && !isPersonOrigin(c.origin);
+// A person's word (a leaver answer, a successor finding) is upgraded only by a record that agrees:
+// two findings, or a finding and a leaver answer, never upgrade each other (see corroborate()).
+const UPGRADEABLE: readonly Trust[] = ["from_record", "leaver_said", "successor_found", "inferred"];
 const isUpgradeable = (c: Claim) => UPGRADEABLE.includes(c.trust) && c.supportCheck !== "no";
 
 function kindsKey(c: Claim): string {
@@ -420,6 +426,8 @@ export function reviewFlags(claim: Claim): string[] {
   if (claim.supportCheck === "partly" || claim.supportCheck === "no") flags.push(`support check ${claim.supportCheck}`);
   if (claim.citations.some((c) => !c.accepted)) flags.push("rejected citation");
   if (!claim.citations.some((c) => c.accepted && c.exact)) flags.push("no exact quote");
+  // A claim that began as a finding is reviewed one by one, even after a record corroborates it.
+  if (claim.origin === "successor_finding") flags.push("from a successor finding");
   return flags;
 }
 
