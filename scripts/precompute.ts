@@ -29,7 +29,9 @@
 //  * widen, answer, recovery: the same after the scripted widening of the planted false positive;
 //  * judge path: the sample answer, tier A, every tier B group with its re-test, the plan and
 //    snapshot v1, the example finding and its approval, recovery, then the scripted widening.
-// A step a pack's demo does not have (no recovery samples, no planted false positive, no example
+//  * recovery: the switch alone on a fresh demo (the ladder asks the model in every pack; the
+//    sample teammate answers follow only where the pack has them).
+// A step a pack's demo does not have (no planted false positive, no example
 // finding) is left out of the chain; a chain that then repeats an earlier one is skipped.
 // Usage: pnpm tsx scripts/precompute.ts [--pack <id>] [--keep]
 import "./load-env";
@@ -362,17 +364,18 @@ async function chainOnce(label: string, chain: Chain): Promise<{ ws: string; sta
 }
 
 /** The chains this pack's demo has: steps it lacks are dropped, a chain equal to an earlier one is skipped. */
-async function chainsFor(probeWs: string): Promise<Chain[]> {
-  const samples = await recoverySamples(probeWs);
+async function chainsFor(): Promise<Chain[]> {
   const has: Record<StepName, boolean> = {
     widen: plantedFalsePositive() !== null,
     answer: true,
     review: true,
     release: true,
     finding: Boolean(exampleFinding(pack)),
-    recovery: samples.answers.length > 0 || samples.decline !== null,
+    // The switch builds the ladder (traces, options) in every demo; the sample teammate answers follow where the pack has them.
+    recovery: true,
   };
   const wanted: StepName[][] = [
+    ["recovery"],
     ["answer", "recovery"],
     ["widen", "answer", "recovery"],
     ["answer", "review", "release", "finding", "recovery", "widen"],
@@ -431,7 +434,7 @@ async function main() {
   // The judge's path after the sample answer: each chain twice on fresh workspaces, state by state.
   const coverage: string[] = [];
   let chainsCached = true;
-  for (const chain of await chainsFor(cold.ws)) {
+  for (const chain of await chainsFor()) {
     const first = await chainOnce("run 1", chain);
     const second = await chainOnce("run 2", chain);
     extraWs.push(first.ws, second.ws);
