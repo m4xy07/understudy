@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-14T10:31:30.664Z",
+ "generatedAt": "2026-11-14T13:37:12.256Z",
  "modelTag": "qwen/qwen3-32b@openrouter.ai",
  "pack": "lab",
  "classifier": {
@@ -12,16 +12,16 @@
     "planted": 8,
     "byRule": 4,
     "byModel": 0,
-    "held": 3,
-    "missed": 1,
-    "wronglyLimited": 1
+    "held": 0,
+    "missed": 4,
+    "wronglyLimited": 0
    },
    {
     "category": "hr",
     "planted": 4,
     "byRule": 3,
-    "byModel": 0,
-    "held": 1,
+    "byModel": 1,
+    "held": 0,
     "missed": 0,
     "wronglyLimited": 0
    },
@@ -35,16 +35,34 @@
     "wronglyLimited": 0
    }
   ],
-  "precision": 0.9333333333333333,
-  "recall": 0.875,
+  "precision": 1,
+  "recall": 0.6875,
   "recallRulesOnly": 0.625,
   "heldModelOff": 5,
-  "wronglyLimited": 1,
+  "wronglyLimited": 0,
   "primaryCases": {
    "caught": 0,
    "of": 0
   },
   "missed": [
+   {
+    "id": "ev-005",
+    "category": "finance",
+    "difficulty": "model",
+    "text": "The reagent quote and the supplier invoice for the standing order must be in by 24 November 2026."
+   },
+   {
+    "id": "ev-006",
+    "category": "finance",
+    "difficulty": "model",
+    "text": "Helix pays a data access fee of Rs 4,50,000 on delivery of the first dataset."
+   },
+   {
+    "id": "ev-007",
+    "category": "finance",
+    "difficulty": "model",
+    "text": "Two flow cells are prepaid for the January run, so the January invoice will not touch the reagent budget."
+   },
    {
     "id": "ev-008",
     "category": "finance",
@@ -58,28 +76,17 @@
     "text": "If the biosafety approval lapses all isolate work stops, and the last time it stopped for two weeks."
    }
   ],
-  "wronglyLimitedItems": [
-   {
-    "id": "ev-034",
-    "text": "The reagent invoice is filed and the budget line for the next quarter is set.",
-    "stage": "held"
-   }
-  ],
+  "wronglyLimitedItems": [],
   "modelCalls": 1,
-  "ms": 102
+  "ms": 46
  },
  "detector": {
   "rewordings": 28,
   "keyTerms": 21,
-  "judgeOnly": 0,
-  "neither": 7,
-  "judgeAsked": false,
+  "judgeOnly": 2,
+  "neither": 5,
+  "judgeAsked": true,
   "missed": [
-   {
-    "factId": "pf-01",
-    "text": "The two cells for the first run of the new year are already covered, nothing more goes out for them.",
-    "kind": "hard"
-   },
    {
     "factId": "pf-02",
     "text": "Our industry partner holds the shared results back from any paper until the middle of 2027.",
@@ -92,17 +99,12 @@
    },
    {
     "factId": "pf-04",
-    "text": "The quarterly paperwork for cells and reagents has to go in a fortnight before the next slot at the core.",
+    "text": "The quarterly paperwork for cells and reagents has to be in by the day of our next slot at the core.",
     "kind": "hard"
    },
    {
     "factId": "pf-05",
     "text": "First the one who holds the budget puts a name on the form, then the office turns it into an order.",
-    "kind": "hard"
-   },
-   {
-    "factId": "pf-06",
-    "text": "Lose the committee sign off and the bench side of the project is frozen for a fortnight, with a visit before anyone starts again.",
     "kind": "hard"
    },
    {
@@ -118,8 +120,8 @@
   "hard": {
    "total": 7,
    "keyTerms": 0,
-   "judgeOnly": 0,
-   "neither": 7
+   "judgeOnly": 2,
+   "neither": 5
   }
  },
  "grid": {
@@ -128,10 +130,10 @@
   "textsChecked": 5164,
   "tokenLeaks": 0,
   "probeLeaks": 0,
-  "unconfirmed": 0,
+  "unconfirmed": 9,
   "judgeCalls": 107,
-  "judgeFailed": 107,
-  "judgeWithdrawn": 0,
+  "judgeFailed": 0,
+  "judgeWithdrawn": 33,
   "notBuilt": []
  },
  "modelCallAudit": {
