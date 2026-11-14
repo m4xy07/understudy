@@ -98,7 +98,8 @@ export function resolvePack(raw: unknown, opts: { checkFiles?: boolean } = {}): 
   if (badExample !== undefined) throw new PackError(`extraction.examples: unknown attribute "${badExample}"`);
 
   if (pack.demo && opts.checkFiles !== false) {
-    const dir = path.resolve(process.cwd(), pack.demo.dataDir);
+    // The demo folder ships through outputFileTracingIncludes (next.config.ts), not through tracing this call.
+    const dir = path.resolve(/* turbopackIgnore: true */ process.cwd(), pack.demo.dataDir);
     if (!fs.existsSync(path.join(dir, "sources.json"))) throw new PackError("demo.dataDir not found");
   }
 
