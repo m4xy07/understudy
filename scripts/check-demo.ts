@@ -2,7 +2,8 @@
 // any model runs. Works for any pack: roles, folders and dates come from the pack; what a given demo
 // must contain comes from its answer key (<demo.dataDir>/ground_truth.json) and from the optional
 // `demo.expect` block of the pack (counts, the task cards that stay active, footprint evidence).
-// Run from the repo root: pnpm tsx scripts/check-demo.ts [--pack <id>]   (default: packs/index.json)
+// Run from the repo root: pnpm tsx scripts/check-demo.ts [--pack <id>] [--adapters]   (default: packs/index.json)
+// A pack with demo.expect.adapters (or --adapters) also runs scripts/check-demo-adapters.ts.
 // Contract: docs/ARCHITECTURE.md sections 1, 1a, 2, 4 and 7a.
 import "./load-env";
 import fs from "node:fs";
@@ -43,6 +44,8 @@ interface DemoExpect {
   readbackItems?: number;
   activeTaskIds?: string[];
   footprint?: FootprintExpectation[];
+  /** Also run the second stage (scripts/check-demo-adapters.ts): real adapters, masking, footprint, inventory. */
+  adapters?: boolean;
 }
 const EXPECT = ((resolved.demo as Record<string, unknown>).expect ?? {}) as DemoExpect;
 
@@ -510,7 +513,8 @@ for (const s of secrets) {
   if (!isObj(s) || !isStr(s.where) || !isStr(s.type) || !isStr(s.value)) { fail(`gt: bad secret ${JSON.stringify(s)}`); continue; }
   const file = path.join(ROOT, s.where);
   check(fs.existsSync(file) && fs.readFileSync(file, "utf8").includes(s.value), `secrets: ${s.type} value not found in ${s.where}`);
-  if (s.type === "github_token") check(/^ghp_[A-Za-z0-9]{36}$/.test(s.value), "secrets: github token must be ghp_ + 36 alphanumerics");
+  // the shape the masker recognises (src/lib/tether/mask.ts); the adapters stage proves it is masked
+  if (s.type === "github_token") check(/^gh[pousr]_[A-Za-z0-9]{20,}$/.test(s.value), "secrets: github token must be gh?_ + at least 20 alphanumerics");
   if (s.type === "aws_access_key_id") check(/^AKIA[A-Z0-9]{16}$/.test(s.value), "secrets: AWS key id format");
 }
 
@@ -584,3 +588,13 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(`\ncheck-demo: OK (${PACK_ID})`);
+
+// Second stage: the same corpus through the real adapters, the masker, the footprint and the inventory.
+if (EXPECT.adapters || process.argv.includes("--adapters")) {
+  if (packArg === -1) process.argv.push("--pack", PACK_ID);
+  console.log("\n--- adapters stage ---\n");
+  import("./check-demo-adapters").catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

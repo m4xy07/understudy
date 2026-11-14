@@ -168,7 +168,10 @@
     "today": "2026-11-11T12:00:00+05:30",
     "title": "University research group",
     "button": "Open the research-group demo",
-    "blurb": "Farhan, a postdoc, leaves for a new post. The incoming postdoc must take over the analysis pipeline, the sequencing bookings and the approvals."
+    "blurb": "Farhan, a postdoc, leaves for a new post. The incoming postdoc must take over the analysis pipeline, the sequencing bookings and the approvals.",
+    "pendingText": "Creating your private copy…",
+    "sampleAnswer": "Gauri holds it in the lab password manager. I showed her on 6 Nov. Ask her, never post it in a channel.",
+    "expect": { "responsibilities": 10, "claims": [60, 85], "readbackItems": 5, "adapters": true }
   },
   "sensitivity": {
     "finance": ["pi", "lab_manager", "leaving_postdoc"],

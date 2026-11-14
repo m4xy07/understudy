@@ -1,19 +1,20 @@
-// Validates the research-group setting pack (packs/lab.json) and its synthetic corpus (data/lab).
-// Run from the repo root: pnpm tsx scripts/check-lab.ts
+// Second stage of scripts/check-demo.ts: the demo corpus through the REAL code, before any model runs.
+// check-demo.ts runs this stage for a pack whose demo.expect.adapters is true, or with --adapters.
+// Run alone from the repo root: pnpm tsx scripts/check-demo-adapters.ts --pack <id>
 //
-// Unlike scripts/check-demo.ts (which is written for the club data), nothing here names a role,
-// an entity or a person: roles, flags, checklists, the leaver and the data folder all come from the
-// pack, so the same script checks any pack:  pnpm tsx scripts/check-lab.ts --pack <id>
+// Nothing here names a role, an entity or a person: roles, flags, checklists, the leaver and the
+// data folder all come from the pack.
 //
-// What it proves:
-//   1. the pack has the version 2 shape (spec 03, A3) and passes its loader rules;
-//   2. every source file is well formed (Slack JSON, commits.json, task CSV header, ICS, notes);
-//   3. every source goes through the real Tether adapters with 0 rejected rows, the planted secrets
-//      and contacts are masked, and credential names survive;
-//   4. canary tokens sit only in sources (and segments) whose role set the answer key allows;
-//   5. every answer-key "contains" string is in its file verbatim and in a masked segment;
-//   6. planted coverage per check agrees with the gaps list, for the successor and per restricted check;
-//   7. the leaver footprint and the inventory (real code) give exactly the answer key's responsibilities.
+// What it adds to the first stage:
+//   1. every source goes through the real Tether adapters with 0 rejected rows; the planted secrets
+//      and contacts are masked, credential names survive, and no planted secret has the exact shape
+//      of a real provider key;
+//   2. canary tokens sit only in segments whose role set the answer key allows, and in no other
+//      pack's data;
+//   3. every answer-key "contains" string is in a masked segment with the claim's role set;
+//   4. planted coverage per check agrees with the gaps list, per restricted check and per role;
+//   5. the leaver footprint and the inventory (real code) give exactly the answer key's
+//      responsibilities, each off-board duty by the rule the answer key names.
 import fs from "node:fs";
 import path from "node:path";
 import Papa from "papaparse";
@@ -28,7 +29,8 @@ import { dropFinishedFootprint } from "../src/lib/lacuna/adapt";
 
 const ROOT = process.cwd();
 const argPack = process.argv.indexOf("--pack");
-const PACK_ID = argPack > 0 ? process.argv[argPack + 1] : "lab";
+const PACK_ID = argPack > 0 ? process.argv[argPack + 1] : "";
+if (!PACK_ID) throw new Error("check-demo-adapters: pass --pack <id>");
 
 const ATTRS = ["owner", "status", "deadline", "location", "procedure", "access", "decision", "reason", "dependency", "contact", "risk"];
 const SOURCE_KINDS = ["whatsapp", "slack", "github", "tasks_csv", "markdown", "ics", "interview"];
@@ -627,4 +629,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`\ncheck-lab (${PACK_ID}): OK`);
+console.log(`\ncheck-demo adapters stage: OK (${PACK_ID})`);
