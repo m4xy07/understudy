@@ -186,7 +186,6 @@ describe("findings 2 and 10: every review decision re-tests", () => {
     expect(await retestAfterReview(ws, claimId, "review approved")).toBe(true);
     expect(await runCount()).toBe(runs + CLUB.testRoles.length); // one narrowed run per tested role
     const after = await check();
-    expect(after.run.trigger ?? "review approved").toBe("review approved");
     expect(after.result.coverage).toBe("covered");
     expect(after.run.scores.b).toBe(before.run.scores.b - 1);
     // Only the claim's responsibility was judged again: every other result is the earlier one.

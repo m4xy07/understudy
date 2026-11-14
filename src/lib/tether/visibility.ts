@@ -254,7 +254,9 @@ function parseResults(v: unknown): { claimIds?: string[]; note?: string }[] {
  * A segment's role set got smaller: everything derived from it shrinks in the same transaction,
  * with no re-run needed. Claims that cite it (and their frozen copies in every snapshot) lose the
  * removed roles; open gap questions are rebuilt by the next run; stand-in notes that may quote
- * those claims are blanked. Returns the ids of the claims it narrowed.
+ * those claims are blanked. Recovery rows (option cards with quotes, rebuilt procedures, the
+ * question written for a neighbour) and successor findings that rest on the segment or on those
+ * claims shrink too. Returns the ids of the claims it narrowed.
  */
 async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: readonly RoleKey[]): Promise<string[]> {
   const like = `%${segmentId}%`;
@@ -266,6 +268,7 @@ async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: r
   await sql`
     UPDATE attest_dropped SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${roleSet as RoleKey[]}::text[]))
     WHERE workspace_id = ${ws} AND citations::text LIKE ${like}`;
+  await narrowRecoveryAndFindings(sql, ws, segmentId, ids, roleSet);
   if (!ids.length) return ids;
   await sql`
     UPDATE snapshot_claims SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${roleSet as RoleKey[]}::text[]))
@@ -294,6 +297,49 @@ async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: r
  * a run is already live nothing is executed here (a second slice on the same run would do its
  * steps twice) and a full run is queued behind it instead.
  */
+/**
+ * Recovery rows and findings keep their own role sets (RLS reads those, not the claim's), so a
+ * limit has to reach them in the same transaction:
+ *   * a row that points at a narrowed claim, or whose stored detail quotes the segment or one of
+ *     those claims (option evidence, trace steps), loses the removed roles;
+ *   * every option row of a gap those claims belong to loses them too (a proposal is written from
+ *     all the record claims of its gap);
+ *   * the question written for a neighbour on such a gap is built from those claims: the row loses
+ *     the removed roles, and if the neighbour who was asked is one of them the row is removed
+ *     (they can no longer be asked about it; the next ladder build decides again);
+ *   * a finding whose evidence is the segment, or whose claim was narrowed, loses the removed roles.
+ */
+async function narrowRecoveryAndFindings(
+  sql: Sql, ws: string, segmentId: string, claimIds: readonly string[], roleSet: readonly RoleKey[],
+): Promise<void> {
+  const keep = roleSet as RoleKey[];
+  const ids = claimIds as string[];
+  const patterns = [`%${segmentId}%`, ...ids.map((id) => `%${id}%`)];
+  await sql`
+    UPDATE recovery_steps SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${keep}::text[])), updated_at = now()
+    WHERE workspace_id = ${ws} AND (claim_id = ANY(${ids}::text[]) OR detail::text LIKE ANY(${patterns}::text[]))`;
+  await sql`
+    UPDATE findings SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${keep}::text[]))
+    WHERE workspace_id = ${ws} AND (segment_id = ${segmentId} OR attachment_segment_id = ${segmentId} OR claim_id = ANY(${ids}::text[]))`;
+  if (!ids.length) return;
+  // The gaps those claims belong to: by the open question that names them, and by entity.
+  const gaps = await sql`
+    SELECT DISTINCT r.id AS responsibility_id FROM responsibilities r
+    WHERE r.workspace_id = ${ws} AND (
+      r.entities && ARRAY(SELECT entity FROM claims WHERE workspace_id = ${ws} AND id = ANY(${ids}::text[]))
+      OR r.id IN (SELECT responsibility_id FROM gap_questions WHERE workspace_id = ${ws} AND claim_ids && ${ids}::text[]))`;
+  const respIds = gaps.map((g) => String(g.responsibility_id));
+  if (!respIds.length) return;
+  await sql`
+    DELETE FROM recovery_steps
+    WHERE workspace_id = ${ws} AND responsibility_id = ANY(${respIds}::text[]) AND kind = 'neighbour' AND status = 'asked'
+      AND question_text IS NOT NULL AND NOT (target_role = ANY(${keep}::text[]))`;
+  await sql`
+    UPDATE recovery_steps SET role_set = ARRAY(SELECT r FROM unnest(role_set) AS r WHERE r = ANY(${keep}::text[])), updated_at = now()
+    WHERE workspace_id = ${ws} AND responsibility_id = ANY(${respIds}::text[])
+      AND (kind = 'option' OR (kind = 'neighbour' AND question_text IS NOT NULL))`;
+}
+
 async function startRerun(ws: string): Promise<{ runId: string | null; queued: boolean }> {
   try {
     const { requestRerun } = await import("@/lib/pipeline/run");

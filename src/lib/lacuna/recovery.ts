@@ -541,6 +541,7 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
   const wantModel = opts.model !== false;
   const modelOff = process.env.LACUNA_MODEL === "off"; // same switch the stand-in honours: no model call at all
   const modelUp = wantModel && !modelOff ? await modelAvailable() : false;
+  const claimsNow = new Map(allClaims.map((c) => [c.id, c]));
   const existingModel = new Map<string, OptionCandidate[]>();
   const existingRulesOnly = new Set<string>();
   if (!wantModel) {
@@ -553,7 +554,14 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
       const k = gapKey(String(r.responsibility_id), String(r.check_key));
       if (d.rulesOnly === true) existingRulesOnly.add(k);
       if (!d.sources?.includes("model") || !d.value || !d.evidence?.length) continue;
-      existingModel.set(k, [...(existingModel.get(k) ?? []), { value: d.value, source: "model", evidence: d.evidence, why: d.why }]);
+      // A kept proposal rests on claims as they are now: a claim limited since (or gone) must not
+      // bring its old, wider role set back. Without all of its evidence the proposal is dropped.
+      const current = d.evidence.map((e) => {
+        const c = claimsNow.get(e.claimId);
+        return c && (c.state === "active" || c.state === "conflicting") ? { ...e, roleSet: c.roleSet } : null;
+      });
+      if (current.some((e) => e === null)) continue;
+      existingModel.set(k, [...(existingModel.get(k) ?? []), { value: d.value, source: "model", evidence: current as OptionEvidence[], why: d.why }]);
     }
   }
 
@@ -779,6 +787,13 @@ async function readSteps(ws: string, role: RoleKey): Promise<Record<string, unkn
     ORDER BY s.responsibility_id, s.check_key, s.rung, s.position, s.id`);
 }
 
+/** False for an option row with evidence this role cannot read in full (see listLadder). */
+export function optionEvidenceReadable(step: Pick<LadderStep, "kind" | "detail">, readable: ReadonlySet<string>): boolean {
+  if (step.kind !== "option") return true;
+  const evidence = (step.detail as { evidence?: { claimId?: string }[] }).evidence ?? [];
+  return evidence.every((e) => !e.claimId || readable.has(e.claimId));
+}
+
 async function peopleNamesFor(ws: string): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const p of await listPeople(ws)) out[p.id] = p.displayName;
@@ -798,7 +813,12 @@ export async function listLadder(ws: string, role: RoleKey): Promise<LadderGap[]
   ]);
   const respById = new Map(resps.map((r) => [r.id, r]));
   const coverage = new Map((latest?.results ?? []).map((r) => [gapKey(r.responsibilityId, r.checkKey), r.coverage]));
-  const steps = rowsRaw.map((r) => ({ key: gapKey(String(r.responsibility_id), String(r.check_key)), step: toStep(r, names) }));
+  // Defence in depth: an option card quotes its evidence claims, so it is shown only when this
+  // role may read every one of them today, whatever role set the stored row carries.
+  const readable = new Set((await withRole(ws, role, (tx) => tx`SELECT id FROM claims WHERE workspace_id = ${ws}`)).map((r) => String(r.id)));
+  const steps = rowsRaw
+    .map((r) => ({ key: gapKey(String(r.responsibility_id), String(r.check_key)), step: toStep(r, names) }))
+    .filter(({ step }) => optionEvidenceReadable(step, readable));
   const fullText = role === pack.leaverRole || role === pack.approverRole || role === pack.successorRole;
   const out: LadderGap[] = [];
   for (const q of questions.filter((x) => !x.answeredClaimId)) {

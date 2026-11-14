@@ -14,7 +14,7 @@ import type { RunProgress, RunStatus, RunStep, RunStepKey } from "@/lib/db/mappe
 import { getRunStatus, listSources, audit } from "@/lib/db/queries";
 import { getWorkspacePack, type ResolvedPack } from "@/lib/pack";
 import { reconstruct, verify } from "@/lib/attest";
-import { buildInventory, buildQuestions, runTest } from "@/lib/lacuna";
+import { buildInventory, buildLadder, buildQuestions, recoveryState, runTest } from "@/lib/lacuna";
 import { DEFAULT_TIMEOUT_MS, modelAvailable, runWithModelContext, type ModelContext } from "@/lib/model/client";
 import { chargeModelCall } from "./guard";
 import { reclassify } from "@/lib/tether/visibility";
@@ -274,6 +274,9 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
     },
     ask: async () => {
       const qs = await buildQuestions(ws);
+      // With recovery on, the ladder is rebuilt from the questions and claims as they are now (a
+      // visibility change may have narrowed them). No new model proposals: the stored ones are kept.
+      if ((await recoveryState(ws)).on) await buildLadder(ws, { model: false });
       return { counts: { questions: qs.filter((q) => !q.answeredClaimId).length } };
     },
   };
