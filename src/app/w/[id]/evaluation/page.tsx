@@ -5,6 +5,7 @@ import { loadWorkspace, type WsParams } from "@/lib/page";
 import { PageHead, PageLoading } from "@/components/PageHead";
 import { EmptyState, Notice } from "@/components/Notice";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
+import { evaluationLists } from "@/lib/attest/evaluation-view";
 import type { Ratio } from "@/lib/attest/core/evaluate";
 
 export default function EvaluationPage({ params }: { params: WsParams }) {
@@ -58,13 +59,11 @@ async function Evaluation({ params }: { params: WsParams }) {
       </>
     );
   }
-  // Lists below show only what this role may see: ground-truth items whose role set includes the
-  // role, and conflict pairs whose claims are both visible to it. Counts are workspace totals.
-  const visibleIds = new Set(visible.map((c) => c.id));
-  const gtRoles = new Map(e.groundTruth.claims.map((g) => [g.id, g.roleSet ?? []]));
-  const unmatched = r.unmatched.filter((u) => (gtRoles.get(u.id) ?? []).includes(role));
-  const hiddenUnmatched = r.unmatched.length - unmatched.length;
-  const falsePairs = r.falseConflicts.pairs.filter((p) => p.claimIds.every((cid) => visibleIds.has(cid)));
+  // Every list below shows only what this role may see: ground-truth items whose role set includes
+  // the role (entities and supersessions too: the answer key's names are content), and conflict
+  // pairs whose claims are both visible to it. Counts are workspace totals.
+  const lists = evaluationLists(r, e.groundTruth, role, new Set(visible.map((c) => c.id)));
+  const { unmatched, hiddenUnmatched, falsePairs, perEntity, hiddenEntities, supersessionsMissing, hiddenSupersessions } = lists;
 
   return (
     <>
@@ -107,8 +106,7 @@ async function Evaluation({ params }: { params: WsParams }) {
               </tr>
             </thead>
             <tbody>
-              {Object.entries(r.perEntity)
-                .sort(([a], [b]) => a.localeCompare(b))
+              {perEntity
                 .map(([entity, pe]) => (
                   <tr key={entity} className="border-t border-rule">
                     <td className="mono py-1">{entity}</td>
@@ -120,6 +118,7 @@ async function Evaluation({ params }: { params: WsParams }) {
                 ))}
             </tbody>
           </table>
+          {hiddenEntities > 0 && <p className="mt-2 text-sm text-muted">{hiddenEntities} more outside what {roleName} may see.</p>}
         </section>
 
         <section className="card p-4" aria-label="Unmatched items">
@@ -136,16 +135,17 @@ async function Evaluation({ params }: { params: WsParams }) {
               {hiddenUnmatched > 0 && <li className="text-muted">{hiddenUnmatched} more outside what {roleName} may see.</li>}
             </ul>
           )}
-          {r.supersessions.missing.length > 0 && (
+          {(supersessionsMissing.length > 0 || hiddenSupersessions > 0) && (
             <>
               <h3 className="mt-4 font-medium">Supersessions not found</h3>
               <ul className="mt-1 grid gap-1 text-sm">
-                {r.supersessions.missing.map((s) => (
+                {supersessionsMissing.map((s) => (
                   <li key={`${s.entity}-${s.attribute}-${s.old}`}>
                     {s.entity} · <span className="mono">{s.attribute}</span>
                     {s.attribute === "contact" ? " (multi-valued: both contacts stay; the newest is current)" : ""}
                   </li>
                 ))}
+                {hiddenSupersessions > 0 && <li className="text-muted">{hiddenSupersessions} more outside what {roleName} may see.</li>}
               </ul>
             </>
           )}
