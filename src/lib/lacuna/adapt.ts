@@ -1,6 +1,6 @@
 // Pure glue between the setting pack, Tether's footprint and Lacuna core. No database, no model.
 import { MULTI_VALUED, type Attribute, type CheckResult, type Coverage, type Person, type Responsibility, type RoleKey, type Segment } from "@/lib/types";
-import type { Pack } from "@/lib/pack";
+import type { Pack, ResolvedPack } from "@/lib/pack";
 import type { LacunaCheck, LacunaPack, PackCheck } from "./core/pack";
 import type { ClaimMeta } from "./core/standin";
 import type { FootprintCandidate } from "./core/inventory";
@@ -14,7 +14,7 @@ const PERSON_ATTRIBUTES: readonly Attribute[] = ["owner", "contact"];
  * so it is satisfied only by owner/contact claims (a credential NAME alone does not say who
  * holds it). Entities keep an optional `partOf` link.
  */
-export function toLacunaPack(pack: Pack): LacunaPack {
+export function toLacunaPack(pack: ResolvedPack): LacunaPack {
   const checklists: LacunaPack["checklists"] = {};
   for (const [kind, list] of Object.entries(pack.checklists)) {
     checklists[kind as keyof NonNullable<LacunaPack["checklists"]>] = list.map((c): PackCheck => {
@@ -44,10 +44,9 @@ export function toLacunaPack(pack: Pack): LacunaPack {
   };
 }
 
-/** First word of the leaver role label, e.g. "Priya (outgoing tech lead)" -> "Priya". */
-export function leaverName(pack: Pick<Pack, "roles" | "leaverRole">): string {
-  const label = pack.roles.find((r) => r.key === pack.leaverRole)?.label ?? "";
-  return label.split(/[\s(,]/)[0]?.trim() ?? "";
+/** The leaving person's name as the sources show it: pack.leaverPerson.name (no label parsing). */
+export function leaverName(pack: Pick<Pack, "leaverPerson">): string {
+  return pack.leaverPerson.name.trim();
 }
 
 function words(s: string): string[] {
@@ -58,11 +57,11 @@ function words(s: string): string[] {
  * Every person record that is the leaver: display name or any alias contains the leaver's name
  * as a word. Chat exports have no emails, so the same person can appear several times.
  */
-export function leaverPersonIds(people: readonly Person[], name: string): string[] {
-  const n = words(name)[0];
-  if (!n) return [];
+export function leaverPersonIds(people: readonly Person[], name: string, aliases: readonly string[] = []): string[] {
+  const names = [name, ...aliases].map((x) => words(x)[0]).filter(Boolean);
+  if (!names.length) return [];
   return people
-    .filter((p) => [p.displayName, ...p.aliases].some((x) => words(x).includes(n)))
+    .filter((p) => [p.displayName, ...p.aliases].some((x) => names.some((n) => words(x).includes(n))))
     .map((p) => p.id);
 }
 

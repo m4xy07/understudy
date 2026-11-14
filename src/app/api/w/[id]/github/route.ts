@@ -1,8 +1,8 @@
 // POST JSON { url, roles? }: import a public GitHub repository as a `github` source.
 import { getWorkspace } from "@/lib/db/queries";
-import { isRoleKey } from "@/lib/db/withRole";
+import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { ingestGithubUrl } from "@/lib/pipeline/ingest";
-import { getRole } from "@/lib/session";
+import { viewingRole } from "@/lib/session";
 import type { RoleKey } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -20,7 +20,8 @@ export async function POST(req: Request, ctx: Ctx) {
   }
   const url = typeof body.url === "string" ? body.url.trim() : "";
   if (!url) return Response.json({ ok: false, error: "Paste a public GitHub repository URL." }, { status: 400 });
-  const narrow = (Array.isArray(body.roles) ? body.roles : []).map(String).filter(isRoleKey) as RoleKey[];
-  const res = await ingestGithubUrl(id, url, { narrowRoles: narrow, actor: await getRole(id) });
+  const pack = await getWorkspacePack(id);
+  const narrow = (Array.isArray(body.roles) ? body.roles : []).map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
+  const res = await ingestGithubUrl(id, url, { narrowRoles: narrow, actor: await viewingRole(id) });
   return Response.json(res, { status: res.ok ? 200 : 400 });
 }

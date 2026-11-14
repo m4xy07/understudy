@@ -1,7 +1,7 @@
 // Claim review (Relay). Pure: takes a claim and an action, returns the new claim and one
 // append-only event, or a typed error. Contract: docs/ARCHITECTURE.md section 4, "Review and Handover".
 import type { Claim, ReviewTier, RoleKey } from "@/lib/types";
-import { checkApprover, relayError, type RelayError } from "./labels";
+import { checkApprover, relayError, type ApprovalRoles, type RelayError } from "./labels";
 
 export type ReviewActionType = "approve" | "reject" | "edit";
 
@@ -43,11 +43,12 @@ const EVENT_TYPE: Record<ReviewActionType, RelayEventType> = {
 };
 
 /**
- * Review tier from the contract: C = sensitive (role set excludes new_member), conflicting, or
- * blocking importance; A = corroborated, normal, no flags (bulk approve); B = everything else.
+ * Review tier from the contract: C = sensitive (hidden from a role the pack flags as restricted
+ * audience), conflicting, or blocking importance; A = corroborated, normal, no flags (bulk
+ * approve); B = everything else.
  */
-export function assignTier(claim: Claim): ReviewTier {
-  const sensitive = !claim.roleSet.includes("new_member");
+export function assignTier(claim: Claim, restrictedAudience: readonly RoleKey[]): ReviewTier {
+  const sensitive = restrictedAudience.some((r) => !claim.roleSet.includes(r));
   if (sensitive || claim.state === "conflicting" || claim.importance === "blocking") return "C";
   const flagged =
     claim.state !== "active" ||
@@ -64,8 +65,8 @@ export function isReviewerEdited(claim: Pick<Claim, "review">): boolean {
 }
 
 /** Apply one review action. Only the approver may review; the leaver never. */
-export function applyReview(claim: Claim, action: ReviewAction): ReviewResult {
-  const roleError = checkApprover(action.by);
+export function applyReview(claim: Claim, action: ReviewAction, roles: ApprovalRoles): ReviewResult {
+  const roleError = checkApprover(action.by, roles);
   if (roleError) return roleError;
 
   if (claim.state === "dropped") {
@@ -141,8 +142,8 @@ export type BulkResult =
  * Approve every pending tier A claim (active state) in one go. Other claims are returned unchanged.
  * Input order is preserved.
  */
-export function bulkApproveTierA(claims: readonly Claim[], by: RoleKey, at?: string): BulkResult {
-  const roleError = checkApprover(by);
+export function bulkApproveTierA(claims: readonly Claim[], by: RoleKey, roles: ApprovalRoles, at?: string): BulkResult {
+  const roleError = checkApprover(by, roles);
   if (roleError) return roleError;
   const when = at ?? new Date().toISOString();
   const events: RelayEvent[] = [];

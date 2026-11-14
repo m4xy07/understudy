@@ -4,9 +4,9 @@
 import { cookies } from "next/headers";
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
-import { isRoleKey, isUuid } from "@/lib/db/withRole";
-import { getRole, roleCookieName } from "@/lib/session";
-import { getPack } from "@/lib/pack";
+import { isUuid } from "@/lib/db/withRole";
+import { viewingRole, roleCookieName } from "@/lib/session";
+import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { answerQuestion } from "@/lib/lacuna";
 import type { RoleKey } from "@/lib/types";
 
@@ -27,10 +27,10 @@ async function workspaceFrom(form: FormData): Promise<string | null> {
 export async function answerQuestionAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const role = await getRole(ws);
-  const pack = getPack();
+  const role = await viewingRole(ws);
+  const pack = await getWorkspacePack(ws);
   const base = pack.uploadDefaults.roleSet as RoleKey[];
-  const picked = form.getAll("roles").map(String).filter(isRoleKey) as RoleKey[];
+  const picked = form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
   // All boxes ticked means "no narrowing"; fewer means narrow to those (never wider than the default).
   const narrow = picked.length > 0 && picked.length < base.length ? picked : undefined;
   const res = await answerQuestion(ws, String(form.get("questionId") ?? ""), String(form.get("answer") ?? ""), role, narrow);
@@ -39,11 +39,11 @@ export async function answerQuestionAction(_prev: ActionState, form: FormData): 
   return { ok: true, message: `Saved as "Leaver said". Re-test: ${res.delta}` };
 }
 
-/** "Switch to Priya to answer": sets the viewing role cookie to the leaver. */
+/** "Switch to <the leaver> to answer": sets the viewing role cookie to the pack's leaver role. */
 export async function switchToLeaverAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  (await cookies()).set(roleCookieName(ws), getPack().leaverRole, {
+  (await cookies()).set(roleCookieName(ws), (await getWorkspacePack(ws)).leaverRole, {
     path: "/", sameSite: "lax", httpOnly: true, maxAge: 60 * 60 * 24 * 7,
   });
   refresh();

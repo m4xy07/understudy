@@ -77,7 +77,7 @@ describe("github-fetch", () => {
 const DEMO = join(process.cwd(), "data", "demo", "sources.json");
 describe.skipIf(!existsSync(DEMO))("demo pack", () => {
   it("parses every demo source and leaks no planted secret", async () => {
-    const sources = loadDemoSources();
+    const sources = loadDemoSources("data/demo");
     const out = ingestAll(sources.map((s, i) => ({ ...s, sourceId: `demo-${i + 1}` })), KEYS);
     const text = out.sources.flatMap((s) => s.result.segments).map((s) => `${s.text}\n${JSON.stringify(s.meta)}`).join("\n");
     expect(out.sources.every((s) => s.result.segments.length > 0)).toBe(true);

@@ -1,11 +1,11 @@
 "use server";
 // Test page actions. The role always comes from the cookie on the server; permission rules live
-// in src/lib/lacuna (only the president confirms the inventory or saves plan items).
+// in src/lib/lacuna (only the approver confirms the inventory or saves plan items).
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
-import { isRoleKey, isUuid } from "@/lib/db/withRole";
-import { getRole } from "@/lib/session";
-import { getPack } from "@/lib/pack";
+import { isUuid } from "@/lib/db/withRole";
+import { viewingRole } from "@/lib/session";
+import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { buildQuestions, confirmInventory, runTest, savePlanItem } from "@/lib/lacuna";
 import type { RoleKey } from "@/lib/types";
 
@@ -31,10 +31,10 @@ function pct(x: number | null): string {
 export async function rerunTestAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const pack = getPack();
-  const successor = pack.successorRole as RoleKey;
+  const pack = await getWorkspacePack(ws);
+  const successor = pack.successorRole;
   const asked = String(form.get("target") ?? "");
-  const target: RoleKey = isRoleKey(asked) ? asked : successor;
+  const target: RoleKey = isRoleOf(pack, asked) ? asked : successor;
   try {
     const t = await runTest(ws, target, { trigger: "re-run" });
     if (target !== successor) await runTest(ws, successor, { trigger: "re-run" });
@@ -49,13 +49,13 @@ export async function rerunTestAction(_prev: ActionState, form: FormData): Promi
 export async function confirmInventoryAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await confirmInventory(ws, await getRole(ws));
+  const res = await confirmInventory(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   return done(`Inventory confirmed (${res.count} responsibilities).`);
 }
 
-/** Continuation plan entry (owner, due date, risk note) for an open blocking gap. President only. */
+/** Continuation plan entry (owner, due date, risk note) for an open blocking gap. Approver only. */
 export async function savePlanItemAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
@@ -67,7 +67,7 @@ export async function savePlanItemAction(_prev: ActionState, form: FormData): Pr
     responsibilityId: String(form.get("responsibilityId") ?? ""),
     checkKey: String(form.get("checkKey") ?? ""),
     owner, dueDate, riskNote,
-  }, await getRole(ws));
+  }, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   return done("Plan saved.");

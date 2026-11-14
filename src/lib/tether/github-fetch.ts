@@ -1,4 +1,4 @@
-// Fetch a live public GitHub repo into the same shape as data/demo/github:
+// Fetch a live public GitHub repo into the same shape as a demo's github export:
 // commits.json (last 100 commits; changed files only for the newest 30 to save rate limit),
 // files/README*, files/.github/workflows/*, and up to 25 small text files (< 50 KB).
 import type { SourceFile } from "./adapters/common";

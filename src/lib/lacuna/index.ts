@@ -1,19 +1,19 @@
 // Lacuna: Test and Ask (docs/ARCHITECTURE.md section 4). Database and model glue around the
 // pure core in ./core. Public entry points (names and shapes used by the pipeline, pages and Relay):
 //   buildInventory(ws)                                   -> { responsibilities, items, dropped }
-//   confirmInventory(ws, actor)                          -> president confirms the inventory
+//   confirmInventory(ws, actor)                          -> the approver confirms the inventory
 //   runTest(ws, role, opts?)                             -> TestRun (stored; provisional until a snapshot)
 //   buildQuestions(ws)                                   -> GapQuestion[] (top 10 open + answered)
 //   answerQuestion(ws, qid, text, actor, narrowRoles?)   -> { ok, claimId, before, after, delta }
 //   listBlockingGaps(ws, role?)                          -> BlockingGap[] (open blocking checks + plan)
-//   savePlanItem(ws, item, actor)                        -> president only
+//   savePlanItem(ws, item, actor)                        -> approver only
 //   planComplete(p), releaseInfo(ws), scoreResults(results, weightOf)
 import { db } from "@/lib/db/client";
 import { toClaim, toGapQuestion, toResponsibility, toTestRun } from "@/lib/db/mappers";
 import { sha256Hex } from "@/lib/text/norm";
 import { audit, getLatestTestRun, getWorkspace, listPeople, listPlanItems, listResponsibilities, listSegments } from "@/lib/db/queries";
 import { withRole } from "@/lib/db/withRole";
-import { getPack, entityLabel, type Pack } from "@/lib/pack";
+import { getWorkspacePack, entityLabel, roleLabel, type ResolvedPack } from "@/lib/pack";
 import { claimId as makeClaimId, tierFor } from "@/lib/attest";
 import { computeFootprint } from "@/lib/tether/footprint";
 import { maskText } from "@/lib/tether/mask";
@@ -36,19 +36,20 @@ import { dropFinishedFootprint, leaverName, leaverPersonIds, markPartlyRestricte
 export { toLacunaPack, leaverPersonIds, leaverName } from "./adapt";
 export type { ReleaseState } from "./core/plan";
 
-/** Fixed "today" for the demo pack: the data is written as of 11 Nov 2026 (IST). */
-export const DEMO_NOW = "2026-11-11T12:00:00+05:30";
-
 const MODEL_CONCURRENCY = 6;
 
-function lacunaPack(pack: Pack = getPack()): LacunaPack {
+function lacunaPack(pack: ResolvedPack): LacunaPack {
   return toLacunaPack(pack);
 }
 
-/** "Today" for inventory, urgency and recency: fixed for demo workspaces, real time otherwise. */
+/**
+ * "Today" for inventory, urgency and recency. A demo workspace lives on the fixed day its pack's
+ * demo story is written for (pack.demo.today); every other workspace uses the real time.
+ */
 export async function workspaceNow(ws: string): Promise<string> {
   const w = await getWorkspace(ws);
-  return w?.kind === "demo" ? DEMO_NOW : new Date().toISOString();
+  if (w?.kind !== "demo") return new Date().toISOString();
+  return (await getWorkspacePack(ws)).demo?.today ?? new Date().toISOString();
 }
 
 function importanceOf(weight: number): Importance {
@@ -73,7 +74,7 @@ export interface InventoryResult {
  */
 export async function buildInventory(ws: string): Promise<InventoryResult> {
   const sql = db();
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
   const now = await workspaceNow(ws);
   const [segments, people] = await Promise.all([listSegments(ws), listPeople(ws)]);
@@ -82,7 +83,7 @@ export async function buildInventory(ws: string): Promise<InventoryResult> {
     ...t,
     meta: { ...t.meta, id: t.meta.id ?? t.meta.taskId, updated_at: t.meta.updated_at ?? t.meta.updatedAt },
   }));
-  const leaverIds = leaverPersonIds(people, leaverName(pack));
+  const leaverIds = leaverPersonIds(people, leaverName(pack), pack.leaverPerson.aliases);
   const raw = leaverIds.length
     ? computeFootprint(segments, people, leaverIds, pack.footprint, pack.entities, { now })
     : [];
@@ -132,8 +133,10 @@ export async function buildInventory(ws: string): Promise<InventoryResult> {
 
 /** The approver confirms the inventory (logged). */
 export async function confirmInventory(ws: string, actor: RoleKey): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
-  const pack = getPack();
-  if (actor !== pack.approverRole) return { ok: false, error: "Only the Club President can confirm the inventory." };
+  const pack = await getWorkspacePack(ws);
+  if (actor !== pack.approverRole) {
+    return { ok: false, error: `Only the approver (${roleLabel(pack.approverRole, pack)}) can confirm the inventory.` };
+  }
   const rows = await db()`
     UPDATE responsibilities SET confirmed = true, confirmed_at = now()
     WHERE workspace_id = ${ws} RETURNING key`;
@@ -217,7 +220,7 @@ async function isProvisional(ws: string): Promise<boolean> {
  * can only lower coverage), named owners from the plan, B/C/K in code. Stores the run.
  */
 export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = {}): Promise<TestRun> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
   const [resps, visible, meta, plan] = await Promise.all([
     listResponsibilities(ws),
@@ -349,7 +352,7 @@ export async function listQuestions(ws: string): Promise<QuestionView[]> {
  */
 export async function buildQuestions(ws: string): Promise<GapQuestion[]> {
   const sql = db();
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
   const successor = pack.successorRole as RoleKey;
   const run = (await getLatestTestRun(ws, successor)) ?? (await runTest(ws, successor, { trigger: "questions" }));
@@ -402,7 +405,7 @@ export async function answerQuestion(
   ws: string, questionId: string, answer: string, actor: RoleKey, narrowRoles?: RoleKey[],
 ): Promise<AnswerResult> {
   const sql = db();
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
   const leaverRole = pack.leaverRole as RoleKey;
   const successor = pack.successorRole as RoleKey;
@@ -443,8 +446,9 @@ export async function answerQuestion(
   }
 
   const people = await listPeople(ws);
-  const leaverIds = leaverPersonIds(people, leaverName(pack));
-  const leaverId = people.find((p) => leaverIds.includes(p.id) && p.emailHmac)?.id ?? leaverIds[0] ?? "leaver";
+  const leaverIds = leaverPersonIds(people, leaverName(pack), pack.leaverPerson.aliases);
+  // No person record for the leaver (an uploaded workspace): no author id; the role is in the audit row.
+  const leaverId = people.find((p) => leaverIds.includes(p.id) && p.emailHmac)?.id ?? leaverIds[0] ?? null;
   const ts = new Date().toISOString();
   const { segment, claim: draft } = answerToDrafts(
     maskedText,
@@ -461,7 +465,7 @@ export async function answerQuestion(
     sourceKinds: ["interview"], importance: importanceOf(check.weight), tier: "B", review: "pending",
     reviewNote: null, origin: "leaver_answer", supportCheck: null,
   };
-  claim.tier = tierFor(claim);
+  claim.tier = tierFor(claim, pack);
 
   const before = await getLatestTestRun(ws, successor);
   await sql.begin(async (tx) => {
@@ -501,10 +505,8 @@ export async function answerQuestion(
   await audit(ws, actor, "answer_question", { questionId, claimId: claim.id, roleSet });
 
   const trigger = `answer ${questionId}`;
-  const [after] = await Promise.all([
-    runTest(ws, successor, { trigger }),
-    runTest(ws, "new_member", { trigger }),
-  ]);
+  // Re-test as the successor (the score shown) and as every other role the pack tests.
+  const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger })));
   const checks = checksByResp(await listResponsibilities(ws), lpack);
   const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
   await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
@@ -528,7 +530,7 @@ export interface BlockingGap {
 
 /** Blocking checks (weight 5) not covered in the latest test for `role` (default successor). */
 export async function listBlockingGaps(ws: string, role?: RoleKey): Promise<BlockingGap[]> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const lpack = lacunaPack(pack);
   const run = await getLatestTestRun(ws, role ?? (pack.successorRole as RoleKey));
   if (!run) return [];
@@ -553,10 +555,12 @@ export function planComplete(p: PlanItem | null): boolean {
   return Boolean(p && p.owner.trim() && /^\d{4}-\d{2}-\d{2}/.test(p.dueDate ?? "") && p.riskNote.trim());
 }
 
-/** Continuation plan entry for an open blocking gap (owner, due date, approver's risk note). President only. */
+/** Continuation plan entry for an open blocking gap (owner, due date, approver's risk note). Approver only. */
 export async function savePlanItem(ws: string, item: PlanItem, actor: RoleKey): Promise<{ ok: true } | { ok: false; error: string }> {
-  const pack = getPack();
-  if (actor !== pack.approverRole) return { ok: false, error: "Only the Club President can set the continuation plan." };
+  const pack = await getWorkspacePack(ws);
+  if (actor !== pack.approverRole) {
+    return { ok: false, error: `Only the approver (${roleLabel(pack.approverRole, pack)}) can set the continuation plan.` };
+  }
   const owner = (item.owner ?? "").trim().slice(0, 200);
   const riskNote = (item.riskNote ?? "").trim().slice(0, 2000);
   const due = /^(\d{4}-\d{2}-\d{2})/.exec((item.dueDate ?? "").trim())?.[1] ?? null;
@@ -580,7 +584,7 @@ export async function savePlanItem(ws: string, item: PlanItem, actor: RoleKey): 
 async function rescoreLatest(ws: string, role: RoleKey, trigger: string): Promise<TestRun | null> {
   const run = await getLatestTestRun(ws, role);
   if (!run) return null;
-  const checks = checksByResp(await listResponsibilities(ws), lacunaPack());
+  const checks = checksByResp(await listResponsibilities(ws), lacunaPack(await getWorkspacePack(ws)));
   const named = namedOwnersFromPlan(openBlockingGaps(run.results, checks), await listPlanItems(ws));
   const scores = computeScores(run.results, checks, named);
   if (scores.b === run.scores.b && scores.c === run.scores.c && scores.k === run.scores.k) return run;
@@ -600,7 +604,7 @@ export interface ReleaseInfo extends ReleaseState {
 
 /** Release state for Relay: the core release rule over the latest successor run and the plan. */
 export async function releaseInfo(ws: string): Promise<ReleaseInfo> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const run = await getLatestTestRun(ws, pack.successorRole as RoleKey);
   const gaps = await listBlockingGaps(ws);
   const plan = await listPlanItems(ws);

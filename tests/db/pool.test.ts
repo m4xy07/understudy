@@ -35,7 +35,7 @@ const shared = db();
 let ws = "";
 
 beforeAll(async () => {
-  const [w] = await shared`INSERT INTO workspaces (name, kind) VALUES ('pool fixture', 'empty') RETURNING id`;
+  const [w] = await shared`INSERT INTO workspaces (name, kind, pack_id, approver_role, leaver_role) VALUES ('pool fixture', 'empty', 'club', 'president', 'leaver') RETURNING id`;
   ws = String(w.id);
 });
 

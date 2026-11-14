@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { listResponsibilities } from "@/lib/db/queries";
-import { roleLabel } from "@/lib/pack";
+import { isRoleOf, roleLabel, roleShort } from "@/lib/pack";
 import { loadWorkspace, roleOptions, type WsParams } from "@/lib/page";
 import { listQuestions, testHistory, toLacunaPack, type QuestionView } from "@/lib/lacuna";
 import { checksFor } from "@/lib/lacuna/core/checks";
@@ -93,7 +93,7 @@ async function Ask({ params }: { params: WsParams }) {
           <Notice tone="info" title={`Only ${roleLabel(leaver, pack)} answers these.`}>
             <ActionForm action={switchToLeaverAction} hidden={{ ws: id }} className="mt-1">
               <SubmitButton className="btn-sm" pendingText="Switching…">
-                Switch to {roleLabel(leaver, pack).split(/[\s(]/)[0]} to answer
+                Switch to {roleShort(leaver, pack)} to answer
               </SubmitButton>
             </ActionForm>
           </Notice>

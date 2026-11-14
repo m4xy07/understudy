@@ -7,7 +7,7 @@ import { checksByResp } from "@/lib/lacuna/core/checks";
 import { deterministicStandin, namesDate, type ClaimMeta, type VisibleClaim } from "@/lib/lacuna/core/standin";
 import type { CheckResult, Person, Responsibility } from "@/lib/types";
 
-const pack = getPack();
+const pack = getPack("club");
 const lpack = toLacunaPack(pack);
 const ALL = ["president", "tech_lead", "new_member", "treasurer", "leaver"] as const;
 

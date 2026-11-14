@@ -3,12 +3,15 @@
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { createDemoWorkspace, createEmptyWorkspace } from "@/lib/pipeline/ingest";
+import { listDemoPacks } from "@/lib/pack";
 import { executeRun, startRun } from "@/lib/pipeline/run";
 
-export async function openDemo(): Promise<{ error: string } | void> {
+/** Open a private copy of a pack's demo. `packId` must be one of the demos in packs/index.json. */
+export async function openDemo(packId: string): Promise<{ error: string } | void> {
   let id: string;
   try {
-    id = (await createDemoWorkspace()).id;
+    if (!listDemoPacks().some((p) => p.id === packId)) return { error: "That demo is not available." };
+    id = (await createDemoWorkspace(packId)).id;
     const { runId } = await startRun(id);
     after(async () => {
       await executeRun(id, runId);

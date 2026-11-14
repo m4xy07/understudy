@@ -17,6 +17,7 @@ import {
 import { hashSnapshot, verifySnapshot } from "@/lib/relay/core/snapshot";
 import { renderMarkdown } from "@/lib/relay/core/compile";
 import type { RoleKey } from "@/lib/types";
+import { CLUB, CLUB_ID } from "../helpers/club";
 
 const sql = db();
 let ws = "";
@@ -41,7 +42,7 @@ async function plant(id: string, f: {
 }
 
 beforeAll(async () => {
-  ws = (await createDemoWorkspace()).id;
+  ws = (await createDemoWorkspace(CLUB_ID)).id;
   const { runId } = await startRun(ws);
   expect((await executeRun(ws, runId))?.status).toBe("done");
 
@@ -89,7 +90,7 @@ describe("Relay review", () => {
 
   it("tier C needs the evidence opened and a written reason; every action is logged", async () => {
     const tierC = (await listClaims(ws)).find((c) => c.id === ID.canary)!;
-    expect(effectiveTier(tierC)).toBe("C"); // sensitive: new_member is not in the role set
+    expect(effectiveTier(tierC, CLUB)).toBe("C"); // sensitive: new_member is not in the role set
     const noEvidence = await reviewClaim(ws, ID.canary, "approved", "president", { note: "Checked the finance thread." });
     expect(noEvidence.ok).toBe(false);
     const shortReason = await reviewClaim(ws, ID.canary, "approved", "president", { evidenceOpened: true, note: "ok" });
@@ -119,7 +120,7 @@ describe("Relay review", () => {
 
   it("bulk approve takes pending tier A claims only", async () => {
     const pending = (await listClaims(ws)).filter((c) =>
-      c.review === "pending" && c.state === "active" && !c.id.startsWith("clm_test") && effectiveTier({ ...c, tier: "A" }) === "A");
+      c.review === "pending" && c.state === "active" && !c.id.startsWith("clm_test") && effectiveTier({ ...c, tier: "A" }, CLUB) === "A");
     const promoted = pending.filter((c) => c.tier !== "A").slice(0, 2).map((c) => c.id);
     expect(promoted.length).toBe(2);
     await sql`UPDATE claims SET tier = 'A' WHERE workspace_id = ${ws} AND id = ANY(${promoted}::text[])`;
@@ -127,7 +128,7 @@ describe("Relay review", () => {
     // is every pending active claim whose effective tier is A, including the two promoted above.
     const before = await listClaims(ws);
     const expectedA = before
-      .filter((c) => c.review === "pending" && c.state === "active" && effectiveTier(c) === "A")
+      .filter((c) => c.review === "pending" && c.state === "active" && effectiveTier(c, CLUB) === "A")
       .map((c) => c.id).sort();
     expect(expectedA).toEqual(expect.arrayContaining(promoted));
     const otherPending = before.filter((c) => c.review === "pending" && !expectedA.includes(c.id)).map((c) => c.id).sort();

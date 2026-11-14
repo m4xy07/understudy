@@ -2,15 +2,22 @@
   "id": "club",
   "name": "College robotics club",
   "roles": [
-    { "key": "president", "label": "Club President" },
-    { "key": "tech_lead", "label": "Incoming tech lead" },
-    { "key": "new_member", "label": "New member" },
-    { "key": "treasurer", "label": "Treasurer" },
-    { "key": "leaver", "label": "Priya (outgoing tech lead)" }
+    { "key": "president", "label": "Club President", "short": "Club President", "approver": true },
+    { "key": "tech_lead", "label": "Incoming tech lead", "short": "the incoming tech lead", "successor": true },
+    { "key": "new_member", "label": "New member", "short": "a new member", "restrictedAudience": true },
+    { "key": "treasurer", "label": "Treasurer", "short": "the Treasurer" },
+    { "key": "leaver", "label": "Priya (outgoing tech lead)", "short": "Priya", "leaver": true }
   ],
   "approverRole": "president",
   "successorRole": "tech_lead",
   "leaverRole": "leaver",
+  "leaverPerson": { "name": "Priya" },
+  "roleHolders": {
+    "president": ["Rohan Mehta"],
+    "tech_lead": ["Arjun Rao"],
+    "treasurer": ["Ananya Iyer"],
+    "leaver": ["Priya Nair"]
+  },
   "contactsRoles": ["president", "tech_lead", "treasurer", "leaver"],
   "entities": [
     { "key": "firmware-deploy", "label": "Firmware deploy to the robot",
@@ -47,17 +54,17 @@
       "aliases": ["recruitment", "first years", "outreach", "orientation"] }
   ],
   "sourceAuthority": {
-    "owner":      { "tasks_csv": 3, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
-    "status":     { "tasks_csv": 3, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
-    "deadline":   { "tasks_csv": 3, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 1, "interview": 1 },
-    "location":   { "tasks_csv": 2, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
-    "procedure":  { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 3, "interview": 1 },
-    "access":     { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 3, "interview": 1 },
-    "decision":   { "tasks_csv": 2, "ics": 1, "markdown": 3, "slack": 3, "whatsapp": 3, "github": 2, "interview": 1 },
-    "reason":     { "tasks_csv": 1, "ics": 1, "markdown": 3, "slack": 3, "whatsapp": 3, "github": 2, "interview": 1 },
-    "dependency": { "tasks_csv": 2, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1 },
-    "contact":    { "tasks_csv": 2, "ics": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "github": 1, "interview": 1 },
-    "risk":       { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "github": 1, "interview": 1 }
+    "owner":      { "tasks_csv": 3, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1, "finding": 1 },
+    "status":     { "tasks_csv": 3, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1, "finding": 1 },
+    "deadline":   { "tasks_csv": 3, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 1, "interview": 1, "finding": 1 },
+    "location":   { "tasks_csv": 2, "ics": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1, "finding": 1 },
+    "procedure":  { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 3, "interview": 1, "finding": 1 },
+    "access":     { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 3, "interview": 1, "finding": 1 },
+    "decision":   { "tasks_csv": 2, "ics": 1, "markdown": 3, "slack": 3, "whatsapp": 3, "github": 2, "interview": 1, "finding": 1 },
+    "reason":     { "tasks_csv": 1, "ics": 1, "markdown": 3, "slack": 3, "whatsapp": 3, "github": 2, "interview": 1, "finding": 1 },
+    "dependency": { "tasks_csv": 2, "ics": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "github": 2, "interview": 1, "finding": 1 },
+    "contact":    { "tasks_csv": 2, "ics": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "github": 1, "interview": 1, "finding": 1 },
+    "risk":       { "tasks_csv": 1, "ics": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "github": 1, "interview": 1, "finding": 1 }
   },
   "checklists": {
     "deploy_operate": [
@@ -112,5 +119,32 @@
     { "key": "lab_booking_day", "label": "Day the workshop lab is booked for the club each week", "type": "text",
       "entity": "lab-slot", "attribute": "deadline" }
   ],
-  "uploadDefaults": { "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"] }
+  "uploadDefaults": { "roleSet": ["president", "tech_lead", "new_member", "treasurer", "leaver"] },
+  "extraction": {
+    "examples": {
+      "owner": "value \"Priya Nair\", statement \"Priya Nair owns the firmware deploy.\"",
+      "status": "value \"blocked on parts\", statement \"The arm rebuild is blocked on parts.\"",
+      "deadline": "value \"2026-12-05\", statement \"The regional competition is on 5 December 2026.\"",
+      "location": "value \"Lab B-204\", statement \"The robot is stored in Lab B-204.\"",
+      "procedure": "value \"run make flash then power-cycle\", statement \"To deploy, run make flash and power-cycle the robot.\"",
+      "access": "value \"DEPLOY_TOKEN in repo secrets\", statement \"Deploys need the DEPLOY_TOKEN repo secret.\"",
+      "decision": "value \"use the Teensy 4.1\", statement \"The team decided to use the Teensy 4.1 board.\"",
+      "reason": "value \"cheaper and in stock\", statement \"The Teensy was chosen because it was cheaper and in stock.\"",
+      "dependency": "value \"faculty sign-off\", statement \"The lab booking waits on faculty sign-off.\"",
+      "contact": "value \"[CONTACT:p-3]\", statement \"Call [CONTACT:p-3] at the lab office about bookings.\"",
+      "risk": "value \"USB port drops during flash\", statement \"The USB port often drops mid-flash; use the powered hub.\""
+    },
+    "entityHint": "an entry fee is entry-fee, not competition",
+    "contactExample": "Rahul Desai"
+  },
+  "demo": {
+    "dataDir": "data/demo",
+    "today": "2026-11-11T12:00:00+05:30",
+    "button": "Open the robotics-club demo",
+    "pendingText": "Creating your private copy…",
+    "title": "College robotics club",
+    "blurb": "A fictional college robotics club: Priya, the outgoing tech lead, graduates; the incoming tech lead must take over.",
+    "sampleAnswer": "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat."
+  },
+  "forbiddenInCore": ["Priya", "Club President", "robotics", "RoboLeague", "Vertex", "Pawar", "Kulkarni", "Rahul Desai"]
 }

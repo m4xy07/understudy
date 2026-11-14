@@ -15,7 +15,7 @@
 import { db } from "@/lib/db/client";
 import { claimRow, toClaim, toSegment } from "@/lib/db/mappers";
 import { peopleNames } from "@/lib/db/queries";
-import { getPack, type Pack } from "@/lib/pack";
+import { getWorkspacePack, type Pack, type ResolvedPack } from "@/lib/pack";
 import { modelAvailable } from "@/lib/model/client";
 import { norm, sha256Hex } from "@/lib/text/norm";
 import type { Attribute, Claim, ResponsibilityKind, ReviewTier, RoleKey, Segment, SourceKind } from "@/lib/types";
@@ -29,7 +29,9 @@ import {
   type DraftClaim as VerifyDraft,
   type DroppedDraft,
 } from "./core/verify";
-import { applyRules, tierOf, type RuleFiring } from "./core/rules";
+import { applyRules, isSensitive, tierOf, type RuleFiring } from "./core/rules";
+import { EXTRACTION_SKIP_KINDS, isCarriedOrigin, isRecordOrigin, takesPartInRules } from "./core/origins";
+import type { AttestPack } from "./core/verify";
 import { supportCheck, weakerTrust } from "./core/support";
 import { attestModelCall, newStats } from "./model";
 import { toIsoDate } from "./dates";
@@ -75,8 +77,19 @@ export function claimId(entity: string, attribute: string, value: string, segmen
   return coreClaimId(entity, attribute as Attribute, value, segmentIds);
 }
 
-function extractionPack(pack: Pack): ExtractionPack {
-  return { entities: pack.entities.map((e) => ({ key: e.key, label: e.label, aliases: [...(e.aliases ?? [])] })) };
+/** The part of the pack extraction reads: entities, and the pack's own prompt examples and hints. */
+export function extractionPack(pack: Pack): ExtractionPack {
+  return {
+    entities: pack.entities.map((e) => ({ key: e.key, label: e.label, aliases: [...(e.aliases ?? [])] })),
+    examples: pack.extraction?.examples as ExtractionPack["examples"],
+    entityHint: pack.extraction?.entityHint,
+    contactExample: pack.extraction?.contactExample,
+  };
+}
+
+/** The part of the pack the Attest rules read. */
+export function attestPack(pack: ResolvedPack): AttestPack {
+  return { ...(pack as unknown as AttestPack), roleOrder: pack.roleOrder, restrictedAudience: pack.restrictedAudienceRoles };
 }
 
 function slugOf(text: string): string {
@@ -93,13 +106,17 @@ export function matchEntity(text: string, fallback: string, pack: Pack): { key: 
   return { key: slugOf(fallback), label: fallback.trim() || slugOf(fallback) };
 }
 
-export function intersectRoles(sets: RoleKey[][]): RoleKey[] {
-  return intersectRoleSets(sets);
+export function intersectRoles(sets: RoleKey[][], pack: Pick<ResolvedPack, "roleOrder">): RoleKey[] {
+  return intersectRoleSets(sets, pack.roleOrder);
 }
 
-export function tierFor(c: Pick<Claim, "roleSet" | "state" | "importance" | "trust"> & Partial<Claim>): ReviewTier {
-  if (!c.roleSet.includes("new_member") || c.state === "conflicting" || c.importance === "blocking") return "C";
-  if (c.citations && c.supportCheck !== undefined) return tierOf(c as Claim);
+export function tierFor(
+  c: Pick<Claim, "roleSet" | "state" | "importance" | "trust"> & Partial<Claim>,
+  pack: Pick<ResolvedPack, "restrictedAudienceRoles">,
+): ReviewTier {
+  const restricted = pack.restrictedAudienceRoles;
+  if (isSensitive(c.roleSet, restricted) || c.state === "conflicting" || c.importance === "blocking") return "C";
+  if (c.citations && c.supportCheck !== undefined) return tierOf(c as Claim, restricted);
   if (c.trust === "corroborated" && c.importance === "normal") return "A";
   return "B";
 }
@@ -121,7 +138,7 @@ function newestTs(segs: Segment[]): string | null {
 }
 
 /** Entity -> responsibility kinds, from the pack role templates and the Lacuna inventory. */
-async function entityKindsFor(ws: string, pack: Pack): Promise<Map<string, ResponsibilityKind[]>> {
+async function entityKindsFor(ws: string, pack: Pick<AttestPack, "roleTemplates">): Promise<Map<string, ResponsibilityKind[]>> {
   const out = new Map<string, ResponsibilityKind[]>();
   const add = (e: string, k: ResponsibilityKind) => {
     const list = out.get(e) ?? [];
@@ -173,7 +190,7 @@ function normaliseDrafts(drafts: DraftClaim[], segsById: Map<string, Segment>): 
 export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Promise<ReconstructResult> {
   const t0 = Date.now();
   const sql = db();
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const xpack = extractionPack(pack);
   const segments = await loadSegments(ws);
   const segsById = new Map(segments.map((s) => [s.id, s]));
@@ -185,7 +202,8 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
   let modelDrafts: DraftClaim[] = [];
   let offList: OffListClaim[] = [];
   let modelNote: string | null = null;
-  const textSegments = segments.filter((s) => s.kind !== "task" && s.kind !== "event");
+  // Structured rows are read by code; a person's answers and findings are never sent to the model.
+  const textSegments = segments.filter((s) => !EXTRACTION_SKIP_KINDS.includes(s.kind));
 
   if (opts.useModel === false) {
     modelNote = textSegments.length ? "Model step skipped: claims from the task board and calendar only." : null;
@@ -199,6 +217,8 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
       // 50-70 s measured for a full batch), inside the 120 s timeout. The batch size is part of every
       // extraction cache key: changing it makes the committed demo cache miss until precompute reruns.
       maxChars: EXTRACT_MAX_CHARS,
+      roleOrder: pack.roleOrder,
+      skipKinds: EXTRACTION_SKIP_KINDS,
       authorLabel: (id: string | null) => (id ? (names[id] ?? id) : "unknown"),
     };
     const res = await extractClaims(segments, xpack, call, xopts);
@@ -313,7 +333,7 @@ const EVENT_FIELDS = ["trust", "state", "stateNote", "supersededBy", "supportChe
 export async function verify(ws: string, opts: VerifyOptions = {}): Promise<VerifyResult> {
   const t0 = Date.now();
   const sql = db();
-  const pack = getPack();
+  const pack = attestPack(await getWorkspacePack(ws));
   let stored = await getExtraction(ws);
   if (!stored) {
     await reconstruct(ws);
@@ -327,7 +347,7 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
   const vr = verifyDrafts(drafts.map(toVerifyDraft), segsById, pack, ws);
   const labels = new Map<string, string>();
   for (const d of drafts) if (d.entityRaw && !labels.has(d.entity)) labels.set(d.entity, d.entityRaw);
-  const packKeys = new Set(pack.entities.map((e) => e.key));
+  const packKeys = new Set((pack.entities ?? []).map((e) => e.key));
   let claims: Claim[] = vr.claims.map((c) =>
     packKeys.has(c.entity) || c.entity === OTHER_ENTITY ? c : { ...c, entityLabel: labels.get(c.entity) ?? c.entityLabel },
   );
@@ -377,9 +397,13 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
     return { ...c, supportCheck: prev.supportCheck, trust };
   });
 
-  // 4. Leaver answers (written by Lacuna) take part in the rules but keep their content.
+  // 4. Claims Attest did not derive from the record (a leaver's answer, a successor finding, a
+  //    neighbour's answer, a trace) are written by other modules and are never re-produced by
+  //    extraction. They are carried over with their content. Answers and findings take part in
+  //    the rules; second-hand answers and traces stay outside them (see ./core/origins).
   const produced = new Set(claims.map((c) => c.id));
-  const answers = existingRows.filter((c) => c.origin === "leaver_answer" && !produced.has(c.id));
+  const carried = existingRows.filter((c) => isCarriedOrigin(c.origin) && !produced.has(c.id) && c.state !== "dropped");
+  const answers = carried.filter((c) => takesPartInRules(c.origin));
 
   // 5. Rules: supersession / conflicts, corroboration, importance and tier.
   const entityKinds = await entityKindsFor(ws, pack);
@@ -391,10 +415,11 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
   const firingByOlder = new Map(ruled.firings.map((f) => [f.olderId, f]));
   const firingByNewer = new Map(ruled.firings.filter((f) => f.rule >= 3).map((f) => [f.newerId, f]));
 
-  // 6. Claims that an earlier run produced but this one did not: dropped, never deleted.
+  // 6. Record claims that an earlier run produced but this one did not: dropped, never deleted.
+  //    Only origins Attest owns can go stale; a carried claim is never dropped here.
   const finalIds = new Set(finalClaims.map((c) => c.id));
   const stale = existingRows
-    .filter((c) => !finalIds.has(c.id) && c.origin !== "leaver_answer" && c.state !== "dropped")
+    .filter((c) => !finalIds.has(c.id) && isRecordOrigin(c.origin) && c.state !== "dropped")
     .map((c) => ({ ...c, state: "dropped" as const, stateNote: "Dropped: the latest extraction no longer finds this claim", supersededBy: null }));
 
   // 7. Write the projection (review fields untouched) and one event per change.

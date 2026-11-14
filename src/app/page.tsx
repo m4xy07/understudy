@@ -1,3 +1,4 @@
+import { listDemoPacks } from "@/lib/pack";
 import { LandingActions } from "./LandingActions";
 
 // Server actions on this page (openDemo starts the pipeline with after()) may run long.
@@ -10,6 +11,8 @@ const STEPS = [
 ];
 
 export default function Home() {
+  // The demos on offer come from packs/index.json; each pack words its own button and blurb.
+  const demos = listDemoPacks();
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-10 sm:px-8 sm:py-16">
       <header className="flex items-baseline justify-between gap-4 border-b border-rule pb-4">
@@ -27,7 +30,9 @@ export default function Home() {
           asks only what the record cannot answer, and shows each role only what it may see.
         </p>
         <div className="mt-8">
-          <LandingActions />
+          <LandingActions
+            demos={demos.map((d) => ({ packId: d.id, label: d.demo.button, pendingText: d.demo.pendingText ?? "Creating your private copy…" }))}
+          />
         </div>
         <p className="mt-4 flex items-start gap-2 text-sm text-muted">
           <span aria-hidden="true">!</span>
@@ -49,8 +54,12 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto pt-16 text-xs text-muted">
-        The demo is a fictional college robotics club: Priya, the outgoing tech lead, graduates; the
-        incoming tech lead must take over. You get a private copy; nobody else sees your approvals.
+        {demos.map((d) => (
+          <p key={d.id}>
+            <span className="font-medium text-ink-2">{d.demo.title}.</span> {d.demo.blurb}
+          </p>
+        ))}
+        <p className={demos.length ? "mt-1" : undefined}>You get a private copy; nobody else sees your approvals.</p>
       </footer>
     </main>
   );

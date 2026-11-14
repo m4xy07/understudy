@@ -4,17 +4,17 @@
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
-import { getRole } from "@/lib/session";
-import { getPack } from "@/lib/pack";
+import { viewingRole } from "@/lib/session";
+import { getWorkspacePack } from "@/lib/pack";
 import { acknowledgeHandover, checkHandoverReadback } from "@/lib/relay";
 import type { ReadbackState } from "./ReadbackForm";
 
 export async function readbackAction(_prev: ReadbackState, form: FormData): Promise<ReadbackState> {
   const ws = String(form.get("ws") ?? "");
   if (!isUuid(ws) || !(await getWorkspace(ws))) return { ok: false, message: "Workspace not found.", verdicts: null, acked: false };
-  const role = await getRole(ws);
+  const role = await viewingRole(ws);
   const typed: Record<string, string> = {};
-  for (const item of getPack().readback) typed[item.key] = String(form.get(`rb_${item.key}`) ?? "");
+  for (const item of (await getWorkspacePack(ws)).readback) typed[item.key] = String(form.get(`rb_${item.key}`) ?? "");
 
   if (form.get("intent") === "ack") {
     const res = await acknowledgeHandover(ws, role, typed);

@@ -111,7 +111,7 @@ function noteCall(key: string, outcome: "cached" | "live" | "failed", error?: st
 
 /**
  * The text a cache row holds for `output`: writeCache stores JSON.stringify(output) as a jsonb
- * *string*, and data/demo/model_cache.json exports that string as read back. A string output is
+ * *string*, and a demo's model_cache.json exports that string as read back. A string output is
  * therefore already this text and is not encoded again (scripts/seed.ts uses this).
  */
 export function cacheOutputText(output: unknown): string {

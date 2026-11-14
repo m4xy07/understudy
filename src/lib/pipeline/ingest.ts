@@ -3,12 +3,13 @@
 import { db } from "@/lib/db/client";
 import { segmentRow, toPerson } from "@/lib/db/mappers";
 import { audit } from "@/lib/db/queries";
-import { getPack } from "@/lib/pack";
+import { defaultPackId, getPack, getWorkspacePack, type ResolvedPack } from "@/lib/pack";
 import { ingestAll, type IngestInput } from "@/lib/tether/ingest";
 import { PersonRegistry } from "@/lib/tether/identity";
 import { loadDemoSources } from "@/lib/tether/demo";
 import { fetchPublicRepo, GithubFetchError } from "@/lib/tether/github-fetch";
 import { sha256Hex } from "@/lib/text/norm";
+import { syncRoleHolders } from "@/lib/roles";
 import type { AdapterResult, Person, RoleKey, SourceKind } from "@/lib/types";
 
 export const UPLOAD_LIMIT_BYTES = 5 * 1024 * 1024;
@@ -66,7 +67,7 @@ async function storeResult(
   ws: string, src: { sourceId: string; kind: SourceKind; name: string; roleSet: RoleKey[]; result: AdapterResult }, origin: string,
 ): Promise<StoredSource> {
   const sql = db();
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const r = src.result;
   await sql`
     INSERT INTO sources (workspace_id, id, kind, name, role_set, segment_count, rejected, masked_secrets, masked_contacts, origin)
@@ -117,32 +118,47 @@ export async function ingestSources(ws: string, inputs: IngestInput[], origin: s
     { identityKey, contactsKey, registry: reg },
   );
   await storePeople(ws, out.people);
+  // New sources can bring new person records: match the pack's role holders to them.
+  await syncRoleHolders(ws);
   const stored: StoredSource[] = [];
   for (const s of out.sources) stored.push(await storeResult(ws, s, origin));
   return stored;
 }
 
-export async function createEmptyWorkspace(name = "My handover"): Promise<string> {
-  const [row] = await db()`INSERT INTO workspaces (name, kind) VALUES (${name}, 'empty') RETURNING id`;
-  const id = String(row.id);
-  await audit(id, "system", "create_workspace", { kind: "empty" });
+/**
+ * The workspace row. The pack id and the pack's approver and leaver roles are written once, here,
+ * and never change (database guard): the database enforces "only the approver approves, never
+ * the leaver" from these columns, without knowing any role key.
+ */
+async function insertWorkspace(name: string, kind: "demo" | "empty", pack: ResolvedPack): Promise<string> {
+  const [row] = await db()`
+    INSERT INTO workspaces (name, kind, pack_id, approver_role, leaver_role)
+    VALUES (${name}, ${kind}, ${pack.id}, ${pack.approverRole}, ${pack.leaverRole}) RETURNING id`;
+  return String(row.id);
+}
+
+/** An empty workspace of the given setting (default: the default pack of packs/index.json). */
+export async function createEmptyWorkspace(name = "My handover", packId: string = defaultPackId()): Promise<string> {
+  const pack = getPack(packId);
+  const id = await insertWorkspace(name, "empty", pack);
+  await audit(id, "system", "create_workspace", { kind: "empty", pack: pack.id });
   return id;
 }
 
-/** A private copy of the robotics-club demo: workspace + all demo sources stored. */
-export async function createDemoWorkspace(): Promise<{ id: string; sources: StoredSource[] }> {
-  const pack = getPack();
-  const [row] = await db()`INSERT INTO workspaces (name, kind, pack_id) VALUES (${pack.name + " (demo)"}, 'demo', ${pack.id}) RETURNING id`;
-  const id = String(row.id);
-  const demo = loadDemoSources();
+/** A private copy of a pack's demo: workspace + all demo sources stored + role holders matched. */
+export async function createDemoWorkspace(packId: string): Promise<{ id: string; sources: StoredSource[] }> {
+  const pack = getPack(packId);
+  if (!pack.demo) throw new Error(`Setting pack "${pack.id}" has no demo.`);
+  const id = await insertWorkspace(pack.name + " (demo)", "demo", pack);
+  const demo = loadDemoSources(pack.demo.dataDir);
   const sources = await ingestSources(id, demo.map((d) => ({ kind: d.kind, name: d.name, roleSet: d.roleSet, files: d.files })), "demo");
-  await audit(id, "system", "create_workspace", { kind: "demo", sources: sources.length });
+  await audit(id, "system", "create_workspace", { kind: "demo", pack: pack.id, sources: sources.length });
   return { id, sources };
 }
 
 /** Role set for an upload: the pack default, optionally narrowed by the uploader (never widened). */
-export function uploadRoleSet(narrow?: RoleKey[]): RoleKey[] {
-  const base = getPack().uploadDefaults.roleSet as RoleKey[];
+export function uploadRoleSet(pack: Pick<ResolvedPack, "uploadDefaults">, narrow?: RoleKey[]): RoleKey[] {
+  const base = pack.uploadDefaults.roleSet as RoleKey[];
   if (!narrow?.length) return [...base];
   return base.filter((r) => narrow.includes(r));
 }
@@ -154,7 +170,7 @@ export async function ingestUpload(
   if (!files.length) return { ok: false, error: "Choose at least one file." };
   const bytes = files.reduce((n, f) => n + Buffer.byteLength(f.content, "utf8"), 0);
   if (bytes > UPLOAD_LIMIT_BYTES) return { ok: false, error: "Upload is over 5 MB. Split it or trim it." };
-  const roleSet = uploadRoleSet(opts.narrowRoles);
+  const roleSet = uploadRoleSet(await getWorkspacePack(ws), opts.narrowRoles);
   if (!roleSet.length) return { ok: false, error: "Pick at least one role who can see this source." };
   const name = opts.name?.trim() || (files.length === 1 ? files[0].path.split("/").pop()! : `${kind} upload (${files.length} files)`);
   try {
@@ -170,7 +186,7 @@ export async function ingestGithubUrl(ws: string, url: string, opts: { narrowRol
   try {
     const files = await fetchPublicRepo(url);
     const name = url.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\.git$/i, "").replace(/\/+$/, "");
-    const roleSet = uploadRoleSet(opts.narrowRoles);
+    const roleSet = uploadRoleSet(await getWorkspacePack(ws), opts.narrowRoles);
     const sources = await ingestSources(ws, [{ kind: "github", name: name || url, roleSet, files }], "github");
     await audit(ws, opts.actor ?? "uploader", "github_import", { url, files: files.length });
     return { ok: true, sources };

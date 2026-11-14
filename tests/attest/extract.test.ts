@@ -16,6 +16,9 @@ import { SEGMENTS_END } from "@/lib/attest/core/prompts";
 import type { Segment } from "@/lib/types";
 import canned from "./fixtures/model-firmware.json";
 import { ALL, CORE, at, fakeModel, pack, seg } from "./fixtures/segments";
+import { CLUB_ROLE_ORDER } from "../helpers/club";
+
+const PLAN = { roleOrder: CLUB_ROLE_ORDER };
 
 function firmwareThread(): Segment[] {
   return [
@@ -39,10 +42,10 @@ describe("planBatches", () => {
       seg({ thread: "#firmware", ts: at(1, 4), roleSet: ["president", "treasurer"], text: "finance" }),
       seg({ thread: "#firmware", ts: at(1, 5), roleSet: CORE, text: "core 3", meta: {} }),
     ];
-    const batches = planBatches(segs);
+    const batches = planBatches(segs, PLAN);
     expect(batches).toHaveLength(3);
     for (const b of batches) {
-      for (const s of b.segments) expect(canonicalRoleSet(s.roleSet)).toEqual(b.roleSet);
+      for (const s of b.segments) expect(canonicalRoleSet(s.roleSet, CLUB_ROLE_ORDER)).toEqual(b.roleSet);
     }
     const core = batches.find((b) => b.roleSet.join() === "president,tech_lead,leaver")!;
     expect(core.segments.map((s) => s.text)).toEqual(["core 1", "core 2 reordered", "core 3"]);
@@ -59,7 +62,7 @@ describe("planBatches", () => {
       seg({ thread: "club.ics", kind: "event", sourceKind: "ics", text: "Lab booking" }),
       seg({ thread: "#firmware", text: "c" }),
     ];
-    const batches = planBatches(segs);
+    const batches = planBatches(segs, PLAN);
     expect(batches.map((b) => b.thread).sort()).toEqual(["#firmware", "#general"]);
     expect(batches.flatMap((b) => b.segments).every((s) => s.kind === "message")).toBe(true);
   });
@@ -70,7 +73,7 @@ describe("planBatches", () => {
       seg({ ts: at(1), text: "first" }),
       seg({ ts: at(3), text: "second" }),
     ];
-    const [b] = planBatches(segs);
+    const [b] = planBatches(segs, PLAN);
     expect(b.segments.map((s) => s.text)).toEqual(["first", "second", "third"]);
   });
 
@@ -78,12 +81,12 @@ describe("planBatches", () => {
     const segs = Array.from({ length: 80 }, (_, i) =>
       seg({ ts: at(1, i), text: `message ${i} ` + "x".repeat(900) }),
     );
-    const batches = planBatches(segs);
+    const batches = planBatches(segs, PLAN);
     expect(batches.length).toBeGreaterThanOrEqual(3);
     for (const b of batches) expect(b.chars).toBeLessThanOrEqual(DEFAULT_MAX_CHARS);
     expect(batches.flatMap((b) => b.segmentIds)).toEqual(segs.map((s) => s.id));
     // Smaller budget, more batches.
-    expect(planBatches(segs, { maxChars: 5_000 }).length).toBeGreaterThan(batches.length);
+    expect(planBatches(segs, { ...PLAN, maxChars: 5_000 }).length).toBeGreaterThan(batches.length);
   });
 
   it("keeps a reply chain together when the thread splits", () => {
@@ -92,7 +95,7 @@ describe("planBatches", () => {
     );
     segs[9].meta = { replyTo: segs[0].id };
     segs[5].meta = { replyTo: segs[9].id };
-    const batches = planBatches(segs, { maxChars: 800 });
+    const batches = planBatches(segs, { ...PLAN, maxChars: 800 });
     expect(batches.length).toBeGreaterThan(1);
     const home = batches.find((b) => b.segmentIds.includes(segs[0].id))!;
     expect(home.segmentIds).toContain(segs[5].id);
@@ -106,14 +109,14 @@ describe("planBatches", () => {
   it("splits a reply chain that is larger than one batch instead of dropping it", () => {
     const segs = Array.from({ length: 6 }, (_, i) => seg({ ts: at(4, i), text: "z".repeat(400) }));
     for (let i = 1; i < segs.length; i++) segs[i].meta = { replyTo: segs[i - 1].id };
-    const batches = planBatches(segs, { maxChars: 1_000 });
+    const batches = planBatches(segs, { ...PLAN, maxChars: 1_000 });
     expect(batches.length).toBeGreaterThan(1);
     expect(batches.flatMap((b) => b.segmentIds)).toEqual(segs.map((s) => s.id));
   });
 
   it("is deterministic (stable batch ids)", () => {
     const segs = firmwareThread();
-    expect(planBatches(segs).map((b) => b.id)).toEqual(planBatches([...segs].reverse()).map((b) => b.id));
+    expect(planBatches(segs, PLAN).map((b) => b.id)).toEqual(planBatches([...segs].reverse(), PLAN).map((b) => b.id));
   });
 });
 
@@ -121,7 +124,7 @@ describe("extractClaims", () => {
   it("returns drafts tagged with the batch, resolves entities, counts off-list attributes", async () => {
     const segs = firmwareThread();
     const model = fakeModel(() => canned, { cached: true });
-    const res = await extractClaims(segs, pack, model.call);
+    const res = await extractClaims(segs, pack, model.call, PLAN);
 
     expect(res.batches).toHaveLength(1);
     const b = res.batches[0];
@@ -157,7 +160,7 @@ describe("extractClaims", () => {
       seg({ thread: "#core", roleSet: CORE, text: "Sponsor call moved to Friday." }),
     ];
     const model = fakeModel(() => ({ claims: [] }));
-    const res = await extractClaims(segs, pack, model.call);
+    const res = await extractClaims(segs, pack, model.call, PLAN);
     expect(model.calls).toHaveLength(2);
     expect(new Set(model.calls.map((c) => c.system)).size).toBe(1);
     for (const c of model.calls) {
@@ -186,7 +189,7 @@ describe("extractClaims", () => {
           statement: "Deploy with make flash.", citations: [{ segment_id: ids[0], quote: "deploy with make flash" }] }],
       };
     });
-    const res = await extractClaims(segs, pack, model.call);
+    const res = await extractClaims(segs, pack, model.call, PLAN);
     const byThread = Object.fromEntries(res.batches.map((b) => [b.thread, b]));
     expect(byThread["#a"]).toMatchObject({ ok: true, claims: 1 });
     expect(byThread["#b"]).toMatchObject({ ok: false, error: "model unavailable", claims: 0 });
@@ -199,19 +202,19 @@ describe("extractClaims", () => {
   it("runs batches with concurrency 4 by default", async () => {
     const segs = Array.from({ length: 10 }, (_, i) => seg({ thread: `#t${i}`, text: `thread ${i}` }));
     const m4 = fakeModel(() => ({ claims: [] }), { delayMs: 10 });
-    const r4 = await extractClaims(segs, pack, m4.call);
+    const r4 = await extractClaims(segs, pack, m4.call, PLAN);
     expect(r4.batches).toHaveLength(10);
     expect(m4.maxInFlight()).toBe(4);
     const m2 = fakeModel(() => ({ claims: [] }), { delayMs: 10 });
-    await extractClaims(segs, pack, m2.call, { concurrency: 2 });
+    await extractClaims(segs, pack, m2.call, { ...PLAN, concurrency: 2 });
     expect(m2.maxInFlight()).toBe(2);
     // Reports keep plan order regardless of completion order.
-    expect(r4.batches.map((b) => b.id)).toEqual(planBatches(segs).map((b) => b.id));
+    expect(r4.batches.map((b) => b.id)).toEqual(planBatches(segs, PLAN).map((b) => b.id));
   });
 
   it("returns an empty result when there is nothing to extract", async () => {
     const model = fakeModel(() => ({ claims: [] }));
-    const res = await extractClaims([seg({ kind: "task", text: "status: Open" })], pack, model.call);
+    const res = await extractClaims([seg({ kind: "task", text: "status: Open" })], pack, model.call, PLAN);
     expect(res).toEqual({ drafts: [], batches: [], offList: 0, offListClaims: [] });
     expect(model.calls).toHaveLength(0);
   });
@@ -226,7 +229,7 @@ describe("prompt injection", () => {
   it("segment text cannot fake segment headers or the end-of-data marker", async () => {
     const segs = [...firmwareThread(), seg({ id: "seg_inject", ts: at(3, 30), text: injection })];
     const model = fakeModel(() => ({ claims: [] }));
-    await extractClaims(segs, pack, model.call);
+    await extractClaims(segs, pack, model.call, PLAN);
     const user = model.calls[0].user;
     const headers = [...user.matchAll(/^\[(seg_[^\]]+)\]/gm)].map((m) => m[1]);
     expect(headers).toEqual(["seg_fw01", "seg_fw02", "seg_fw03", "seg_fw04", "seg_inject"]);
@@ -237,7 +240,7 @@ describe("prompt injection", () => {
   it("does not change batching", () => {
     const plain = [...firmwareThread(), seg({ id: "seg_inject", ts: at(3, 30), text: "ok see you" })];
     const injected = plain.map((s) => (s.id === "seg_inject" ? { ...s, text: injection } : s));
-    expect(planBatches(injected).map((b) => b.segmentIds)).toEqual(planBatches(plain).map((b) => b.segmentIds));
+    expect(planBatches(injected, PLAN).map((b) => b.segmentIds)).toEqual(planBatches(plain, PLAN).map((b) => b.segmentIds));
   });
 
   it("never trusts labels the model adds", async () => {
@@ -255,7 +258,7 @@ describe("prompt injection", () => {
         ],
       }],
     }));
-    const res = await extractClaims(segs, pack, model.call);
+    const res = await extractClaims(segs, pack, model.call, PLAN);
     expect(res.drafts).toHaveLength(1);
     const d = res.drafts[0];
     expect(Object.keys(d).sort()).toEqual(

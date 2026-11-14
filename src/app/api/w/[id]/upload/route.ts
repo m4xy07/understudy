@@ -1,8 +1,8 @@
 // POST multipart/form-data: kind, files (multiple), optional roles (narrow who can see it).
 import { getWorkspace } from "@/lib/db/queries";
-import { isRoleKey } from "@/lib/db/withRole";
+import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { ingestUpload, UPLOAD_KINDS, UPLOAD_LIMIT_BYTES } from "@/lib/pipeline/ingest";
-import { getRole } from "@/lib/session";
+import { viewingRole } from "@/lib/session";
 import type { RoleKey, SourceKind } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -30,7 +30,8 @@ export async function POST(req: Request, ctx: Ctx) {
     const path = (entry as File & { webkitRelativePath?: string }).webkitRelativePath || entry.name;
     files.push({ path: path.split(String.fromCharCode(92)).join("/"), content: await entry.text() });
   }
-  const narrow = form.getAll("roles").map(String).filter(isRoleKey) as RoleKey[];
-  const res = await ingestUpload(id, kind, files, { narrowRoles: narrow, actor: await getRole(id) });
+  const pack = await getWorkspacePack(id);
+  const narrow = form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
+  const res = await ingestUpload(id, kind, files, { narrowRoles: narrow, actor: await viewingRole(id) });
   return Response.json(res, { status: res.ok ? 200 : 400 });
 }

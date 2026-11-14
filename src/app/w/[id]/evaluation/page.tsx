@@ -40,8 +40,7 @@ async function Evaluation({ params }: { params: WsParams }) {
       <>
         <PageHead module="attest" step="Evaluation" title="Evaluation" aside={back} />
         <Notice title="Evaluation needs the demo data.">
-          The ground truth only describes the synthetic robotics-club pack. Open the demo workspace to see precision
-          and recall.
+          The answer key only describes the synthetic demo data. Open a demo workspace to see precision and recall.
         </Notice>
       </>
     );

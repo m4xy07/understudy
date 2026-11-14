@@ -47,7 +47,7 @@ export function toWorkspace(r: Row): Workspace {
     id: String(r.id),
     name: String(r.name),
     kind: r.kind as Workspace["kind"],
-    packId: String(r.pack_id ?? "club"),
+    packId: String(r.pack_id),
     createdAt: iso(r.created_at),
   };
 }

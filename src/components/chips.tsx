@@ -1,6 +1,7 @@
 // Status chips: always a symbol AND a word, never colour alone (WCAG 1.4.1).
 import clsx from "clsx";
 import type { ClaimState, Coverage, RoleKey, Trust } from "@/lib/types";
+import { TRUST_LABEL } from "@/lib/trust";
 
 type Tone = "ok" | "warn" | "bad" | "hold" | "info" | "plain";
 
@@ -28,19 +29,14 @@ export function Chip({ symbol, label, tone = "plain", title }: { symbol: string;
   );
 }
 
-export const TRUST_LABEL: Record<Trust, string> = {
-  from_record: "From record",
-  corroborated: "Corroborated",
-  leaver_said: "Leaver said",
-  second_hand: "Second-hand",
-  inferred: "Inferred",
-  ranked_options: "Ranked options",
-};
+// Labels and order are written once in src/lib/trust.ts.
+export { TRUST_LABEL };
 
 const TRUST_STYLE: Record<Trust, { symbol: string; tone: Tone }> = {
   from_record: { symbol: "◆", tone: "ok" },
   corroborated: { symbol: "◆◆", tone: "ok" },
   leaver_said: { symbol: "❝", tone: "info" },
+  successor_found: { symbol: "⚑", tone: "info" },
   second_hand: { symbol: "↪", tone: "warn" },
   inferred: { symbol: "≈", tone: "warn" },
   ranked_options: { symbol: "⋯", tone: "hold" },

@@ -14,16 +14,29 @@ function Submit({ children, pendingText, quiet }: { children: React.ReactNode; p
   );
 }
 
-export function LandingActions() {
-  const [demoState, demoAction] = useActionState<State, FormData>(async () => openDemo(), undefined);
+export interface DemoButton {
+  packId: string;
+  label: string;
+  pendingText: string;
+}
+
+/** One button per demo pack (from packs/index.json, passed in by the server page), then "start empty". */
+export function LandingActions({ demos }: { demos: DemoButton[] }) {
+  const [demoState, demoAction] = useActionState<State, FormData>(
+    async (_prev, form) => openDemo(String(form.get("pack") ?? "")),
+    undefined,
+  );
   const [emptyState, emptyAction] = useActionState<State, FormData>(async () => startEmpty(), undefined);
   const error = (demoState && demoState.error) || (emptyState && emptyState.error) || null;
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <form action={demoAction}>
-          <Submit pendingText="Creating your private copy…">Open the robotics-club demo</Submit>
-        </form>
+        {demos.map((d) => (
+          <form key={d.packId} action={demoAction}>
+            <input type="hidden" name="pack" value={d.packId} />
+            <Submit pendingText={d.pendingText}>{d.label}</Submit>
+          </form>
+        ))}
         <form action={emptyAction}>
           <Submit pendingText="Creating an empty workspace…" quiet>
             Start empty and upload my files

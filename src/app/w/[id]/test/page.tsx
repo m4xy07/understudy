@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getLatestTestRun, listResponsibilities } from "@/lib/db/queries";
-import { roleLabel } from "@/lib/pack";
+import { isRoleOf, roleLabel, roleShort } from "@/lib/pack";
 import { first, loadWorkspace, type SearchParams, type WsParams } from "@/lib/page";
-import { isRoleKey } from "@/lib/db/withRole";
 import { citedSegments, listBlockingGaps, testHistory, toLacunaPack } from "@/lib/lacuna";
 import { checksFor } from "@/lib/lacuna/core/checks";
 import { confirmInventoryAction, rerunTestAction } from "./actions";
@@ -59,8 +58,9 @@ async function Test({ params, searchParams }: { params: WsParams; searchParams: 
   const asked = first(sp.target);
   const successor = pack.successorRole as RoleKey;
   const approver = pack.approverRole as RoleKey;
-  const target: RoleKey = isRoleKey(asked) ? asked : successor;
-  const targets: RoleKey[] = [...new Set([successor, "new_member" as RoleKey])];
+  const target: RoleKey = isRoleOf(pack, asked) ? asked : successor;
+  // The successor, then every role the pack flags as restricted audience.
+  const targets: RoleKey[] = pack.testRoles;
   const [run, responsibilities, history, gaps] = await Promise.all([
     getLatestTestRun(id, target),
     listResponsibilities(id),
@@ -142,7 +142,7 @@ async function Test({ params, searchParams }: { params: WsParams; searchParams: 
             ))}
           </ul>
           <p className="mt-1 text-xs text-muted">
-            The Club President sets an owner, a due date and a risk note for each on the Review page.
+            The approver ({roleLabel(approver, pack)}) sets an owner, a due date and a risk note for each on the Review page.
           </p>
         </section>
       )}
@@ -163,7 +163,7 @@ async function Test({ params, searchParams }: { params: WsParams; searchParams: 
           )}
         </div>
         <p className="mb-3 text-sm text-muted">
-          Found from the task board, the leaver&rsquo;s footprint (what Priya actually did, off the board) and the role
+          Found from the task board, the leaver&rsquo;s footprint (what {roleShort(pack.leaverRole, pack)} actually did, off the board) and the role
           template, merged by topic.
         </p>
 

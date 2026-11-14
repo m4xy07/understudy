@@ -7,12 +7,13 @@ import { executeRun, startRun } from "@/lib/pipeline/run";
 import { getLatestTestRun, listClaims, listGapQuestions } from "@/lib/db/queries";
 import { answerQuestion, listBlockingGaps, savePlanItem } from "@/lib/lacuna";
 import { approveSnapshot, bulkApprove, canonicalJson, compileHandover, reviewClaim } from "@/lib/relay";
+import { CLUB_ID } from "../helpers/club";
 
 const sql = db();
 let ws = "";
 
 beforeAll(async () => {
-  ws = (await createDemoWorkspace()).id;
+  ws = (await createDemoWorkspace(CLUB_ID)).id;
   const { runId } = await startRun(ws);
   const run = await executeRun(ws, runId);
   expect(run?.status).toBe("done");

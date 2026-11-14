@@ -4,6 +4,7 @@ import { answerToDrafts, narrowRoleSet, questionText, rankGaps, segmentId } from
 import { checksByResp, checksFor } from "@/lib/lacuna/core/checks";
 import { norm, sha256Hex } from "@/lib/text/norm";
 import { ALL_ROLES, claim, resp } from "./fixtures";
+import { CLUB_LEAVER } from "../helpers/club";
 
 const TODAY = "2026-11-11";
 
@@ -55,14 +56,14 @@ describe("questionText", () => {
   const owner = checksFor(deploy).find((c) => c.key === "credential_owner")!;
 
   it("builds a specific missing question from the check template", () => {
-    expect(questionText({ gapType: "missing" }, deploy, rollback, "deploy_operate")).toBe(
+    expect(questionText({ gapType: "missing" }, deploy, rollback, "deploy_operate", [], CLUB_LEAVER)).toBe(
       "If firmware deploy to the robot breaks at the worst possible moment, what exact steps or command roll it back, and where is that written down?",
     );
   });
 
   it("uses a pack template when present", () => {
     const custom = { ...rollback, question: { missing: "If a {resp} breaks the robot the night before a match, what exact steps or command roll it back, and where is that written down?" } };
-    expect(questionText({ gapType: "missing" }, { ...deploy, title: "firmware deploy" }, custom, "deploy_operate")).toBe(
+    expect(questionText({ gapType: "missing" }, { ...deploy, title: "firmware deploy" }, custom, "deploy_operate", [], CLUB_LEAVER)).toBe(
       "If a firmware deploy breaks the robot the night before a match, what exact steps or command roll it back, and where is that written down?",
     );
   });
@@ -70,24 +71,24 @@ describe("questionText", () => {
   it("gives the setting pack's check keys the same plain text (no generic fallback)", () => {
     const work = resp({ id: "w", kind: "unfinished_work", entities: ["website"], title: "Website registration form" });
     const step = { ...checksFor(work).find((c) => c.key === "next_step")!, key: "next_concrete_step" };
-    expect(questionText({ gapType: "missing" }, work, step, "unfinished_work")).toBe(
+    expect(questionText({ gapType: "missing" }, work, step, "unfinished_work", [], CLUB_LEAVER)).toBe(
       "What is the next concrete step on Website registration form, and what does someone need to take it?",
     );
   });
 
   it("prefixes partial gaps", () => {
-    expect(questionText({ gapType: "partial" }, deploy, rollback, "deploy_operate")).toMatch(/^The record only partly answers this for this system\. If firmware/);
+    expect(questionText({ gapType: "partial" }, deploy, rollback, "deploy_operate", [], CLUB_LEAVER)).toMatch(/^The record only partly answers this for this system\. If firmware/);
   });
 
   it("names conflicting values only from claims the leaver may see", () => {
     const a = claim({ id: "a", entity: "firmware-deploy", attribute: "owner", value: "Arjun", state: "conflicting" });
     const b = claim({ id: "b", entity: "firmware-deploy", attribute: "access", value: "Meera", state: "conflicting" });
     const hidden = claim({ id: "h", entity: "firmware-deploy", attribute: "access", value: "CANARY-0001", state: "conflicting", roleSet: ["president"] });
-    const text = questionText({ gapType: "conflicting", claimIds: ["a", "h", "b"] }, deploy, owner, "deploy_operate", [a, hidden, b]);
+    const text = questionText({ gapType: "conflicting", claimIds: ["a", "h", "b"] }, deploy, owner, "deploy_operate", [a, hidden, b], CLUB_LEAVER);
     expect(text).toBe('Two people gave different answers for credential owner of firmware deploy to the robot: "Arjun" and "Meera". Which is right now, and since when?');
     expect(text).not.toContain("CANARY");
 
-    const onlyOne = questionText({ gapType: "conflicting", claimIds: ["a", "h"] }, deploy, owner, "deploy_operate", [a, hidden]);
+    const onlyOne = questionText({ gapType: "conflicting", claimIds: ["a", "h"] }, deploy, owner, "deploy_operate", [a, hidden], CLUB_LEAVER);
     expect(onlyOne).not.toContain("CANARY");
     expect(onlyOne).not.toContain("Arjun");
     expect(onlyOne).toMatch(/^People gave different answers for credential owner/);
@@ -96,7 +97,7 @@ describe("questionText", () => {
   it("finds conflicting claims by entity and attribute when no ids are given", () => {
     const a = claim({ id: "a", entity: "firmware-deploy", attribute: "procedure", value: "make flash-prev", state: "conflicting" });
     const b = claim({ id: "b", entity: "firmware-deploy", attribute: "procedure", value: "git revert and reflash", state: "conflicting" });
-    expect(questionText({ gapType: "conflicting" }, deploy, rollback, "deploy_operate", [a, b])).toContain('"make flash-prev" and "git revert and reflash"');
+    expect(questionText({ gapType: "conflicting" }, deploy, rollback, "deploy_operate", [a, b], CLUB_LEAVER)).toContain('"make flash-prev" and "git revert and reflash"');
   });
 });
 

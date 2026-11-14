@@ -12,7 +12,7 @@ const ALL = ["president", "tech_lead", "new_member", "treasurer", "leaver"];
 const FINANCE = ["president", "treasurer"];
 
 beforeAll(async () => {
-  const [w] = await sql`INSERT INTO workspaces (name, kind) VALUES ('rls fixture', 'empty') RETURNING id`;
+  const [w] = await sql`INSERT INTO workspaces (name, kind, pack_id, approver_role, leaver_role) VALUES ('rls fixture', 'empty', 'club', 'president', 'leaver') RETURNING id`;
   ws = String(w.id);
   await sql`INSERT INTO sources (workspace_id, id, kind, name, role_set) VALUES
     (${ws}, 'src_board', 'tasks_csv', 'board.csv', ${ALL}::text[]),

@@ -4,11 +4,11 @@
 import { cookies } from "next/headers";
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
-import { isRoleKey, isUuid } from "@/lib/db/withRole";
-import { getRole, roleCookieName } from "@/lib/session";
+import { isUuid } from "@/lib/db/withRole";
+import { viewingRole, roleCookieName } from "@/lib/session";
 import { answerQuestion, buildQuestions, runTest, savePlanItem } from "@/lib/lacuna";
 import { approveSnapshot, bulkApprove, reviewClaim } from "@/lib/relay";
-import { getPack } from "@/lib/pack";
+import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import type { RoleKey } from "@/lib/types";
 
 export interface ActionState {
@@ -30,7 +30,9 @@ function pct(x: number): string {
 }
 
 export async function setRole(ws: string, role: string): Promise<void> {
-  if (!isUuid(ws) || !isRoleKey(role)) return;
+  if (!isUuid(ws) || !(await getWorkspace(ws))) return;
+  // Only a role of this workspace's pack can be picked.
+  if (!isRoleOf(await getWorkspacePack(ws), role)) return;
   (await cookies()).set(roleCookieName(ws), role, {
     path: "/", sameSite: "lax", httpOnly: true, maxAge: 60 * 60 * 24 * 7,
   });
@@ -40,8 +42,9 @@ export async function setRole(ws: string, role: string): Promise<void> {
 export async function answerAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const role = await getRole(ws);
-  const narrow = form.getAll("roles").map(String).filter(isRoleKey) as RoleKey[];
+  const role = await viewingRole(ws);
+  const pack = await getWorkspacePack(ws);
+  const narrow = form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
   const res = await answerQuestion(ws, String(form.get("questionId") ?? ""), String(form.get("answer") ?? ""), role, narrow);
   if (!res.ok) return fail(res.error);
   refresh();
@@ -55,7 +58,7 @@ export async function answerAction(_prev: ActionState, form: FormData): Promise<
 export async function reviewAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const role = await getRole(ws);
+  const role = await viewingRole(ws);
   const decision = String(form.get("decision") ?? "");
   if (decision !== "approved" && decision !== "rejected" && decision !== "edited") return fail("Unknown decision.");
   const res = await reviewClaim(ws, String(form.get("claimId") ?? ""), decision, role, {
@@ -70,7 +73,7 @@ export async function reviewAction(_prev: ActionState, form: FormData): Promise<
 export async function bulkApproveAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await bulkApprove(ws, await getRole(ws), ["A", "B"]);
+  const res = await bulkApprove(ws, await viewingRole(ws), ["A", "B"]);
   if (!res.ok) return fail(res.error);
   refresh();
   return done(`Approved ${res.approved ?? 0} claim(s) in tiers A and B. Tier C still needs one-by-one review.`);
@@ -87,7 +90,7 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
     responsibilityId: String(form.get("responsibilityId") ?? ""),
     checkKey: String(form.get("checkKey") ?? ""),
     owner, dueDate, riskNote,
-  }, await getRole(ws));
+  }, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   return done("Plan saved.");
@@ -96,7 +99,7 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
 export async function approveSnapshotAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await approveSnapshot(ws, await getRole(ws));
+  const res = await approveSnapshot(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   const s = res.snapshot!;
@@ -106,9 +109,9 @@ export async function approveSnapshotAction(_prev: ActionState, form: FormData):
 export async function rerunTestAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const pack = getPack();
-  const t = await runTest(ws, pack.successorRole as RoleKey);
-  await runTest(ws, "new_member");
+  const pack = await getWorkspacePack(ws);
+  const t = await runTest(ws, pack.successorRole);
+  for (const role of pack.testRoles) if (role !== pack.successorRole) await runTest(ws, role);
   await buildQuestions(ws);
   refresh();
   return done(`Re-tested: B ${t.scores.b} · C ${pct(t.scores.c)}.`);

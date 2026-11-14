@@ -1,31 +1,20 @@
 // Shared Relay vocabulary and small helpers. Exact strings come from docs/ARCHITECTURE.md section 2.
-import type { Attribute, RoleKey, Trust } from "@/lib/types";
+import type { Attribute, RoleKey } from "@/lib/types";
 
-/** The only role that may review claims and approve snapshots (ARCHITECTURE section 4). */
-export const APPROVER_ROLE: RoleKey = "president";
-/** The leaving person. Can never review or approve, whatever else changes. */
-export const LEAVER_ROLE: RoleKey = "leaver";
-/** Default approver label, used in stub and conflict text. Callers pass the pack label when it differs. */
-export const DEFAULT_APPROVER_LABEL = "Club President";
+/**
+ * The role facts the approval rules need, read from the workspace's pack (approvalRoles(pack)):
+ * `approver` is the only role that may review claims and approve snapshots (ARCHITECTURE
+ * section 4); `leaver` is the leaving person, who can never review or approve.
+ */
+export interface ApprovalRoles {
+  approver: RoleKey;
+  leaver: RoleKey;
+  /** The approver's label from the pack, used in stub, conflict and error text. */
+  approverLabel: string;
+}
 
-/** Trust labels in words, strongest first. Nothing a person said is ever labelled verified. */
-export const TRUST_LABEL: Record<Trust, string> = {
-  from_record: "From record",
-  corroborated: "Corroborated",
-  leaver_said: "Leaver said",
-  second_hand: "Second-hand",
-  inferred: "Inferred",
-  ranked_options: "Ranked options",
-};
-
-export const TRUST_ORDER: readonly Trust[] = [
-  "from_record",
-  "corroborated",
-  "leaver_said",
-  "second_hand",
-  "inferred",
-  "ranked_options",
-];
+// The trust ladder is written once in src/lib/trust.ts.
+export { TRUST_LABEL, TRUST_ORDER, weakestTrust } from "@/lib/trust";
 
 /**
  * Shown under the scores when the release label's open gap count differs from B: a restricted blocking
@@ -51,15 +40,6 @@ export const ATTRIBUTE_LABEL: Record<Attribute, string> = {
   risk: "risk",
 };
 
-/** The weakest trust in a list (the conservative label for a line built from several claims). */
-export function weakestTrust(trusts: readonly Trust[]): Trust | null {
-  let worst: Trust | null = null;
-  for (const t of trusts) {
-    if (worst === null || TRUST_ORDER.indexOf(t) > TRUST_ORDER.indexOf(worst)) worst = t;
-  }
-  return worst;
-}
-
 /** Relay operations return a value or a typed error; they never throw for rule violations. */
 export type RelayErrorCode =
   | "not_approver"
@@ -83,12 +63,12 @@ export function relayError(code: RelayErrorCode, message: string): RelayError {
 }
 
 /** Role check shared by review and snapshot approval. Returns an error or null. */
-export function checkApprover(by: RoleKey): RelayError | null {
-  if (by === LEAVER_ROLE) {
+export function checkApprover(by: RoleKey, roles: ApprovalRoles): RelayError | null {
+  if (by === roles.leaver) {
     return relayError("leaver_cannot_approve", "The leaver can never review or approve the handover.");
   }
-  if (by !== APPROVER_ROLE) {
-    return relayError("not_approver", `Only the approver (${APPROVER_ROLE}) may review or approve; got ${by}.`);
+  if (by !== roles.approver) {
+    return relayError("not_approver", `Only the approver (${roles.approverLabel}) may review or approve; got ${by}.`);
   }
   return null;
 }

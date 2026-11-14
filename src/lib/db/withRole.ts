@@ -8,10 +8,15 @@ import type { Sql, TransactionSql } from "postgres";
 import { db } from "./client";
 import type { RoleKey } from "@/lib/types";
 
-export const ROLE_KEYS: readonly RoleKey[] = ["president", "tech_lead", "new_member", "treasurer", "leaver"];
+const ROLE_KEY_RE = /^[a-z][a-z0-9_]{1,31}$/;
 
+/**
+ * Format check only. It is enough here because the policy is `role_key = ANY(role_set)`: a key no
+ * row lists sees nothing. Whether a key is a role of the workspace's pack is checked where a role
+ * enters the system (the cookie reader, the role switch, form fields): isRoleOf(pack, x).
+ */
 export function isRoleKey(x: unknown): x is RoleKey {
-  return typeof x === "string" && (ROLE_KEYS as readonly string[]).includes(x);
+  return typeof x === "string" && ROLE_KEY_RE.test(x);
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

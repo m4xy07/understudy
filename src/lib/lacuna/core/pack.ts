@@ -1,7 +1,7 @@
 // The slice of the setting pack (ARCHITECTURE section 1a) that Lacuna core reads.
 // Structural on purpose: the full zod-validated pack from src/lib/pack/ satisfies it.
 import type {
-  Attribute, CheckDef, ResponsibilityKind, RoleKey, Trust, WTag,
+  Attribute, CheckDef, ResponsibilityKind, RoleKey, WTag,
 } from "@/lib/types";
 
 export interface PackEntity {
@@ -53,30 +53,8 @@ export interface LacunaPack {
 /** A check as Lacuna passes it around: the shared CheckDef plus optional pack refinements. */
 export type LacunaCheck = CheckDef & Pick<PackCheck, "keywords" | "question" | "needsDate">;
 
-export const TRUST_ORDER: readonly Trust[] = [
-  "from_record", "corroborated", "leaver_said", "second_hand", "inferred", "ranked_options",
-];
-
-export const TRUST_LABEL: Record<Trust, string> = {
-  from_record: "From record",
-  corroborated: "Corroborated",
-  leaver_said: "Leaver said",
-  second_hand: "Second-hand",
-  inferred: "Inferred",
-  ranked_options: "Ranked options",
-};
-
-/** Strongest trust in the list (section 2 order), or null when empty. */
-export function strongestTrust(trusts: readonly Trust[]): Trust | null {
-  let best: Trust | null = null;
-  for (const t of trusts) {
-    if (best === null || TRUST_ORDER.indexOf(t) < TRUST_ORDER.indexOf(best)) best = t;
-  }
-  return best;
-}
-
-export const STRONG_TRUST: ReadonlySet<Trust> = new Set<Trust>(["from_record", "corroborated", "leaver_said"]);
-export const RECORD_TRUST: ReadonlySet<Trust> = new Set<Trust>(["from_record", "corroborated"]);
+// The trust ladder is written once in src/lib/trust.ts.
+export { TRUST_ORDER, TRUST_LABEL, STRONG_TRUST, RECORD_TRUST, strongestTrust } from "@/lib/trust";
 
 /** Key used for gaps, plan items and named owners: "<responsibilityId>|<checkKey>". */
 export function gapKey(responsibilityId: string, checkKey: string): string {

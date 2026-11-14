@@ -2,6 +2,7 @@
 import type { Attribute, Claim, RoleKey, Segment, SourceKind } from "@/lib/types";
 import { norm, sha256Hex } from "@/lib/text/norm";
 import type { AttestPack, DraftClaim } from "@/lib/attest/core/verify";
+import { CLUB_RESTRICTED, CLUB_ROLE_ORDER } from "../../helpers/club";
 
 export const ALL_ROLES: RoleKey[] = ["president", "tech_lead", "new_member", "treasurer", "leaver"];
 
@@ -11,10 +12,12 @@ const ATTRS: Attribute[] = [
 ];
 
 const DEFAULT_AUTHORITY: Record<SourceKind, number> = {
-  tasks_csv: 2, ics: 2, markdown: 2, slack: 1, whatsapp: 1, github: 2, interview: 1,
+  tasks_csv: 2, ics: 2, markdown: 2, slack: 1, whatsapp: 1, github: 2, interview: 1, finding: 1,
 };
 
 export const pack: AttestPack = {
+  roleOrder: CLUB_ROLE_ORDER,
+  restrictedAudience: CLUB_RESTRICTED,
   entities: [
     { key: "firmware-deploy", label: "Firmware deploy to the robot", aliases: ["deploy", "flash", "firmware"] },
     { key: "competition", label: "Regional robotics competition", aliases: ["regionals"] },

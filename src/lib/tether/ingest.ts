@@ -27,7 +27,7 @@ export function ingestAll(
   opts: { identityKey: string; contactsKey: string; registry?: PersonRegistry; now?: string; orderByIdentity?: boolean },
 ): IngestOutput {
   const people = opts.registry ?? new PersonRegistry(opts.identityKey);
-  const rank: Record<SourceKind, number> = { slack: 0, github: 1, tasks_csv: 2, markdown: 3, ics: 4, whatsapp: 5, interview: 6 };
+  const rank: Record<SourceKind, number> = { slack: 0, github: 1, tasks_csv: 2, markdown: 3, ics: 4, whatsapp: 5, interview: 6, finding: 7 };
   const ordered = inputs.map((s, i) => ({ s, i }));
   if (opts.orderByIdentity !== false) ordered.sort((a, b) => rank[a.s.kind] - rank[b.s.kind] || a.i - b.i);
   const out = ordered.map(({ s, i }) => {

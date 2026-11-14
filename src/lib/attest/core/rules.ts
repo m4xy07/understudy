@@ -11,7 +11,7 @@ import type {
   SourceKind,
   Trust,
 } from "@/lib/types";
-import { MULTI_VALUED } from "@/lib/types";
+import { MULTI_VALUED, type RoleKey } from "@/lib/types";
 import { norm } from "@/lib/text/norm";
 import type { AttestPack } from "./verify";
 
@@ -33,6 +33,7 @@ const KIND_OWNER: Record<SourceKind, { name: string; verb: string }> = {
   slack: { name: "Slack", verb: "owns" },
   whatsapp: { name: "WhatsApp", verb: "owns" },
   interview: { name: "the leaver's answers", verb: "own" },
+  finding: { name: "the successor's findings", verb: "own" },
 };
 
 const KIND_ITEM: Record<SourceKind, string> = {
@@ -43,6 +44,7 @@ const KIND_ITEM: Record<SourceKind, string> = {
   slack: "a Slack message",
   whatsapp: "a WhatsApp message",
   interview: "the leaver's answer",
+  finding: "a successor finding",
 };
 
 const ATTR_PLURAL: Record<Attribute, string> = {
@@ -140,7 +142,7 @@ export function isDateValue(v: string): boolean {
  * Two claims on the same entity and single-valued attribute are only compared when their
  * values are the same KIND of fact, so that a cadence never "conflicts" with a due date and a
  * verify step never "supersedes" the deploy steps:
- * - values where one contains the other agree (e.g. "Priya Nair" and "Priya Nair (lead)");
+ * - values where one contains the other agree (a name, and the same name with a title after it);
  * - deadline: both values are single dates (a cadence such as "once per term" is another fact);
  * - owner, location: always;
  * - procedure, status, decision: only a restatement, i.e. the same author, a reply / quote link
@@ -421,24 +423,29 @@ export function reviewFlags(claim: Claim): string[] {
   return flags;
 }
 
+/** Sensitive: hidden from at least one role the pack flags as restricted audience ("sees least"). */
+export function isSensitive(roleSet: readonly RoleKey[], restrictedAudience: readonly RoleKey[]): boolean {
+  return restrictedAudience.some((r) => !roleSet.includes(r));
+}
+
 /**
- * Tier C: sensitive (role set excludes new_member), conflicting, or blocking importance.
+ * Tier C: sensitive (hidden from a restricted audience role), conflicting, or blocking importance.
  * Tier A: corroborated, normal importance, no flags (bulk approve). Tier B: everything else.
  */
-export function tierOf(claim: Claim): ReviewTier {
-  if (!claim.roleSet.includes("new_member") || claim.state === "conflicting" || claim.importance === "blocking") return "C";
+export function tierOf(claim: Claim, restrictedAudience: readonly RoleKey[]): ReviewTier {
+  if (isSensitive(claim.roleSet, restrictedAudience) || claim.state === "conflicting" || claim.importance === "blocking") return "C";
   if (claim.trust === "corroborated" && claim.importance === "normal" && reviewFlags(claim).length === 0) return "A";
   return "B";
 }
 
 export function assignImportanceAndTier(
   claims: Claim[],
-  pack: Pick<AttestPack, "checklists" | "roleTemplates">,
+  pack: Pick<AttestPack, "checklists" | "roleTemplates" | "restrictedAudience">,
   entityKinds?: EntityKinds,
 ): Claim[] {
   return claims.map((c) => {
     const withImportance = { ...c, importance: importanceOf(c, pack, entityKinds) };
-    return { ...withImportance, tier: tierOf(withImportance) };
+    return { ...withImportance, tier: tierOf(withImportance, pack.restrictedAudience) };
   });
 }
 

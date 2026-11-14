@@ -1,11 +1,16 @@
 // Shared types for Understudy. The contract is docs/ARCHITECTURE.md.
 // Only the foundation owns this file; other modules propose changes.
 
-export type RoleKey = "president" | "tech_lead" | "new_member" | "treasurer" | "leaver";
+/**
+ * A role key is defined by the setting pack (format ^[a-z][a-z0-9_]{1,31}$). Core never names one:
+ * the pack flags which role approves, which is the successor, which is the leaver and which see least.
+ */
+export type RoleKey = string;
 
-export type SourceKind = "whatsapp" | "slack" | "github" | "tasks_csv" | "markdown" | "ics" | "interview";
+export type SourceKind = "whatsapp" | "slack" | "github" | "tasks_csv" | "markdown" | "ics" | "interview" | "finding";
 
-export type SegmentKind = "message" | "commit" | "file" | "task" | "note" | "event" | "answer";
+/** "answer" and "finding" hold a person's own words (a gap answer, a successor finding); extraction never reads them. */
+export type SegmentKind = "message" | "commit" | "file" | "task" | "note" | "event" | "answer" | "finding";
 
 export type Attribute =
   | "owner" | "status" | "deadline" | "location" | "procedure" | "access"
@@ -13,7 +18,17 @@ export type Attribute =
 
 export const MULTI_VALUED: readonly Attribute[] = ["reason", "dependency", "contact"];
 
-export type Trust = "from_record" | "corroborated" | "leaver_said" | "second_hand" | "inferred" | "ranked_options";
+/** Strongest first. The one ordered list is TRUST_ORDER in src/lib/trust.ts. */
+export type Trust =
+  | "from_record" | "corroborated" | "leaver_said" | "successor_found" | "second_hand" | "inferred" | "ranked_options";
+
+/**
+ * Where a claim came from. "extracted" and "structured" are read from the record by Attest.
+ * The others are a person's word or a derived trace, written by Lacuna, recovery or the living
+ * handover; Attest keeps them across re-runs (src/lib/attest/core/origins.ts).
+ */
+export type ClaimOrigin =
+  | "extracted" | "structured" | "leaver_answer" | "neighbour_answer" | "trace" | "successor_finding";
 
 export type ClaimState = "active" | "superseded" | "conflicting" | "dropped";
 
@@ -120,7 +135,7 @@ export interface Claim {
   tier: ReviewTier;
   review: ReviewState;
   reviewNote: string | null;
-  origin: "extracted" | "structured" | "leaver_answer";
+  origin: ClaimOrigin;
   supportCheck: "yes" | "partly" | "no" | null;
 }
 
@@ -196,7 +211,7 @@ export interface Snapshot {
   workspaceId: string;
   version: number;
   hash: string;              // sha256 hex of the canonical payload
-  approvedBy: RoleKey;       // always "president"
+  approvedBy: RoleKey;       // always the approver role of the workspace's pack
   approvedAt: string;
   claimIds: string[];
   openBlocking: number;

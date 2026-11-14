@@ -4,7 +4,7 @@
 import { db } from "@/lib/db/client";
 import type { RunStatus, RunStep, RunStepKey } from "@/lib/db/mappers";
 import { getRunStatus, listSources, audit } from "@/lib/db/queries";
-import { getPack } from "@/lib/pack";
+import { getWorkspacePack, type ResolvedPack } from "@/lib/pack";
 import { reconstruct, verify } from "@/lib/attest";
 import { buildInventory, buildQuestions, runTest } from "@/lib/lacuna";
 import { modelAvailable } from "@/lib/model/client";
@@ -52,13 +52,14 @@ type StepFn = () => Promise<{ counts: Record<string, number>; note?: string | nu
 export async function executeRun(ws: string, runId: string): Promise<RunStatus | null> {
   const steps = freshSteps();
   const errors: string[] = [];
-  let pack: ReturnType<typeof getPack> | null = null;
+  let pack: ResolvedPack | null = null;
   try {
-    pack = getPack();
+    pack = await getWorkspacePack(ws);
   } catch (err) {
     errors.push(err instanceof Error ? err.message : String(err));
   }
-  const roles: RoleKey[] = pack ? [...new Set([pack.successorRole as RoleKey, "new_member" as RoleKey])] : [];
+  // The successor, then every role the pack flags as restricted audience.
+  const roles: RoleKey[] = pack ? pack.testRoles : [];
 
   const fns: Record<RunStepKey, StepFn> = {
     connect: async () => {

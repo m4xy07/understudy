@@ -3,6 +3,7 @@
 // Pure module: no database, no network; the model call is injected.
 import type { RoleKey, Segment, SegmentKind } from "@/lib/types";
 import { norm, sha256Hex } from "@/lib/text/norm";
+import { EXTRACTION_SKIP_KINDS } from "./origins";
 import { buildSystemPrompt, buildUserPrompt, renderSegment, type AuthorLabel } from "./prompts";
 import {
   EXTRACTION_JSON_SCHEMA_NAME,
@@ -21,16 +22,16 @@ import {
 /** About 8,000 tokens at ~3 chars per token. */
 export const DEFAULT_MAX_CHARS = 24_000;
 export const DEFAULT_CONCURRENCY = 4;
-/** Kinds that produce claims deterministically (structured.ts), never through the model. */
-export const DETERMINISTIC_KINDS: readonly SegmentKind[] = ["task", "event"];
+export { DETERMINISTIC_KINDS, EXTRACTION_SKIP_KINDS } from "./origins";
 
-const ROLE_ORDER: readonly RoleKey[] = ["president", "tech_lead", "new_member", "treasurer", "leaver"];
-
-/** Canonical role set: deduplicated, in a fixed order, so equal sets compare equal. */
-export function canonicalRoleSet(roles: readonly RoleKey[]): RoleKey[] {
+/**
+ * Canonical role set: deduplicated, in the pack's role order (`order` = pack.roleOrder), so equal
+ * sets compare equal. Keys the order does not list go last, alphabetically.
+ */
+export function canonicalRoleSet(roles: readonly RoleKey[], order: readonly RoleKey[]): RoleKey[] {
   const rank = (r: string) => {
-    const i = ROLE_ORDER.indexOf(r as RoleKey);
-    return i === -1 ? ROLE_ORDER.length : i;
+    const i = order.indexOf(r);
+    return i === -1 ? order.length : i;
   };
   return [...new Set(roles)].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 }
@@ -46,7 +47,10 @@ export interface PlannedBatch {
 }
 
 export interface PlanOptions {
+  /** The pack's role order (pack.roleOrder): fixes how a role set is written in a batch id. */
+  roleOrder: readonly RoleKey[];
   maxChars?: number;
+  /** Default: EXTRACTION_SKIP_KINDS (structured rows, and a person's answers and findings). */
   skipKinds?: readonly SegmentKind[];
 }
 
@@ -67,11 +71,12 @@ function compareSegments(a: Segment, b: Segment): number {
 /**
  * Group segments per (source, thread, identical role set), order by time, and split
  * each group at about `maxChars`, keeping reply chains (meta.replyTo) together where
- * they fit. A batch never mixes role sets. Task and event segments are skipped.
+ * they fit. A batch never mixes role sets. Task and event segments are skipped (code reads them),
+ * and so are answer and finding segments: a person's own words are never sent to extraction.
  */
-export function planBatches(segments: Segment[], opts: PlanOptions = {}): PlannedBatch[] {
+export function planBatches(segments: Segment[], opts: PlanOptions): PlannedBatch[] {
   const maxChars = opts.maxChars ?? DEFAULT_MAX_CHARS;
-  const skip = new Set<SegmentKind>(opts.skipKinds ?? DETERMINISTIC_KINDS);
+  const skip = new Set<SegmentKind>(opts.skipKinds ?? EXTRACTION_SKIP_KINDS);
 
   // Deduplicate by id (keep the newest version).
   const byId = new Map<string, Segment>();
@@ -83,7 +88,7 @@ export function planBatches(segments: Segment[], opts: PlanOptions = {}): Planne
 
   const groups = new Map<string, { sourceId: string; thread: string; roleSet: RoleKey[]; segs: Segment[] }>();
   for (const s of byId.values()) {
-    const roleSet = canonicalRoleSet(s.roleSet);
+    const roleSet = canonicalRoleSet(s.roleSet, opts.roleOrder);
     const key = `${s.sourceId}\u0000${s.thread}\u0000${roleSet.join(",")}`;
     let g = groups.get(key);
     if (!g) groups.set(key, (g = { sourceId: s.sourceId, thread: s.thread, roleSet, segs: [] }));
@@ -227,6 +232,8 @@ export interface ExtractionResult {
 }
 
 export interface ExtractOptions {
+  /** The pack's role order (pack.roleOrder). */
+  roleOrder: readonly RoleKey[];
   concurrency?: number;
   maxChars?: number;
   skipKinds?: readonly SegmentKind[];
@@ -242,9 +249,9 @@ export async function extractClaims(
   segments: Segment[],
   pack: ExtractionPack,
   call: ModelCall,
-  opts: ExtractOptions = {},
+  opts: ExtractOptions,
 ): Promise<ExtractionResult> {
-  const batches = planBatches(segments, { maxChars: opts.maxChars, skipKinds: opts.skipKinds });
+  const batches = planBatches(segments, { roleOrder: opts.roleOrder, maxChars: opts.maxChars, skipKinds: opts.skipKinds });
   const system = buildSystemPrompt(pack);
   const jsonSchema = buildExtractionJsonSchema(pack.entities.map((e) => e.key));
   const resolveEntity = makeEntityResolver(pack);

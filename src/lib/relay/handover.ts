@@ -11,7 +11,7 @@ import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { iso, toSnapshot } from "@/lib/db/mappers";
 import { audit, getWorkspace, listGapQuestions, listResponsibilities, peopleNames } from "@/lib/db/queries";
-import { getPack, roleLabel } from "@/lib/pack";
+import { getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
 import type {
   Attribute, Citation, Claim, ReadbackItem, ReadbackVerdict, RoleKey, Scores, Snapshot, Trust,
 } from "@/lib/types";
@@ -172,7 +172,7 @@ function dateRank(value: string, statement: string): number {
 
 /** For each pack read-back item, the approved snapshot claim that answers it (admin read). */
 export async function resolveReadbackItems(ws: string, snapshotId: string): Promise<ResolvedReadback> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const rows = await db()`
     SELECT claim_id, entity, attribute, coalesce(value, statement) AS value, statement, trust, state, valid_from
     FROM snapshot_claims WHERE workspace_id = ${ws} AND snapshot_id = ${snapshotId}`;
@@ -268,7 +268,7 @@ export async function checkHandoverReadback(ws: string, role: RoleKey, typed: Re
 export async function acknowledgeHandover(
   ws: string, role: RoleKey, typed: Record<string, string>,
 ): Promise<{ ok: true; ack: Acknowledgement } | { ok: false; error: string }> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   if (role === pack.leaverRole) {
     return { ok: false, error: "The leaver hands over; receipt is acknowledged by the people taking over." };
   }
@@ -300,7 +300,7 @@ export interface AckRow {
 }
 
 export async function listAcknowledgements(ws: string): Promise<AckRow[]> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const rows = await db()`SELECT * FROM acknowledgements WHERE workspace_id = ${ws} ORDER BY created_at DESC, id DESC`;
   return rows.map((r) => {
     const verdicts = jsonArr<ReadbackVerdict>(r.verdicts);
@@ -364,15 +364,15 @@ export interface Handover {
   scores: Scores | null;
 }
 
-function checkLabels(): Record<string, string> {
+function checkLabels(pack: Pick<ResolvedPack, "checklists">): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const list of Object.values(getPack().checklists)) for (const c of list) out[c.key] = c.label;
+  for (const list of Object.values(pack.checklists)) for (const c of list) out[c.key] = c.label;
   return out;
 }
 
 /** The handover for one role, compiled from the latest approved snapshot under RLS. */
 export async function compileHandover(ws: string, role: RoleKey): Promise<Handover> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const approverLabel = roleLabel(pack.approverRole as RoleKey, pack);
   const rl = roleLabel(role, pack);
   const latest = await latestSnapshot(ws);
@@ -404,7 +404,7 @@ export async function compileHandover(ws: string, role: RoleKey): Promise<Handov
     plan: snapshot.plan,
     responsibilities,
     readbackItems: resolved.items,
-    checkLabels: checkLabels(),
+    checkLabels: checkLabels(pack),
     approverLabel,
   });
   const groups = ATTRIBUTE_ORDER.map(({ attribute, label: l }) => ({
@@ -439,21 +439,27 @@ interface TokenSet {
   allowed: Map<RoleKey, Set<string>>;
 }
 
-let gtCache: { token: string; roleSet: RoleKey[] }[] | null | undefined;
+type PlantedToken = { token: string; roleSet: RoleKey[] };
+const gtCache = new Map<string, PlantedToken[] | null>();
 
-function groundTruthRestricted(): { token: string; roleSet: RoleKey[] }[] | null {
-  if (gtCache !== undefined) return gtCache;
+/** The planted canary tokens of a pack's demo (<demo.dataDir>/ground_truth.json), cached per pack id. */
+function groundTruthRestricted(pack: Pick<ResolvedPack, "id" | "demo">): PlantedToken[] | null {
+  const hit = gtCache.get(pack.id);
+  if (hit !== undefined) return hit;
+  let out: PlantedToken[] | null = null;
   try {
-    const file = path.join(process.cwd(), "data", "demo", "ground_truth.json");
+    if (!pack.demo) throw new Error("no demo");
+    const file = path.join(process.cwd(), pack.demo.dataDir, "ground_truth.json");
     const gt = JSON.parse(fs.readFileSync(file, "utf8")) as { restricted?: { token?: string; roleSet?: RoleKey[] }[] };
     const list = (gt.restricted ?? [])
       .filter((r) => typeof r.token === "string" && Array.isArray(r.roleSet))
       .map((r) => ({ token: r.token!, roleSet: r.roleSet! }));
-    gtCache = list.length ? list : null;
+    out = list.length ? list : null;
   } catch {
-    gtCache = null;
+    out = null;
   }
-  return gtCache;
+  gtCache.set(pack.id, out);
+  return out;
 }
 
 const CANARY_RE = /canary-[a-z0-9]+/gi;
@@ -464,12 +470,12 @@ function tokensIn(rows: readonly Row[]): Set<string> {
   return out;
 }
 
-/** Demo workspaces: the planted tokens from ground_truth.json. Others: any CANARY-shaped token in the sources. */
+/** Demo workspaces: the planted tokens from the demo's answer key. Others: any CANARY-shaped token in the sources. */
 async function canaryTokens(ws: string): Promise<TokenSet> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const roles = pack.roles.map((r) => r.key as RoleKey);
   const w = await getWorkspace(ws);
-  const gt = w?.kind === "demo" ? groundTruthRestricted() : null;
+  const gt = w?.kind === "demo" ? groundTruthRestricted(pack) : null;
   if (gt) {
     const allowed = new Map<RoleKey, Set<string>>();
     for (const role of roles) allowed.set(role, new Set(gt.filter((t) => t.roleSet.includes(role)).map((t) => t.token)));
@@ -491,7 +497,9 @@ export async function exportMarkdown(
 ): Promise<{ ok: true; markdown: string; filename: string } | { ok: false; status: number; error: string }> {
   const h = await compileHandover(ws, role);
   if (!h.doc || !h.snapshot) {
-    return { ok: false, status: 404, error: "The approver hasn't approved a handover yet. Switch to Club President and go to Review." };
+    const pack = await getWorkspacePack(ws);
+    const approver = roleLabel(pack.approverRole, pack);
+    return { ok: false, status: 404, error: `The approver hasn't approved a handover yet. Switch to ${approver} and go to Review.` };
   }
   const markdown = renderMarkdown(h.doc);
   const tokens = await canaryTokens(ws);
@@ -535,7 +543,7 @@ function surfaceOf(name: string): LeakSurface {
  * timeline and gap questions. A token may only appear for roles allowed to see it.
  */
 export async function runLeakCheck(ws: string): Promise<LeakReport> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const tokens = await canaryTokens(ws);
   const questions = (await listGapQuestions(ws)).map((q) => q.text);
   const roles = pack.roles.map((r) => r.key as RoleKey);

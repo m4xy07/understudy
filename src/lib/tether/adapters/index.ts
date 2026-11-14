@@ -27,6 +27,8 @@ export function parseSource(kind: SourceKind, files: SourceFile[], ctx: AdapterC
       return parseIcs(files, ctx);
     case "interview":
       throw new Error("interview segments are created from gap answers, not imported");
+    case "finding":
+      throw new Error("finding segments are created from successor findings, not imported");
     default: {
       const never: never = kind;
       throw new Error(`unknown source kind: ${String(never)}`);

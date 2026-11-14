@@ -59,7 +59,7 @@ export function toIsoDate(value: string, refIso: string | null = null): string |
     return y && valid(y, mo, d) ? `${y}-${pad(mo)}-${pad(d)}` : null;
   }
 
-  // 19/12/2026 or 19.12.26 (day first, as in the club's Indian locale)
+  // 19/12/2026 or 19.12.26 (day first, as written in India)
   m = /^(\d{1,2})[/.](\d{1,2})[/.](\d{2}|\d{4})$/.exec(v);
   if (m) {
     const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];

@@ -6,6 +6,7 @@
 // as extraction. Context segments from the thread are shown only when their role set matches.
 import { z, type ZodType } from "zod";
 import type { Claim, Segment, Trust } from "@/lib/types";
+import { trustRank } from "@/lib/trust";
 
 /** Injected model call (same shape as the extraction builder's). */
 export type ModelCall = <T>(opts: {
@@ -46,12 +47,9 @@ export interface SupportOptions {
   contextAfter?: number;  // and after, default 1
 }
 
-// Strongest first (ARCHITECTURE section 2).
-const TRUST_ORDER: readonly Trust[] = ["from_record", "corroborated", "leaver_said", "second_hand", "inferred", "ranked_options"];
-
-/** The weaker of two trust levels. */
+/** The weaker of two trust levels (order: src/lib/trust.ts). */
 export function weakerTrust(a: Trust, b: Trust): Trust {
-  return TRUST_ORDER.indexOf(a) >= TRUST_ORDER.indexOf(b) ? a : b;
+  return trustRank(a) >= trustRank(b) ? a : b;
 }
 
 export const SUPPORT_SYSTEM = [

@@ -12,6 +12,7 @@ import {
 } from "@/lib/lacuna";
 import type { Responsibility, RoleKey, TestRun } from "@/lib/types";
 import { loadGroundTruth, seedGroundTruthClaims } from "./gt-seed";
+import { CLUB_ID } from "../helpers/club";
 
 process.env.LACUNA_MODEL = "off"; // re-tests after answers stay deterministic and fast
 const sql = db();
@@ -33,7 +34,7 @@ function fmt(s: { b: number; c: number; k: number | null }): string {
 }
 
 beforeAll(async () => {
-  ws = (await createDemoWorkspace()).id;
+  ws = (await createDemoWorkspace(CLUB_ID)).id;
   const seeded = await seedGroundTruthClaims(ws);
   log.push(`seeded ${seeded.seeded} planted claims; unmatched: ${seeded.unmatched.join(", ") || "none"}`);
   inv = await buildInventory(ws);

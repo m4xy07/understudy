@@ -20,12 +20,31 @@ describe("system prompt", () => {
     expect(system).toContain("- other:");
   });
 
-  it("lists the closed attribute list with a definition and an example each", () => {
+  it("lists the closed attribute list with a definition each; a pack without examples prints no example", () => {
     for (const a of ATTRIBUTES) {
-      expect(system).toContain(`- ${a}: ${ATTRIBUTE_GUIDE[a].definition}. Example: `);
+      expect(system).toContain(`- ${a}: ${ATTRIBUTE_GUIDE[a].definition}.
+`);
     }
+    expect(system).not.toContain("Example:");
+    expect(system).toContain('Pick the most specific entity; use "other" when no entity fits.');
+    expect(system).toContain("gives one, else the masked token.");
     expect(system).toMatch(/access: credential NAMES/);
     expect(system).toMatch(/Never create a new attribute/);
+  });
+
+  it("prints the pack's own example, entity hint and contact example when it gives them", () => {
+    const examples = Object.fromEntries(ATTRIBUTES.map((a) => [a, `value "x-${a}"`]));
+    const withPack = buildSystemPrompt({ ...pack, examples, entityHint: "a pump is pump, not plant", contactExample: "Asha Rao" });
+    for (const a of ATTRIBUTES) {
+      expect(withPack).toContain(`- ${a}: ${ATTRIBUTE_GUIDE[a].definition}. Example: value "x-${a}"
+`);
+    }
+    expect(withPack).toContain('Pick the most specific entity (a pump is pump, not plant); use "other" when no entity fits.');
+    expect(withPack).toContain('gives one (e.g. "Asha Rao"), else the masked token.');
+  });
+
+  it("holds no setting text of its own: nothing from the club pack appears unless the pack is passed", () => {
+    for (const word of ["Priya", "Rahul Desai", "Teensy", "entry-fee"]) expect(system).not.toContain(word);
   });
 
   it("states the citation, masking and injection rules", () => {

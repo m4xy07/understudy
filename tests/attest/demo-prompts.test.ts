@@ -9,9 +9,10 @@ import { cacheKey } from "@/lib/model/client";
 import { sourceIdFor } from "@/lib/pipeline/ingest";
 import { loadDemoSources } from "@/lib/tether/demo";
 import { ingestAll } from "@/lib/tether/ingest";
+import { CLUB_DEMO_DIR, CLUB_ROLE_ORDER } from "../helpers/club";
 
 function demoPrompts(transform: (content: string) => string = (c) => c) {
-  const demo = loadDemoSources();
+  const demo = loadDemoSources(CLUB_DEMO_DIR);
   const out = ingestAll(
     demo.map((d) => ({
       kind: d.kind,
@@ -24,7 +25,7 @@ function demoPrompts(transform: (content: string) => string = (c) => c) {
   );
   const names = Object.fromEntries(out.people.map((p) => [p.id, p.displayName]));
   const segments = out.sources.flatMap((s) => s.result.segments.map((seg) => ({ ...seg, sourceId: s.sourceId })));
-  const batches = planBatches(segments, { maxChars: EXTRACT_MAX_CHARS });
+  const batches = planBatches(segments, { roleOrder: CLUB_ROLE_ORDER, maxChars: EXTRACT_MAX_CHARS });
   const prompts = batches.map((b) => buildUserPrompt(b, { authorLabel: (id) => (id ? (names[id] ?? id) : "unknown") }));
   return { segments, prompts, keys: prompts.map((u) => cacheKey("tag", "system", u, "attest_claims")) };
 }
@@ -46,7 +47,7 @@ describe("demo extraction prompts", () => {
 
   it("never put a backslash in a thread or file path", () => {
     const { segments } = demoPrompts();
-    for (const d of loadDemoSources()) for (const f of d.files) expect(f.path).not.toContain("\\");
+    for (const d of loadDemoSources(CLUB_DEMO_DIR)) for (const f of d.files) expect(f.path).not.toContain("\\");
     for (const s of segments) expect(s.thread, s.id).not.toContain("\\");
   });
 });

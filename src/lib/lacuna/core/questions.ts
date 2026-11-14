@@ -121,7 +121,7 @@ const MISSING_TEMPLATES: Record<string, string> = {
   next_step: "What is the next concrete step on {resp}, and what does someone need to take it?",
   reviewer: "Who should review or sign off {resp}?",
 };
-// The setting pack (packs/club.json) names some checks differently; give them the same plain text
+// A setting pack may name some checks differently; give them the same plain text
 // instead of the generic "How exactly is {check} done for {resp}" fallback.
 Object.assign(MISSING_TEMPLATES, {
   how_to_verify: MISSING_TEMPLATES.verify,
@@ -167,8 +167,8 @@ export function questionText(
   resp: Pick<Responsibility, "title" | "entities">,
   check: LacunaCheck,
   kind: ResponsibilityKind,
-  leaverVisibleClaims: readonly Pick<Claim, "id" | "entity" | "attribute" | "value" | "state" | "roleSet">[] = [],
-  leaverRole: RoleKey = "leaver",
+  leaverVisibleClaims: readonly Pick<Claim, "id" | "entity" | "attribute" | "value" | "state" | "roleSet">[],
+  leaverRole: RoleKey,
 ): string {
   const missing = fill(
     check.question?.missing ?? MISSING_TEMPLATES[check.key] ?? WTAG_FALLBACK[check.wTag],
@@ -242,7 +242,7 @@ export interface AnswerClaimDraft {
   state: "active";
   roleSet: RoleKey[];
   validFrom: string;
-  authorId: string;
+  authorId: string | null;
   sourceKinds: ["interview"];
   origin: "leaver_answer";
 }
@@ -259,7 +259,7 @@ export function segmentId(sourceKind: string, ts: string, thread: string, positi
 export function answerToDrafts(
   answerText: string,
   question: AnsweredQuestion,
-  leaverPersonId: string,
+  leaverPersonId: string | null,
   opts: AnswerOptions = {},
 ): { segment: AnswerSegment; claim: AnswerClaimDraft } {
   const text = answerText.trim();

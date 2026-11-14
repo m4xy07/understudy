@@ -2,7 +2,7 @@
 // Pure. Contract: docs/ARCHITECTURE.md section 4, "Review and Handover".
 import { createHash } from "node:crypto";
 import type { Attribute, Claim, PlanItem, RoleKey, Scores, Snapshot, Trust } from "@/lib/types";
-import { checkApprover, relayError, type RelayError } from "./labels";
+import { checkApprover, relayError, type ApprovalRoles, type RelayError } from "./labels";
 import type { RelayEvent } from "./review";
 
 // ---------------------------------------------------------------------------------------------
@@ -228,17 +228,18 @@ export type ApproveResult =
   | RelayError;
 
 /**
- * Approve a snapshot. Only the approver (president); the leaver never; the release rule must hold.
+ * Approve a snapshot. Only the pack's approver role; the leaver never; the release rule must hold.
  * The snapshot id is derived from the hash; a database layer may replace it with its own key.
  */
 export function approveSnapshot(input: {
   by: RoleKey;
+  roles: ApprovalRoles;
   releaseState: ReleaseState;
   payload: SnapshotPayload;
   at?: string;
 }): ApproveResult {
   const { by, releaseState, payload } = input;
-  const roleError = checkApprover(by);
+  const roleError = checkApprover(by, input.roles);
   if (roleError) return roleError;
   if (!releaseState.canApprove) {
     return relayError("release_blocked", releaseState.reasons.join(" ") || "Release rule not met.");

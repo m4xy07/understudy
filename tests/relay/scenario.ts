@@ -2,6 +2,7 @@
 import { compileHandover, type CompileInput } from "@/lib/relay/core/compile";
 import type { Claim, ReadbackItem, RoleKey } from "@/lib/types";
 import { makeClaim, makePlan, makeResp } from "./fixtures";
+import { CLUB_APPROVER_LABEL } from "../helpers/club";
 
 export const SECRET_TOKEN = "CANARY-7F3A";
 export const OPEN_TOKEN = "CANARY-1111";
@@ -39,6 +40,7 @@ export function scenarioInput(role: RoleKey, claims: Claim[] = scenarioClaims())
   return {
     role,
     roleLabel: role === "tech_lead" ? "Incoming tech lead" : role,
+    approverLabel: CLUB_APPROVER_LABEL,
     snapshot: {
       version: 2,
       hash: "a".repeat(64),

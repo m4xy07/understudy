@@ -4,12 +4,11 @@
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
-import { getRole } from "@/lib/session";
-import { getPack } from "@/lib/pack";
+import { viewingRole } from "@/lib/session";
+import { getWorkspacePack } from "@/lib/pack";
 import { runTest, savePlanItem } from "@/lib/lacuna";
 import { approveSnapshot, bulkApprove, reviewClaim } from "@/lib/relay";
 import type { ActionState } from "@/components/ActionForm";
-import type { RoleKey } from "@/lib/types";
 
 const fail = (message: string): ActionState => ({ ok: false, message });
 const done = (message: string | null = null): ActionState => ({ ok: true, message });
@@ -23,7 +22,7 @@ async function workspaceFrom(form: FormData): Promise<string | null> {
 export async function reviewClaimAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const role = await getRole(ws);
+  const role = await viewingRole(ws);
   const decision = String(form.get("decision") ?? "");
   if (decision !== "approved" && decision !== "rejected" && decision !== "edited") return fail("Unknown decision.");
   const res = await reviewClaim(ws, String(form.get("claimId") ?? ""), decision, role, {
@@ -35,7 +34,7 @@ export async function reviewClaimAction(_prev: ActionState, form: FormData): Pro
   if (decision === "edited") {
     // Any edit triggers a re-test (scores stay provisional until the snapshot is approved).
     try {
-      await runTest(ws, getPack().successorRole as RoleKey);
+      await runTest(ws, (await getWorkspacePack(ws)).successorRole);
     } catch {
       // The edit is saved; the next run of the test picks it up.
     }
@@ -47,7 +46,7 @@ export async function reviewClaimAction(_prev: ActionState, form: FormData): Pro
 export async function bulkApproveAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await bulkApprove(ws, await getRole(ws));
+  const res = await bulkApprove(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   return done(`Approved ${res.approved ?? 0} tier A claim${res.approved === 1 ? "" : "s"}.`);
@@ -64,7 +63,7 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
     responsibilityId: String(form.get("responsibilityId") ?? ""),
     checkKey: String(form.get("checkKey") ?? ""),
     owner, dueDate, riskNote,
-  }, await getRole(ws));
+  }, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   return done("Plan saved.");
@@ -73,7 +72,7 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
 export async function approveSnapshotAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await approveSnapshot(ws, await getRole(ws));
+  const res = await approveSnapshot(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
   const s = res.snapshot!;

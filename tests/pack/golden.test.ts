@@ -10,7 +10,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { EXTRACT_MAX_CHARS } from "@/lib/attest";
+import { EXTRACT_MAX_CHARS, extractionPack } from "@/lib/attest";
 import { planBatches } from "@/lib/attest/core/extract";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/attest/core/prompts";
 import { EXTRACTION_JSON_SCHEMA_NAME } from "@/lib/attest/core/schema";
@@ -32,9 +32,9 @@ interface Golden {
 }
 
 function current() {
-  const pack = getPack();
-  const system = buildSystemPrompt({ entities: pack.entities.map((e) => ({ key: e.key, label: e.label, aliases: [...(e.aliases ?? [])] })) });
-  const demo = loadDemoSources();
+  const pack = getPack("club");
+  const system = buildSystemPrompt(extractionPack(pack));
+  const demo = loadDemoSources(pack.demo!.dataDir);
   const out = ingestAll(
     demo.map((d) => ({ kind: d.kind, name: d.name, roleSet: d.roleSet, files: d.files, sourceId: sourceIdFor(d.kind, d.name) })),
     { identityKey: "test-identity-key", contactsKey: "test-contacts-key" },
@@ -45,7 +45,7 @@ function current() {
   const segments = out.sources.flatMap((s) =>
     s.result.segments.map((seg) => ({ ...seg, sourceId: s.sourceId, ts: new Date(seg.ts).toISOString() })),
   );
-  const batches = planBatches(segments, { maxChars: EXTRACT_MAX_CHARS });
+  const batches = planBatches(segments, { roleOrder: pack.roleOrder, maxChars: EXTRACT_MAX_CHARS });
   const users = batches.map((b) => buildUserPrompt(b, { authorLabel: (id) => (id ? (names[id] ?? id) : "unknown") }));
   const golden: Golden = {
     systemPromptSha256: sha(system),
@@ -74,7 +74,7 @@ describe("club demo golden hashes (model cache keys stay stable)", () => {
   });
 
   it("every extraction batch of the club demo has its answer in the committed model cache", () => {
-    const file = path.join(process.cwd(), "data", "demo", "model_cache.json");
+    const file = path.join(process.cwd(), getPack("club").demo!.dataDir, "model_cache.json");
     const rows = JSON.parse(fs.readFileSync(file, "utf8")) as { input_hash: string; model_tag: string }[];
     const tags = [...new Set(rows.map((r) => r.model_tag))];
     expect(tags.length).toBe(1);

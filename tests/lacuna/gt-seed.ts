@@ -48,7 +48,7 @@ function findSegment(segs: Segment[], c: GtClaim): Segment | null {
 /** Inserts the planted claims; returns how many were placed and which could not be matched to a segment. */
 export async function seedGroundTruthClaims(ws: string): Promise<{ seeded: number; unmatched: string[] }> {
   const sql = db();
-  const pack = getPack();
+  const pack = getPack("club");
   const gt = loadGroundTruth();
   const segs = await listSegments(ws);
   const unmatched: string[] = [];
@@ -66,7 +66,7 @@ export async function seedGroundTruthClaims(ws: string): Promise<{ seeded: numbe
     const id = `clm_gt_${sha256Hex(`${ws}|${c.id}`).slice(0, 12)}`;
     const roleSet = seg.roleSet;
     const importance = "normal";
-    const sensitive = !roleSet.includes("new_member");
+    const sensitive = pack.restrictedAudienceRoles.some((r) => !roleSet.includes(r));
     const tier = sensitive || c.state === "conflicting" ? "C" : "B";
     await sql`
       INSERT INTO claims (workspace_id, id, entity, entity_label, attribute, value, statement, citations, trust, state,

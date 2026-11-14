@@ -7,6 +7,7 @@ import { listClaims } from "@/lib/db/queries";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
 import { reconstruct, verify } from "@/lib/attest";
 import type { ModelCall } from "@/lib/attest/core/schema";
+import { CLUB_ID } from "../helpers/club";
 
 const sql = db();
 let ws = "";
@@ -50,7 +51,7 @@ const fakeSupport: ModelCall = async (opts) => {
 };
 
 beforeAll(async () => {
-  ws = (await createDemoWorkspace()).id;
+  ws = (await createDemoWorkspace(CLUB_ID)).id;
   const rows = await sql`
     SELECT s.id FROM segments s JOIN sources src ON src.workspace_id = s.workspace_id AND src.id = s.source_id
     WHERE s.workspace_id = ${ws} AND src.name ILIKE '%finance%'`;

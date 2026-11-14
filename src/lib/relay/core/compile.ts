@@ -5,7 +5,7 @@ import type {
   Attribute, Claim, PlanItem, ReadbackItem, Responsibility, RoleKey, Scores, Trust,
 } from "@/lib/types";
 import {
-  ATTRIBUTE_LABEL, DEFAULT_APPROVER_LABEL, OPEN_GAPS_NOTE, REVIEWER_EDITED_LABEL, TRUST_LABEL, weakestTrust,
+  ATTRIBUTE_LABEL, OPEN_GAPS_NOTE, REVIEWER_EDITED_LABEL, TRUST_LABEL, weakestTrust,
 } from "./labels";
 import { parseDate } from "./readback";
 import { isReviewerEdited } from "./review";
@@ -101,16 +101,16 @@ export interface CompileInput {
   readbackItems?: readonly ReadbackItem[];
   /** Check key -> label from the pack; falls back to the key in words. */
   checkLabels?: Readonly<Record<string, string>>;
-  /** The approver's label from the pack. Default "Club President". */
-  approverLabel?: string;
+  /** The approver's label from the pack (roleLabel(pack.approverRole, pack)). */
+  approverLabel: string;
 }
 
 // ---------------------------------------------------------------------------------------------
 // Fixed text
 // ---------------------------------------------------------------------------------------------
 
-/** Exact stub text: "N restricted items. Ask the approver (Club President)." Singular for 1; null for 0. */
-export function stubText(n: number, approverLabel: string = DEFAULT_APPROVER_LABEL): string | null {
+/** Exact stub text: "N restricted items. Ask the approver (<approver label>)." Singular for 1; null for 0. */
+export function stubText(n: number, approverLabel: string): string | null {
   const count = Number.isFinite(n) ? Math.floor(n) : 0;
   if (count <= 0) return null;
   const items = count === 1 ? "1 restricted item." : `${count} restricted items.`;
@@ -206,7 +206,7 @@ function pick(claims: readonly Claim[], attribute: Attribute): { value: string |
 
 export function compileHandover(input: CompileInput): HandoverDoc {
   const { role, snapshot, scores } = input;
-  const approver = input.approverLabel ?? DEFAULT_APPROVER_LABEL;
+  const approver = input.approverLabel;
   const askApprover = `Ask the approver (${approver}).`;
   const checkLabel = (key: string) => input.checkLabels?.[key] ?? humanise(key);
   const yearMatch = /^(\d{4})/.exec(snapshot.approvedAt ?? "");

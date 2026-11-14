@@ -6,14 +6,16 @@ import { PageHead, PageLoading } from "@/components/PageHead";
 import { Chip, StateChip, TierChip, TRUST_LABEL, TrustChip } from "@/components/chips";
 import { EmptyState, Notice } from "@/components/Notice";
 import type { Attribute, Claim, ClaimState, Importance, SourceKind, Trust } from "@/lib/types";
+import { TRUST_ORDER } from "@/lib/trust";
 import { extractionNote, listDropped, type DroppedItem } from "./data";
 
 const ATTRIBUTES: Attribute[] = ["owner", "status", "deadline", "location", "procedure", "access", "decision", "reason", "dependency", "contact", "risk"];
-const TRUSTS: Trust[] = ["from_record", "corroborated", "leaver_said", "second_hand", "inferred", "ranked_options"];
+const TRUSTS: readonly Trust[] = TRUST_ORDER;
 const STATES: ClaimState[] = ["active", "superseded", "conflicting", "dropped"];
-const KINDS: SourceKind[] = ["tasks_csv", "whatsapp", "slack", "github", "markdown", "ics", "interview"];
+const KINDS: SourceKind[] = ["tasks_csv", "whatsapp", "slack", "github", "markdown", "ics", "interview", "finding"];
 const IMPORTANCE: Importance[] = ["blocking", "important", "normal"];
-const COUNTED: Trust[] = ["from_record", "corroborated", "inferred", "leaver_said"];
+// Counters shown above the list. "Successor found" appears only once a finding exists (see below).
+const COUNTED: Trust[] = ["from_record", "corroborated", "inferred", "leaver_said", "successor_found"];
 
 export default function ClaimsPage({ params, searchParams }: { params: WsParams; searchParams: SearchParams }) {
   return (
@@ -104,7 +106,7 @@ async function Claims({ params, searchParams }: { params: WsParams; searchParams
       )}
 
       <section aria-label="Claims by trust" className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {COUNTED.map((t) => (
+        {COUNTED.filter((t) => t !== "successor_found" || trustCount(t) > 0).map((t) => (
           <div key={t} className="card p-4">
             <p className="eyebrow">{TRUST_LABEL[t]}</p>
             <p className="mt-1 flex items-baseline gap-2">

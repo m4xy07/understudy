@@ -21,6 +21,7 @@ const KIND_LABEL: Record<SourceKind, string> = {
   markdown: "Notes",
   ics: "Calendar",
   interview: "Leaver answers",
+  finding: "Successor findings",
 };
 
 const LEVEL_LINE: Record<string, string> = {
@@ -42,7 +43,8 @@ async function Connect({ params }: { params: WsParams }) {
   const { id, pack } = await loadWorkspace(params);
   const [sources, run, modelUp] = await Promise.all([listSources(id), getRunStatus(id), modelAvailable()]);
   const level = dataLevel(sources.map((s) => s.kind));
-  const imported = sources.filter((s) => s.kind !== "interview");
+  // Answers and findings are a person's words collected by Understudy, not connected sources.
+  const imported = sources.filter((s) => s.kind !== "interview" && s.kind !== "finding");
 
   return (
     <>
@@ -69,8 +71,8 @@ async function Connect({ params }: { params: WsParams }) {
             </div>
             {sources.length === 0 ? (
               <div className="mt-4">
-                <EmptyState title="No sources yet. Upload a file or open the demo.">
-                  Use the upload form on this page, or go back to the start page and open the robotics-club demo.
+                <EmptyState title="No sources yet. Upload a file or open a demo.">
+                  Use the upload form on this page, or go back to the start page and open a demo.
                 </EmptyState>
               </div>
             ) : (

@@ -13,10 +13,10 @@ export const DATA_LEVEL_LABEL: Record<DataLevel, string> = {
  * Data level shown on Connect: L0 none, L1 task board, L2 + chat or notes, L3 + github.
  * Counted as layers present: structured board (tasks_csv or ics), talk (whatsapp, slack,
  * markdown), code/config (github). The full ladder gives the documented meaning; a partial mix
- * (e.g. chat + github, no board) still gets credit per layer. Interview answers do not count.
+ * (e.g. chat + github, no board) still gets credit per layer. Answers and findings do not count.
  */
 export function dataLevel(kinds: SourceKind[]): DataLevel {
-  const k = new Set(kinds.filter((x) => x !== "interview"));
+  const k = new Set(kinds.filter((x) => x !== "interview" && x !== "finding"));
   const board = k.has("tasks_csv") || k.has("ics");
   const talk = k.has("whatsapp") || k.has("slack") || k.has("markdown");
   const code = k.has("github");

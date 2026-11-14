@@ -1,4 +1,4 @@
-// Attest evaluation harness: scores claims against data/demo/ground_truth.json. Pure function.
+// Attest evaluation harness: scores claims against a demo answer key (ground_truth.json). Pure function.
 //
 // Matching: a ground-truth claim is matched by a claim with the same entity and attribute whose
 // norm(value + " " + statement) contains every norm(keyword). Eligible states: active and

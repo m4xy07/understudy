@@ -2,17 +2,18 @@ import { describe, expect, it } from "vitest";
 import { compileHandover, formatScores, renderMarkdown, stubText } from "@/lib/relay/core/compile";
 import { OPEN_GAPS_NOTE } from "@/lib/relay/core/labels";
 import { SECRET_TOKEN, scenarioClaims, scenarioDoc, scenarioInput } from "./scenario";
+import { CLUB_APPROVER_LABEL } from "../helpers/club";
 
 const section = (doc: ReturnType<typeof scenarioDoc>, key: string) => doc.sections.find((s) => s.key === key)!;
 const texts = (doc: ReturnType<typeof scenarioDoc>) => doc.sections.flatMap((s) => s.lines.map((l) => l.text));
 
 describe("stubText", () => {
   it("has the exact wording, singular and plural", () => {
-    expect(stubText(1)).toBe("1 restricted item. Ask the approver (Club President).");
-    expect(stubText(2)).toBe("2 restricted items. Ask the approver (Club President).");
-    expect(stubText(12)).toBe("12 restricted items. Ask the approver (Club President).");
-    expect(stubText(0)).toBeNull();
-    expect(stubText(-3)).toBeNull();
+    expect(stubText(1, CLUB_APPROVER_LABEL)).toBe("1 restricted item. Ask the approver (Club President).");
+    expect(stubText(2, CLUB_APPROVER_LABEL)).toBe("2 restricted items. Ask the approver (Club President).");
+    expect(stubText(12, CLUB_APPROVER_LABEL)).toBe("12 restricted items. Ask the approver (Club President).");
+    expect(stubText(0, CLUB_APPROVER_LABEL)).toBeNull();
+    expect(stubText(-3, CLUB_APPROVER_LABEL)).toBeNull();
   });
 });
 

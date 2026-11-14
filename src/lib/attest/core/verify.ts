@@ -28,8 +28,6 @@ export const ATTRIBUTES: readonly Attribute[] = [
   "decision", "reason", "dependency", "contact", "risk",
 ];
 
-export const ROLE_ORDER: readonly RoleKey[] = ["president", "tech_lead", "new_member", "treasurer", "leaver"];
-
 /** Draft claim as produced by the extraction step (model or structured rows). */
 export interface DraftClaim {
   entity: string;
@@ -51,6 +49,10 @@ export interface AttestPack {
   sourceAuthority: Partial<Record<Attribute, Partial<Record<SourceKind, number>>>>;
   checklists?: Partial<Record<ResponsibilityKind, { key: string; weight: number; attributes: Attribute[] }[]>>;
   roleTemplates?: Partial<Record<string, { key: string; kind: ResponsibilityKind; entities: string[] }[]>>;
+  /** Canonical order of a role set: the order of the pack's roles. */
+  roleOrder: readonly RoleKey[];
+  /** Roles the pack flags "sees least": a claim hidden from any of them is sensitive (tier C). */
+  restrictedAudience: readonly RoleKey[];
 }
 
 export interface DroppedDraft {
@@ -91,10 +93,10 @@ export function resolveEntity(raw: string, pack: Pick<AttestPack, "entities">): 
   return { key: slug || "other", label: raw.trim() || "Other" };
 }
 
-/** Intersection of role sets, in canonical role order. */
-export function intersectRoleSets(sets: RoleKey[][]): RoleKey[] {
+/** Intersection of role sets, in the pack's role order (`order` = pack.roleOrder). */
+export function intersectRoleSets(sets: RoleKey[][], order: readonly RoleKey[]): RoleKey[] {
   if (sets.length === 0) return [];
-  return ROLE_ORDER.filter((r) => sets.every((s) => s.includes(r)));
+  return order.filter((r) => sets.every((s) => s.includes(r)));
 }
 
 function timeOf(ts: string): number {
@@ -147,7 +149,7 @@ function mergeCitations(a: Citation[], b: Citation[]): Citation[] {
 export function verifyDrafts(
   drafts: DraftClaim[],
   segmentsById: Map<string, Segment>,
-  pack: Pick<AttestPack, "entities">,
+  pack: Pick<AttestPack, "entities" | "roleOrder">,
   workspaceId: string,
 ): VerifyResult {
   const claims = new Map<string, Claim>();
@@ -238,7 +240,7 @@ export function verifyDrafts(
       state: "active",
       stateNote: null,
       supersededBy: null,
-      roleSet: intersectRoleSets(segs.map((s) => s.roleSet)),
+      roleSet: intersectRoleSets(segs.map((s) => s.roleSet), pack.roleOrder),
       validFrom: newest.ts,
       authorId: newest.authorId,
       sourceKinds: [...new Set(segs.map((s) => s.sourceKind))].sort(),

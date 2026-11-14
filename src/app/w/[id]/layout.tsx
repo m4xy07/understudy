@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getRunStatus, getWorkspace } from "@/lib/db/queries";
 import { getProgress } from "@/lib/progress";
 import { getRole } from "@/lib/session";
-import { getPack } from "@/lib/pack";
+import { getWorkspacePack } from "@/lib/pack";
 import { roleOptions, type WsParams } from "@/lib/page";
 import { Stepper } from "@/components/Stepper";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
@@ -41,8 +41,8 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
   const { id } = await params;
   const workspace = await getWorkspace(id);
   if (!workspace) notFound();
-  const [role, progress, run] = await Promise.all([getRole(id), getProgress(id), getRunStatus(id)]);
-  const pack = getPack();
+  const pack = await getWorkspacePack(id);
+  const [role, progress, run] = await Promise.all([getRole(id, pack), getProgress(id, pack), getRunStatus(id)]);
   return (
     <header className="border-b border-rule bg-paper">
       <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-3 sm:px-8">
@@ -63,8 +63,8 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
             ws={id}
             steps={progress.steps}
             next={
-              // Already viewing as the leaver: drop the "Switch to Priya" part of the hint.
-              progress.next?.key === "ask" && role === "leaver"
+              // Already viewing as the leaver: drop the "Switch to ..." part of the hint.
+              progress.next?.key === "ask" && role === pack.leaverRole
                 ? { ...progress.next, hint: "Answer a gap question." }
                 : progress.next
             }

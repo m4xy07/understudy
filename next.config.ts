@@ -3,9 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
-  // The setting pack and the demo exports are read with fs at runtime: ship them with every function.
+  // Setting packs and every pack's demo data are read with fs at runtime: ship them with every
+  // function. All of data/ is included, so a new pack's demo folder needs no change here.
   outputFileTracingIncludes: {
-    "/*": ["./packs/**/*", "./data/demo/**/*"],
+    "/*": ["./packs/**/*", "./data/**/*"],
   },
   turbopack: {
     rules: {

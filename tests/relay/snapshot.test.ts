@@ -5,6 +5,7 @@ import {
 } from "@/lib/relay/core/snapshot";
 import type { Scores } from "@/lib/types";
 import { AT, makeClaim, makePlan } from "./fixtures";
+import { CLUB_ROLES } from "../helpers/club";
 
 const scores: Scores = { b: 1, c: 0.91, k: 0.5 };
 
@@ -89,7 +90,7 @@ describe("release rule and approval", () => {
     const rs = computeReleaseState({ scores, blockingGaps: gaps, plan: [makePlan()] });
     expect(rs.canApprove).toBe(true);
     expect(rs.openBlocking).toBe(1);
-    const r = approveSnapshot({ by: "president", releaseState: rs, payload: payloadOf(), at: AT });
+    const r = approveSnapshot({ by: "president", roles: CLUB_ROLES, releaseState: rs, payload: payloadOf(), at: AT });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.snapshot.approvedBy).toBe("president");
@@ -101,24 +102,24 @@ describe("release rule and approval", () => {
 
   it("the leaver can never approve, nor can any non-president role", () => {
     const rs = computeReleaseState({ scores, blockingGaps: gaps, plan: [makePlan()] });
-    const leaver = approveSnapshot({ by: "leaver", releaseState: rs, payload: payloadOf() });
+    const leaver = approveSnapshot({ by: "leaver", roles: CLUB_ROLES, releaseState: rs, payload: payloadOf() });
     expect(leaver.ok === false && leaver.code).toBe("leaver_cannot_approve");
     for (const by of ["tech_lead", "treasurer", "new_member"] as const) {
-      const r = approveSnapshot({ by, releaseState: rs, payload: payloadOf() });
+      const r = approveSnapshot({ by, roles: CLUB_ROLES, releaseState: rs, payload: payloadOf() });
       expect(r.ok === false && r.code).toBe("not_approver");
     }
   });
 
   it("the president cannot approve while the release rule is not met", () => {
     const rs = computeReleaseState({ scores, blockingGaps: gaps, plan: [] });
-    const r = approveSnapshot({ by: "president", releaseState: rs, payload: payloadOf() });
+    const r = approveSnapshot({ by: "president", roles: CLUB_ROLES, releaseState: rs, payload: payloadOf() });
     expect(r.ok === false && r.code).toBe("release_blocked");
   });
 
   it("B = 0 releases with no plan needed", () => {
     const rs = computeReleaseState({ scores: { b: 0, c: 1, k: 1 }, blockingGaps: [], plan: [] });
     expect(rs.canApprove).toBe(true);
-    const r = approveSnapshot({ by: "president", releaseState: rs, payload: payloadOf(undefined, 0, []) });
+    const r = approveSnapshot({ by: "president", roles: CLUB_ROLES, releaseState: rs, payload: payloadOf(undefined, 0, []) });
     expect(r.ok).toBe(true);
   });
 

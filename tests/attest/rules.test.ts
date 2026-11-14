@@ -8,6 +8,7 @@ import {
   tierOf,
 } from "@/lib/attest/core/rules";
 import { claim, pack, seg, segMap } from "./fixtures-verify/build";
+import { CLUB_RESTRICTED } from "../helpers/club";
 
 const byId = <T extends { id: string }>(xs: T[], id: string) => xs.find((x) => x.id === id)!;
 
@@ -173,13 +174,13 @@ describe("importance and tier", () => {
 
   it("tier C for sensitive, conflicting or blocking; A for corroborated normal unflagged; else B", () => {
     const base = { entity: "sponsor", attribute: "status" as const, value: "renewed", trust: "corroborated" as const };
-    expect(tierOf(claim({ ...base, roleSet: ["president", "treasurer"] }))).toBe("C");
-    expect(tierOf(claim({ ...base, state: "conflicting" }))).toBe("C");
-    expect(tierOf(claim({ ...base, importance: "blocking" }))).toBe("C");
-    expect(tierOf(claim({ ...base }))).toBe("A");
-    expect(tierOf(claim({ ...base, supportCheck: "partly" }))).toBe("B");
-    expect(tierOf(claim({ ...base, importance: "important" }))).toBe("B");
-    expect(tierOf(claim({ ...base, trust: "from_record" }))).toBe("B");
+    expect(tierOf(claim({ ...base, roleSet: ["president", "treasurer"] }), CLUB_RESTRICTED)).toBe("C");
+    expect(tierOf(claim({ ...base, state: "conflicting" }), CLUB_RESTRICTED)).toBe("C");
+    expect(tierOf(claim({ ...base, importance: "blocking" }), CLUB_RESTRICTED)).toBe("C");
+    expect(tierOf(claim({ ...base }), CLUB_RESTRICTED)).toBe("A");
+    expect(tierOf(claim({ ...base, supportCheck: "partly" }), CLUB_RESTRICTED)).toBe("B");
+    expect(tierOf(claim({ ...base, importance: "important" }), CLUB_RESTRICTED)).toBe("B");
+    expect(tierOf(claim({ ...base, trust: "from_record" }), CLUB_RESTRICTED)).toBe("B");
 
     const [c] = assignImportanceAndTier([claim({ entity: "firmware-deploy", attribute: "procedure", value: "x" })], pack);
     expect(c).toMatchObject({ importance: "blocking", tier: "C" });

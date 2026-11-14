@@ -1,4 +1,4 @@
-// Loads the demo pack sources listed in data/demo/sources.json (server-side only).
+// Loads the demo sources a pack lists in <pack.demo.dataDir>/sources.json (server-side only).
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import type { RoleKey, SourceKind } from "@/lib/types";
@@ -37,7 +37,8 @@ export function readSourceFiles(absPath: string): SourceFile[] {
   return [{ path: name, content: readFileSync(absPath, "utf8") }];
 }
 
-export function loadDemoSources(rootDir = "data/demo"): DemoSource[] {
+/** `rootDir` is the pack's demo.dataDir, relative to the project root. */
+export function loadDemoSources(rootDir: string): DemoSource[] {
   const root = resolve(process.cwd(), rootDir);
   const raw = JSON.parse(readFileSync(join(root, "sources.json"), "utf8")) as SourceEntry[] | { sources: SourceEntry[] };
   const entries = Array.isArray(raw) ? raw : raw.sources;

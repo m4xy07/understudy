@@ -7,7 +7,7 @@
 //   approveSnapshot(ws, actor)                        -> ActionResult & { snapshot? }  hash + release rule
 //   compileHandover(ws, role)                         -> Handover        per-role I-PASS doc read under RLS
 //   canonicalJson(value)                              -> string          stable key order (hash input)
-//   stubLine(n, pack?)                                -> string          the exact restricted-stub text
+//   stubLine(n, pack)                                 -> string          the exact restricted-stub text
 // Plus: getReleaseInfo, listReviewClaims, listSnapshotHistory, previewSnapshotPayload,
 // checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown, runLeakCheck.
 //
@@ -20,7 +20,7 @@ import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { toClaim, toSnapshot } from "@/lib/db/mappers";
 import { audit, getLatestTestRun, listClaims } from "@/lib/db/queries";
-import { getPack, roleLabel, type Pack } from "@/lib/pack";
+import { approvalRoles, getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
 import type { Claim, PlanItem, ReviewState, ReviewTier, RoleKey, Scores, Snapshot } from "@/lib/types";
 import { assignTier, applyReview, bulkApproveTierA, type ReviewAction } from "./core/review";
 import {
@@ -45,19 +45,20 @@ export function canonicalJson(value: unknown): string {
   return coreCanonicalJson(value);
 }
 
-/** Exactly "N restricted items. Ask the approver (Club President)." ("1 restricted item." for one). */
-export function stubLine(n: number, pack: Pack = getPack()): string {
-  const label = roleLabel(pack.approverRole as RoleKey, pack);
+/** Exactly "N restricted items. Ask the approver (<approver label>)." ("1 restricted item." for one). */
+export function stubLine(n: number, pack: Pick<ResolvedPack, "roles" | "approverRole">): string {
+  const label = roleLabel(pack.approverRole, pack);
   return stubText(n, label) ?? `0 restricted items. Ask the approver (${label}).`;
 }
 
-function gate(actor: RoleKey): ActionResult {
-  const err = checkApprover(actor);
+function gate(actor: RoleKey, pack: ResolvedPack): ActionResult {
+  const roles = approvalRoles(pack);
+  const err = checkApprover(actor, roles);
   if (!err) return { ok: true };
   if (err.code === "leaver_cannot_approve") {
-    return { ok: false, code: err.code, error: "The leaver can never review or approve the handover. Switch to the Club President." };
+    return { ok: false, code: err.code, error: `The leaver can never review or approve the handover. Switch to ${roles.approverLabel}.` };
   }
-  return { ok: false, code: err.code, error: `Only the approver (${roleLabel(getPack().approverRole as RoleKey)}) can do this.` };
+  return { ok: false, code: err.code, error: `Only the approver (${roles.approverLabel}) can do this.` };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -68,15 +69,16 @@ function gate(actor: RoleKey): ActionResult {
  * The tier used for review: the stored tier, raised to C whenever the contract rule says C
  * (sensitive, conflicting or blocking). A sensitive claim can never slip into bulk approval.
  */
-export function effectiveTier(c: Claim): ReviewTier {
-  if (c.tier === "C" || assignTier(c) === "C") return "C";
+export function effectiveTier(c: Claim, pack: Pick<ResolvedPack, "restrictedAudienceRoles">): ReviewTier {
+  if (c.tier === "C" || assignTier(c, pack.restrictedAudienceRoles) === "C") return "C";
   return c.tier;
 }
 
 /** Claims as review sees them (tier made effective). Pass `role` for a read under RLS. */
 export async function listReviewClaims(ws: string, role?: RoleKey): Promise<Claim[]> {
+  const pack = await getWorkspacePack(ws);
   const claims = await listClaims(ws, role ? { role } : {});
-  return claims.map((c) => ({ ...c, tier: effectiveTier(c) }));
+  return claims.map((c) => ({ ...c, tier: effectiveTier(c, pack) }));
 }
 
 export async function reviewClaim(
@@ -86,13 +88,14 @@ export async function reviewClaim(
   actor: RoleKey,
   opts: { note?: string; statement?: string; value?: string; evidenceOpened?: boolean } = {},
 ): Promise<ActionResult> {
-  const g = gate(actor);
+  const pack = await getWorkspacePack(ws);
+  const g = gate(actor, pack);
   if (!g.ok) return g;
   const sql = db();
   const [row] = await sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND id = ${claimId}`;
   if (!row) return { ok: false, error: "Claim not found." };
   const stored = toClaim(row);
-  const claim = { ...stored, tier: effectiveTier(stored) };
+  const claim = { ...stored, tier: effectiveTier(stored, pack) };
   const action: ReviewAction = {
     type: decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "edit",
     by: actor,
@@ -101,7 +104,7 @@ export async function reviewClaim(
     newValue: opts.value,
     evidenceOpened: opts.evidenceOpened === true,
   };
-  const res = applyReview(claim, action);
+  const res = applyReview(claim, action, approvalRoles(pack));
   if (!res.ok) return { ok: false, code: res.code, error: res.message };
   const next = res.claim;
   // Citations and trust are never touched by a review: an edit keeps them as they were.
@@ -122,12 +125,13 @@ export async function bulkApprove(
   ws: string, actor: RoleKey, _tiers?: ReviewTier[],
 ): Promise<ActionResult & { approved?: number }> {
   void _tiers; // kept for call-site compatibility; bulk approval is tier A only.
-  const g = gate(actor);
+  const pack = await getWorkspacePack(ws);
+  const g = gate(actor, pack);
   if (!g.ok) return g;
   const sql = db();
   const claims = (await sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND review = 'pending' ORDER BY id`)
-    .map(toClaim).map((c) => ({ ...c, tier: effectiveTier(c) }));
-  const res = bulkApproveTierA(claims, actor);
+    .map(toClaim).map((c) => ({ ...c, tier: effectiveTier(c, pack) }));
+  const res = bulkApproveTierA(claims, actor, approvalRoles(pack));
   if (!res.ok) return { ok: false, code: res.code, error: res.message };
   if (res.approvedIds.length) {
     await sql.begin(async (tx) => {
@@ -210,7 +214,7 @@ async function lacunaReleaseLine(ws: string): Promise<string | null> {
 
 /** The release state now: scores of the successor's latest test, open blocking gaps, their plan. */
 export async function getReleaseInfo(ws: string): Promise<ReleaseInfo> {
-  const pack = getPack();
+  const pack = await getWorkspacePack(ws);
   const [run, rawGaps, approvedRow, lacunaLine] = await Promise.all([
     getLatestTestRun(ws, pack.successorRole as RoleKey),
     listBlockingGaps(ws),
@@ -267,7 +271,8 @@ export async function previewSnapshotPayload(ws: string, version: number): Promi
 export async function approveSnapshot(
   ws: string, actor: RoleKey,
 ): Promise<ActionResult & { snapshot?: Snapshot; label?: string }> {
-  const g = gate(actor);
+  const pack = await getWorkspacePack(ws);
+  const g = gate(actor, pack);
   if (!g.ok) return g;
   const sql = db();
   const { claims, versions, release } = await snapshotInputs(ws);
@@ -277,7 +282,7 @@ export async function approveSnapshot(
     workspaceId: ws, version, claims, segmentVersions: versions,
     plan: release.plan, scores: release.scores, openBlocking: release.state.openBlocking,
   });
-  const res = coreApproveSnapshot({ by: actor, releaseState: release.state, payload });
+  const res = coreApproveSnapshot({ by: actor, roles: approvalRoles(pack), releaseState: release.state, payload });
   if (!res.ok) {
     const detail = res.code === "release_blocked" && release.blockers.length ? ` ${release.blockers.join(" ")}` : "";
     const lead = res.code === "release_blocked"

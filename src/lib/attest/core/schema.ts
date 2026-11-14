@@ -27,6 +27,12 @@ export interface PackEntity {
 }
 export interface ExtractionPack {
   entities: PackEntity[];
+  /** One example line per attribute for the prompt (pack.extraction.examples). */
+  examples?: Partial<Record<Attribute, string>>;
+  /** Hint printed in the "most specific entity" rule (pack.extraction.entityHint). */
+  entityHint?: string;
+  /** A person's name printed as the contact example (pack.extraction.contactExample). */
+  contactExample?: string;
 }
 
 /**
