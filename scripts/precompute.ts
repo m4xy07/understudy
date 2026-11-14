@@ -21,6 +21,16 @@
 // ingest are recorded too, and when the demo's answer key plants a deliberate false positive
 // (decoys with group "false_positive"), the approver widens it and the pipeline re-runs, so the
 // scripted widening of the walkthrough replays from the cache as well.
+// The judge's path after the sample leaver answer (the answer has a fixed time in a demo, so its
+// claim id and every later prompt repeat). Each chain below runs on its own fresh demo workspace,
+// twice, and the prompts both passes sent are exported, state by state:
+//  * answer, recovery: the sample leaver answer with its re-test and model re-check, then recovery
+//    switched on and the sample teammate answers;
+//  * widen, answer, recovery: the same after the scripted widening of the planted false positive;
+//  * judge path: the sample answer, tier A, every tier B group with its re-test, the plan and
+//    snapshot v1, the example finding and its approval, recovery, then the scripted widening.
+// A step a pack's demo does not have (no recovery samples, no planted false positive, no example
+// finding) is left out of the chain; a chain that then repeats an earlier one is skipped.
 // Usage: pnpm tsx scripts/precompute.ts [--pack <id>] [--keep]
 import "./load-env";
 import fs from "node:fs";
@@ -30,8 +40,8 @@ import { createDemoWorkspace } from "@/lib/pipeline/ingest";
 import { executeRun, runToEnd, SCRIPT_RUN } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
-import { answerQuestion, listBlockingGaps, precomputeRecovery, recoverySamples, savePlanItem } from "@/lib/lacuna";
-import { approveSnapshot, bulkApprove } from "@/lib/relay";
+import { answerQuestion, listBlockingGaps, precomputeRecovery, recoverySamples, runTest, savePlanItem } from "@/lib/lacuna";
+import { approveGroup, approveSnapshot, bulkApprove, listReviewGroups } from "@/lib/relay";
 import { decideFinding, exampleFinding, firstWeeks, recordFinding } from "@/lib/relay/living";
 import { getLatestTestRun, listGapQuestions } from "@/lib/db/queries";
 import { modelAvailable, modelTag, startRecording, stopRecording, type CallRecord } from "@/lib/model/client";
@@ -69,28 +79,28 @@ function plantedFalsePositive(): string | null {
   }
 }
 
-/** The approver widens the planted false positive and the pipeline re-runs. Returns the keys it used. */
-async function widenFalsePositive(label: string, ws: string): Promise<Set<string>> {
+/** The approver widens the planted false positive and the pipeline re-runs. Returns the calls it made. */
+async function widenFalsePositive(label: string, ws: string): Promise<CallRecord | null> {
   const text = plantedFalsePositive();
-  if (!text) return new Set();
+  if (!text) return null;
   const [seg] = await db()`
     SELECT id FROM segments WHERE workspace_id = ${ws} AND position(${text} in text) > 0 AND role_set_original IS NOT NULL
     ORDER BY version DESC LIMIT 1`;
   if (!seg) {
     console.log(`[${label}]   widening: the planted false positive is not limited in this run; skipped`);
-    return new Set();
+    return null;
   }
   const res = await setSegmentVisibility(ws, String(seg.id), { action: "widen", roles: "source", reason: "Routine and useful: it backs a procedure everyone needs." }, pack.approverRole);
   if (!res.ok || !res.runId) {
     console.log(`[${label}]   widening failed: ${res.ok ? "no run started" : res.error}`);
-    return new Set();
+    return null;
   }
   const rec = startRecording();
   const t0 = Date.now();
   const run = await executeRun(ws, res.runId, SCRIPT_RUN);
   stopRecording();
   console.log(`[${label}]   widening + re-run ${s(Date.now() - t0)}: run ${run?.status}; ${calls(rec)}`);
-  return rec.keys;
+  return rec;
 }
 
 async function runOnce(label: string, allKeys: Set<string>) {
@@ -159,7 +169,7 @@ async function runOnce(label: string, allKeys: Set<string>) {
   for (const k of pipeRec.keys) allKeys.add(k);
   const reused = [...answerRec.keys].filter((k) => pipeRec.keys.has(k)).length;
   console.log(`[${label}]   re-test prompts identical to the pipeline's: ${reused} of ${answerRec.keys.size}`);
-  const widenKeys = await widenFalsePositive(label, ws);
+  const widenKeys = (await widenFalsePositive(label, ws))?.keys ?? new Set<string>();
   return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation, widenKeys };
 }
 
@@ -235,6 +245,150 @@ async function findingOnce(label: string): Promise<{ ws: string; rec: CallRecord
   return { ws, rec };
 }
 
+// ---------------------------------------------------------------------------------------------
+// Chains: the judge's path after the sample leaver answer, state by state
+// ---------------------------------------------------------------------------------------------
+
+type StepName = "widen" | "answer" | "review" | "release" | "finding" | "recovery";
+interface StateRec { state: string; rec: CallRecord }
+interface Chain { name: string; steps: StepName[] }
+
+const must = <T extends { ok: boolean }>(what: string, r: T): Extract<T, { ok: true }> => {
+  if (!r.ok) throw new Error(`${what}: ${(r as { error?: string }).error ?? "refused"}`);
+  return r as Extract<T, { ok: true }>;
+};
+
+/** Run one state under its own recording. A state that throws is logged and keeps what it recorded. */
+async function recordState(label: string, state: string, out: StateRec[], fn: () => Promise<string>): Promise<void> {
+  const rec = startRecording();
+  const t0 = Date.now();
+  let note = "";
+  try {
+    note = await fn();
+  } catch (err) {
+    note = `FAILED: ${err instanceof Error ? err.message : String(err)}`;
+  } finally {
+    stopRecording();
+  }
+  out.push({ state, rec });
+  console.log(`[${label}]   ${state} ${s(Date.now() - t0)}: ${calls(rec)}${note ? `; ${note}` : ""}`);
+  if (rec.errors.length) console.log(`[${label}]   model errors: ${rec.errors.join(" | ").slice(0, 400)}`);
+}
+
+/**
+ * The sample leaver answer on the top open question (what "Use a sample answer" then "Save answer"
+ * stores: answerQuestion with the pack's sample text), then the background model re-check of the
+ * answered responsibility (pipeline/rejudge.ts).
+ */
+async function stepAnswer(ws: string): Promise<string> {
+  const [q] = (await listGapQuestions(ws)).filter((x) => !x.answeredClaimId);
+  if (!q) return "no open question";
+  const ans = must("sample answer", await answerQuestion(ws, q.id, ANSWER, pack.leaverRole));
+  await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger: "model re-check", only: [ans.responsibilityId], rejudge: true })));
+  return `claim ${ans.claimId}; ${JSON.stringify(ans.before)} -> ${JSON.stringify(ans.after)}`;
+}
+
+/** Tier A in bulk, then every tier B group with the one re-test its approval runs (review/actions.ts). */
+async function stepReview(ws: string): Promise<string> {
+  const a = must("approve tier A", await bulkApprove(ws, pack.approverRole));
+  let groups = 0;
+  let claims = 0;
+  for (const g of await listReviewGroups(ws)) {
+    const res = must(`approve group ${g.key}`, await approveGroup(ws, pack.approverRole, g.key, { expanded: true, claimIds: g.claims.map((c) => c.id) }));
+    if (!res.approved) continue;
+    groups++;
+    claims += res.approved;
+    if (res.responsibilityId) {
+      const only = [res.responsibilityId];
+      await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger: "review group approved", only })));
+    }
+  }
+  return `${a.approved ?? 0} tier A; ${claims} tier B in ${groups} groups`;
+}
+
+/** Every blocking gap planned, then snapshot v1. */
+async function stepRelease(ws: string): Promise<string> {
+  const due = new Date(Date.parse(pack.demo!.today) + 14 * 86_400_000).toISOString().slice(0, 10);
+  for (const g of await listBlockingGaps(ws)) {
+    must("plan", await savePlanItem(ws, {
+      responsibilityId: g.responsibilityId, checkKey: g.checkKey,
+      owner: "The successor", dueDate: due, riskNote: "Known gap; checked weekly.",
+    }, pack.approverRole));
+  }
+  must("snapshot v1", await approveSnapshot(ws, pack.approverRole));
+  return "snapshot v1";
+}
+
+/** The successor records the example finding and the approver approves it. */
+async function stepFinding(ws: string): Promise<string> {
+  const fw = await firstWeeks(ws, pack.successorRole);
+  const row = [...fw.blocking, ...fw.other].find((g) => g.example && g.canRecord);
+  if (!row?.example) return "the example finding's gap is not open; nothing recorded";
+  const recorded = must("record finding", await recordFinding(ws, pack.successorRole, {
+    responsibilityId: row.responsibilityId, checkKey: row.checkKey,
+    answer: row.example.answer, note: row.example.note, link: "", attachment: null, narrowRoles: null, example: true,
+  }));
+  const decided = must("approve finding", await decideFinding(ws, pack.approverRole, recorded.findingId, "approved", {
+    evidenceOpened: true, note: "Checked against the evidence.",
+  }));
+  return `${row.responsibilityKey}.${row.checkKey} approved; ` +
+    (decided.snapshot ? `snapshot v${decided.snapshot.version} ${decided.delta ?? ""}` : `not released: ${decided.blocked ?? "no snapshot"}`);
+}
+
+/** Recovery switched on (the ladder and its traces), then the sample teammate answers. */
+async function stepRecovery(ws: string): Promise<string> {
+  const r = await precomputeRecovery(ws);
+  return `${r.gaps} gaps on the ladder, ${r.answered} sample answers, ${r.declined} declined`;
+}
+
+const STEPS: Record<Exclude<StepName, "widen">, (ws: string) => Promise<string>> = {
+  answer: stepAnswer, review: stepReview, release: stepRelease, finding: stepFinding, recovery: stepRecovery,
+};
+
+/** One chain on a fresh demo workspace: the calls of each state, in order. */
+async function chainOnce(label: string, chain: Chain): Promise<{ ws: string; states: StateRec[] }> {
+  const ws = await freshDemo();
+  console.log(`[${label}] chain "${chain.name}" ${ws}`);
+  const states: StateRec[] = [];
+  for (const step of chain.steps) {
+    if (step === "widen") {
+      const rec = await widenFalsePositive(label, ws);
+      states.push({ state: "widen", rec: rec ?? { keys: new Set(), calls: 0, cached: 0, live: 0, failed: 0, errors: [] } });
+    } else {
+      await recordState(label, step, states, () => STEPS[step](ws));
+    }
+  }
+  return { ws, states };
+}
+
+/** The chains this pack's demo has: steps it lacks are dropped, a chain equal to an earlier one is skipped. */
+async function chainsFor(probeWs: string): Promise<Chain[]> {
+  const samples = await recoverySamples(probeWs);
+  const has: Record<StepName, boolean> = {
+    widen: plantedFalsePositive() !== null,
+    answer: true,
+    review: true,
+    release: true,
+    finding: Boolean(exampleFinding(pack)),
+    recovery: samples.answers.length > 0 || samples.decline !== null,
+  };
+  const wanted: StepName[][] = [
+    ["answer", "recovery"],
+    ["widen", "answer", "recovery"],
+    ["answer", "review", "release", "finding", "recovery", "widen"],
+  ];
+  const seen = new Set<string>();
+  const out: Chain[] = [];
+  for (const w of wanted) {
+    const steps = w.filter((x) => has[x]);
+    const name = steps.join(", ");
+    if (seen.has(name)) continue;
+    seen.add(name);
+    out.push({ name, steps });
+  }
+  return out;
+}
+
 function fingerprint(rows: Record<string, unknown>[]): string {
   return JSON.stringify(rows.map((r) => [r.id, r.value, r.state, r.trust, r.superseded_by, r.support_check, r.tier]));
 }
@@ -273,6 +427,29 @@ async function main() {
     const unstable = [...second.rec.keys].filter((k) => !first.rec.keys.has(k)).length;
     console.log(`${name}: prompts sent by both passes (exported too): ${stable.length} beyond the earlier ones; ${unstable} of the second pass did not repeat; second pass ${calls(second.rec)}`);
   }
+
+  // The judge's path after the sample answer: each chain twice on fresh workspaces, state by state.
+  const coverage: string[] = [];
+  let chainsCached = true;
+  for (const chain of await chainsFor(cold.ws)) {
+    const first = await chainOnce("run 1", chain);
+    const second = await chainOnce("run 2", chain);
+    extraWs.push(first.ws, second.ws);
+    for (let i = 0; i < second.states.length; i++) {
+      const a = first.states[i]?.rec;
+      const b = second.states[i].rec;
+      const added = [...(a?.keys ?? [])].filter((k) => b.keys.has(k) && !keys.has(k));
+      for (const k of added) keys.add(k);
+      const repeated = [...b.keys].filter((k) => a?.keys.has(k)).length;
+      if (b.cached !== b.calls) chainsCached = false;
+      coverage.push(
+        `coverage [${chain.name}] ${second.states[i].state}: second pass ${b.cached}/${b.calls} cached (${b.live} live, ${b.failed} failed); ` +
+          `${repeated}/${b.keys.size} prompts repeat; ${added.length} new keys exported`,
+      );
+    }
+  }
+  for (const line of coverage) console.log(line);
+  console.log(`chains after the sample answer fully cached on the second pass: ${chainsCached}`);
 
   const sameClaims = fingerprint(cold.claims) === fingerprint(warm.claims);
   const sameScores = JSON.stringify(cold.scores) === JSON.stringify(warm.scores);

@@ -654,6 +654,12 @@
   "created_at": "2026-11-14T07:13:53.773Z"
  },
  {
+  "input_hash": "c863f06b2dcff1a3868012eadcd1943ae3294ba2637db738ef21811df9948447",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b9521e04b2b32d4\"],\"blocker\":\"\"},{\"check_key\":\"data_provenance\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c3b840f15f766ff9\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1f24982d4f129a57\",\"clm_0f5fbfcdc9ac9670\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1099efd5dd519761\",\"clm_907c710a50ecfea4\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4a3ee2c84458478\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:52:28.745Z"
+ },
+ {
   "input_hash": "c99d6e6a28f36463211a3c0124768036ce43f3f6f99265c1bb0cefaed815255e",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6a23a613ad44d923\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c914c9cadca9b752\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c5c336755ae67970\"],\"blocker\":\"\"},{\"check_key\":\"protocol_location\",\"status\":\"partial\",\"claim_ids\":[\"clm_83d3e1657f30a3ac\",\"clm_e7454d03ad5e8f70\"],\"blocker\":\"Conflicting locations provided for the renewal form and usage report.\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_af830dbe9d6d1a6b\"],\"blocker\":\"\"}]}",
@@ -736,6 +742,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[]}",
   "created_at": "2026-11-14T07:17:17.826Z"
+ },
+ {
+  "input_hash": "db95c7c903e1a87dad42d934b085e911def81d8961d5238110ca658348b662a1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b9521e04b2b32d4\"],\"blocker\":\"\"},{\"check_key\":\"data_provenance\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c3b840f15f766ff9\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1f24982d4f129a57\",\"clm_0f5fbfcdc9ac9670\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1099efd5dd519761\",\"clm_907c710a50ecfea4\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4a3ee2c84458478\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:52:26.403Z"
  },
  {
   "input_hash": "ded2015ca363ab8c05662f76eabc2aefdefc9dfb0114aa44e3b8e0b71ff24d11",

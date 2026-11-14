@@ -642,6 +642,12 @@
   "created_at": "2026-11-14T06:08:12.236Z"
  },
  {
+  "input_hash": "253ba8cc748b0d2cc4daaa0350068a1f645c24775c3cdad8187f50e03ba1edf8",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_7e189d86ab0b65ae\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_7e189d86ab0b65ae\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_3647f6613f00eba5\",\"clm_87274741f15d5546\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_faceb6c1d82201e3\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:52:52.373Z"
+ },
+ {
   "input_hash": "25a0c686f6a8dc1a7f70750d5a111da463306b6ae6ec8948f61edd99af0239db",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
@@ -832,6 +838,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
   "created_at": "2026-11-14T06:26:09.063Z"
+ },
+ {
+  "input_hash": "2fc8a5f7bf4232677b657525fe561802b221f1272f4e3deefd18ca1a8b31b28a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_47fdfc1628e22915\",\"clm_6a2d4a9cbdf1c905\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4daaf4b72ef4d2b\",\"clm_890cd268553d3b5e\",\"clm_2a2e0778a1916e38\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2f111a21a7d4517a\",\"clm_4ef086e69afd4cfb\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ff97680d2e4404f0\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"partial\",\"claim_ids\":[\"clm_41ea2917d4cd0fd0\"],\"blocker\":\"Priya said: Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat.\"}]}",
+  "created_at": "2026-11-14T09:52:26.712Z"
  },
  {
   "input_hash": "307ecf2da4b6dfa75bcf6bca06d0e7785d35fbb7ba206c39a272aa7002d035fa",
@@ -1096,6 +1108,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"options\":[]}",
   "created_at": "2026-11-14T07:34:32.179Z"
+ },
+ {
+  "input_hash": "3cb06e96d200ade0ebee13973470f0e5ec526042e8ce00fa7a045e2693c4cfd1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"options\":[{\"answer\":\"Weekly\",\"claim_ids\":[\"clm_7e189d86ab0b65ae\"],\"why\":\"The claim states that late lab access is requested almost every week in build season.\"}]}",
+  "created_at": "2026-11-14T09:03:34.335Z"
  },
  {
   "input_hash": "3ce9d6356891840b9ea0c6888a0c7cd71687010f51eb197f66774202ccf68a89",
@@ -1744,6 +1762,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_918a941214fd27e5\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_202248ab7b03d879\",\"clm_be93ec0d7ce7d193\",\"clm_151b9e122337daa4\",\"clm_35b1541284429fb4\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0fee822550c6b8c8\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_6d5f1897610d86fb\",\"clm_7f2f42128984c94a\"],\"blocker\":\"Unclear specific consequences beyond needing to contact Mr. Pawar for booking.\"}]}",
   "created_at": "2026-11-14T07:31:30.517Z"
+ },
+ {
+  "input_hash": "68f26fbd4736816a2f0357f8c6fcb865468141caeb2beb51bb0d99a628ef2eac",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_47fdfc1628e22915\",\"clm_6a2d4a9cbdf1c905\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_890cd268553d3b5e\",\"clm_2a2e0778a1916e38\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2f111a21a7d4517a\",\"clm_90cdf8c72036b6a6\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ff97680d2e4404f0\",\"clm_53d4df6e7a141b6a\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"partial\",\"claim_ids\":[\"clm_41ea2917d4cd0fd0\"],\"blocker\":\"Need to contact Arjun Rao directly for the OTA_PASSWORD as per Priya's instructions.\"}]}",
+  "created_at": "2026-11-14T09:52:43.750Z"
  },
  {
   "input_hash": "69bd7adaf9c989933dcba569158db4be3d9c573330bcf44c9056dcda71d41d71",
@@ -2400,6 +2424,12 @@
   "created_at": "2026-11-14T07:45:10.390Z"
  },
  {
+  "input_hash": "921de7c2c41f9b0922b9451807056edee1b776d9069223e6bd35efe30f85394c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6a2d4a9cbdf1c905\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4daaf4b72ef4d2b\",\"clm_890cd268553d3b5e\",\"clm_2a2e0778a1916e38\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2f111a21a7d4517a\",\"clm_4ba36606b3d3bdd1\",\"clm_7d3e2de25ac26444\",\"clm_585588444807c23c\",\"clm_5e38462fac5e1c10\",\"clm_90cdf8c72036b6a6\",\"clm_0239dd6c60e4d979\",\"clm_259441969f544452\",\"clm_6a506c726fde5991\",\"clm_ba786b4fdc10e235\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"partial\",\"claim_ids\":[\"clm_6a506c726fde5991\",\"clm_ba786b4fdc10e235\"],\"blocker\":\"No explicit rollback procedure provided, but a known-good build (v2.3.1) is referenced.\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_41ea2917d4cd0fd0\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:52:35.069Z"
+ },
+ {
   "input_hash": "9236f7f21d92336a7ae0bfb855765c426049843249411cbf14c3d598df63fb11",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"reveals\":false}",
@@ -2466,6 +2496,12 @@
   "created_at": "2026-11-14T06:58:08.437Z"
  },
  {
+  "input_hash": "94506ab79255d83546cf9c94d842c53310530c20c281823408eb5ca109587711",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_8b276997117c32fe\",\"clm_918a941214fd27e5\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_35b1541284429fb4\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0fee822550c6b8c8\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_c125984c235863a7\"],\"blocker\":\"No direct claim about the consequence of missing the booking for the current term.\"}]}",
+  "created_at": "2026-11-14T09:52:59.561Z"
+ },
+ {
   "input_hash": "9481ec9c8e73592699d6cba31dc1852a1a9d76beda423db163868de8b31e08a1",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
@@ -2520,6 +2556,12 @@
   "created_at": "2026-11-14T07:30:33.008Z"
  },
  {
+  "input_hash": "96e6e8c431a6d9075bc2569fb6285d4c242279026f1a19bff23b51298359e072",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"options\":[]}",
+  "created_at": "2026-11-14T09:03:34.980Z"
+ },
+ {
   "input_hash": "97d6fa1f5d4143e928b1f753b303eab8734c0420f722e084a7ac1b1bb35da640",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
@@ -2536,6 +2578,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
   "created_at": "2026-11-14T07:45:17.152Z"
+ },
+ {
+  "input_hash": "98a0b2d71bb457b3c9e5abd8bb28a9dbff6ac22b54cec0fbb96a4fff706d4552",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5b32d88fd011420a\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5b32d88fd011420a\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_3647f6613f00eba5\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_faceb6c1d82201e3\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:53:06.884Z"
  },
  {
   "input_hash": "992977db460b20dbb289cdb0f3a399825efbc2a46c86295f5436c598a60d7eaa",
@@ -2590,6 +2638,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"lab-slot\",\"attribute\":\"deadline\",\"value\":\"every Saturday\",\"statement\":\"The workshop lab slot is every Saturday.\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"The club's workshop lab slot is every Saturday, 10:00 to 17:00, in Workshop Lab 3.\"}]},{\"entity\":\"lab-slot\",\"attribute\":\"location\",\"value\":\"Workshop Lab 3\",\"statement\":\"The workshop lab slot is in Workshop Lab 3.\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"The club's workshop lab slot is every Saturday, 10:00 to 17:00, in Workshop Lab 3.\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"contact\",\"value\":\"[CONTACT:c-1]\",\"statement\":\"The lab booking contact is [CONTACT:c-1].\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"Workshop Lab 3 has to be booked once per term with Mr. Pawar, the lab in-charge ([CONTACT:c-1]).\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"deadline\",\"value\":\"once per term\",\"statement\":\"The lab booking is once per term.\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"Workshop Lab 3 has to be booked once per term with Mr. Pawar, the lab in-charge ([CONTACT:c-1]).\"}]},{\"entity\":\"club-budget\",\"attribute\":\"owner\",\"value\":\"Ananya Iyer\",\"statement\":\"Ananya Iyer owns the club budget.\",\"citations\":[{\"segment_id\":\"seg_fbf5bec2403f28d1\",\"quote\":\"Ananya Iyer: Treasurer. Handles all payments and reimbursements.\"}]},{\"entity\":\"faculty-approval\",\"attribute\":\"owner\",\"value\":\"Dr. S. Kulkarni\",\"statement\":\"Dr. S. Kulkarni owns the faculty approval.\",\"citations\":[{\"segment_id\":\"seg_42ae75f020303d89\",\"quote\":\"Dr. Kulkarni approves every purchase above ₹5,000 before the Treasurer pays.\"}]},{\"entity\":\"competition\",\"attribute\":\"status\",\"value\":\"blocked on date announcement\",\"statement\":\"The competition is blocked on date announcement.\",\"citations\":[{\"segment_id\":\"seg_bcb55f8c73e5f0b3\",\"quote\":\"We will enter Deccan RoboLeague 2026. The organisers have not announced the date yet.\"}]}]}",
   "created_at": "2026-11-10T19:51:39.300Z"
+ },
+ {
+  "input_hash": "9cd465921631f6fd7b206a686a13905b0c0c894d181aea3598f30b0ae505827c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"options\":[{\"answer\":\"Ask Pawar sir for late lab access, specifying the lab and time needed, as he has granted it before.\",\"claim_ids\":[\"clm_2963dde8012ae71c\",\"clm_7e189d86ab0b65ae\",\"clm_e37a880018daaf58\"],\"why\":\"Claims show Pawar sir grants late access to Lab 3 till 11 pm, and this is a recurring weekly request in build season.\"}]}",
+  "created_at": "2026-11-14T09:03:32.255Z"
  },
  {
   "input_hash": "9cfff71b8a356a5776bf488d545a0d6b69a433690e8c0a052ead6c63bbb824ea",
@@ -2686,6 +2740,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"options\":[]}",
   "created_at": "2026-11-14T07:34:17.385Z"
+ },
+ {
+  "input_hash": "a2778e4c56b31639a7590decdcce6197603feb908a2aee4b88dbb5ee3de4e8c4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_8b276997117c32fe\",\"clm_918a941214fd27e5\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_35b1541284429fb4\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0fee822550c6b8c8\",\"clm_7f2f42128984c94a\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_2821b009ad3d5ef0\",\"clm_484162a77724d618\"],\"blocker\":\"Uncertainty about consequences if booking is missed, as no direct claim specifies the risks or reasons for missing the booking.\"}]}",
+  "created_at": "2026-11-14T09:03:23.127Z"
  },
  {
   "input_hash": "a2ec8f818c7407d96e6c2a889334626e02cae8ef458bdb79cf7a1654a491b39f",
@@ -2992,6 +3052,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"\"},{\"check_key\":\"options_considered\",\"status\":\"partial\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"No claims explicitly list options considered for drive team selection.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_89a0f331d803668f\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"partial\",\"claim_ids\":[\"clm_426741ad87ef04ee\",\"clm_855b5826e6f1088f\"],\"blocker\":\"Conflicting deadlines for drive team trials (22 November 2026 vs. 29 November 2026).\"}]}",
   "created_at": "2026-11-14T06:17:42.660Z"
+ },
+ {
+  "input_hash": "b59288b93d711dda0dd140a1156da1652f7ae9df63cd0e422619916f52333a95",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"options\":[]}",
+  "created_at": "2026-11-14T09:03:33.233Z"
  },
  {
   "input_hash": "b5b4c1c9aaf105a7ee56883cc32f7b3572fc0257fe266bc78bbb4d91363fcbf4",
@@ -3582,6 +3648,12 @@
   "created_at": "2026-11-14T07:44:11.959Z"
  },
  {
+  "input_hash": "d7a1b5b93df02692ef48276773764265bf4eb762eec77415f4350ab1b236aae0",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_8ea76a4dd7b6129e\",\"clm_099225a4471212e5\",\"clm_725d4e3f131429a5\"],\"blocker\":\"Conflicting status: 'In progress' vs 'Organisers moved the competition' vs 'Date on homepage'\"},{\"check_key\":\"options_considered\",\"status\":\"can_do\",\"claim_ids\":[\"clm_63858d48e8a178ab\",\"clm_f61426f222234cff\",\"clm_7130ae3507f674a0\"],\"blocker\":\"\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_904ca06fec8d6ccf\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c1fd40a0cad4b2bf\",\"clm_8afdc3aa2a1568ee\",\"clm_ebc8409b84264086\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:53:14.216Z"
+ },
+ {
   "input_hash": "d7cb848c481a5ad6308061beb5e3b2a4dff35d53220389e9bdb76a87aa27e305",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
@@ -4170,6 +4242,12 @@
   "created_at": "2026-11-14T07:45:41.830Z"
  },
  {
+  "input_hash": "f6d1eb9083c7206febd42078c5223f9789bd0f8e2ce59094102969d5afbe6fb4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5b32d88fd011420a\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5b32d88fd011420a\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_3647f6613f00eba5\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_faceb6c1d82201e3\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:53:11.100Z"
+ },
+ {
   "input_hash": "f765dff8ee9830eeb299edb90f1b79379a7a422f5110f825bf444dc39e0e889c",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
@@ -4312,6 +4390,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"revealed\":[]}",
   "created_at": "2026-11-14T06:27:51.072Z"
+ },
+ {
+  "input_hash": "fef2a6fa317b5426efa3723a7b99e0e6a2d0c0df9b03a03d88614d2c27da2e63",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6a2d4a9cbdf1c905\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4daaf4b72ef4d2b\",\"clm_890cd268553d3b5e\",\"clm_2a2e0778a1916e38\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"partial\",\"claim_ids\":[\"clm_2f111a21a7d4517a\",\"clm_4ba36606b3d3bdd1\",\"clm_7d3e2de25ac26444\",\"clm_585588444807c23c\",\"clm_5e38462fac5e1c10\",\"clm_90cdf8c72036b6a6\",\"clm_0239dd6c60e4d979\",\"clm_259441969f544452\",\"clm_6a506c726fde5991\",\"clm_ba786b4fdc10e235\"],\"blocker\":\"Recent deploy.yml runs have failed since 5 Nov 2026; last successful run was on 3 Nov 2026\"},{\"check_key\":\"rollback\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No rollback procedure is explicitly documented in the provided claims.\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_41ea2917d4cd0fd0\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T09:52:47.589Z"
  },
  {
   "input_hash": "fef944cd5e9f6d76119474b3fdfe063d1106e38ee7ba8c254af946d6fb4d0c18",
