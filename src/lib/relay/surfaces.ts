@@ -253,12 +253,22 @@ export interface CollectedSurface {
 export async function collectSurfaces(ws: string, role: RoleKey, handover: Handover): Promise<CollectedSurface[]> {
   const pack = await getWorkspacePack(ws);
   const ctx: SurfaceContext = { ws, role, pack, handover };
-  const out: CollectedSurface[] = [];
-  for (const p of SURFACE_PROVIDERS) {
-    const res = await p.collect(ctx);
-    out.push({ key: p.key, label: p.label, built: res !== "not_built", texts: res === "not_built" ? [] : res });
-  }
+  // Two providers at a time: each is a handful of role-scoped reads, and the pool has five
+  // connections for the whole instance. The result keeps the providers' order.
+  const out: CollectedSurface[] = new Array(SURFACE_PROVIDERS.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(COLLECT_CONCURRENCY, SURFACE_PROVIDERS.length) }, async () => {
+    while (next < SURFACE_PROVIDERS.length) {
+      const i = next++;
+      const p = SURFACE_PROVIDERS[i];
+      const res = await p.collect(ctx);
+      out[i] = { key: p.key, label: p.label, built: res !== "not_built", texts: res === "not_built" ? [] : res };
+    }
+  }));
   return out;
 }
+
+/** Surface providers collected at once per role (the connection pool holds five). */
+export const COLLECT_CONCURRENCY = 2;
 
 export { parseJson as parseStoredJson };

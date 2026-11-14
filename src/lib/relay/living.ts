@@ -1068,12 +1068,17 @@ export async function latestChange(ws: string, role: RoleKey): Promise<ChangeVie
 /** The panels of every version for a role, newest first. */
 export async function listChanges(ws: string, role: RoleKey): Promise<ChangeView[]> {
   const rows = await db()`SELECT id FROM snapshots WHERE workspace_id = ${ws} ORDER BY version DESC`;
-  const out: ChangeView[] = [];
-  for (const r of rows) {
-    const v = await whatChanged(ws, role, String(r.id));
-    if (v) out.push(v);
-  }
-  return out;
+  // Two versions at a time (not one after the other, and not all at once: the pool has five
+  // connections). The order stays newest first.
+  const views: (ChangeView | null)[] = new Array(rows.length).fill(null);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(2, rows.length) }, async () => {
+    while (next < rows.length) {
+      const i = next++;
+      views[i] = await whatChanged(ws, role, String(rows[i].id));
+    }
+  }));
+  return views.filter((v): v is ChangeView => v !== null);
 }
 
 /**

@@ -108,6 +108,15 @@ describe("S5: the lease fails closed and its key cannot carry a client string", 
   });
 });
 
+describe("finding (d): the leak check collects its surfaces a few at a time", () => {
+  it("more than one at once, and always fewer than the pool's five connections", async () => {
+    const { COLLECT_CONCURRENCY } = await import("@/lib/relay/surfaces");
+    expect(COLLECT_CONCURRENCY).toBeGreaterThan(1);
+    expect(COLLECT_CONCURRENCY).toBeLessThan(5);
+    expect(read("src/lib/db/client.ts")).toMatch(/max: 5,/);
+  });
+});
+
 describe("S7: the role cookie", () => {
   it("is Secure in production on the Ask page too", () => {
     expect(read("src/app/w/[id]/ask/actions.ts")).toMatch(/secure: process\.env\.NODE_ENV === "production"/);
