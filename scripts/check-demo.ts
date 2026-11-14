@@ -775,7 +775,7 @@ else {
     check(isObj(ref) && ref.file === rel(probesPath) && isStrArr(ref.facts) && sameSet(ref.facts, probeFacts.map((p) => p.id))
       && ref.evalSegments === evalCount && ref.evalPositives === evalPos && ref.evalNegatives === negatives.length
       && isStrArr(ref.liveRewordings) && ref.liveRewordings.every((id) => sensitiveIds.has(id)),
-    "gt: probes reference must match data/demo/probes.json (facts, counts, live rewordings)");
+    `gt: probes reference must match ${rel(probesPath)} (facts, counts, live rewordings)`);
   }
 }
 
