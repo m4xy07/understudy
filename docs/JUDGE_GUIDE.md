@@ -44,7 +44,7 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 - Press **New member** under "Testing as": more checks turn **Restricted**, which means evidence exists but this role may not see it.
 
 ### 5. Ask (switch to: Priya (outgoing tech lead))
-**Do:** set **Viewing as** to **Priya (outgoing tech lead)**, open **Ask**, type an answer to one or two questions and press **Save answer**. You can untick roles to narrow who sees the answer.
+**Do:** set **Viewing as** to **Priya (outgoing tech lead)**, open **Ask**. On the first question press **Use a sample answer** (or type your own), then **Save answer**. You can untick roles to narrow who sees the answer. Leave "When exactly is Late-night lab access next due?" open: step 8 uses it.
 **Look for:**
 - Up to ten questions, ranked, each saying why it was asked.
 - Saved answers are labelled **Leaver said**, never verified.
@@ -81,7 +81,7 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 Optional: **Download handover (Markdown)** exports the current role's view.
 
 ### 8. First weeks: the handover keeps improving (switch to: Incoming tech lead, then Club President)
-**Do:** as **Incoming tech lead**, open **First weeks** (right end of the step row, or the link under the release banner). On "Late-night lab access: Next due date" press **Record a finding**, then **Use the example finding**, then **Save finding**.
+**Do:** as **Incoming tech lead**, open **First weeks** (right end of the step row, or the link under the release banner). On "Late-night lab access: Next due date" press **Record a finding**, then **Use the example finding**, then **Save finding**. If that gap is gone because Priya answered it in step 5, press **Record a finding** on any other open gap and type an answer; the rest of the step works the same way.
 **Look for:** the row reads "Waiting for review". It is saved as evidence labelled "Successor found". The scores and the handover have not changed.
 
 **Do:** switch to **Club President**, open **Review**. Under **Successor findings (1)** read the evidence, tick "I opened the evidence", write a reason and press **Approve and release v2**.

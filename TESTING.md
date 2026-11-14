@@ -183,27 +183,56 @@ Before the final merge, the Round 3 branch went through a separate review pass f
 
 ## Manual end-to-end checks on the live link
 
-Run in a fresh private browser window on https://understudy-lyart.vercel.app, following [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md). The results below come from a fresh browser context (Playwright, Chromium) on 2026-11-11 at 1440×900; every page was also checked at 375 px wide (no horizontal scroll) and no console errors were logged.
+Run on https://understudy-lyart.vercel.app on 14 Nov 2026, after the last deployment of that day, as a first-time visitor: a fresh browser context each time (Playwright, Chromium, 1440×900, no stored cookies), following [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) and then going off script. Numbers are the ones on screen in that run; they can differ by a point or two in another run.
+
+### Robotics-club demo
 
 | Step | Expected | Result |
 |---|---|---|
-| Landing: press "Open the robotics-club demo" | A private workspace opens on Connect; the run starts by itself | Pass (2026-11-11). Workspace opened on Connect in about 3 s; the run started by itself. |
-| Connect | Eight sources with segment, masked-secret, masked-contact and rejected counts; data level shown; run panel reaches Done for every step | Pass (2026-11-11). Eight sources (139, 50, 50, 25, 77, 40, 22 and 9 segments), masked secrets and contacts, no rejected rows, L3 shown; every step reached Done. That run took about 4.5 min, because the model cache was not hit ("Read 23 batches (0 from the cache)"), so the B, C and K values in this table come from a live, uncached run. Fixed the same day (our seed script stored every cached answer double-encoded); a fresh demo now reads 23 of 23 batches from the cache and finishes in about 3 to 4 s. |
-| Claims: open a citation | Source segment opens with the exact quote highlighted; back link returns to the claim | Pass (2026-11-11). The source page opened in about 1 s with the exact quote highlighted; "Back to claims" link present. |
-| Claims: Superseded and Conflicting | Each shows the rule that fired; dropped-claim counter per source | Pass (2026-11-11). Superseded and Conflicting claims name the rule (for example "the task board owns deadlines"); dropped-per-source counter shown (0). |
-| Test as Incoming tech lead | B, then C, then K; grid of Covered, Partial, Missing, Restricted with evidence links | Pass (2026-11-11). B 7 · C 70% · K 94%; blocking-gap list and a Covered / Partial / Missing / Restricted grid with evidence links. |
-| Test as New member | More Restricted checks; no restricted values shown | Pass (2026-11-11). B 8 · C 66%; restricted checks say "Evidence exists for other roles" and show no values. |
-| Ask as Priya | Up to ten ranked questions with a reason each; an answer is labelled "Leaver said"; re-test line shows the B, C, K change | Pass (2026-11-11). Ten ranked questions, each with "Why asked"; two answers labelled Leaver said; B 7 · C 70% · K 94% became B 5 · C 79% · K 84%. Each save took 10 to 16 s (live re-test) while "Saving and re-testing…" showed. |
-| Ask as anyone else | Questions are read only; only Priya can answer | Pass (2026-11-11). As Incoming tech lead: "Only Priya (outgoing tech lead) answers these.", no answer boxes. |
-| Review as Priya | "The leaver can never approve."; no approve controls | Pass (2026-11-11). "The leaver can never approve." and no approve buttons. |
-| Review as Club President: approve without a plan | Approval blocked, with the list of missing owners, dates or risk notes | Pass (2026-11-11). "Approval is blocked:" lists every gap that needs an owner, a due date and a risk note. |
-| Review as Club President: plan every gap, approve | Snapshot v1 with a SHA-256 hash; "Released with N open blocking gaps" if B > 0 | Pass (2026-11-11). Bulk tier A, one tier B, one tier C (evidence opened, reason written), five plan items; snapshot v1, SHA-256 0fed7ece9236…, "Released with 5 open blocking gaps". |
-| Handover as Incoming tech lead | I-PASS sections, decision timeline, open items, stub "N restricted items. Ask the approver (Club President)." | Pass (2026-11-11). I-PASS sections with trust labels and [n] citations, decision timeline, open items, stub "3 restricted items. Ask the approver (Club President)." |
-| Read-back and acknowledge | Per-item verdicts; acknowledgement row with role, time and snapshot hash | Pass (2026-11-11). Sponsor contact, domain renewal date and lab day matched; competition date and rollback showed "Nothing to check" (their claims were not approved in this run); acknowledgement row with role, time, v1 and hash. |
-| Handover as New member | Fewer items, larger stub, no topic or value of restricted items | Pass (2026-11-11). No restricted values; stub "3 restricted items. Ask the approver (Club President)." Same items as the tech lead in this run, because every approved claim came from sources all roles see. |
-| Leak check grid | Every role and surface passes | Pass (2026-11-11). "All 30 checks pass" (5 roles × 6 surfaces). |
-| Download handover (Markdown) | File matches the role's view; no canary outside that role's visibility | Pass (2026-11-11). handover-tech_lead-v1.md (3 KB), no CANARY token. |
-| Start empty and upload a file | Upload accepted (4.5 MB max per upload) or rejected with a reason; run works on the upload | Pass (2026-11-11). A 3-row task CSV was accepted (3 segments, 0 rejected); the run finished in about 7 s with 9 claims. |
+| Landing | Two demo cards with their roles, "Start empty", and what is new in Round 3 | Pass. Loads in under 1 s. Both cards, the roles of each, and a "New in Round 3" strip that says where each improvement is. |
+| Open the demo | A private workspace opens on Connect and the run starts by itself | Pass. Connect opened in about 1 s; the run finished about 3.4 s after the click ("Read 31 batches (31 from the cache)"). |
+| Connect | Eight sources with segment, masked and rejected counts; data level | Pass. 8 sources, 466 segments (154, 51, 52, 25, 113, 40, 22, 9). Masked: 4 secrets and 8 contacts. No rejected rows. L3. |
+| Connect: Sensitive content | Limited messages with a category, a reason, who sees them now and before | Pass. "9 limited · 0 held · 0 widened": 4 money, 2 people matter, 3 health; 8 found by a rule, 1 by the model. Each card shows "Why", "Visible to" and "Before". |
+| Connect: widen the false positive | The approver widens the lab deposit message with a reason; the run repeats | Pass. An empty reason is refused. With a reason the card reads "Widened by Club President on 14 Nov 2026. Reason: ..." and the count becomes "8 limited · 1 widened by you". The run repeated and finished. |
+| Claims | Trust labels, Superseded and Conflicting with the rule, a citation with the quote highlighted | Pass. 396 claims: 368 From record, 20 Corroborated, 8 Inferred; 57 superseded (rule named), 4 conflicting. A citation opened the source in about 1 s with the quote highlighted; Back returned to the list. |
+| Test | B, then C, then K; blocking gaps; the grid | Pass. Incoming tech lead: B 4 · C 77% · K 100%. Four blocking gaps listed; 10 responsibilities with Covered, Missing and Restricted checks and their evidence. |
+| Ask as Priya | Ranked questions with a reason; an answer is labelled "Leaver said"; the scores move | Pass. 8 questions. "Use a sample answer" on the first one, then Save: B 4 → 3, C 77% → 82%, K 100% → 95%, in about 2 s. A typed answer to another question also worked (under 1 s). |
+| Improvement 1: "Priya can't be reached" | The ladder: three rungs per gap, a skipped role, rebuilt procedures, ranked options, a before and after panel | Pass. Switched on in 16 to 26 s. 7 gaps, each with "People who worked on this", "What the files and history show" and "Possible answers". One role "Skipped: no access", people without a role "Not asked", "Files and history cannot say who. Skipped.", Ranked options with quotes. Rebuilt procedures (5), one from the CI run history of deploy.yml. Panel: if Priya answered, up to 7 closed, B 1, C 100%, K 80%; without Priya so far, 0 closed, B 4, C 80%, K 97%. |
+| Improvement 1: a teammate answers | Switch to Arjun, use the sample, save: labelled Second-hand, B unchanged | Pass. "Saved as Second-hand. Re-test: B 4 (no change) · C 80% → 82% · K 97% → 95%". Panel: 1 partly answered, 6 still open, 3% of coverage rests on Second-hand. Switching recovery off restored the question list in about 1 s. |
+| Review | Tier A in bulk, tier B, tier C with evidence and a reason, the plan, the snapshot | Pass. "Approve 14 tier A claims" (a double click approved once). Tier C stays disabled until the evidence is opened and a reason is written. Approval is blocked until each gap has an owner, a date and a risk note. Snapshot v1, SHA-256 cc69f7733956, "Released with 4 open blocking gaps", hash verified. |
+| Review as Priya | "The leaver can never approve." | Pass. |
+| Handover per role | I-PASS sections, stub, read-back, acknowledge, export | Pass. Incoming tech lead and New member each get a handover with no restricted value; stub "1 restricted item. Ask the approver (Club President)." Read-back gives a verdict per item; items whose claim was not approved say so. Acknowledgement row with role, time, version and hash. Export handover-tech_lead-v1.md, 3 KB, no canary token. |
+| Improvement 3: First weeks | The successor records the example finding; nothing moves until review | Pass. "Use the example finding", Save: "Saved as Successor found", row "Waiting for review", "12 open gaps · 1 finding waiting for review · 0 closed since v1 · handover v1". A typed finding on another gap also worked. |
+| Improvement 3: review and v2 | The approver approves under "Successor findings"; snapshot v2; "What changed" | Pass. "Finding approved. Snapshot v2 released. B 3 → 2." in 8 to 12 s. Version history shows v1 and v2, both verified. "What changed in v2": 1 claim added, 2 gaps closed, B 3 → 2, C 82% → 89%, K 95% → 87%, each with one sentence. |
+| Improvement 2: leak check | Exact tokens and reworded facts, every role and output | Pass. "All 127 checks pass" with recovery on (95 with recovery off, when the four recovery outputs have nothing to check): 9 tokens and 9 reworded facts, 5 roles, 15 outputs. No canary token in any role's page that may not see it. |
+| Improvement 2: probe results | What each check caught and missed | Pass. Classifier on 40 labelled messages: precision 87%, recall 72%. 36 reworded leaks: key terms caught 27, the model judge 4 more, 5 got past both, and the page lists them under "Missed". |
+| Evaluation | Scores against the planted answer key | Pass. Strict precision 23.3%, recall 77.5%, citation pass rate 96.5%, secrets leaked 0, restricted-token violations 0. |
+
+### Research-group demo
+
+| Step | Expected | Result |
+|---|---|---|
+| Open the demo | Same steps, the lab's roles and sources | Pass. Finished about 3.5 s after the click. Roles: Principal investigator, Incoming postdoc, PhD student, Lab manager, Farhan (outgoing postdoc). "3 limited" under Sensitive content. |
+| Claims, Test | A citation with its quote; B, C, K | Pass. Quote highlighted. Incoming postdoc: B 6 · C 69% · K 100%. |
+| Ask as Farhan | An answer moves the scores | Pass. B 6 → 5, C 69% → 73%, K 100% → 95%. |
+| Recovery | Ladder, rebuilt procedures, the panel, a teammate answer | Pass. Switched on in about 30 s. 9 gaps, 11 ranked options, Rebuilt procedures (3). Panel: if Farhan answered, up to 9 closed, B 1, C 99%, K 78%; without Farhan, 0 closed, B 5, C 73%, K 95%. The Lab manager's typed answer was saved as Second-hand with B unchanged. |
+| Review | Approve as the PI | Pass. 7 tier A claims, 5 plan items, snapshot v1, "Released with 5 open blocking gaps". |
+| Handover for three roles | Stubs name the PI; no canary token | Pass. Incoming postdoc, PhD student and Lab manager: "3 restricted items. Ask the approver (Principal investigator)."; no canary token. Leak check: "All 53 checks pass" (6 tokens; this pack plants no reworded facts). |
+| First weeks to v2 | The example finding, review, v2 | Pass. Example on "Freezer check and alarm rota: Next due date". "Finding approved. Snapshot v2 released. B 4 → 3." What changed: C 73% → 77%, K 95% → 90%. |
+
+### Abuse
+
+| Check | Result |
+|---|---|
+| Unknown and malformed workspace addresses, an unknown page | Pass. "This workspace or page does not exist." with a "Start again" link. |
+| An empty workspace, every page, each of the five roles | Pass. Each page shows an empty state that names the next step. |
+| Uploads: an empty file, a PNG, a CSV with the wrong header, a bad and a missing GitHub address | Pass. Each refused in words; nothing stored ("0 connected"). |
+| A valid WhatsApp upload, Upload double clicked, Run double clicked, refresh mid-run | Pass. One source, 5 segments, 1 secret and 1 contact masked; the run finished in about 11 s with the live model ("Read 1 batches (0 from the cache)") and 3 claims. The planted password and phone number were not on the page. |
+| Double click on bulk approve, on Approve snapshot and on Save finding | Pass. One approval, one version, one finding. |
+| Two tabs with different roles; Back and Forward | Pass. The role is stored per workspace, so the other tab shows the new role after a reload. Back and Forward land on the right pages. |
+| 375 px wide, ten pages | Pass. No horizontal page scroll. Wide tables scroll inside their own box. |
+| Console errors and failed requests during the walks | None, apart from the expected 400 and 404 answers to the bad uploads and the unknown page. |
+| Opening a demo while other heavy actions run | One failure in 13 opens: the first research-group open was cancelled by the database after a long wait. The next 12 opens, 8 of them at once, took 1 to 2 s each. Opening a demo now retries once and, if it still fails, says "Press the button again". |
 
 ## Known imperfections
 
@@ -212,4 +241,6 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 - **The role switcher is not sign-in.** Row-level security enforces what the chosen role sees; it does not prove who the visitor is.
 - **CI covers tests, the build and the browser suite.** Lint, the type check and the evaluation are run by hand.
 - **The pooler regression against a real pooler is opt-in** (`POOLER_TEST_URL`). The default run checks the pool options and the concurrency behaviour on local Postgres.
+- **Scores can move by one after a widen.** In a demo where the approver first widens a sensitive message, later re-tests no longer match the replayed model answers and use the rule-based reader. Switching recovery on then showed B one higher for the same evidence (3 to 4) in one manual run.
+- **The leak grid is wider than the page.** Its 15 output columns scroll sideways inside the table; the "All N checks pass" line above it covers every column.
 - **Each browser run creates workspaces on its target.** The daily cleanup removes them.
