@@ -6,7 +6,10 @@
 //   3. the detector check: every rewording of every planted fact is fed straight into the
 //      key-term check and the model judge, to see what each one catches;
 //   4. the probes run over every role and every surface of the demo workspace, with the judge;
-//   5. docs/PROBE_RESULTS.md and <demo.dataDir>/probe_summary.json are written.
+//   5. <demo.dataDir>/probe_summary.json and the write-up are written. The default pack writes
+//      docs/PROBE_RESULTS.md; any other pack writes docs/PROBE_RESULTS.<pack>.md, and each
+//      write-up links the other settings with the numbers they last measured.
+// A pack whose demo ships no probes.json has nothing to measure here.
 // Hard rewordings and the evaluation set never enter the live demo sources.
 // Usage: pnpm tsx scripts/probe-eval.ts [--pack <id>] [--no-judge] [--keep]
 import "./load-env";
@@ -17,14 +20,14 @@ import { getExtraction } from "@/lib/attest";
 import { countWithheld, getLatestTestRun, listClaims } from "@/lib/db/queries";
 import { listBlockingGaps, savePlanItem } from "@/lib/lacuna";
 import { modelAvailable, modelTag, startRecording, stopRecording } from "@/lib/model/client";
-import { defaultPackId, getPack, roleLabel } from "@/lib/pack";
+import { defaultPackId, getPack, listDemoPacks, roleLabel } from "@/lib/pack";
 import { createDemoWorkspace, createEmptyWorkspace, ingestSources } from "@/lib/pipeline/ingest";
 import { executeRun, startRun } from "@/lib/pipeline/run";
 import { approveSnapshot, bulkApprove, reviewClaim, runProbes } from "@/lib/relay";
 import { textRevealsFact } from "@/lib/relay/core/probes";
 import { demoProbeFacts } from "@/lib/relay/handover";
 import { judgeText, modelJudgeCall } from "@/lib/relay/probes";
-import { pct, probeSummaryPath, type ClassifierCategoryRow, type ProbeSummary } from "@/lib/relay/probe-summary";
+import { loadProbeSummary, pct, probeSummaryPath, type ClassifierCategoryRow, type ProbeSummary } from "@/lib/relay/probe-summary";
 import { CATEGORIES, CLASSIFIER_VERSION } from "@/lib/tether/sensitivity";
 import type { RoleKey } from "@/lib/types";
 
@@ -34,6 +37,12 @@ const pack = getPack(packArg === -1 ? defaultPackId() : (process.argv[packArg + 
 if (!pack.demo) throw new Error(`Setting pack "${pack.id}" has no demo.`);
 const DATA = path.join(process.cwd(), pack.demo.dataDir);
 const roles = pack.roles.map((r) => r.key as RoleKey);
+/** The write-up of one setting: the default pack keeps the plain name, every other pack is suffixed. */
+const reportFile = (id: string) => (id === defaultPackId() ? "PROBE_RESULTS.md" : `PROBE_RESULTS.${id}.md`);
+const reportName = reportFile(pack.id);
+const packFlag = pack.id === defaultPackId() ? "" : ` --pack ${pack.id}`;
+/** Whether a model answered in this run. The write-up says so, because it changes every number. */
+let modelReachable = false;
 
 interface EvalSegment { id: string; author: string; text: string; thread?: string; expect: "sensitive" | "open"; category?: string; difficulty?: string }
 interface ProbeFile { evalSegments?: EvalSegment[] }
@@ -143,6 +152,7 @@ async function classifyEval(items: EvalSegment[], withModel: boolean) {
 
 async function main() {
   const up = await modelAvailable();
+  modelReachable = up;
   console.log(`model ${modelTag()}; reachable: ${up}; classifier version ${CLASSIFIER_VERSION}`);
   const facts = demoProbeFacts(pack);
   const probeFile = JSON.parse(fs.readFileSync(path.join(DATA, "probes.json"), "utf8")) as ProbeFile;
@@ -281,10 +291,10 @@ async function main() {
     limited: { byRule: stageCount(["rule", "follow"]), byModel: stageCount(["model"]), held: stageCount(["held"]), total: limitedRows.length },
   };
   fs.writeFileSync(probeSummaryPath(pack)!, JSON.stringify(summary, null, 1) + "\n");
-  fs.writeFileSync(path.join(process.cwd(), "docs", "PROBE_RESULTS.md"), markdown(summary, report.findings.map((f) => ({
+  fs.writeFileSync(path.join(process.cwd(), "docs", reportName), markdown(summary, report.findings.map((f) => ({
     ...f, fact: facts.find((x) => x.id === f.item)?.fact ?? f.item,
   })), { ingestMs: demo.ingestMs, classifierCalls: demo.classifierCalls, classifierCached: demo.classifierCached }));
-  console.log(`wrote ${path.relative(process.cwd(), probeSummaryPath(pack)!)} and docs/PROBE_RESULTS.md`);
+  console.log(`wrote ${path.relative(process.cwd(), probeSummaryPath(pack)!)} and docs/${reportName}`);
 
   // The judge's answers for the demo's outputs go into the demo cache, so "Run probes again" in a
   // fresh copy of the demo replays what it can (texts that are the same in every copy) at once.
@@ -313,6 +323,27 @@ async function main() {
 // ---------------------------------------------------------------------------------------------
 // The write-up
 
+/**
+ * The other demo settings that have been measured, from each one's committed probe_summary.json.
+ * Written here so every write-up names the rest, with the numbers they last measured, and no
+ * section has to be kept by hand.
+ */
+function otherSettings(): string[] {
+  const lines: string[] = [];
+  for (const other of listDemoPacks()) {
+    if (other.id === pack.id) continue;
+    const s = loadProbeSummary(other);
+    if (!s) continue;
+    const d = s.detector;
+    lines.push(`- ${other.name} (\`${other.id}\`), measured on ${s.generatedAt.slice(0, 10)}: ` +
+      `${s.grid.checks} checks over every role and output, ${s.grid.failed} failing; ` +
+      `classifier precision ${pct(s.classifier.precision)} and recall ${pct(s.classifier.recall)} on ${s.classifier.segments} messages; ` +
+      `key terms caught ${d.catchable.keyTerms} of ${d.catchable.total} catchable rewordings and ${d.hard.keyTerms + d.hard.judgeOnly} of ${d.hard.total} hard ones. ` +
+      `Full write-up: [${reportFile(other.id)}](${reportFile(other.id)}).`);
+  }
+  return lines.length ? ["## Other settings", "", ...lines, ""] : [];
+}
+
 function markdown(
   s: ProbeSummary,
   findings: { row: string; role: string; surface: string; item: string; by: string; quote: string; confirmed: boolean; fact: string }[],
@@ -327,9 +358,15 @@ function markdown(
   L.push("");
   L.push("Restricted facts were planted in reworded form. This page shows what each check caught and what it missed.");
   L.push("");
-  L.push(`Generated by \`pnpm tsx scripts/probe-eval.ts\` on ${s.generatedAt.slice(0, 16).replace("T", " ")} UTC, setting pack \`${s.pack}\`, model \`${s.modelTag}\`. ` +
+  L.push(`Generated by \`pnpm tsx scripts/probe-eval.ts${packFlag}\` on ${s.generatedAt.slice(0, 16).replace("T", " ")} UTC, setting pack \`${s.pack}\`, model \`${s.modelTag}\`. ` +
     "The same numbers are shown in the app on the Probe results page (`/w/<workspace>/probes`). Do not edit by hand: run the script again.");
   L.push("");
+  if (!modelReachable) {
+    L.push("No model was reachable in this run (no key, or the model switched off), so the model stage of the classifier and the model judge could not be asked. " +
+      "Every number below comes from the rules and the key-term check, and borderline messages are held for the approver rather than released.");
+    L.push("");
+  }
+  L.push(...otherSettings());
   L.push("## Classifier");
   L.push("");
   L.push(`Scored on a labelled evaluation set of ${c.segments} messages (${c.positives} sensitive, ${c.negatives} routine) in a scratch workspace. ` +
