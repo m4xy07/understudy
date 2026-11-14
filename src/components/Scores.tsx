@@ -33,7 +33,15 @@ export function ScoreLine({ scores, provisional = true }: { scores: ScoresT | nu
  */
 export function OpenGapsNote({ b, open }: { b: number; open: number }) {
   if (open === b) return null;
-  return <p className="mt-1 text-sm text-muted">{OPEN_GAPS_NOTE}</p>;
+  const owned = open - b;
+  // Body-size text: this line explains why two numbers on screen differ.
+  return (
+    <p className="mt-2 max-w-2xl text-base text-ink-2" data-testid="open-gaps-note">
+      {owned > 0
+        ? `${open} blocking gaps are open and B is ${b}. ${owned === 1 ? "One gap is" : `${owned} gaps are`} restricted for the successor and ${owned === 1 ? "has" : "have"} a named owner in the continuation plan: still open, not counted in B.`
+        : OPEN_GAPS_NOTE}
+    </p>
+  );
 }
 
 export function ScoreLegend() {

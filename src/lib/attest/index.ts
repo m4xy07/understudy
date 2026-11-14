@@ -54,7 +54,12 @@ export interface VerifyResult {
   fromRecord: number;
   corroborated: number;
   inferred: number;
+  /** draftsDropped + claimsRetired. The two are different things and are shown apart. */
   dropped: number;
+  /** Drafts of this run that lost their citation in verification (the Claims page lists them per source). */
+  draftsDropped: number;
+  /** Claims an earlier run produced that this run no longer finds (kept, with state Dropped). */
+  claimsRetired: number;
   superseded: number;
   conflicting: number;
   firings: number;
@@ -577,6 +582,8 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
     corroborated: live.filter((c) => c.trust === "corroborated").length,
     inferred: live.filter((c) => c.trust === "inferred").length,
     dropped: vr.dropped.length + stale.length,
+    draftsDropped: vr.dropped.length,
+    claimsRetired: stale.length,
     superseded: live.filter((c) => c.state === "superseded").length,
     conflicting: live.filter((c) => c.state === "conflicting").length,
     firings: ruled.firings.length,

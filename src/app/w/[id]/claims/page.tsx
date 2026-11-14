@@ -60,6 +60,7 @@ async function Claims({ params, searchParams }: { params: WsParams; searchParams
   };
   const [all, dropped, ext] = await Promise.all([listClaims(id, { role }), listDropped(id, role), extractionNote(id)]);
   const live = all.filter((c) => c.state !== "dropped");
+  const retired = all.length - live.length;
   const byId = new Map(all.map((c) => [c.id, c]));
   const trustCount = (t: Trust) => live.filter((c) => c.trust === t).length;
   const superseded = all.filter((c) => c.state === "superseded");
@@ -135,8 +136,13 @@ async function Claims({ params, searchParams }: { params: WsParams; searchParams
           )}
         </div>
         <div className="card p-4">
-          <p className="eyebrow">Dropped per source</p>
+          <p className="eyebrow">Drafts dropped per source</p>
           <p className="mt-1 font-serif text-3xl">{dropped.length}</p>
+          {retired > 0 && (
+            <p className="text-xs text-muted">
+              Not counted here: {retired} claim{retired === 1 ? "" : "s"} retired by a later run (state Dropped in the list).
+            </p>
+          )}
           {droppedBySource.size === 0 ? (
             <p className="text-xs text-muted">No draft lost its citation.</p>
           ) : (

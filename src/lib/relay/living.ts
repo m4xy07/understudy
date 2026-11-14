@@ -159,6 +159,13 @@ export interface OpenGapRow {
 }
 
 export interface FirstWeeks {
+  /**
+   * Demo only: the gap the example finding is written for, and whether it can still be used.
+   * "open": press Record a finding on it. "waiting": a finding on it awaits review. "answered":
+   * the gap is already covered, so there is no example to use. Null when there is no example
+   * or this role cannot see the gap.
+   */
+  exampleGap: { title: string; state: "open" | "waiting" | "answered" } | null;
   hasSnapshot: boolean;
   latestVersion: number | null;
   viewer: "successor" | "approver" | "leaving" | "other";
@@ -244,7 +251,7 @@ export async function firstWeeks(ws: string, role: RoleKey): Promise<FirstWeeks>
   const roleChoices = base.map((key) => ({ key, label: roleLabel(key, pack), locked: keep.has(key) }));
   const empty: FirstWeeks = {
     hasSnapshot: latestVersion !== null, latestVersion, viewer, blocking: [], other: [], closed: [],
-    counts: { open: 0, waiting: 0, closed: 0 }, roleChoices,
+    counts: { open: 0, waiting: 0, closed: 0 }, roleChoices, exampleGap: null,
   };
   if (latestVersion === null) return empty;
 
@@ -310,7 +317,23 @@ export async function firstWeeks(ws: string, role: RoleKey): Promise<FirstWeeks>
   other.sort(order);
   closed.sort(order);
   const open = [...blocking, ...other];
+  // Where the example finding goes, said plainly: on its open gap, or "already answered".
+  let exampleGap: FirstWeeks["exampleGap"] = null;
+  if (example && seeOther) {
+    for (const r of run.results) {
+      const resp = byId.get(r.responsibilityId);
+      const check = resp ? findCheck(checks, r.responsibilityId, r.checkKey) : undefined;
+      if (!resp || !check || !exampleMatches(example, resp, check.key)) continue;
+      const shown = open.find((g) => g.responsibilityId === resp.id && g.checkKey === check.key);
+      exampleGap = {
+        title: `${resp.title}: ${check.label}`,
+        state: r.coverage === "covered" ? "answered" : shown?.state === "waiting" ? "waiting" : "open",
+      };
+      break;
+    }
+  }
   return {
+    exampleGap,
     hasSnapshot: true, latestVersion, viewer, blocking, other, closed,
     counts: { open: open.length, waiting: open.filter((g) => g.state === "waiting").length, closed: closed.length },
     roleChoices,

@@ -88,6 +88,17 @@ async function FirstWeeks({ params }: { params: WsParams }) {
 
       <section aria-labelledby="gaps-h">
         <h2 id="gaps-h" className="text-xl">Open gaps</h2>
+        {isSuccessor && fw.exampleGap && (
+          <p className="mt-2 max-w-3xl text-sm text-ink-2" data-testid="example-finding-note">
+            {fw.exampleGap.state === "open" ? (
+              <>To try it with the demo&apos;s example: press Record a finding on &ldquo;{fw.exampleGap.title}&rdquo;, then Use the example finding.</>
+            ) : fw.exampleGap.state === "waiting" ? (
+              <>A finding on the example gap &ldquo;{fw.exampleGap.title}&rdquo; is waiting for review.</>
+            ) : (
+              <>The example finding was written for &ldquo;{fw.exampleGap.title}&rdquo;. That gap is already answered, so there is no example to use here. You can record your own finding on any open gap.</>
+            )}
+          </p>
+        )}
         {open === 0 ? (
           <p className="mt-3 text-sm text-ok">
             <span aria-hidden="true">✓ </span>

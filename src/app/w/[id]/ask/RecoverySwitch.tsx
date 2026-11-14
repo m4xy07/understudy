@@ -4,6 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { Notice } from "@/components/Notice";
 import type { RecoveryState } from "@/lib/lacuna";
 import { rebuildLadderAction, setUnreachableAction } from "./actions";
+import { RecoveryProgress } from "./RecoveryProgress";
 
 function when(iso: string | null): string {
   if (!iso) return "";
@@ -33,6 +34,7 @@ export function RecoverySwitchCard({ ws, leaver }: { ws: string; leaver: string 
         <div>
           <SubmitButton pendingText="Starting recovery…">{leaver} can&apos;t be reached</SubmitButton>
         </div>
+        <RecoveryProgress />
       </ActionForm>
     </section>
   );
