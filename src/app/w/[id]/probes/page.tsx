@@ -96,7 +96,9 @@ async function Probes({ params }: { params: WsParams }) {
             <p className="mt-1 text-sm text-muted">
               With the model switched off the rules alone reach recall {pct(c.recallRulesOnly)}, and {c.heldModelOff}{" "}
               borderline {c.heldModelOff === 1 ? "message is" : "messages are"} held for the approver instead of being released.
-              The {c.primaryCases.of} planted cases in the open group chat: {c.primaryCases.caught} of {c.primaryCases.of} caught by a rule alone.
+              {c.primaryCases.of > 0 && (
+                <> The {c.primaryCases.of} planted cases in the open group chat: {c.primaryCases.caught} of {c.primaryCases.of} caught by a rule alone.</>
+              )}
             </p>
           </>
         )}

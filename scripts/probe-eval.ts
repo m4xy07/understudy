@@ -380,7 +380,8 @@ function markdown(
   L.push(`Precision ${pct(c.precision)}. Recall ${pct(c.recall)}. ${c.segments} messages checked.`);
   L.push("");
   L.push(`- Recall with the rules alone (model off): ${pct(c.recallRulesOnly)}. With the model off, ${c.heldModelOff} borderline messages are held for the approver instead of being released.`);
-  L.push(`- Planted cases in the open group chat caught by a rule alone: ${c.primaryCases.caught} of ${c.primaryCases.of}.`);
+  // A setting with no planted cases in an open chat has nothing to say here.
+  if (c.primaryCases.of > 0) L.push(`- Planted cases in the open group chat caught by a rule alone: ${c.primaryCases.caught} of ${c.primaryCases.of}.`);
   L.push(`- Routine messages wrongly limited: ${c.wronglyLimited} of ${c.negatives}.`);
   for (const w of c.wronglyLimitedItems) L.push(`  - \`${w.id}\` (${w.stage}): "${w.text}"`);
   L.push(`- Classifier model calls for the evaluation set: ${c.modelCalls}, ${(c.ms / 1000).toFixed(1)} s in total.`);
