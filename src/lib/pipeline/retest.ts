@@ -41,11 +41,25 @@ export async function retestAfterReview(ws: string, claimId: string, trigger: st
   try {
     const only = await responsibilitiesOfClaim(ws, claimId);
     if (only === null) return false;
+    return await retestResponsibilities(ws, only, trigger, hooks);
+  } catch (err) {
+    console.error(`[retest ${ws}] re-test after ${trigger} failed`, err);
+    return false;
+  }
+}
+
+/**
+ * Re-test every tested role once for these responsibilities (a group approval re-tests once, not
+ * once per claim). Same lease and deadline as retestAfterReview; true when nothing needed a
+ * re-test or it ran. Never throws.
+ */
+export async function retestResponsibilities(ws: string, only: readonly string[], trigger: string, hooks: RetestHooks = {}): Promise<boolean> {
+  try {
     if (only.length === 0) return true;
     const pack = await getWorkspacePack(ws);
     const run = hooks.run ?? runTest;
     return await exclusive(ws, RETEST_KEY, () => runWithModelContext(actionContext(ws), async () => {
-      await Promise.all(pack.testRoles.map((role) => run(ws, role, { trigger, only })));
+      await Promise.all(pack.testRoles.map((role) => run(ws, role, { trigger, only: [...only] })));
       return true;
     }), false, ACTION_LEASE_MS, REPEAT_WAIT_MS);
   } catch (err) {

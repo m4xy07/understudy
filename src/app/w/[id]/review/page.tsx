@@ -3,7 +3,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import { roleLabel } from "@/lib/pack";
 import { first, loadWorkspace, type SearchParams, type WsParams } from "@/lib/page";
-import { getReleaseInfo, listReviewClaims, listSnapshotHistory, loadEvidence, type GapView } from "@/lib/relay";
+import { getReleaseInfo, groupTierB, listReviewClaims, listSnapshotHistory, loadEvidence, type GapView } from "@/lib/relay";
+import { listResponsibilities } from "@/lib/db/queries";
 import { PageHead, PageLoading } from "@/components/PageHead";
 import { Chip, CoverageChip, StateChip, TierChip, TrustChip } from "@/components/chips";
 import { OpenGapsNote, ScoreLine } from "@/components/Scores";
@@ -13,6 +14,7 @@ import type { Claim, ReviewTier, RoleKey } from "@/lib/types";
 import { listChanges, listFindings } from "@/lib/relay/living";
 import { WhatChanged } from "@/components/WhatChanged";
 import { approveSnapshotAction, bulkApproveAction, reviewClaimAction, savePlanAction } from "./actions";
+import { TierBGroups, type GroupItem } from "./TierBGroups";
 import { TierCReview, type EvidenceItem } from "./TierCReview";
 import { FindingsGroup } from "./FindingsGroup";
 
@@ -32,7 +34,7 @@ const TIERS: ReviewTier[] = ["A", "B", "C"];
 
 const TIER_INFO: Record<ReviewTier, { title: string; blurb: string }> = {
   A: { title: "Tier A · bulk approve", blurb: "Corroborated, normal importance, nothing flagged." },
-  B: { title: "Tier B · one by one", blurb: "Approve, edit or reject each claim. An edit keeps its citations and is labelled “edited by reviewer”." },
+  B: { title: "Tier B · by responsibility, or one by one", blurb: "Approve, edit or reject each claim here, or approve a whole responsibility above after reading its list. An edit keeps its citations and is labelled “edited by reviewer”." },
   C: { title: "Tier C · evidence and a reason", blurb: "Sensitive, conflicting or blocking. Open the evidence, then write why it is right or wrong." },
 };
 
@@ -54,8 +56,9 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
   const isApprover = role === pack.approverRole;
   const isLeaver = role === pack.leaverRole;
 
-  const [allClaims, release, history, findings, changes] = await Promise.all([
+  const [allClaims, responsibilities, release, history, findings, changes] = await Promise.all([
     listReviewClaims(id, role),
+    listResponsibilities(id),
     getReleaseInfo(id),
     listSnapshotHistory(id),
     listFindings(id, role),
@@ -87,6 +90,23 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
     return `/w/${id}/review${qs ? `?${qs}` : ""}#claims`;
   };
   const latest = history[0] ?? null;
+  // Tier B grouped by responsibility: read the list, then approve the group in one go.
+  const groups: GroupItem[] = groupTierB(claims, responsibilities).map((g) => ({
+    key: g.key,
+    title: g.title,
+    claims: g.claims.map((c) => {
+      const cite = c.citations.find((x) => x.accepted) ?? c.citations[0];
+      return {
+        id: c.id,
+        statement: c.statement,
+        trust: c.trust,
+        detail: `${c.entityLabel} · ${c.attribute}`,
+        href: cite ? `/w/${id}/source/${cite.segmentId}?claim=${c.id}` : null,
+      };
+    }),
+  }));
+  const groupedCount = groups.reduce((n, g) => n + g.claims.length, 0);
+  const openPlans = release.gaps.filter((g) => !g.plan || !g.plan.owner || !g.plan.dueDate || !g.plan.riskNote).length;
   const canApproveNow = isApprover && release.blockers.length === 0;
 
   return (
@@ -156,22 +176,35 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
         </div>
       </section>
 
-      {/* Where to start: the bulk approve sits at the bottom of a long list, so offer it here too. */}
+      {/* Where to start: the path an approver can follow top to bottom. */}
       {isApprover && (
-        <section aria-label="Where to start" className="card mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
-          <p className="max-w-2xl text-sm text-ink-2">
-            <span className="font-medium text-ink">Where to start:</span>{" "}
-            {pendingBy("A") > 0
-              ? "approve the low-risk tier A claims in one go, decide tier B and C below, then "
-              : "decide tier B and C claims below, then "}
-            fill the <a href="#plan-h" className="text-attest underline">continuation plan</a> and{" "}
-            <a href="#snap-h" className="text-attest underline">approve the snapshot</a>.
-          </p>
-          {pendingBy("A") > 0 && (
-            <ActionForm action={bulkApproveAction} hidden={{ ws: id }} className="flex flex-col items-end">
-              <SubmitButton pendingText="Approving…">Approve {pendingBy("A")} tier A claim{pendingBy("A") === 1 ? "" : "s"}</SubmitButton>
-            </ActionForm>
-          )}
+        <section aria-labelledby="start-h" className="card mb-6 p-4 sm:p-5" data-testid="where-to-start">
+          <h2 id="start-h" className="text-lg">Where to start</h2>
+          <ol className="mt-2 grid gap-2 text-sm text-ink-2">
+            <StartStep n={1} done={pendingBy("A") === 0} label="Approve tier A" note={pendingBy("A") === 0 ? "Done." : "Low risk, backed twice. One click."}>
+              {pendingBy("A") > 0 && (
+                <ActionForm action={bulkApproveAction} hidden={{ ws: id }} className="flex flex-col items-end">
+                  <SubmitButton className="btn-sm" pendingText="Approving…">Approve {pendingBy("A")} tier A claim{pendingBy("A") === 1 ? "" : "s"}</SubmitButton>
+                </ActionForm>
+              )}
+            </StartStep>
+            <StartStep n={2} done={groupedCount === 0} label="Review tier B by responsibility"
+              note={groupedCount === 0 ? "Done." : `${groupedCount} pending in ${groups.length} group${groups.length === 1 ? "" : "s"}. Open a group, read it, approve it.`}>
+              {groupedCount > 0 && <a href="#groups-h" className="text-attest underline">Go to the groups</a>}
+            </StartStep>
+            <StartStep n={3} done={pendingBy("C") === 0} label="Decide tier C one by one"
+              note={pendingBy("C") === 0 ? "Done." : `${pendingBy("C")} pending. Each needs the evidence opened and a reason.`}>
+              {pendingBy("C") > 0 && <Link href={href("C", "pending")} className="text-attest underline">Show tier C</Link>}
+            </StartStep>
+            <StartStep n={4} done={openPlans === 0} label="Plan the open blocking gaps"
+              note={openPlans === 0 ? "Done." : `${openPlans} gap${openPlans === 1 ? " needs" : "s need"} an owner, a due date and a risk note.`}>
+              {openPlans > 0 && <a href="#plan-h" className="text-attest underline">Go to the plan</a>}
+            </StartStep>
+            <StartStep n={5} done={false} label="Approve the snapshot"
+              note={canApproveNow ? "Ready. You can approve now and again later; each approval is a new version." : "Open once steps 1 and 4 are done."}>
+              <a href="#snap-h" className="text-attest underline">Go to the snapshot</a>
+            </StartStep>
+          </ol>
         </section>
       )}
 
@@ -185,6 +218,19 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
         successorLabel={roleLabel(pack.successorRole as RoleKey, pack)}
         nextVersion={(history[0]?.snapshot.version ?? 0) + 1}
       />
+
+      {/* Tier B by responsibility */}
+      {groups.length > 0 && (
+        <section aria-labelledby="groups-h" className="mb-8 scroll-mt-4">
+          <h2 id="groups-h" className="text-xl scroll-mt-4">Tier B by responsibility</h2>
+          <p className="mb-3 mt-1 max-w-3xl text-sm text-muted">
+            {groupedCount} pending tier B claim{groupedCount === 1 ? "" : "s"}, grouped by the responsibility they belong to. Open a group,
+            read its claims and their evidence, then approve the group. Tier C, conflicting and superseded claims are never
+            part of a group. The successor is re-tested once per group.
+          </p>
+          <TierBGroups ws={id} groups={groups} isApprover={isApprover} />
+        </section>
+      )}
 
       {/* Claims */}
       <section id="claims" aria-labelledby="claims-h" className="scroll-mt-4">
@@ -394,6 +440,21 @@ async function Review({ params, searchParams }: { params: WsParams; searchParams
         )}
       </section>
     </>
+  );
+}
+
+function StartStep({
+  n, done, label, note, children,
+}: { n: number; done: boolean; label: string; note: string; children?: React.ReactNode }) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <span>
+        <span className={clsx("mono mr-2", done ? "text-ok" : "text-ink")} aria-hidden="true">{done ? "✓" : `${n}.`}</span>
+        <span className="font-medium text-ink">{label}</span>
+        <span className="text-muted"> · {note}</span>
+      </span>
+      {children}
+    </li>
   );
 }
 

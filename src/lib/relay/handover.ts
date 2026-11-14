@@ -166,6 +166,15 @@ function dayRank(value: string, statement: string): number {
   return weekday(value) ? 0 : weekday(statement) ? 1 : 2;
 }
 
+/** A command item is answered by something that can be typed: a script path or a line starting with a tool. */
+const COMMAND_LIKE = /^`?(\.{0,2}\/[\w./-]+|(?:git|make|npm|pnpm|npx|yarn|python3?|bash|sh|sudo|docker|kubectl|ssh|scp|curl|conda|mamba|snakemake|pio|platformio|west|cargo|go)\s+\S)/i;
+
+function commandRank(value: string): number {
+  const v = value.trim();
+  if (COMMAND_LIKE.test(v)) return 0;
+  return /`[^`]+`/.test(v) ? 1 : 2;
+}
+
 function dateRank(value: string, statement: string): number {
   if (DATE_ONLY.test(value)) return 0;
   if (parseDate(value)) return 1;
@@ -194,6 +203,7 @@ export async function resolveReadbackItems(ws: string, snapshotId: string): Prom
       .sort((a, b) =>
         (raw.type === "date" ? dateRank(a.value, a.statement) - dateRank(b.value, b.statement) : 0) ||
         (isDayItem(raw) ? dayRank(a.value, a.statement) - dayRank(b.value, b.statement) : 0) ||
+        (raw.type === "command" ? commandRank(a.value) - commandRank(b.value) : 0) ||
         a.trust - b.trust || b.at - a.at || (a.claimId < b.claimId ? -1 : 1));
     const best = candidates[0] ?? null;
     items.push({ key: raw.key, label: raw.label, type: raw.type, expectedClaimId: best?.claimId ?? null });

@@ -6,13 +6,13 @@ import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
 import { viewingRole } from "@/lib/session";
 import { savePlanItem } from "@/lib/lacuna";
-import { bulkApprove, reviewClaim } from "@/lib/relay";
+import { approveGroup, bulkApprove, reviewClaim } from "@/lib/relay";
 import { exclusive, isSafeId } from "@/lib/pipeline/guard";
 import {
   approveSnapshotOnce, busyMessage, findingClaimProblem, planProblem, REPEAT_WAIT_MS, reviewAlreadyDone, reviewTextProblem,
 } from "@/lib/pipeline/once";
 import { evidenceChanged } from "@/lib/pipeline/rejudge";
-import { retestAfterReview, SAVED_NOT_RETESTED } from "@/lib/pipeline/retest";
+import { retestAfterReview, retestResponsibilities, SAVED_NOT_RETESTED } from "@/lib/pipeline/retest";
 import type { ActionState } from "@/components/ActionForm";
 
 const fail = (message: string): ActionState => ({ ok: false, message });
@@ -69,6 +69,38 @@ export async function bulkApproveAction(_prev: ActionState, form: FormData): Pro
   await evidenceChanged(ws);
   refresh();
   return done(`Approved ${res.approved ?? 0} tier A claim${res.approved === 1 ? "" : "s"}.`);
+}
+
+/** Most claims one group approval may name (the form lists the claims that were on screen). */
+const MAX_GROUP_IDS = 2000;
+
+/**
+ * Approve the pending tier B claims of one responsibility (or one topic outside every
+ * responsibility) after its list was opened. One re-test for the whole group.
+ */
+export async function approveGroupAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const ws = await workspaceFrom(form);
+  if (!ws) return fail("Workspace not found.");
+  const role = await viewingRole(ws);
+  const group = String(form.get("group") ?? "");
+  if (!/^(resp|topic):/.test(group) || !isSafeId(group)) return fail("Group not found. Reload the page.");
+  const claimIds = String(form.get("claimIds") ?? "").split(",").filter(Boolean);
+  if (claimIds.length === 0 || claimIds.length > MAX_GROUP_IDS || !claimIds.every(isSafeId)) return fail("Reload the page and open the list again.");
+  // One approval per group at a time: a second click or tab waits, then finds nothing left to approve.
+  const res = await exclusive(ws, `review-group:${group}`, () =>
+    approveGroup(ws, role, group, { expanded: form.get("expanded") === "true", claimIds }),
+  { ok: false as const, error: busyMessage("This approval") }, 60_000, REPEAT_WAIT_MS);
+  if (!res.ok) return fail(res.error);
+  const n = res.approved ?? 0;
+  if (n === 0) {
+    refresh();
+    return done("Already approved. Nothing changed.");
+  }
+  await evidenceChanged(ws);
+  const retested = await retestResponsibilities(ws, res.responsibilityId ? [res.responsibilityId] : [], "review group approved");
+  refresh();
+  if (!retested) return done(SAVED_NOT_RETESTED);
+  return done(`Approved ${n} tier B claim${n === 1 ? "" : "s"}.`);
 }
 
 export async function savePlanAction(_prev: ActionState, form: FormData): Promise<ActionState> {

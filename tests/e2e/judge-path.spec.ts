@@ -18,6 +18,22 @@ async function viewAs(page: Page, label: string) {
   await expect(page.getByText("Switching…")).toHaveCount(0);
 }
 
+/**
+ * Review tier B by responsibility: the button is off until the group's list was opened, then one
+ * click approves the group and it leaves the list (the successor is re-tested once).
+ */
+async function approveGroup(page: Page, title: RegExp) {
+  const group = page.getByTestId("tier-b-group").filter({ hasText: title });
+  await expect(group).toHaveCount(1);
+  const button = group.getByRole("button", { name: /^Approve these \d+ claims?$/ });
+  await expect(button).toBeDisabled();
+  await group.locator("summary").click();
+  await expect(group.getByRole("link", { name: "Open evidence" }).first()).toBeVisible();
+  await expect(button).toBeEnabled();
+  await button.click();
+  await expect(group).toHaveCount(0, { timeout: 120_000 });
+}
+
 /** A plausible leaver answer for the demo's top gap questions; anything else gets a generic reply. */
 function answerFor(question: string): string {
   if (/OTA|password|credential/i.test(question)) {
@@ -87,13 +103,20 @@ test("judge path: demo, claims, test, ask, review, handover, leak check", async 
     await expect(page.getByRole("heading", { name: /^Answered \(1\)$/ })).toBeVisible();
   });
 
-  await test.step("Review as Club President: approve tier A, plan the gaps, approve the snapshot", async () => {
+  await test.step("Review as Club President: approve tier A, tier B by responsibility, plan the gaps, approve the snapshot", async () => {
     await page.goto(`/w/${ws}/review`);
     await viewAs(page, "Club President");
 
     const start = page.getByRole("region", { name: "Where to start" });
     await start.getByRole("button", { name: /^Approve \d+ tier A claims?$/ }).click();
     await expect(start.getByRole("button", { name: /tier A/ })).toHaveCount(0, { timeout: 60_000 });
+    await expect(start).toContainText("Review tier B by responsibility");
+
+    // Tier B by responsibility, for the groups that feed the read-back (dates and the lab day).
+    await expect(page.getByRole("heading", { name: "Tier B by responsibility" })).toBeVisible();
+    for (const title of [/R07 Competition venue and date/, /R03 Domain and DNS renewal/, /Other: Weekly workshop lab slot/]) {
+      await approveGroup(page, title);
+    }
 
     const cards = page.locator('section[aria-labelledby="plan-h"] li');
     const n = await cards.count();
@@ -132,6 +155,17 @@ test("judge path: demo, claims, test, ask, review, handover, leak check", async 
     ]) {
       await expect(page.getByRole("heading", { name: title })).toBeVisible();
     }
+    // Read-back: at least 3 of the 5 items have an approved claim behind them, and typed answers match.
+    await expect(page.getByLabel("Competition date")).toBeVisible();
+    expect(await page.getByText(/No approved claim for this yet/).count()).toBeLessThanOrEqual(2);
+    await page.getByLabel("Competition date").fill("19 Dec 2026");
+    await page.getByLabel("Domain renewal date").fill("2 Dec 2026");
+    await page.getByLabel("Day the workshop lab is booked for the club each week").fill("Saturday");
+    await page.getByRole("button", { name: "Check my read-back" }).click();
+    await expect(page.getByText(/[3-5] of \d+ items match the snapshot\./)).toBeVisible({ timeout: 30_000 });
+    // The same dated action is listed once.
+    const actions = await page.locator("main li", { hasText: /^\W*(Due|Past due) / }).allInnerTexts();
+    expect(new Set(actions).size).toBe(actions.length);
   });
 
   await test.step("Handover as New member: restricted stub, no canary token", async () => {

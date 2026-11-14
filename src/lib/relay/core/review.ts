@@ -1,6 +1,6 @@
 // Claim review (Relay). Pure: takes a claim and an action, returns the new claim and one
 // append-only event, or a typed error. Contract: docs/ARCHITECTURE.md section 4, "Review and Handover".
-import type { Claim, ReviewTier, RoleKey } from "@/lib/types";
+import type { Claim, Responsibility, ReviewTier, RoleKey } from "@/lib/types";
 import { checkApprover, relayError, type ApprovalRoles, type RelayError } from "./labels";
 
 export type ReviewActionType = "approve" | "reject" | "edit";
@@ -159,6 +159,101 @@ export function bulkApproveTierA(claims: readonly Claim[], by: RoleKey, roles: A
       payload: {
         tier: "A",
         bulk: true,
+        note: null,
+        evidenceOpened: false,
+        before: { review: c.review, value: c.value, statement: c.statement },
+        after: { review: "approved", value: c.value, statement: c.statement },
+        trust: c.trust,
+      },
+    });
+    return { ...c, review: "approved" as const };
+  });
+  return { ok: true, claims: out, events, approvedIds };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Tier B by responsibility
+// ---------------------------------------------------------------------------------------------
+
+/** The entity key extraction gives a claim that belongs to no named topic. */
+export const OTHER_ENTITY = "other";
+
+export interface ReviewGroup {
+  /** "resp:<responsibility id>" or "topic:<entity key>". Safe to carry in a form. */
+  key: string;
+  title: string;
+  /** The responsibility the group belongs to; null for claims outside every responsibility. */
+  responsibilityId: string | null;
+  claims: Claim[];
+}
+
+/** Can this claim be approved with its group? Pending, tier B, active. Never tier C, a conflict or a superseded claim. */
+export function groupApprovable(c: Pick<Claim, "tier" | "review" | "state" | "origin">): boolean {
+  return c.tier === "B" && c.review === "pending" && c.state === "active" && c.origin !== "successor_finding";
+}
+
+/**
+ * Pending tier B claims grouped for review: one group per responsibility (inventory order), then one
+ * per remaining topic, the catch-all topic last. A claim sits in exactly one group. Pass claims with
+ * their effective tier. Groups with nothing to approve are left out.
+ */
+export function groupTierB(
+  claims: readonly Claim[],
+  responsibilities: readonly Pick<Responsibility, "id" | "key" | "title" | "entities">[],
+): ReviewGroup[] {
+  const resps = [...responsibilities].sort((a, b) => a.key.localeCompare(b.key, "en", { numeric: true }) || (a.id < b.id ? -1 : 1));
+  const byResp = new Map<string, Claim[]>();
+  const byTopic = new Map<string, Claim[]>();
+  for (const c of claims) {
+    if (!groupApprovable(c)) continue;
+    const r = resps.find((x) => x.entities.includes(c.entity));
+    const [map, key] = r ? [byResp, r.id] : [byTopic, c.entity];
+    map.set(key, [...(map.get(key) ?? []), c]);
+  }
+  const out: ReviewGroup[] = [];
+  for (const r of resps) {
+    const list = byResp.get(r.id);
+    if (list) out.push({ key: `resp:${r.id}`, title: `${r.key} ${r.title}`, responsibilityId: r.id, claims: list });
+  }
+  const topics = [...byTopic.keys()].sort((a, b) =>
+    (a === OTHER_ENTITY ? 1 : 0) - (b === OTHER_ENTITY ? 1 : 0) || (a < b ? -1 : a > b ? 1 : 0));
+  for (const t of topics) {
+    const list = byTopic.get(t)!;
+    const label = list[0].entityLabel || t;
+    out.push({
+      key: `topic:${t}`,
+      title: t === OTHER_ENTITY ? "Other: not tied to one topic" : `Other: ${label}`,
+      responsibilityId: null,
+      claims: list,
+    });
+  }
+  return out;
+}
+
+/**
+ * Approve the pending tier B claims of one group. `ids` are the claims the approver had on screen:
+ * a claim that joined the group since is left for the next look. Other claims are returned unchanged.
+ */
+export function bulkApproveGroup(
+  claims: readonly Claim[], ids: ReadonlySet<string>, groupKey: string, by: RoleKey, roles: ApprovalRoles, at?: string,
+): BulkResult {
+  const roleError = checkApprover(by, roles);
+  if (roleError) return roleError;
+  const when = at ?? new Date().toISOString();
+  const events: RelayEvent[] = [];
+  const approvedIds: string[] = [];
+  const out = claims.map((c) => {
+    if (!groupApprovable(c) || !ids.has(c.id)) return c;
+    approvedIds.push(c.id);
+    events.push({
+      type: "claim_approved",
+      claimId: c.id,
+      by,
+      at: when,
+      payload: {
+        tier: "B",
+        bulk: true,
+        group: groupKey,
         note: null,
         evidenceOpened: false,
         before: { review: c.review, value: c.value, statement: c.statement },

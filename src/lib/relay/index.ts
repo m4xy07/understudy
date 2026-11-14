@@ -19,10 +19,12 @@ import { listBlockingGaps } from "@/lib/lacuna";
 import { db } from "@/lib/db/client";
 import { withRole } from "@/lib/db/withRole";
 import { toClaim, toSnapshot } from "@/lib/db/mappers";
-import { audit, getLatestTestRun, listClaims } from "@/lib/db/queries";
+import { audit, getLatestTestRun, listClaims, listResponsibilities } from "@/lib/db/queries";
 import { approvalRoles, getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
 import type { Claim, PlanItem, ReviewState, ReviewTier, RoleKey, Scores, Snapshot } from "@/lib/types";
-import { assignTier, applyReview, bulkApproveTierA, type ReviewAction } from "./core/review";
+import {
+  assignTier, applyReview, bulkApproveGroup, bulkApproveTierA, groupTierB, type ReviewAction, type ReviewGroup,
+} from "./core/review";
 import {
   approveSnapshot as coreApproveSnapshot, buildSnapshotPayload, canonicalJson as coreCanonicalJson,
   computeReleaseState, diffSnapshots, releaseLabel, verifySnapshot,
@@ -42,6 +44,8 @@ export {
   runLeakCheck, runProbes, latestProbeRun,
   type LeakReport, type LeakCell, type LeakFinding, type LeakRow, type ProbeRun,
 } from "./probes";
+
+export { groupTierB, groupApprovable, type ReviewGroup } from "./core/review";
 
 export type ActionResult = { ok: true } | { ok: false; error: string; code?: string };
 
@@ -151,6 +155,65 @@ export async function bulkApprove(
   }
   await audit(ws, actor, "bulk_approve", { tier: "A", count: res.approvedIds.length });
   return { ok: true, approved: res.approvedIds.length };
+}
+
+/** Pending tier B claims grouped by responsibility, then by topic (see groupTierB). Pass `role` for a read under RLS. */
+export async function listReviewGroups(ws: string, role?: RoleKey): Promise<ReviewGroup[]> {
+  const [claims, resps] = await Promise.all([listReviewClaims(ws, role), listResponsibilities(ws)]);
+  return groupTierB(claims, resps);
+}
+
+export type GroupApproval = ActionResult & {
+  approved?: number;
+  /** The group's title, for the reply. */
+  title?: string;
+  /** The responsibility to re-test (none for a topic outside every responsibility). */
+  responsibilityId?: string | null;
+};
+
+/**
+ * Approve the pending tier B claims of one group ("resp:<id>" or "topic:<entity>") in one go.
+ * Approver only, and only after the group's list was opened. Tier C, conflicting and superseded
+ * claims are never included. `claimIds` (the claims on screen) narrows it further. A repeat approves
+ * nothing and says so.
+ */
+export async function approveGroup(
+  ws: string, actor: RoleKey, groupKey: string, opts: { expanded?: boolean; claimIds?: readonly string[] } = {},
+): Promise<GroupApproval> {
+  const pack = await getWorkspacePack(ws);
+  const g = gate(actor, pack);
+  if (!g.ok) return g;
+  if (opts.expanded !== true) return { ok: false, code: "group_not_opened", error: "Open the list and look through it before approving." };
+  const sql = db();
+  const [rows, resps] = await Promise.all([
+    sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND review = 'pending' ORDER BY id`,
+    listResponsibilities(ws),
+  ]);
+  const claims = rows.map(toClaim).map((c) => ({ ...c, tier: effectiveTier(c, pack) }));
+  const group = groupTierB(claims, resps).find((x) => x.key === groupKey);
+  if (!group) {
+    // Nothing pending under this key: a repeat (already approved), or a key that never existed.
+    const r = resps.find((x) => `resp:${x.id}` === groupKey);
+    if (!r && !groupKey.startsWith("topic:")) return { ok: false, code: "group_not_found", error: "Group not found. Reload the page." };
+    return { ok: true, approved: 0, title: r ? `${r.key} ${r.title}` : undefined, responsibilityId: r?.id ?? null };
+  }
+  const shown = opts.claimIds ? new Set(opts.claimIds) : new Set(group.claims.map((c) => c.id));
+  const res = bulkApproveGroup(group.claims, shown, groupKey, actor, approvalRoles(pack));
+  if (!res.ok) return { ok: false, code: res.code, error: res.message };
+  if (res.approvedIds.length) {
+    const events = res.events.map((e) => ({ claimId: e.claimId, type: e.type, data: { ...e.payload, at: e.at } }));
+    await sql.begin(async (tx) => {
+      await tx`
+        UPDATE claims SET review = 'approved', updated_at = now()
+        WHERE workspace_id = ${ws} AND review = 'pending' AND id = ANY(${res.approvedIds}::text[])`;
+      await tx`
+        INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
+        SELECT ${ws}, x->>'claimId', x->>'type', x->'data', ${actor}
+        FROM jsonb_array_elements((${JSON.stringify(events)}::jsonb #>> '{}')::jsonb) AS x`;
+    });
+  }
+  await audit(ws, actor, "approve_group", { group: groupKey, tier: "B", count: res.approvedIds.length });
+  return { ok: true, approved: res.approvedIds.length, title: group.title, responsibilityId: group.responsibilityId };
 }
 
 // ---------------------------------------------------------------------------------------------

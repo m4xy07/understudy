@@ -18,6 +18,22 @@ const READBACK = [
   "Date the manuscript revision is due",
   "Day the lab meeting is held each week",
 ];
+/**
+ * Review tier B by responsibility: the button is off until the group's list was opened, then one
+ * click approves the group and it leaves the list (the successor is re-tested once).
+ */
+async function approveGroup(page: Page, title: RegExp) {
+  const group = page.getByTestId("tier-b-group").filter({ hasText: title });
+  await expect(group).toHaveCount(1);
+  const button = group.getByRole("button", { name: /^Approve these \d+ claims?$/ });
+  await expect(button).toBeDisabled();
+  await group.locator("summary").click();
+  await expect(group.getByRole("link", { name: "Open evidence" }).first()).toBeVisible();
+  await expect(button).toBeEnabled();
+  await button.click();
+  await expect(group).toHaveCount(0, { timeout: 120_000 });
+}
+
 /** A plausible leaver answer for the demo's top gap questions; anything else gets a generic reply. */
 function answerFor(question: string): string {
   if (/sequencing run|sample sheet|checksum|manifest/i.test(question)) {
@@ -132,6 +148,12 @@ test("lab path: research-group demo, claims, test, ask, review, handover, read-b
     await start.getByRole("button", { name: /^Approve \d+ tier A claims?$/ }).click();
     await expect(start.getByRole("button", { name: /tier A/ })).toHaveCount(0, { timeout: 60_000 });
 
+    // Tier B by responsibility, for the groups that feed the read-back (the restore command, the lab meeting day).
+    await expect(page.getByRole("heading", { name: "Tier B by responsibility" })).toBeVisible();
+    for (const title of [/R01 Nightly QC and assembly pipeline/, /R02 Manuscript revision analysis/, /Other: Weekly lab meeting/]) {
+      await approveGroup(page, title);
+    }
+
     const cards = page.locator('section[aria-labelledby="plan-h"] li');
     const n = await cards.count();
     for (let i = 0; i < n; i++) {
@@ -171,6 +193,8 @@ test("lab path: research-group demo, claims, test, ask, review, handover, read-b
     }
     // Read-back asks this setting's items; a typed answer from the answer key is graded.
     for (const label of READBACK) await expect(page.getByLabel(label)).toBeVisible();
+    // At least 3 of the 5 items have an approved claim behind them after the grouped approval.
+    expect(await page.getByText(/No approved claim for this yet/).count()).toBeLessThanOrEqual(2);
     await page.getByLabel("Biosafety approval renewal date").fill("10 Dec 2026");
     await page.getByLabel("Day the lab meeting is held each week").fill("Thursday");
     await page.getByRole("button", { name: "Check my read-back" }).click();

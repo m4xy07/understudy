@@ -5,10 +5,10 @@ import type {
   Attribute, Claim, PlanItem, ReadbackItem, Responsibility, RoleKey, Scores, Trust,
 } from "@/lib/types";
 import {
-  ATTRIBUTE_LABEL, OPEN_GAPS_NOTE, REVIEWER_EDITED_LABEL, TRUST_LABEL, weakestTrust,
+  ATTRIBUTE_LABEL, OPEN_GAPS_NOTE, REVIEWER_EDITED_LABEL, TRUST_LABEL, TRUST_ORDER, weakestTrust,
 } from "./labels";
 import { parseDate } from "./readback";
-import { isReviewerEdited } from "./review";
+import { isReviewerEdited, OTHER_ENTITY } from "./review";
 
 // ---------------------------------------------------------------------------------------------
 // Types
@@ -183,6 +183,26 @@ function plainLine(kind: HandoverLineKind, text: string, date: string | null = n
   return { text, trust: null, claimIds: [], segmentIds: [], kind, edited: false, date };
 }
 
+/**
+ * One line per distinct text. Two claims that render the same sentence (the same date from the
+ * calendar and from a chat) are one line that carries both claims and the stronger of the two labels.
+ */
+export function dedupeLines(lines: readonly HandoverLine[]): HandoverLine[] {
+  const byText = new Map<string, HandoverLine>();
+  for (const line of lines) {
+    const seen = byText.get(line.text);
+    if (!seen) {
+      byText.set(line.text, { ...line });
+      continue;
+    }
+    seen.claimIds = uniq([...seen.claimIds, ...line.claimIds]);
+    seen.segmentIds = uniq([...seen.segmentIds, ...line.segmentIds]);
+    seen.edited = seen.edited || line.edited;
+    if (line.trust && (!seen.trust || TRUST_ORDER.indexOf(line.trust) < TRUST_ORDER.indexOf(seen.trust))) seen.trust = line.trust;
+  }
+  return [...byText.values()];
+}
+
 function humanise(key: string): string {
   const s = key.replace(/[_-]+/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : key;
@@ -192,12 +212,28 @@ function stripStop(s: string): string {
   return s.trim().replace(/[.\s]+$/, "");
 }
 
+/** Most values one summary part spells out. */
+const MAX_VALUES = 2;
+
 /** Active values for one attribute on one entity, plus whether that attribute is disputed. */
 function pick(claims: readonly Claim[], attribute: Attribute): { value: string | null; used: Claim[]; disputed: boolean } {
   const active = claims.filter((c) => c.attribute === attribute && c.state === "active");
   const disputed = claims.some((c) => c.attribute === attribute && c.state === "conflicting");
-  if (active.length) return { value: uniq(active.map((c) => stripStop(c.value))).join(" and "), used: active, disputed };
-  return { value: null, used: [], disputed };
+  if (!active.length) return { value: null, used: [], disputed };
+  // Newest first; the same value written twice (any case or spacing) counts once. A summary line
+  // names the two newest values and says how many more there are; every claim stays cited.
+  const seen = new Set<string>();
+  const values: string[] = [];
+  for (const c of [...active].sort((a, b) => byStr(b.validFrom, a.validFrom) || byStr(a.id, b.id))) {
+    const v = stripStop(c.value);
+    const k = v.toLowerCase().replace(/\s+/g, " ");
+    if (seen.has(k)) continue;
+    seen.add(k);
+    values.push(v);
+  }
+  const more = values.length - MAX_VALUES;
+  const value = values.slice(0, MAX_VALUES).join(" and ") + (more > 0 ? ` (+${more} more)` : "");
+  return { value, used: active, disputed };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -211,6 +247,10 @@ export function compileHandover(input: CompileInput): HandoverDoc {
   const checkLabel = (key: string) => input.checkLabels?.[key] ?? humanise(key);
   const yearMatch = /^(\d{4})/.exec(snapshot.approvedAt ?? "");
   const year = yearMatch ? Number(yearMatch[1]) : undefined;
+  // The day the handover was issued: a date before it is not an upcoming action.
+  const issued = /^\d{4}-\d{2}-\d{2}/.exec(snapshot.approvedAt ?? "")?.[0] ?? null;
+  const due = (iso: string | null, raw: string) =>
+    iso && issued && iso < issued ? `Past due (was due ${iso})` : `Due ${iso ?? raw}`;
 
   // Defensive role filter: never render a claim whose role set lacks this role.
   const violations: RoleViolation[] = [];
@@ -271,12 +311,23 @@ export function compileHandover(input: CompileInput): HandoverDoc {
 
   // A: Action list ------------------------------------------------------------------------
   const actions: HandoverLine[] = [];
+  const respEntities = new Set(visibleResp.flatMap((r) => r.entities));
+  // Dates that passed before the handover was issued, on topics outside every responsibility: history, not actions.
+  let passedElsewhere = 0;
   for (const [entity, ec] of byEntity) {
-    const owner = pick(ec, "owner");
-    const status = pick(ec, "status");
+    // The catch-all topic is not one thing: its claims do not share an owner or a status.
+    const catchAll = entity === OTHER_ENTITY;
+    const owner = pick(catchAll ? [] : ec, "owner");
+    const status = pick(catchAll ? [] : ec, "status");
     for (const d of ec.filter((c) => c.attribute === "deadline" && c.state === "active")) {
       const iso = parseDate(d.value, year);
-      const text = `Due ${iso ?? stripStop(d.value)}: ${entityLabel(entity)}. Owner: ${owner.value ?? "not named"}. Status: ${status.value ?? "not recorded"}.`;
+      if (iso && issued && iso < issued && !respEntities.has(entity)) {
+        passedElsewhere++;
+        continue;
+      }
+      const text = catchAll
+        ? `${due(iso, stripStop(d.value))}: ${stripStop(d.statement)}.`
+        : `${due(iso, stripStop(d.value))}: ${entityLabel(entity)}. Owner: ${owner.value ?? "not named"}. Status: ${status.value ?? "not recorded"}.`;
       actions.push(claimLine("action", text, [d, ...owner.used, ...status.used], iso));
     }
     const disputed = ec.filter((c) => c.attribute === "deadline" && c.state === "conflicting");
@@ -295,7 +346,7 @@ export function compileHandover(input: CompileInput): HandoverDoc {
     const iso = parseDate(p.dueDate, year);
     actions.push(plainLine(
       "plan",
-      `Due ${iso ?? p.dueDate}: close the gap "${checkLabel(p.checkKey)}" on ${r.key} ${r.title}. Owner: ${p.owner}.`,
+      `${due(iso, p.dueDate)}: close the gap "${checkLabel(p.checkKey)}" on ${r.key} ${r.title}. Owner: ${p.owner}.`,
       iso,
     ));
   }
@@ -305,7 +356,14 @@ export function compileHandover(input: CompileInput): HandoverDoc {
     if (b.date) return 1;
     return byStr(a.text, b.text);
   });
-  sections.get("actions")!.lines.push(...actions);
+  // The same action once, even when two approved claims state it; past due lines sort first by date.
+  sections.get("actions")!.lines.push(...dedupeLines(actions));
+  if (passedElsewhere > 0) {
+    put("actions", plainLine(
+      "action",
+      `${passedElsewhere} earlier date${passedElsewhere === 1 ? "" : "s"} on other topics passed before this handover was approved. ${passedElsewhere === 1 ? "It is" : "They are"} not listed as actions.`,
+    ));
+  }
   // Next steps: how each thing is done (undated, after the dated actions).
   for (const c of claims.filter((x) => x.attribute === "procedure" && x.state === "active")) {
     put("actions", claimLine("claim", `How to (${c.entityLabel}): ${c.statement}`, [c]));
