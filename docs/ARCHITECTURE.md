@@ -394,7 +394,11 @@ and from `scripts/probe-eval.ts`, and its results are stored in `probe_runs` (ad
 guard refuses an export that holds a restricted token or a reworded restricted fact.
 `scripts/probe-eval.ts` scores the classifier on the labelled evaluation set (in a scratch workspace;
 hard rewordings never enter the live demo), runs the detector check and the probes, and writes
-`docs/PROBE_RESULTS.md` and `<demo.dataDir>/probe_summary.json` (read by `/w/[id]/probes`).
+`<demo.dataDir>/probe_summary.json` (read by `/w/[id]/probes`) and one write-up per setting:
+`docs/PROBE_RESULTS.md` for the default pack, `docs/PROBE_RESULTS.<pack>.md` for any other, each
+naming the other settings with the numbers they last measured. A demo without a `probes.json` has
+no reworded-fact block and nothing to measure here; `scripts/check-demo.ts` holds a demo that ships
+one to every probe check, and its answer key references the file (`probes`) with the counts.
 
 ## 4b. Recovery when the leaver cannot be reached (Round 3)
 

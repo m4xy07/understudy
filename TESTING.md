@@ -8,7 +8,7 @@ From a fresh clone of `main`, following the README, with no model key (2026-11-1
 
 | Command | Result |
 |---|---|
-| `pnpm test` | 77 test files, 992 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
+| `pnpm test` | 77 test files, 996 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
 | `pnpm test:e2e` against `pnpm dev` | 5 spec files, 9 tests passed, 3.2 min, no retry |
 
 `pnpm test` prints the totals on its last lines, so these numbers are easy to check.
@@ -141,7 +141,7 @@ The suites above fake or disable the model, so they test the rules around it. Ex
 
 **Exact tokens.** Restricted demo sources carry `CANARY-XXXX` tokens. For every role and every output (handover text, export, stubs, scores, timeline, questions, conflict flags, the claim list, test notes, the sensitive panel, the people graph, neighbour questions, traces, ranked options, what changed), no token outside that role's visibility may appear. This runs in `pnpm test` (`tests/relay/integration.test.ts`, `tests/relay/leak-wide.test.ts`) and in the app as the Leak check grid on the Handover page.
 
-**Reworded facts.** Nine restricted facts are planted in the club demo with rewordings. Two checks look for them in every role's outputs: key terms, then a model judge that can only add findings. `pnpm tsx scripts/probe-eval.ts` scores all of it and writes [docs/PROBE_RESULTS.md](docs/PROBE_RESULTS.md):
+**Reworded facts.** Each demo has its own probe file, `<demo.dataDir>/probes.json`: nine restricted facts for the club, seven for the research group, each with rewordings. Two checks look for them in every role's outputs: key terms, then a model judge that can only add findings. `pnpm tsx scripts/probe-eval.ts` scores all of it and writes [docs/PROBE_RESULTS.md](docs/PROBE_RESULTS.md) for the club:
 
 | Measure | Result |
 |---|---|
@@ -153,6 +153,8 @@ The suites above fake or disable the model, so they test the rules around it. Ex
 | Model calls with a limited message in a batch for a wider role set | 0 of 31 |
 
 The report lists every miss with the wording that got through.
+
+The same script on the research group (`--pack lab`) writes [docs/PROBE_RESULTS.lab.md](docs/PROBE_RESULTS.lab.md). Measured with the model off, the way CI runs: 84 output checks, 0 failing; 0 token leaks and 0 reworded leaks; key terms caught all 21 catchable rewordings and none of the 7 hard ones, which need the judge; the classifier reached precision 93% and recall 88% on 36 labelled messages, 63% with the rules alone. `pnpm test` holds every demo pack to this: the per-pack suite reads each pack's probe file and checks that every role is read on every output with no leak (`tests/db/pipeline.packs.test.ts`).
 
 ## 7. Independent code review, and the fixes
 

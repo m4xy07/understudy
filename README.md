@@ -12,7 +12,7 @@ Team DRACONIX (CodersInPune) · Knowledge Handover challenge · Round 3
 - **Click-by-click guide:** [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md)
 - **Run it yourself:** [Run it locally](#run-it-locally), about ten minutes from a fresh clone
 - **Tests:** [TESTING.md](TESTING.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Disclosures:** [DISCLOSURES.md](DISCLOSURES.md)
-- **Evaluation:** [robotics club](docs/EVALUATION.md), [research group (the hold-out)](docs/EVALUATION.lab.md), [probe results](docs/PROBE_RESULTS.md)
+- **Evaluation:** [robotics club](docs/EVALUATION.md), [research group (the hold-out)](docs/EVALUATION.lab.md), probe results ([robotics club](docs/PROBE_RESULTS.md), [research group](docs/PROBE_RESULTS.lab.md))
 
 > **The demo data is synthetic.** The people, the club, the research group and the companies are fictional. The data holds planted FAKE secrets (AWS-style keys, GitHub-style tokens, password lines) so the masking step has something to mask. None of them is real.
 
@@ -210,7 +210,7 @@ Then on the landing page press **Start empty and upload my files**. One upload i
 pnpm test
 ```
 
-Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **77 test files, 992 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
+Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **77 test files, 996 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
 
 End-to-end tests drive a real browser through both demos, recovery, First weeks and the abuse cases. Keep `pnpm dev` running in one terminal, then in a second one:
 
