@@ -1,0 +1,58 @@
+[
+  {
+    "id": "U01FARHAN",
+    "real_name": "Farhan Qureshi",
+    "profile": {
+      "email": "farhan.qureshi@sils.example"
+    }
+  },
+  {
+    "id": "U02LEELA",
+    "real_name": "Leela Menon",
+    "profile": {
+      "email": "leela.menon@sils.example"
+    }
+  },
+  {
+    "id": "U03NISHA",
+    "real_name": "Nisha Iyer",
+    "profile": {
+      "email": "nisha.iyer@sils.example"
+    }
+  },
+  {
+    "id": "U04TARA",
+    "real_name": "Tara Bose",
+    "profile": {
+      "email": "tara.bose@sils.example"
+    }
+  },
+  {
+    "id": "U05IMRAN",
+    "real_name": "Imran Sheikh",
+    "profile": {
+      "email": "imran.sheikh@sils.example"
+    }
+  },
+  {
+    "id": "U06GAURI",
+    "real_name": "Gauri Patil",
+    "profile": {
+      "email": "gauri.patil@sils.example"
+    }
+  },
+  {
+    "id": "U07JOSEPH",
+    "real_name": "Joseph Mathew",
+    "profile": {
+      "email": "joseph.mathew@genomicscore.example"
+    }
+  },
+  {
+    "id": "U08VIKRAM",
+    "real_name": "Vikram Sood",
+    "profile": {
+      "email": "vikram.sood@sils.example"
+    }
+  }
+]

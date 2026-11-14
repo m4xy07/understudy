@@ -1,0 +1,182 @@
+{
+  "id": "lab",
+  "name": "University research group",
+  "roles": [
+    { "key": "pi", "label": "Principal investigator", "short": "the PI", "approver": true },
+    { "key": "incoming_postdoc", "label": "Incoming postdoc", "short": "the incoming postdoc", "successor": true },
+    { "key": "phd_student", "label": "PhD student", "short": "a PhD student", "restrictedAudience": true },
+    { "key": "lab_manager", "label": "Lab manager", "short": "the lab manager" },
+    { "key": "leaving_postdoc", "label": "Farhan (outgoing postdoc)", "short": "Farhan", "leaver": true }
+  ],
+  "approverRole": "pi",
+  "successorRole": "incoming_postdoc",
+  "leaverRole": "leaving_postdoc",
+  "leaverPerson": { "name": "Farhan", "aliases": ["Farhan Qureshi"] },
+  "roleHolders": {
+    "pi": ["Leela Menon"],
+    "incoming_postdoc": ["Nisha Iyer"],
+    "phd_student": ["Tara Bose", "Imran Sheikh"],
+    "lab_manager": ["Gauri Patil"],
+    "leaving_postdoc": ["Farhan Qureshi"]
+  },
+  "contactsRoles": ["pi", "incoming_postdoc", "lab_manager", "leaving_postdoc"],
+  "kindLabels": {
+    "deploy_operate": "Compute environments and pipelines",
+    "external_relationship": "Facilities, partners and agreements",
+    "recurring_obligation": "Protocols, approvals and renewals",
+    "open_decision": "Open decisions",
+    "unfinished_work": "Analyses and datasets in progress"
+  },
+  "entities": [
+    { "key": "qc-pipeline", "label": "Nightly QC and assembly pipeline",
+      "aliases": ["pipeline", "Snakefile", "nightly QC", "nightly-qc.yml", "nightly run", "bio-142 jobs"] },
+    { "key": "pipeline-env", "label": "Pipeline environment pin and rollback", "partOf": "qc-pipeline",
+      "aliases": ["environment.lock.yml", "conda env", "restore_env.sh", "v1.4.2", "known-good environment"] },
+    { "key": "seq-core", "label": "Sequencing core facility bookings",
+      "aliases": ["sequencing core", "flow cell slot", "run submission", "Dr. Mathew", "Joseph Mathew"] },
+    { "key": "biosafety-approval", "label": "Biosafety committee approval",
+      "aliases": ["biosafety", "IBSC", "committee renewal", "isolate work approval"] },
+    { "key": "hpc-allocation", "label": "Cluster compute allocation",
+      "aliases": ["allocation", "compute hours", "bio-142", "cluster renewal"] },
+    { "key": "freezer-rota", "label": "Freezer check and alarm rota",
+      "aliases": ["freezer check", "minus 80", "alarm rota", "freezer log"] },
+    { "key": "helix-agreement", "label": "Data-sharing agreement with Helix Agritech",
+      "aliases": ["Helix", "Helix Agritech", "data-sharing agreement", "DSA", "Dr. Petrova", "Elena Petrova"] },
+    { "key": "revision-analysis", "label": "Manuscript revision analysis (reviewer 2)",
+      "aliases": ["revision", "reviewer 2", "figure 3", "revision_r2", "revised manuscript"] },
+    { "key": "soil-dataset-v3", "label": "Soil reference dataset version 3",
+      "aliases": ["dataset v3", "reference dataset", "raw_v3", "v3 manifest"] },
+    { "key": "assembler-choice", "label": "Choice of long-read assembler",
+      "aliases": ["assembler", "Flye", "hifiasm", "long-read assembly"] },
+    { "key": "standing-order", "label": "Flow-cell and reagent standing order",
+      "aliases": ["standing order", "indent", "purchase order", "flow cells"] },
+    { "key": "lab-meeting", "label": "Weekly lab meeting",
+      "aliases": ["lab meeting", "group meeting"] },
+    { "key": "lab-budget", "label": "Grant budget and reimbursements",
+      "aliases": ["budget", "grant head", "reimbursement"] },
+    { "key": "intern-training", "label": "Summer intern training",
+      "aliases": ["interns", "training session"] },
+    { "key": "student-progress", "label": "Student progress and supervision",
+      "aliases": ["progress review", "committee meeting"] },
+    { "key": "sample-storage", "label": "Sample storage map",
+      "aliases": ["box map", "rack", "shelf"] }
+  ],
+  "kindOverrides": {
+    "qc-pipeline": "deploy_operate",
+    "pipeline-env": "deploy_operate",
+    "seq-core": "external_relationship",
+    "helix-agreement": "external_relationship",
+    "biosafety-approval": "recurring_obligation",
+    "hpc-allocation": "recurring_obligation",
+    "freezer-rota": "recurring_obligation",
+    "standing-order": "recurring_obligation",
+    "revision-analysis": "unfinished_work",
+    "soil-dataset-v3": "unfinished_work",
+    "assembler-choice": "open_decision"
+  },
+  "sourceAuthority": {
+    "owner":      { "tasks_csv": 3, "ics": 1, "github": 2, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "status":     { "tasks_csv": 3, "ics": 1, "github": 2, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "deadline":   { "tasks_csv": 3, "ics": 3, "github": 1, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "location":   { "tasks_csv": 2, "ics": 3, "github": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "procedure":  { "tasks_csv": 1, "ics": 1, "github": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "access":     { "tasks_csv": 1, "ics": 1, "github": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "decision":   { "tasks_csv": 2, "ics": 1, "github": 2, "markdown": 3, "slack": 2, "whatsapp": 2, "interview": 1, "finding": 1 },
+    "reason":     { "tasks_csv": 1, "ics": 1, "github": 2, "markdown": 3, "slack": 2, "whatsapp": 2, "interview": 1, "finding": 1 },
+    "dependency": { "tasks_csv": 2, "ics": 1, "github": 3, "markdown": 2, "slack": 1, "whatsapp": 1, "interview": 1, "finding": 1 },
+    "contact":    { "tasks_csv": 2, "ics": 1, "github": 1, "markdown": 2, "slack": 2, "whatsapp": 2, "interview": 1, "finding": 1 },
+    "risk":       { "tasks_csv": 1, "ics": 1, "github": 1, "markdown": 3, "slack": 2, "whatsapp": 2, "interview": 1, "finding": 1 }
+  },
+  "checklists": {
+    "deploy_operate": [
+      { "key": "access_path", "label": "Where it runs and how to get in", "wTag": "WHERE", "weight": 3, "attributes": ["location", "access"] },
+      { "key": "steps", "label": "Run steps", "wTag": "HOW", "weight": 3, "attributes": ["procedure"] },
+      { "key": "how_to_verify", "label": "How to check the output", "wTag": "HOW", "weight": 3, "attributes": ["procedure", "status"] },
+      { "key": "rollback", "label": "Environment pin and rollback", "wTag": "HOW", "weight": 5, "attributes": ["procedure"] },
+      { "key": "credential_owner", "label": "Allocation and credential owner", "wTag": "WHO", "weight": 5, "attributes": ["owner", "access"] }
+    ],
+    "external_relationship": [
+      { "key": "contact_person", "label": "Contact person", "wTag": "WHO", "weight": 5, "attributes": ["contact", "owner"] },
+      { "key": "last_interaction", "label": "Last interaction", "wTag": "WHEN", "weight": 1, "attributes": ["status", "deadline"] },
+      { "key": "open_commitments", "label": "Agreement terms and open commitments", "wTag": "WHY", "weight": 3, "attributes": ["dependency", "decision", "risk"] },
+      { "key": "next_date", "label": "Next date", "wTag": "WHEN", "weight": 3, "attributes": ["deadline"] }
+    ],
+    "recurring_obligation": [
+      { "key": "cadence", "label": "How often", "wTag": "WHEN", "weight": 3, "attributes": ["deadline", "procedure"] },
+      { "key": "next_due_date", "label": "Next due date", "wTag": "WHEN", "weight": 5, "attributes": ["deadline"] },
+      { "key": "how_to_do_it", "label": "Protocol or steps", "wTag": "HOW", "weight": 3, "attributes": ["procedure"] },
+      { "key": "protocol_location", "label": "Where the current protocol or form lives", "wTag": "WHERE", "weight": 3, "attributes": ["location"],
+        "question": { "missing": "Where is the current version of the protocol or form for {resp} kept, and who can edit it?" } },
+      { "key": "consequence_if_missed", "label": "What happens if it lapses", "wTag": "WHY", "weight": 1, "attributes": ["risk", "reason"] }
+    ],
+    "open_decision": [
+      { "key": "current_state", "label": "Current state", "wTag": "WHERE", "weight": 3, "attributes": ["status", "decision"] },
+      { "key": "options_considered", "label": "Options considered", "wTag": "WHY", "weight": 1, "attributes": ["decision", "reason"] },
+      { "key": "owner", "label": "Owner", "wTag": "WHO", "weight": 5, "attributes": ["owner"] },
+      { "key": "deadline", "label": "Deadline", "wTag": "WHEN", "weight": 3, "attributes": ["deadline"] }
+    ],
+    "unfinished_work": [
+      { "key": "where_it_lives", "label": "Where the code and data live", "wTag": "WHERE", "weight": 3, "attributes": ["location"] },
+      { "key": "data_provenance", "label": "Dataset provenance", "wTag": "WHERE", "weight": 5, "attributes": ["dependency"],
+        "keywords": ["run", "sample sheet", "manifest", "checksum", "raw reads"],
+        "question": { "missing": "Which sequencing run, sample sheet and data version does {resp} use, and where is the checksum manifest?" } },
+      { "key": "last_state", "label": "Last state", "wTag": "WHERE", "weight": 3, "attributes": ["status"] },
+      { "key": "next_concrete_step", "label": "Next concrete step", "wTag": "HOW", "weight": 5, "attributes": ["procedure"] },
+      { "key": "who_reviews_it", "label": "Who reviews it", "wTag": "WHO", "weight": 1, "attributes": ["owner", "contact"] }
+    ]
+  },
+  "roleTemplates": {
+    "incoming_postdoc": [
+      { "key": "seq-core-bookings", "title": "Sequencing core facility bookings", "kind": "external_relationship", "entities": ["seq-core"], "dueDate": "2026-11-26" },
+      { "key": "biosafety-renewal", "title": "Biosafety approval renewal", "kind": "recurring_obligation", "entities": ["biosafety-approval"] },
+      { "key": "assembler-decision", "title": "Choice of long-read assembler", "kind": "open_decision", "entities": ["assembler-choice"] }
+    ]
+  },
+  "footprint": { "repeatMin": 3, "distinctWeeksMin": 2, "ownershipShare": 0.8, "windowMonths": 6 },
+  "readback": [
+    { "key": "biosafety_renewal_date", "label": "Biosafety approval renewal date", "type": "date",
+      "entity": "biosafety-approval", "attribute": "deadline" },
+    { "key": "env_rollback", "label": "Command that restores the last known-good environment", "type": "command",
+      "entity": "pipeline-env", "attribute": "procedure" },
+    { "key": "seq_core_contact", "label": "Contact at the sequencing core", "type": "contact",
+      "entity": "seq-core", "attribute": "contact" },
+    { "key": "revision_due_date", "label": "Date the manuscript revision is due", "type": "date",
+      "entity": "revision-analysis", "attribute": "deadline" },
+    { "key": "lab_meeting_day", "label": "Day the lab meeting is held each week", "type": "text",
+      "entity": "lab-meeting", "attribute": "deadline" }
+  ],
+  "uploadDefaults": { "roleSet": ["pi", "incoming_postdoc", "phd_student", "lab_manager", "leaving_postdoc"] },
+  "extraction": {
+    "examples": {
+      "owner": "value \"Asha Verma\", statement \"Asha Verma looks after the greenhouse irrigation timer.\"",
+      "status": "value \"waiting for seedlings\", statement \"The tomato trial is waiting for seedlings.\"",
+      "deadline": "value \"2027-03-04\", statement \"The greenhouse inspection is on 4 March 2027.\"",
+      "location": "value \"Bay 3, greenhouse B\", statement \"The seed trays are kept in Bay 3 of greenhouse B.\"",
+      "procedure": "value \"./tools/water.sh --zone 2\", statement \"Zone 2 is watered by running ./tools/water.sh --zone 2.\"",
+      "access": "value \"GREENHOUSE_DOOR_CODE\", statement \"The side door needs the GREENHOUSE_DOOR_CODE, kept by the site office.\"",
+      "decision": "value \"drip irrigation\", statement \"The team chose drip irrigation over sprinklers.\"",
+      "reason": "value \"sprinklers spread leaf mould\", statement \"Sprinklers were ruled out because they spread leaf mould.\"",
+      "dependency": "value \"needs the soil sensor delivery\", statement \"The humidity study cannot start until the soil sensors are delivered.\"",
+      "contact": "value \"Kiran Dsouza\", statement \"Kiran Dsouza at the seed supplier handles replacement orders.\"",
+      "risk": "value \"seedlings die within a day\", statement \"If the vents fail in a heatwave the seedlings die within a day.\""
+    },
+    "entityHint": "a pinned environment is pipeline-env, not qc-pipeline",
+    "contactExample": "Kiran Dsouza"
+  },
+  "demo": {
+    "dataDir": "data/lab",
+    "today": "2026-11-11T12:00:00+05:30",
+    "title": "University research group",
+    "button": "Open the research-group demo",
+    "blurb": "Farhan, a postdoc, leaves for a new post. The incoming postdoc must take over the analysis pipeline, the sequencing bookings and the approvals.",
+    "pendingText": "Creating your private copy…",
+    "sampleAnswer": "The six excluded samples came from run SR-0391. The sample sheet for that run and the checksum manifest MANIFEST.sha256 are in /project/bio-142/raw_v3.",
+    "expect": { "responsibilities": 10, "claims": [60, 85], "readbackItems": 5, "adapters": true }
+  },
+  "sensitivity": {
+    "finance": ["pi", "lab_manager", "leaving_postdoc"],
+    "hr": ["pi", "lab_manager"],
+    "health": ["pi"]
+  },
+  "forbiddenInCore": ["Farhan", "Menon", "Principal investigator", "Helix", "Nisha"]
+}

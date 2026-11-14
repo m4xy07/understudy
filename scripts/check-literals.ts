@@ -50,13 +50,14 @@ interface RawPack {
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
 /** Role keys, pack ids and proper nouns of every packs/*.json (index.json is not a pack). */
-export function packVocabulary(root: string): LiteralReport["vocabulary"] {
+export function packVocabulary(root: string, onlyPackIds?: readonly string[]): LiteralReport["vocabulary"] {
   const dir = path.join(root, "packs");
   const roleKeys = new Set<string>();
   const packIds = new Set<string>();
   const nouns = new Set<string>();
   for (const name of fs.readdirSync(dir).sort()) {
     if (!name.endsWith(".json") || name === "index.json") continue;
+    if (onlyPackIds && !onlyPackIds.includes(name.replace(/\.json$/, ""))) continue;
     const pack = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8")) as RawPack;
     packIds.add(typeof pack.id === "string" ? pack.id : name.replace(/\.json$/, ""));
     for (const r of pack.roles ?? []) {

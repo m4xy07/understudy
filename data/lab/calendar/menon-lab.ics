@@ -1,0 +1,121 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Menon Lab//Lab Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Menon Lab calendar
+X-WR-TIMEZONE:Asia/Kolkata
+BEGIN:VEVENT
+UID:lab-meeting-2026@menonlab.sils.example
+DTSTAMP:20260608T043000Z
+CREATED:20260608T043000Z
+LAST-MODIFIED:20260608T043000Z
+DTSTART:20260611T043000Z
+DTEND:20260611T053000Z
+RRULE:FREQ=WEEKLY;BYDAY=TH
+SUMMARY:Lab meeting (weekly)
+LOCATION:Seminar room 2
+DESCRIPTION:Lab meeting is held every Thursday at 10:00 in seminar room 2.
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:biosafety-renewal@menonlab.sils.example
+DTSTAMP:20261020T063000Z
+CREATED:20251212T050000Z
+LAST-MODIFIED:20261020T063000Z
+DTSTART;VALUE=DATE:20251210
+DTEND;VALUE=DATE:20251211
+RRULE:FREQ=YEARLY
+SUMMARY:Biosafety committee approval renewal due
+DESCRIPTION:Yearly renewal of the biosafety committee approval for isolate work. This year the renewal is due 10 December 2026.
+ORGANIZER;CN=Farhan Qureshi:mailto:farhan.qureshi@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:seq-slot-2026-11@menonlab.sils.example
+DTSTAMP:20261103T050000Z
+CREATED:20261013T045000Z
+LAST-MODIFIED:20261103T050000Z
+DTSTART:20261126T033000Z
+DTEND:20261126T113000Z
+SUMMARY:Sequencing run: flow cell slot at the sequencing core
+LOCATION:Genomics Core Facility
+DESCRIPTION:The flow cell slot for the next run is 26 November 2026.
+ORGANIZER;CN=Farhan Qureshi:mailto:farhan.qureshi@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:revision-due@menonlab.sils.example
+DTSTAMP:20261027T054500Z
+CREATED:20261027T054500Z
+LAST-MODIFIED:20261027T054500Z
+DTSTART;VALUE=DATE:20261128
+DTEND;VALUE=DATE:20261129
+SUMMARY:Manuscript revision due at the journal
+DESCRIPTION:The revised manuscript is due on 28 November 2026.
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:helix-delivery@menonlab.sils.example
+DTSTAMP:20261029T110000Z
+CREATED:20260916T093000Z
+LAST-MODIFIED:20261029T110000Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Helix Agritech: first dataset delivery
+DESCRIPTION:The first dataset is delivered to Helix on 15 December 2026.
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:dataset-v3-release@menonlab.sils.example
+DTSTAMP:20261020T123000Z
+CREATED:20261020T123000Z
+LAST-MODIFIED:20261020T123000Z
+DTSTART;VALUE=DATE:20261218
+DTEND;VALUE=DATE:20261219
+SUMMARY:Soil reference dataset v3 release
+DESCRIPTION:Release target for dataset v3.
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:farhan-last-day@menonlab.sils.example
+DTSTAMP:20261015T040000Z
+CREATED:20261015T040000Z
+LAST-MODIFIED:20261015T040000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Farhan's last day in the lab
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:first-year-review@menonlab.sils.example
+DTSTAMP:20260928T044500Z
+CREATED:20260928T044500Z
+LAST-MODIFIED:20260928T044500Z
+DTSTART:20261202T083000Z
+DTEND:20261202T103000Z
+SUMMARY:First-year progress review
+LOCATION:Seminar room 1
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:symposium-2026@menonlab.sils.example
+DTSTAMP:20260715T060000Z
+CREATED:20260715T060000Z
+LAST-MODIFIED:20260715T060000Z
+DTSTART;VALUE=DATE:20260908
+DTEND;VALUE=DATE:20260910
+SUMMARY:Soil Microbiome Symposium
+LOCATION:Convention hall
+ORGANIZER;CN=Leela Menon:mailto:leela.menon@sils.example
+END:VEVENT
+BEGIN:VEVENT
+UID:seq-run-2026-09@menonlab.sils.example
+DTSTAMP:20260821T103000Z
+CREATED:20260821T103000Z
+LAST-MODIFIED:20260821T103000Z
+DTSTART:20260901T033000Z
+DTEND:20260901T113000Z
+SUMMARY:Sequencing run: September batch
+LOCATION:Genomics Core Facility
+ORGANIZER;CN=Farhan Qureshi:mailto:farhan.qureshi@sils.example
+END:VEVENT
+END:VCALENDAR

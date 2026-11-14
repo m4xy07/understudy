@@ -1,0 +1,12 @@
+# Request file only. The nightly run does not use this file; it uses env/environment.lock.yml.
+name: soilmeta
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - snakemake=8.20
+  - fastp=0.23
+  - flye=2.9
+  - samtools=1.21
+  - multiqc=1.25

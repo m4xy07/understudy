@@ -1,0 +1,23 @@
+[
+  {
+    "id": "U01FARHAN",
+    "real_name": "Farhan Qureshi",
+    "profile": {
+      "email": "farhan.qureshi@sils.example"
+    }
+  },
+  {
+    "id": "U02LEELA",
+    "real_name": "Leela Menon",
+    "profile": {
+      "email": "leela.menon@sils.example"
+    }
+  },
+  {
+    "id": "U03NISHA",
+    "real_name": "Nisha Iyer",
+    "profile": {
+      "email": "nisha.iyer@sils.example"
+    }
+  }
+]
