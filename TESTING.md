@@ -61,6 +61,19 @@ These are the tests behind "shows each role only what it may see".
 - The New member's compiled handover never contains a canary, and its stub count comes from `count_withheld()`.
 - The same check runs in the app as the **Leak check** grid at the bottom of the Handover page.
 
+## Second setting (Round 3): the research group
+
+The university research group (`packs/lab.json`, `data/lab/`) is tested as one more row of the same suites, never as a special case.
+
+| What | Where | What it proves |
+|---|---|---|
+| Corpus against its answer key, before any model runs | `pnpm tsx scripts/check-demo.ts --pack lab` (then its adapters stage, `scripts/check-demo-adapters.ts`) | The pack loads; 191 segments through the real adapters with 0 rejected rows; 8 planted secrets and 4 contacts masked, credential names kept; 6 canary tokens only in sources with the right role set; every planted sentence is in a masked segment; the footprint and the inventory give exactly the answer key's 10 responsibilities |
+| The whole product on each demo pack, model off, committed cache | `tests/db/pipeline.packs.test.ts` (12 tests per pack) | Every extraction batch replays from the pack's `model_cache.json`; no planted secret is stored; the inventory matches the key; only the leaver answers; only the pack's approver approves; per-role handover with the pack's stub text ("Ask the approver (Principal investigator)."); RLS returns no row with a token outside a role's set; the leak check passes on every surface for every role; read-back asks the pack's items |
+| RLS with each pack's role keys | `tests/db/rls.test.ts` (11 tests per pack) | The policies know no role key: the same fixture passes with the club's keys and the lab's; a role key of another pack reads nothing; the database refuses a snapshot approved by anyone but the workspace's approver |
+| Browser walk of the lab | `tests/e2e/lab-path.spec.ts` | Two demo cards on the landing page; the lab demo opens in one click; the role switcher lists the five lab roles; claims, evaluation (76 planted facts), test, ask as the leaver, review as the PI, handover, read-back with the lab items, restricted stub for the PhD student, leak check |
+| Zero setting-specific core code | `pnpm tsx scripts/check-zero-core.ts`, `tests/pack/zero-core.test.ts`, `pnpm check:literals` | From the git history: the pack's branch changed no core file; the 3 core files changed since are listed in [docs/round3/ZERO_CORE_CHANGES.md](docs/round3/ZERO_CORE_CHANGES.md); no added core line names the lab |
+| Extraction quality on a hold-out | `pnpm tsx scripts/eval.ts --pack lab` → [docs/EVALUATION.lab.md](docs/EVALUATION.lab.md) | Numbers from the first cold run, nothing tuned to this answer key: recall 60.5% (46/76), citations 97.6% exact, 9 false conflicts, supersessions 3/4, planted conflicts 2/3, 0 secrets leaked, 0 restricted violations |
+
 ## The production bug we found and fixed
 
 **Symptom.** On the live Vercel deployment, workspace pages sometimes never finished loading. The HTML stream stayed open until the function timed out, and different pages hung at different times. Local runs talk to Docker Postgres directly, with no pooler in between, so they did not show it.

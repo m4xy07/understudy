@@ -59,7 +59,8 @@ export function checkZeroCore(root: string): ZeroCoreReport {
   }
   const names = (...range: string[]) => git("diff", "--name-only", ...range, "--", ...CORE).split("\n").map((s) => s.trim()).filter(Boolean);
 
-  r.packBranchCore = git("diff", "--name-only", r.base, r.pack, "--", ...CORE, "scripts/seed.ts", "scripts/migrate.ts")
+  // Three dots: what the pack's branch itself changed since it forked, not what main changed meanwhile.
+  r.packBranchCore = git("diff", "--name-only", `${r.base}...${r.pack}`, "--", ...CORE, "scripts/seed.ts", "scripts/migrate.ts")
     .split("\n").map((s) => s.trim()).filter(Boolean);
   if (r.packBranchCore.length) r.problems.push(`the pack's branch changed core files: ${r.packBranchCore.join(", ")}`);
 

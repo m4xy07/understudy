@@ -11,7 +11,7 @@ Every push and pull request to `main` runs the test suites, a production build a
 - **Live app:** https://understudy-lyart.vercel.app
 - **Repository:** https://github.com/m4xy07/understudy
 - **Click-by-click guide:** [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md)
-- **Evaluation report:** [docs/EVALUATION.md](docs/EVALUATION.md)
+- **Evaluation report:** [docs/EVALUATION.md](docs/EVALUATION.md) (robotics club) and [docs/EVALUATION.lab.md](docs/EVALUATION.lab.md) (research group, the hold-out)
 - **Tests:** [TESTING.md](TESTING.md) · **Disclosures:** [DISCLOSURES.md](DISCLOSURES.md)
 
 > **Note on the demo data.** The demo data is synthetic. It contains deliberately planted FAKE secrets (an AWS-style key pair, a GitHub-style token, a password line) so the masking step can be demonstrated; the masking tests add more, including a Slack-style token. None of them is real. The people, the club and the companies are fictional too.
@@ -208,8 +208,11 @@ src/lib/pack/            setting-pack loader and schema
 src/lib/pipeline/        run orchestration across steps
 db/migrations/           0001_core, 0003_attest, 0004_lacuna, 0005_relay
 packs/club.json          the robotics-club setting pack
+packs/lab.json           the research-group setting pack (second setting, no setting-specific core code:
+                         docs/round3/ZERO_CORE_CHANGES.md)
 data/demo/               synthetic exports, sources.json, ground_truth.json, model_cache.json
-scripts/                 migrate, seed, export-cache, precompute, eval, check-demo
+data/lab/                the same for the research group
+scripts/                 migrate, seed, export-cache, precompute, eval, check-demo, check-literals, check-zero-core
 tests/                   vitest suites per module plus db/ (RLS, pipeline, pool)
 docs/                    ARCHITECTURE.md, EVALUATION.md, JUDGE_GUIDE.md, plan/
 ```

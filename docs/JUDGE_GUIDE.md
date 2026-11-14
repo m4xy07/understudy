@@ -78,6 +78,18 @@ Optional: **Download handover (Markdown)** exports the current role's view.
 
 ---
 
+### A second setting: the research-group demo
+
+The landing page has two cards. **Open the research-group demo** runs the same seven steps on a different organisation, with no change to the product's code: one pack file (`packs/lab.json`) and one data folder.
+
+- **The story.** A fictional university research group. Farhan, a postdoc, leaves for a new post. The incoming postdoc takes over the analysis pipeline, the sequencing bookings and the approvals.
+- **Roles in "Viewing as":** Principal investigator (the approver; you start here), Incoming postdoc (the successor), PhD student (sees least), Lab manager, Farhan (outgoing postdoc).
+- **Sources:** three Slack channels (#lab-general, #pipeline, #lab-admin), a git repository, a lab notebook, a task sheet and a calendar. No WhatsApp.
+- **Look for:** different checklists on Test (for example "Dataset provenance" and "Environment pin and rollback"); the stub line reads "N restricted items. Ask the approver (Principal investigator)."; the read-back asks for the biosafety renewal date, the environment restore command, the sequencing core contact, the revision due date and the lab meeting day; the leak check scans for the lab's own six canary tokens.
+- **Evaluation** (button on the Claims page) scores this workspace against the lab's answer key. The lab is our hold-out: nothing was tuned to it. Numbers: [EVALUATION.lab.md](EVALUATION.lab.md).
+
+---
+
 **Want to try your own files?** On the landing page, press **Start empty and upload my files**. Connect accepts a WhatsApp `.txt`, Slack JSON, a task board CSV, Markdown notes, an `.ics` calendar, or a public GitHub repo URL (5 MB per file). Please do not upload real or confidential data.
 
 **If something looks stuck:** the run panel on Connect shows each step's status and any error. If the model is unreachable, the page says "Model unavailable" and the rule-based steps still run.
