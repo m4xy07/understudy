@@ -199,7 +199,7 @@ describe("recording a finding", () => {
     expect(String(seg.text)).toContain(claim.citations[0].quote!);
     expect(claim.citations[0]).toMatchObject({ quote: `Answer: ${GT.finding.date}`, accepted: true, exact: true });
     // The demo example uses a fixed time, so the claim id repeats in every demo workspace.
-    expect(new Date(seg.ts).toISOString()).toBe("2026-11-25T06:30:00.000Z");
+    expect(new Date(seg.ts).toISOString()).toBe("2026-11-12T06:30:00.000Z");
 
     // Nothing moves until the approver decides.
     const again = await runTest(ws, "tech_lead", { model: "off", trigger: "pending check" });

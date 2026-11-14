@@ -100,7 +100,8 @@ export function exampleFinding(pack: Pick<ResolvedPack, "id" | "demo">): Example
       const today = new Date(pack.demo.today);
       const ts = typeof raw.ts === "string" && !Number.isNaN(Date.parse(raw.ts))
         ? new Date(raw.ts).toISOString()
-        : Number.isNaN(today.getTime()) ? null : new Date(today.getTime() + 14 * 86_400_000).toISOString();
+        // One day after the demo's "today": the date it names is still ahead, as a real finding's would be.
+        : Number.isNaN(today.getTime()) ? null : new Date(today.getTime() + 86_400_000).toISOString();
       out = {
         responsibility: typeof raw.responsibility === "string" ? raw.responsibility : null,
         entity: typeof raw.entity === "string" ? raw.entity : null,
@@ -158,7 +159,7 @@ export interface OpenGapRow {
 export interface FirstWeeks {
   hasSnapshot: boolean;
   latestVersion: number | null;
-  viewer: "successor" | "approver" | "leaver" | "other";
+  viewer: "successor" | "approver" | "leaving" | "other";
   blocking: OpenGapRow[];
   /** Non-blocking gaps from the successor's test. Empty for roles that may not see them. */
   other: OpenGapRow[];
@@ -220,7 +221,7 @@ async function snapshotVersions(ws: string): Promise<Map<string, number>> {
 function viewerKind(role: RoleKey, pack: ResolvedPack): FirstWeeks["viewer"] {
   if (role === pack.successorRole) return "successor";
   if (role === pack.approverRole) return "approver";
-  if (role === pack.leaverRole) return "leaver";
+  if (role === pack.leaverRole) return "leaving";
   return "other";
 }
 
