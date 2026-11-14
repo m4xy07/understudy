@@ -94,10 +94,12 @@ async function Ask({ params }: { params: WsParams }) {
           isApprover={role === approver} isLeaver={isLeaver}
         />
         <section className="card mb-5 p-4" aria-label="Successor scores">
-          <p className="eyebrow">{roleLabel(successor, pack)} now</p>
-          <p className="mt-1 text-lg">
-            <ScoreLine scores={latest?.scores ?? null} provisional={latest?.provisional ?? true} />
-          </p>
+          <div role="status" aria-atomic="true">
+            <p className="eyebrow">{roleLabel(successor, pack)} now</p>
+            <p className="mt-1 text-lg">
+              <ScoreLine scores={latest?.scores ?? null} provisional={latest?.provisional ?? true} />
+            </p>
+          </div>
         </section>
         {comparison && <BeforeAfter comparison={comparison} leaver={leaverPerson} approver={approverLabel} />}
         <NeighbourQuestions
@@ -135,16 +137,19 @@ async function Ask({ params }: { params: WsParams }) {
       </PageHead>
 
       <section className="card mb-5 p-4" aria-label="Successor scores">
-        <p className="eyebrow">{roleLabel(successor, pack)} now</p>
-        <p className="mt-1 text-lg">
-          <ScoreLine scores={latest?.scores ?? null} provisional={latest?.provisional ?? true} />
-        </p>
-        {answered[0]?.scoreDelta && (
-          <p className="mt-1 text-sm text-ink-2">
-            <span className="text-muted">Last answer: </span>
-            <span className="mono">{answered[0].scoreDelta}</span>
+        {/* A live region: after an answer is saved the re-test changes this text and it is read out. */}
+        <div role="status" aria-atomic="true">
+          <p className="eyebrow">{roleLabel(successor, pack)} now</p>
+          <p className="mt-1 text-lg">
+            <ScoreLine scores={latest?.scores ?? null} provisional={latest?.provisional ?? true} />
           </p>
-        )}
+          {answered[0]?.scoreDelta && (
+            <p className="mt-1 text-sm text-ink-2">
+              <span className="text-muted">Last answer: </span>
+              <span className="mono">{answered[0].scoreDelta}</span>
+            </p>
+          )}
+        </div>
       </section>
 
       {!isLeaver && (
@@ -169,7 +174,7 @@ async function Ask({ params }: { params: WsParams }) {
         </EmptyState>
       ) : (
         <>
-          <h2 className="mb-2 text-xl">Open questions ({open.length})</h2>
+          <h2 id="open-questions-h" tabIndex={-1} className="mb-2 text-xl">Open questions ({open.length})</h2>
           {open.length === 0 && <Notice tone="info">Every question is answered. Re-run the test to look for new gaps.</Notice>}
           <ol className="grid gap-3">
             {open.map((q) => {
@@ -192,7 +197,7 @@ async function Ask({ params }: { params: WsParams }) {
                     Why asked: {whyAsked(q)}
                   </p>
                   {isLeaver && (
-                    <ActionForm action={answerQuestionAction} hidden={{ ws: id, questionId: q.id }} className="mt-3 grid gap-2">
+                    <ActionForm action={answerQuestionAction} hidden={{ ws: id, questionId: q.id }} className="mt-3 grid gap-2" focusOnRemove="open-questions-h">
                       <AnswerBox sample={q.id === sampleFor ? pack.demo?.sampleAnswer : undefined} />
                       <fieldset className="text-sm">
                         <legend className="text-muted">Narrow who can see this answer (untick to hide it from a role)</legend>
