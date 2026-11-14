@@ -2,34 +2,10 @@
   "about": "Demo data for unreachable-leaver recovery (Round 3, improvement 1). Read by src/lib/lacuna/recovery.ts for demo workspaces only. Sample answers are matched to an asked step by entity, check key and the person's display name.",
   "sampleAnswers": [
     {
-      "entity": "firmware-deploy",
-      "checkKey": "credential_owner",
-      "person": "Arjun Rao",
-      "text": "Priya has it. She typed it on the lab laptop herself each time. I asked on 4 Nov and never got it."
-    },
-    {
       "entity": "team-selection",
       "checkKey": "owner",
-      "person": "Rohan Mehta",
-      "text": "Arjun will own drive team selection. We agreed it at the core meeting on 11 Nov."
-    },
-    {
-      "entity": "lab-booking",
-      "checkKey": "next_due_date",
-      "person": "Rohan Mehta",
-      "text": "I think it is 1 Dec, but I only heard that from Kabir."
-    },
-    {
-      "entity": "title-sponsor",
-      "checkKey": "open_commitments",
-      "person": "Ananya Iyer",
-      "text": "Vertex also expects a banner at the competition and a report with photos afterwards."
-    },
-    {
-      "entity": "title-sponsor",
-      "checkKey": "open_commitments",
-      "person": "Rohan Mehta",
-      "text": "Vertex also expects a banner at the competition and a report with photos afterwards. Ananya has the details."
+      "person": "Arjun Rao",
+      "text": "Rohan told me at the core meeting on 11 Nov that I take over drive team selection. Nothing is written down yet."
     },
     {
       "entity": "lab-late-access",
@@ -39,45 +15,268 @@
     },
     {
       "entity": "competition",
-      "checkKey": "options_considered",
+      "checkKey": "current_state",
       "person": "Arjun Rao",
-      "text": "Two venues were on the table: Hall B at the Sports Complex and the Main Auditorium. Hall B won because the auditorium was already booked that week."
+      "text": "As far as I know the venue is not final. Hall B at the Sports Complex was preferred because of the power for the arena lights. I was not in the last call about it."
+    },
+    {
+      "entity": "lab-booking",
+      "checkKey": "consequence_if_missed",
+      "person": "Rohan Mehta",
+      "text": "If we miss it, the Saturday slot goes to another club. Mr. Pawar told me that once."
+    },
+    {
+      "entity": "entry-fee",
+      "checkKey": "consequence_if_missed",
+      "person": "Ananya Iyer",
+      "text": "A late registration costs double. I have that from the organisers' fee sheet, not from Priya."
     }
   ],
   "declineSample": {
-    "entity": "domain-dns",
-    "checkKey": "how_to_do_it",
+    "entity": "lab-booking",
+    "checkKey": "consequence_if_missed",
     "person": "Arjun Rao",
     "text": "I don't know"
   },
   "leaverAnswers": [
-    { "entity": "firmware-deploy", "checkKey": "credential_owner", "text": "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat." },
-    { "entity": "firmware-deploy", "checkKey": "how_to_verify", "text": "Open the Actions tab: the last green run is the build the latest release holds. Main has been red since 5 Nov, so the release is still the 3 Nov build." },
-    { "entity": "lab-booking", "checkKey": "next_due_date", "text": "The next-term lab booking form must reach Mr. Pawar by 1 Dec 2026. Kabir is right; 5 Dec was last year's date." },
-    { "entity": "domain-dns", "checkKey": "how_to_do_it", "text": "Log in to NameHarbor with the club account, lower the TTL a week before, press Renew for one year and pay with the club card. Ananya has the card." },
-    { "entity": "website-registration", "checkKey": "next_concrete_step", "text": "The one step left before launch is wiring the confirmation email template in website/register.js and sending a test registration." },
-    { "entity": "lab-late-access", "checkKey": "next_due_date", "text": "The next late-access evening is 19 Nov 2026. Message Mr. Pawar by Monday 16 Nov." },
-    { "entity": "lab-late-access", "checkKey": "how_to_do_it", "text": "Message Mr. Pawar two days before, then sign the late register at the security gate. There is no form." },
-    { "entity": "team-selection", "checkKey": "owner", "text": "Arjun Rao decides drive team selection from now on, with Rohan signing off the final list." },
-    { "entity": "team-selection", "checkKey": "deadline", "text": "Trials are on 22 Nov 2026. Tanvi's 29 Nov was the old plan before the venue moved." },
-    { "entity": "title-sponsor", "checkKey": "open_commitments", "text": "Still open for Vertex: the logo on the robot shell, a banner at the competition and a sponsorship report with photos afterwards." },
-    { "entity": "entry-fee", "checkKey": "next_due_date", "text": "The entry fee is due on 25 Nov 2026. Dev's 28 Nov is the late date with the double fee." }
+    {
+      "entity": "firmware-deploy",
+      "checkKey": "credential_owner",
+      "text": "Arjun Rao holds it now; I handed it over in person on 9 Nov. Ask him, never post it in a chat."
+    },
+    {
+      "entity": "firmware-deploy",
+      "checkKey": "how_to_verify",
+      "text": "Open the Actions tab: the last green run is the build the latest release holds. Main has been red since 5 Nov, so the release is still the 3 Nov build."
+    },
+    {
+      "entity": "lab-booking",
+      "checkKey": "next_due_date",
+      "text": "The next-term lab booking form must reach Mr. Pawar by 1 Dec 2026. Kabir is right; 5 Dec was last year's date."
+    },
+    {
+      "entity": "domain-dns",
+      "checkKey": "how_to_do_it",
+      "text": "Log in to NameHarbor with the club account, lower the TTL a week before, press Renew for one year and pay with the club card. Ananya has the card."
+    },
+    {
+      "entity": "website-registration",
+      "checkKey": "next_concrete_step",
+      "text": "The one step left before launch is wiring the confirmation email template in website/register.js and sending a test registration."
+    },
+    {
+      "entity": "lab-late-access",
+      "checkKey": "next_due_date",
+      "text": "The next late-access evening is 19 Nov 2026. Message Mr. Pawar by Monday 16 Nov."
+    },
+    {
+      "entity": "lab-late-access",
+      "checkKey": "how_to_do_it",
+      "text": "Message Mr. Pawar two days before, then sign the late register at the security gate. There is no form."
+    },
+    {
+      "entity": "team-selection",
+      "checkKey": "owner",
+      "text": "Arjun Rao decides drive team selection from now on, with Rohan signing off the final list."
+    },
+    {
+      "entity": "team-selection",
+      "checkKey": "deadline",
+      "text": "Trials are on 22 Nov 2026. Tanvi's 29 Nov was the old plan before the venue moved."
+    },
+    {
+      "entity": "title-sponsor",
+      "checkKey": "open_commitments",
+      "text": "Still open for Vertex: the logo on the robot shell, a banner at the competition and a sponsorship report with photos afterwards."
+    },
+    {
+      "entity": "entry-fee",
+      "checkKey": "next_due_date",
+      "text": "The entry fee is due on 25 Nov 2026. Dev's 28 Nov is the late date with the double fee."
+    },
+    {
+      "entity": "entry-fee",
+      "checkKey": "consequence_if_missed",
+      "text": "If the entry fee is paid late, registration costs double."
+    },
+    {
+      "entity": "lab-late-access",
+      "checkKey": "cadence",
+      "text": "Almost every week in build season: one evening a week until the competition."
+    },
+    {
+      "entity": "lab-booking",
+      "checkKey": "consequence_if_missed",
+      "text": "If the booking is missed, the Saturday slot goes to another club for the term."
+    },
+    {
+      "entity": "competition",
+      "checkKey": "current_state",
+      "text": "The venue is not final. Hall B at the Sports Complex is preferred because it has 3-phase power for the arena lights; the Main Auditorium is the other option."
+    }
   ],
-  "withLeaver": null,
-  "withLeaverNote": "Filled by the precompute step with measureLeaverRun(ws) on a scratch demo workspace: the real stored run in which the leaver answers every open question. While null, the panel uses the projection worked out by the scoring rules and says so.",
+  "withLeaver": {
+    "baseline": {
+      "b": 4,
+      "c": 0.7608695652173914,
+      "k": 1
+    },
+    "scores": {
+      "b": 2,
+      "c": 0.9521739130434783,
+      "k": 0.7990867579908676
+    },
+    "worked": 9,
+    "closed": 6,
+    "partly": 3,
+    "open": 0,
+    "mix": {
+      "from_record": 0.7534246575342466,
+      "leaver_said": 0.2009132420091324,
+      "corroborated": 0.045662100456621
+    }
+  },
+  "withLeaverNote": "Filled at the final precompute with measureLeaverRun(ws) on a scratch demo workspace (pnpm tsx scripts/demo-state.ts --write-leaver): the real stored run in which the leaver answers every open question with leaverAnswers. The panel uses it only when the workspace's baseline scores and gap count match it; otherwise it falls back to the projection worked out by the scoring rules and says so.",
   "expected": {
     "status": "measured",
     "measuredOn": "the planted claims of ground_truth.json with the deterministic stand-in (tests/db/recovery.test.ts). Responsibility keys are the ones the inventory assigns in a workspace, shown with their entity.",
     "gaps": [
-      { "entity": "website-registration", "checkKey": "next_concrete_step", "asked": [], "skippedNoAccess": [], "noSeat": ["Sneha Joshi"], "trace": "commit_sequence_unfinished", "options": "one lead from the trace", "endState": "partly_answered_inferred" },
-      { "entity": "firmware-deploy", "checkKey": "credential_owner", "asked": ["Arjun Rao"], "skippedNoAccess": [], "noSeat": [], "trace": "not_applicable_who", "options": "lead from Arjun's answer", "endState": "partly_answered_second_hand" },
-      { "entity": "lab-late-access", "checkKey": "next_due_date", "asked": ["Rohan Mehta"], "skippedNoAccess": [], "noSeat": [], "trace": "none", "options": "none", "endState": "still_open" },
-      { "entity": "team-selection", "checkKey": "owner", "asked": ["Rohan Mehta", "Arjun Rao"], "skippedNoAccess": [], "noSeat": ["Kabir Sethi", "Sneha Joshi"], "trace": "not_applicable_who", "options": "lead from Rohan's answer", "endState": "partly_answered_second_hand" },
-      { "entity": "entry-fee", "checkKey": "next_due_date", "asked": ["Ananya Iyer"], "skippedNoAccess": [], "noSeat": ["Dev Malhotra", "Tanvi Deshpande"], "trace": "none", "options": ["2026-11-25", "2026-11-28"], "endState": "still_open", "note": "The tech lead cannot see the finance side of this conflict, so every rung reads 'Nothing here for your role.' for that role." },
-      { "entity": "lab-booking", "checkKey": "next_due_date", "asked": ["Rohan Mehta", "Arjun Rao"], "skippedNoAccess": [], "noSeat": ["Sneha Joshi", "Kabir Sethi"], "trace": "calendar_cadence_without_upcoming_date", "options": ["2026-12-01", "2026-12-05", "2026-12-14 (pattern)"], "endState": "open_unless_rohan_answers" },
-      { "entity": "lab-late-access", "checkKey": "how_to_do_it", "asked": ["Rohan Mehta"], "skippedNoAccess": [], "noSeat": [], "trace": "none", "options": "none", "endState": "closed_second_hand_if_rohan_answers" },
-      { "entity": "team-selection", "checkKey": "deadline", "asked": ["Rohan Mehta", "Arjun Rao"], "skippedNoAccess": [], "noSeat": ["Kabir Sethi", "Sneha Joshi"], "trace": "none", "options": ["2026-11-22", "2026-11-29"], "endState": "still_open" },
-      { "entity": "title-sponsor", "checkKey": "open_commitments", "asked": ["Rohan Mehta"], "skippedNoAccess": ["Ananya Iyer"], "noSeat": [], "trace": "none", "options": "none", "endState": "unchanged_for_tech_lead" }
+      {
+        "entity": "website-registration",
+        "checkKey": "next_concrete_step",
+        "asked": [],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Sneha Joshi"
+        ],
+        "trace": "commit_sequence_unfinished",
+        "options": "one lead from the trace",
+        "endState": "partly_answered_inferred"
+      },
+      {
+        "entity": "firmware-deploy",
+        "checkKey": "credential_owner",
+        "asked": [
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [],
+        "trace": "not_applicable_who",
+        "options": "lead from Arjun's answer",
+        "endState": "partly_answered_second_hand"
+      },
+      {
+        "entity": "lab-late-access",
+        "checkKey": "next_due_date",
+        "asked": [
+          "Rohan Mehta"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [],
+        "trace": "none",
+        "options": "none",
+        "endState": "still_open"
+      },
+      {
+        "entity": "team-selection",
+        "checkKey": "owner",
+        "asked": [
+          "Rohan Mehta",
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Kabir Sethi",
+          "Sneha Joshi"
+        ],
+        "trace": "not_applicable_who",
+        "options": "lead from Rohan's answer",
+        "endState": "partly_answered_second_hand"
+      },
+      {
+        "entity": "entry-fee",
+        "checkKey": "next_due_date",
+        "asked": [
+          "Ananya Iyer"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Dev Malhotra",
+          "Tanvi Deshpande"
+        ],
+        "trace": "none",
+        "options": [
+          "2026-11-25",
+          "2026-11-28"
+        ],
+        "endState": "still_open",
+        "note": "The tech lead cannot see the finance side of this conflict, so every rung reads 'Nothing here for your role.' for that role."
+      },
+      {
+        "entity": "lab-booking",
+        "checkKey": "next_due_date",
+        "asked": [
+          "Rohan Mehta",
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Sneha Joshi",
+          "Kabir Sethi"
+        ],
+        "trace": "calendar_cadence_without_upcoming_date",
+        "options": [
+          "2026-12-01",
+          "2026-12-05",
+          "2026-12-14 (pattern)"
+        ],
+        "endState": "open_unless_rohan_answers"
+      },
+      {
+        "entity": "lab-late-access",
+        "checkKey": "how_to_do_it",
+        "asked": [
+          "Rohan Mehta"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [],
+        "trace": "none",
+        "options": "none",
+        "endState": "closed_second_hand_if_rohan_answers"
+      },
+      {
+        "entity": "team-selection",
+        "checkKey": "deadline",
+        "asked": [
+          "Rohan Mehta",
+          "Arjun Rao"
+        ],
+        "skippedNoAccess": [],
+        "noSeat": [
+          "Kabir Sethi",
+          "Sneha Joshi"
+        ],
+        "trace": "none",
+        "options": [
+          "2026-11-22",
+          "2026-11-29"
+        ],
+        "endState": "still_open"
+      },
+      {
+        "entity": "title-sponsor",
+        "checkKey": "open_commitments",
+        "asked": [
+          "Rohan Mehta"
+        ],
+        "skippedNoAccess": [
+          "Ananya Iyer"
+        ],
+        "noSeat": [],
+        "trace": "none",
+        "options": "none",
+        "endState": "unchanged_for_tech_lead"
+      }
     ],
     "skips": [
       {
@@ -96,20 +295,69 @@
       "Rebuilt from RoboClub calendar (three lab bookings, 7 and 11 weeks apart)"
     ],
     "scoresOnPlantedClaims": [
-      { "when": "before the switch", "b": 7, "c": "68%", "k": "100%" },
-      { "when": "after the switch (traces stored)", "b": 7, "c": "70%", "k": "97%" },
-      { "when": "after Arjun's sample on firmware deploy, credential owner", "b": 7, "c": "72%", "k": "94%" },
-      { "when": "after Rohan's sample on drive team selection, owner", "b": 7, "c": "75%", "k": "91%" },
-      { "when": "after Rohan's sample on lab booking, next due date", "b": 7, "c": "77%", "k": "89%" },
-      { "when": "after Rohan's sample on late-night lab access, how to do it (weight 3, closes)", "b": 7, "c": "79%", "k": "86%" },
-      { "when": "after Rohan's sample on the sponsor's open commitments (unchanged for the tech lead)", "b": 7, "c": "79%", "k": "86%" }
+      {
+        "when": "before the switch",
+        "b": 7,
+        "c": "68%",
+        "k": "100%"
+      },
+      {
+        "when": "after the switch (traces stored)",
+        "b": 7,
+        "c": "70%",
+        "k": "97%"
+      },
+      {
+        "when": "after Arjun's sample on firmware deploy, credential owner",
+        "b": 7,
+        "c": "72%",
+        "k": "94%"
+      },
+      {
+        "when": "after Rohan's sample on drive team selection, owner",
+        "b": 7,
+        "c": "75%",
+        "k": "91%"
+      },
+      {
+        "when": "after Rohan's sample on lab booking, next due date",
+        "b": 7,
+        "c": "77%",
+        "k": "89%"
+      },
+      {
+        "when": "after Rohan's sample on late-night lab access, how to do it (weight 3, closes)",
+        "b": 7,
+        "c": "79%",
+        "k": "86%"
+      },
+      {
+        "when": "after Rohan's sample on the sponsor's open commitments (unchanged for the tech lead)",
+        "b": 7,
+        "c": "79%",
+        "k": "86%"
+      }
     ],
     "panelOnPlantedClaims": {
-      "ifTheLeaverAnswered": { "worked": 9, "closed": 9, "b": 1, "c": "100%", "k": "81%" },
-      "withoutTheLeaver": { "worked": 9, "closed": 1, "partly": 5, "open": 3, "b": 7, "c": "79%", "k": "86%" }
+      "ifTheLeaverAnswered": {
+        "worked": 9,
+        "closed": 9,
+        "b": 1,
+        "c": "100%",
+        "k": "81%"
+      },
+      "withoutTheLeaver": {
+        "worked": 9,
+        "closed": 1,
+        "partly": 5,
+        "open": 3,
+        "b": 7,
+        "c": "79%",
+        "k": "86%"
+      }
     },
     "notes": [
-      "With model extraction the gap list is different from the planted one and will change again with the extraction work, so the sample answers above cover more gaps than any one run asks. On the model run of 14 Nov the ten gaps were: late-night lab access next due date; drive team selection owner and deadline; entry fee next due date and cadence; lab booking next due date and consequence if missed; sponsor open commitments; competition options considered; drivetrain order who reviews it. Three samples applied (Rohan on drive team owner, lab booking date and sponsor commitments) and Arjun's sample on the competition options closes that gap.",
+      "With model extraction the gap list is different from the planted one, so the sample answers follow the cached demo run, not the planted list. On the final precompute (14 Nov 2026, extraction v2) the nine gaps on the ladder are: firmware deploy credential owner; late-night lab access next due date, cadence and how to do it; drive team selection owner and deadline; competition current state; entry fee consequence if missed; lab booking consequence if missed. Every sample answer above matches a step that run asks: Arjun Rao (incoming tech lead) on the drive team owner and the competition state, Rohan Mehta (club president) on late-night access and the lab booking, Ananya Iyer (treasurer) on the entry fee. Arjun is also asked who holds the firmware credential; that step has no sample, because all he can say is that Priya still has it, and the stand-in successor rightly reads that as still missing. The tech lead is skipped for no access on the drive team deadline (one side of it is restricted).",
       "The run history trace and the workflow trace always appear under Rebuilt procedures. They serve a gap only when firmware deploy 'How to verify' is open in the run."
     ]
   }

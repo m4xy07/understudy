@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-14T06:28:11.303Z",
+ "generatedAt": "2026-11-14T07:46:38.723Z",
  "modelTag": "qwen/qwen3-32b@openrouter.ai",
  "pack": "club",
  "classifier": {
@@ -23,7 +23,7 @@
     "byModel": 1,
     "held": 0,
     "missed": 1,
-    "wronglyLimited": 0
+    "wronglyLimited": 1
    },
    {
     "category": "health",
@@ -35,11 +35,11 @@
     "wronglyLimited": 0
    }
   ],
-  "precision": 0.9285714285714286,
+  "precision": 0.8666666666666667,
   "recall": 0.7222222222222222,
   "recallRulesOnly": 0.5,
   "heldModelOff": 6,
-  "wronglyLimited": 1,
+  "wronglyLimited": 2,
   "primaryCases": {
    "caught": 3,
    "of": 3
@@ -81,10 +81,15 @@
     "id": "ev-027",
     "text": "Priya paid Rs 450 for the lab booking deposit, I will reimburse her on Monday.",
     "stage": "rule"
+   },
+   {
+    "id": "ev-035",
+    "text": "Arjun was late again today, the arena setup started without him 😂",
+    "stage": "model"
    }
   ],
   "modelCalls": 1,
-  "ms": 25
+  "ms": 4060
  },
  "detector": {
   "rewordings": 36,
@@ -131,44 +136,38 @@
   }
  },
  "grid": {
-  "checks": 85,
+  "checks": 94,
   "failed": 0,
-  "textsChecked": 5738,
+  "textsChecked": 8485,
   "tokenLeaks": 0,
   "probeLeaks": 0,
-  "unconfirmed": 0,
-  "judgeCalls": 197,
+  "unconfirmed": 4,
+  "judgeCalls": 256,
   "judgeFailed": 0,
-  "judgeWithdrawn": 12,
-  "notBuilt": [
-   "People graph",
-   "Neighbour questions",
-   "Traces",
-   "Ranked options",
-   "What changed"
-  ]
+  "judgeWithdrawn": 41,
+  "notBuilt": []
  },
  "modelCallAudit": {
-  "calls": 25,
+  "calls": 31,
   "violations": 0
  },
  "withheld": {
   "president": 0,
-  "tech_lead": 22,
-  "new_member": 37,
-  "treasurer": 22,
-  "leaver": 3
+  "tech_lead": 32,
+  "new_member": 44,
+  "treasurer": 20,
+  "leaver": 4
  },
  "scores": {
   "tech_lead": {
-   "b": 5,
-   "c": 0.7130434782608696,
-   "k": 0.9695121951219512
+   "b": 3,
+   "c": 0.7608695652173914,
+   "k": 1
   },
   "new_member": {
-   "b": 6,
-   "c": 0.7053571428571429,
-   "k": 0.9683544303797469
+   "b": 5,
+   "c": 0.7391304347826086,
+   "k": 1
   }
  },
  "limited": {
