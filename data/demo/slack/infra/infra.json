@@ -37,7 +37,8 @@
   {
     "ts": "1783348800.000800",
     "user": "U04ARJUN",
-    "text": "ok"
+    "text": "ok",
+    "thread_ts": "1783348200.000700"
   },
   {
     "ts": "1783855800.000900",
@@ -162,7 +163,8 @@
   {
     "ts": "1789923300.003200",
     "user": "U04ARJUN",
-    "text": "saving this"
+    "text": "saving this",
+    "thread_ts": "1789923000.003100"
   },
   {
     "ts": "1790343000.003300",
@@ -173,6 +175,12 @@
     "ts": "1790343300.003400",
     "user": "U01PRIYA",
     "text": "Renewal is a few clicks on the NameHarbor dashboard, I'll show whoever takes over."
+  },
+  {
+    "ts": "1790344200.003450",
+    "user": "U04ARJUN",
+    "text": "Can you show me before you leave?",
+    "thread_ts": "1790343300.003400"
   },
   {
     "ts": "1790425800.003500",
@@ -253,5 +261,10 @@
     "ts": "1794324600.005000",
     "user": "U01PRIYA",
     "text": "Encoder filter tuned and merged"
+  },
+  {
+    "ts": "1794327000.005100",
+    "user": "U04ARJUN",
+    "text": "Actions shows red on the last few pushes to main. Not sure which build the release page has now."
   }
 ]
