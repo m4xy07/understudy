@@ -9,6 +9,14 @@
 // The re-test of the answered responsibility cannot replay: its prompt holds the new answer claim,
 // whose id comes from the answer's time. Every other responsibility replays.
 // The sample leaver answer is the pack's demo.sampleAnswer.
+// Round 3 paths, each on its own fresh demo workspace so they start where a judge starts (the
+// pipeline replays from the rows step 1 just made), twice, exporting the prompts both passes sent:
+//  * recovery (packs whose demo has recovery samples, <demo.dataDir>/recovery.json): the approver
+//    marks the leaver as unreachable, the ladder is built (traces), and each sample neighbour
+//    answer is applied (precomputeRecovery);
+//  * living handover (packs whose answer key has an example finding): tier A approved, every
+//    blocking gap planned, snapshot v1, the successor records the example finding, the approver
+//    approves it (the re-test of the affected responsibility) and v2 is released.
 // Usage: pnpm tsx scripts/precompute.ts [--pack <id>] [--keep]
 import "./load-env";
 import fs from "node:fs";
@@ -18,7 +26,9 @@ import { createDemoWorkspace } from "@/lib/pipeline/ingest";
 import { runToEnd, SCRIPT_RUN } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
-import { answerQuestion } from "@/lib/lacuna";
+import { answerQuestion, listBlockingGaps, precomputeRecovery, recoverySamples, savePlanItem } from "@/lib/lacuna";
+import { approveSnapshot, bulkApprove } from "@/lib/relay";
+import { decideFinding, exampleFinding, firstWeeks, recordFinding } from "@/lib/relay/living";
 import { getLatestTestRun, listGapQuestions } from "@/lib/db/queries";
 import { modelAvailable, modelTag, startRecording, stopRecording, type CallRecord } from "@/lib/model/client";
 import { defaultPackId, getPack } from "@/lib/pack";
@@ -107,6 +117,78 @@ async function runOnce(label: string, allKeys: Set<string>) {
   return { ws, pipelineMs, pipeRec, answerRec, answerMs, claims, scores, questions, evaluation };
 }
 
+/** A fresh demo workspace with the pipeline run (replayed from the cache after run 1). */
+async function freshDemo(): Promise<string> {
+  const ws = (await createDemoWorkspace(pack.id)).id;
+  await runToEnd(ws, SCRIPT_RUN);
+  return ws;
+}
+
+/** Recovery on a fresh demo: switch on, ladder, sample neighbour answers. Null when the pack has no samples. */
+async function recoveryOnce(label: string): Promise<{ ws: string; rec: CallRecord } | null> {
+  const ws = await freshDemo();
+  const samples = await recoverySamples(ws);
+  if (samples.answers.length === 0 && !samples.decline) {
+    await purge(ws);
+    return null;
+  }
+  const rec = startRecording();
+  const t0 = Date.now();
+  try {
+    const r = await precomputeRecovery(ws);
+    console.log(`[${label}] recovery ${ws}: ${r.gaps} gaps on the ladder, ${r.answered} sample answers, ${r.declined} declined in ${s(Date.now() - t0)}; ${calls(rec)}`);
+  } finally {
+    stopRecording();
+  }
+  return { ws, rec };
+}
+
+/** The living-handover demo path on a fresh demo. Null when the answer key has no example finding. */
+async function findingOnce(label: string): Promise<{ ws: string; rec: CallRecord } | null> {
+  if (!exampleFinding(pack)) return null;
+  const ws = await freshDemo();
+  const approver = pack.approverRole;
+  const successor = pack.successorRole;
+  const due = new Date(Date.parse(pack.demo!.today) + 14 * 86_400_000).toISOString().slice(0, 10);
+  const must = <T extends { ok: boolean }>(what: string, r: T): Extract<T, { ok: true }> => {
+    if (!r.ok) throw new Error(`${what}: ${(r as { error?: string }).error ?? "refused"}`);
+    return r as Extract<T, { ok: true }>;
+  };
+  must("approve tier A", await bulkApprove(ws, approver));
+  for (const g of await listBlockingGaps(ws)) {
+    must("plan", await savePlanItem(ws, {
+      responsibilityId: g.responsibilityId, checkKey: g.checkKey,
+      owner: "The successor", dueDate: due, riskNote: "Known gap; checked weekly.",
+    }, approver));
+  }
+  must("snapshot v1", await approveSnapshot(ws, approver));
+  const fw = await firstWeeks(ws, successor);
+  const row = [...fw.blocking, ...fw.other].find((g) => g.example && g.canRecord);
+  if (!row?.example) {
+    console.warn(`[${label}] finding ${ws}: the example finding's gap is not open for ${successor}; nothing to precompute`);
+    await purge(ws);
+    return null;
+  }
+  const rec = startRecording();
+  const t0 = Date.now();
+  try {
+    const recorded = must("record finding", await recordFinding(ws, successor, {
+      responsibilityId: row.responsibilityId, checkKey: row.checkKey,
+      answer: row.example.answer, note: row.example.note, link: "", attachment: null, narrowRoles: null, example: true,
+    }));
+    const decided = must("approve finding", await decideFinding(ws, approver, recorded.findingId, "approved", {
+      evidenceOpened: true, note: "Checked against the evidence.",
+    }));
+    console.log(
+      `[${label}] finding ${ws}: ${row.responsibilityKey}.${row.checkKey} approved in ${s(Date.now() - t0)}; ${calls(rec)}; ` +
+        (decided.snapshot ? `snapshot v${decided.snapshot.version} ${decided.delta ?? ""}` : `not released: ${decided.blocked ?? "no snapshot"}`),
+    );
+  } finally {
+    stopRecording();
+  }
+  return { ws, rec };
+}
+
 function fingerprint(rows: Record<string, unknown>[]): string {
   return JSON.stringify(rows.map((r) => [r.id, r.value, r.state, r.trust, r.superseded_by, r.support_check, r.tier]));
 }
@@ -124,6 +206,23 @@ async function main() {
   const stableRetest = [...cold.answerRec.keys].filter((k) => warm.answerRec.keys.has(k) && !keys.has(k));
   for (const k of stableRetest) keys.add(k);
   console.log(`answer re-test prompts sent by both runs (exported too): ${stableRetest.length} beyond the pipeline's`);
+
+  // Round 3 paths: each twice on fresh workspaces; the prompts both passes sent replay in the demo.
+  const extraWs: string[] = [];
+  for (const [name, once] of [["recovery", recoveryOnce], ["finding", findingOnce]] as const) {
+    const first = await once("run 1");
+    const second = first ? await once("run 2") : null;
+    if (!first || !second) {
+      if (first) extraWs.push(first.ws);
+      console.log(`${name}: ${first ? "second pass did not run" : "not in this pack's demo; skipped"}`);
+      continue;
+    }
+    extraWs.push(first.ws, second.ws);
+    const stable = [...first.rec.keys].filter((k) => second.rec.keys.has(k) && !keys.has(k));
+    for (const k of stable) keys.add(k);
+    const unstable = [...second.rec.keys].filter((k) => !first.rec.keys.has(k)).length;
+    console.log(`${name}: prompts sent by both passes (exported too): ${stable.length} beyond the earlier ones; ${unstable} of the second pass did not repeat; second pass ${calls(second.rec)}`);
+  }
 
   const sameClaims = fingerprint(cold.claims) === fingerprint(warm.claims);
   const sameScores = JSON.stringify(cold.scores) === JSON.stringify(warm.scores);
@@ -169,6 +268,7 @@ async function main() {
   if (!keep) {
     await purge(cold.ws);
     await purge(warm.ws);
+    for (const w of extraWs) await purge(w);
   }
   await db().end();
   if (!sameClaims || !sameScores || !sameQuestions || !fullyCached) process.exitCode = 1;
