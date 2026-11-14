@@ -211,7 +211,7 @@ describe("T-U-8: commit sequence", () => {
     const last = t.steps[t.steps.length - 1];
     expect(last.text).toBe("The last change on this path was left unfinished: WIP confirmation email template, not wired yet");
     expect(last.kind).toBe("quoted");
-    expect(t.value).toMatch(/^Left unfinished: WIP confirmation email template, not wired yet\./);
+    expect(t.value).toBe("Left unfinished: WIP confirmation email template, not wired yet (the last of 3 changes to website/register.html)");
   });
 
   it("one commit is not a sequence, and commits about other things are left out", () => {

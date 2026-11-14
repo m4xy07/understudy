@@ -624,7 +624,7 @@ export function commitSequenceTrace(
   const sourceLabel = `${picked.length} commits to ${place}`;
   const messages = picked.map((c) => firstLine(c.text));
   const value = (unfinished
-    ? `Left unfinished: ${newestMessage}. Before that, in order: ${messages.slice(0, -1).join("; ")}`
+    ? `Left unfinished: ${newestMessage} (the last of ${picked.length} changes to ${place})`
     : `In order: ${messages.join("; ")}`).slice(0, 700);
   return {
     id: traceId("commit_sequence", entity.key, picked.map((c) => c.id)),
