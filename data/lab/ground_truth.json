@@ -1,0 +1,2659 @@
+{
+  "today": "2026-11-11",
+  "pack": "lab",
+  "successorRole": "incoming_postdoc",
+  "responsibilities": [
+    {
+      "key": "R01",
+      "title": "Nightly QC and assembly pipeline",
+      "kind": "deploy_operate",
+      "origin": "footprint",
+      "originDetail": "ownership share: Farhan authored 9 of 11 commits touching pipeline/ (82%), 2 of 2 touching env/ and 2 of 2 touching .github/workflows/ since June 2026; the nightly cron in nightly-qc.yml; credential name SEQCORE_API_TOKEN. Only finished cards on the task sheet.",
+      "entities": [
+        "qc-pipeline",
+        "pipeline-env"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R02",
+      "title": "Manuscript revision analysis (reviewer 2)",
+      "kind": "unfinished_work",
+      "origin": "task_board",
+      "originDetail": "task sheet card T-018 (In progress, due 28 Nov 2026); also footprint: Farhan authored 3 of 3 commits touching analysis/.",
+      "entities": [
+        "revision-analysis"
+      ],
+      "dueDate": "2026-11-28"
+    },
+    {
+      "key": "R03",
+      "title": "Soil reference dataset v3",
+      "kind": "unfinished_work",
+      "origin": "task_board",
+      "originDetail": "task sheet card T-019 (In progress, due 18 Dec 2026).",
+      "entities": [
+        "soil-dataset-v3"
+      ],
+      "dueDate": "2026-12-18"
+    },
+    {
+      "key": "R04",
+      "title": "Sequencing core facility bookings",
+      "kind": "external_relationship",
+      "origin": "footprint",
+      "originDetail": "role template (incoming_postdoc); footprint: Dr. Joseph Mathew of the sequencing core only ever replies to Farhan (2 messages in #lab-general), and his phone number is mentioned only by Farhan. Only a finished card (T-008) on the task sheet.",
+      "entities": [
+        "seq-core"
+      ],
+      "dueDate": "2026-11-26"
+    },
+    {
+      "key": "R05",
+      "title": "Helix Agritech data-sharing agreement",
+      "kind": "external_relationship",
+      "origin": "task_board",
+      "originDetail": "task sheet card T-017 (In progress, due 15 Dec 2026).",
+      "entities": [
+        "helix-agreement"
+      ],
+      "dueDate": "2026-12-15"
+    },
+    {
+      "key": "R06",
+      "title": "Biosafety approval renewal",
+      "kind": "recurring_obligation",
+      "origin": "footprint",
+      "originDetail": "role template (incoming_postdoc); footprint: yearly calendar entry 'Biosafety committee approval renewal due' organised by Farhan (next 10 Dec 2026). Only a finished card (T-013) on the task sheet.",
+      "entities": [
+        "biosafety-approval"
+      ],
+      "dueDate": "2026-12-10"
+    },
+    {
+      "key": "R07",
+      "title": "Freezer check and alarm rota",
+      "kind": "recurring_obligation",
+      "origin": "footprint",
+      "originDetail": "repeat: Farhan posted 'Freezer check done' in #lab-general on 5, 12, 19 and 26 Oct and 2 and 9 Nov 2026 (6 times in 6 distinct weeks). No card on the task sheet.",
+      "entities": [
+        "freezer-rota"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R08",
+      "title": "Cluster allocation renewal (bio-142)",
+      "kind": "recurring_obligation",
+      "origin": "task_board",
+      "originDetail": "task sheet card T-016 (Open, no due date); also footprint: yearly renewal mentioned by Farhan in #lab-general and #pipeline.",
+      "entities": [
+        "hpc-allocation"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R09",
+      "title": "Flow-cell and reagent standing order",
+      "kind": "recurring_obligation",
+      "origin": "task_board",
+      "originDetail": "task sheet card T-020 (Open, no due date on the card).",
+      "entities": [
+        "standing-order"
+      ],
+      "dueDate": null
+    },
+    {
+      "key": "R10",
+      "title": "Choice of long-read assembler",
+      "kind": "open_decision",
+      "origin": "role_template",
+      "originDetail": "role template (incoming_postdoc); no card on the task sheet; discussed by Tara and Imran in #lab-general and the notebook with no owner.",
+      "entities": [
+        "assembler-choice"
+      ],
+      "dueDate": null
+    }
+  ],
+  "claims": [
+    {
+      "id": "gt-001",
+      "entity": "lab-meeting",
+      "attribute": "deadline",
+      "value": "Thursday",
+      "keywords": [
+        "thursday"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "Lab meeting is every Thursday at 10:00 in seminar room 2."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-002",
+      "entity": "hpc-allocation",
+      "attribute": "deadline",
+      "value": "once a year",
+      "keywords": [
+        "once a year"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The bio-142 allocation on Kaveri is renewed once a year."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-003",
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "value": "every year",
+      "keywords": [
+        "every year"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "Biosafety committee approval for the isolate work has to be renewed every year."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-004",
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "value": "2026-12-03",
+      "keywords": [
+        "3 december"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "This year the biosafety renewal is due 3 December 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "next_due_date"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-005",
+      "entity": "seq-core",
+      "attribute": "contact",
+      "value": "Dr. Joseph Mathew",
+      "keywords": [
+        "joseph mathew"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "Our contact at the sequencing core is Dr. Joseph Mathew."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "contact_person"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-006",
+      "entity": "seq-core",
+      "attribute": "dependency",
+      "value": "run submission form and sample sheet two working days before the slot",
+      "keywords": [
+        "two working days"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The run submission form and the sample sheet must reach the core two working days before the flow cell slot."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "open_commitments"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-007",
+      "entity": "freezer-rota",
+      "attribute": "deadline",
+      "value": "once a week",
+      "keywords": [
+        "once a week"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "the minus 80 freezer check is once a week, and whoever does it signs the log."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-008",
+      "entity": "freezer-rota",
+      "attribute": "location",
+      "value": "clipboard on the freezer door, room B-114",
+      "keywords": [
+        "b-114",
+        "clipboard"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The freezer log sheet is on the clipboard on the freezer door in room B-114."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "protocol_location"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-009",
+      "entity": "freezer-rota",
+      "attribute": "risk",
+      "value": "isolate stocks are lost",
+      "keywords": [
+        "isolate stocks"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "If the minus 80 stays above -60 C for more than a few hours we lose the isolate stocks."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R07",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-010",
+      "entity": "seq-core",
+      "attribute": "deadline",
+      "value": "2026-11-24",
+      "keywords": [
+        "24 november"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The sequencing core gave us a flow cell slot on 24 November 2026 for the next run."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "next_date"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-011",
+      "entity": "hpc-allocation",
+      "attribute": "deadline",
+      "value": "2026-12-01",
+      "keywords": [
+        "1 december"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The renewal form for the bio-142 allocation is due 1 December 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "next_due_date"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-012",
+      "entity": "freezer-rota",
+      "attribute": "owner",
+      "value": "Tara Bose",
+      "keywords": [
+        "freezer alarm rota"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "I keep the freezer alarm rota this term."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "superseded"
+    },
+    {
+      "id": "gt-013",
+      "entity": "hpc-allocation",
+      "attribute": "risk",
+      "value": "jobs stop being scheduled; the nightly pipeline stops",
+      "keywords": [
+        "stop"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "If the allocation lapses, bio-142 jobs stop being scheduled and the nightly pipeline stops with them."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-014",
+      "entity": "hpc-allocation",
+      "attribute": "deadline",
+      "value": "2026-12-08",
+      "keywords": [
+        "8 december"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "I thought the bio-142 allocation renewal is due 8 December 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "next_due_date"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-015",
+      "entity": "revision-analysis",
+      "attribute": "deadline",
+      "value": "2026-11-28",
+      "keywords": [
+        "28 november"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The revised manuscript is due back at the journal on 28 November 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-016",
+      "entity": "revision-analysis",
+      "attribute": "owner",
+      "value": "Prof. Leela Menon",
+      "keywords": [
+        "menon"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "For the revision, Prof. Menon reviews every redrawn figure before it goes to the co-authors."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "who_reviews_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-017",
+      "entity": "freezer-rota",
+      "attribute": "owner",
+      "value": "Gauri Patil",
+      "keywords": [
+        "freezer alarm rota"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "Correction: from November the freezer alarm rota is mine."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-018",
+      "entity": "assembler-choice",
+      "attribute": "deadline",
+      "value": "2026-11-19",
+      "keywords": [
+        "19 november"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "For the long-read assembler, let us decide at the lab meeting on 19 November 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "deadline"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-019",
+      "entity": "assembler-choice",
+      "attribute": "deadline",
+      "value": "2026-11-26",
+      "keywords": [
+        "26 november"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The assembler decision should be taken on 26 November 2026, after my hifiasm benchmark is done."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "deadline"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-020",
+      "entity": "seq-core",
+      "attribute": "status",
+      "value": "slot confirmed by Dr. Mathew on 3 November 2026",
+      "keywords": [
+        "confirmed"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "Your flow cell slot is confirmed."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "last_interaction"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-021",
+      "entity": "standing-order",
+      "attribute": "location",
+      "value": "purchase portal, Forms, Recurring indents",
+      "keywords": [
+        "purchase portal"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The indent form for the standing order is on the purchase portal under Forms, Recurring indents."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "protocol_location"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-022",
+      "entity": "standing-order",
+      "attribute": "risk",
+      "value": "flow cells take about six weeks to arrive",
+      "keywords": [
+        "six weeks"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "If the standing order is late, flow cells take about six weeks to arrive."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-023",
+      "entity": "soil-dataset-v3",
+      "attribute": "owner",
+      "value": "Tara Bose",
+      "keywords": [
+        "tara"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "Tara is taking over dataset v3 from Farhan from next week."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "who_reviews_it"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-024",
+      "entity": "biosafety-approval",
+      "attribute": "procedure",
+      "value": "a form on the committee portal",
+      "keywords": [
+        "committee portal"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-general/lab-general.json",
+        "contains": "The biosafety renewal is a form on the committee portal."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "how_to_do_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-025",
+      "entity": "qc-pipeline",
+      "attribute": "procedure",
+      "value": "snakemake --profile profiles/kaveri --cores 32",
+      "keywords": [
+        "snakemake",
+        "profiles/kaveri"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/pipeline/pipeline.json",
+        "contains": "To run the pipeline by hand, activate the soilmeta environment and run `snakemake --profile profiles/kaveri --cores 32`."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-026",
+      "entity": "soil-dataset-v3",
+      "attribute": "location",
+      "value": "/scratch/bio-142/raw",
+      "keywords": [
+        "/scratch/bio-142/raw"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/pipeline/pipeline.json",
+        "contains": "Raw reads for dataset v3 are in /scratch/bio-142/raw."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "where_it_lives"
+      },
+      "state": "superseded"
+    },
+    {
+      "id": "gt-027",
+      "entity": "pipeline-env",
+      "attribute": "procedure",
+      "value": "./scripts/restore_env.sh v1.4.2",
+      "keywords": [
+        "restore_env.sh",
+        "v1.4.2"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/pipeline/pipeline.json",
+        "contains": "Rollback (CANARY-L8RV): run `./scripts/restore_env.sh v1.4.2` on kaveri-login2, never on a compute node."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "rollback"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-028",
+      "entity": "soil-dataset-v3",
+      "attribute": "location",
+      "value": "/project/bio-142/raw_v3",
+      "keywords": [
+        "/project/bio-142/raw_v3"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/pipeline/pipeline.json",
+        "contains": "Dataset v3 raw reads have moved to /project/bio-142/raw_v3."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "where_it_lives"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-029",
+      "entity": "hpc-allocation",
+      "attribute": "procedure",
+      "value": "renewal form on the Kaveri user portal, attach the usage report, Prof. Menon signs",
+      "keywords": [
+        "renewal form",
+        "usage report"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/pipeline/pipeline.json",
+        "contains": "Allocation renewal steps: fill the renewal form on the Kaveri user portal, attach last year's usage report from `scripts/sacct_report.sh`, and Prof. Menon signs it as project owner."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "how_to_do_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-030",
+      "entity": "seq-core",
+      "attribute": "dependency",
+      "value": "two flow cells prepaid for the January run",
+      "keywords": [
+        "prepaid",
+        "january"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-admin/lab-admin.json",
+        "contains": "Two flow cells are already prepaid for the January run"
+      },
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "open_commitments"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-031",
+      "entity": "helix-agreement",
+      "attribute": "dependency",
+      "value": "shared data under embargo until 30 June 2027",
+      "keywords": [
+        "embargo"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-admin/lab-admin.json",
+        "contains": "Helix Agritech terms as signed: the shared data is under embargo until 30 June 2027"
+      },
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "open_commitments"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-032",
+      "entity": "helix-agreement",
+      "attribute": "dependency",
+      "value": "data access fee of Rs 4,50,000 due on delivery of the first dataset",
+      "keywords": [
+        "fee"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-admin/lab-admin.json",
+        "contains": "Helix pays a data access fee of Rs 4,50,000, due on delivery of the first dataset"
+      },
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "open_commitments"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-033",
+      "entity": "biosafety-approval",
+      "attribute": "risk",
+      "value": "all isolate work must stop",
+      "keywords": [
+        "isolate work",
+        "stop"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-admin/lab-admin.json",
+        "contains": "If the biosafety approval lapses, all isolate work must stop."
+      },
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "consequence_if_missed"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-034",
+      "entity": "standing-order",
+      "attribute": "deadline",
+      "value": "2026-11-24",
+      "keywords": [
+        "24 november"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-admin/lab-admin.json",
+        "contains": "The flow-cell and reagent standing order must be raised by 24 November 2026"
+      },
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-035",
+      "entity": "standing-order",
+      "attribute": "procedure",
+      "value": "the PI signs the indent, then the lab manager raises the purchase order",
+      "keywords": [
+        "indent",
+        "purchase order"
+      ],
+      "source": {
+        "kind": "slack",
+        "path": "data/lab/slack/lab-admin/lab-admin.json",
+        "contains": "Steps for the standing order: the PI signs the indent, then the lab manager raises the purchase order"
+      },
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "how_to_do_it"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-036",
+      "entity": "qc-pipeline",
+      "attribute": "procedure",
+      "value": "snakemake --profile profiles/kaveri --cores 32",
+      "keywords": [
+        "snakemake",
+        "profiles/kaveri"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/README.md",
+        "contains": "To run it by hand: `conda activate soilmeta`, then `snakemake --profile profiles/kaveri --cores 32` from the repository root."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-037",
+      "entity": "qc-pipeline",
+      "attribute": "location",
+      "value": "/project/bio-142/pipeline on kaveri-login2 (Kaveri cluster, project bio-142)",
+      "keywords": [
+        "kaveri-login2",
+        "/project/bio-142/pipeline"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/docs/RUNBOOK.md",
+        "contains": "The pipeline runs on the Kaveri cluster under project bio-142, from /project/bio-142/pipeline on the login node kaveri-login2."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "access_path"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-038",
+      "entity": "qc-pipeline",
+      "attribute": "procedure",
+      "value": "last line of logs/nightly.log is nightly-qc: OK; results/qc/multiqc_report.html is written",
+      "keywords": [
+        "nightly-qc: ok",
+        "multiqc_report"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/docs/RUNBOOK.md",
+        "contains": "A good run ends with the line `nightly-qc: OK` in logs/nightly.log and writes results/qc/multiqc_report.html."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "how_to_verify"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-039",
+      "entity": "qc-pipeline",
+      "attribute": "access",
+      "value": "SEQCORE_API_TOKEN",
+      "keywords": [
+        "seqcore_api_token"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/docs/RUNBOOK.md",
+        "contains": "Downloading new runs from the sequencing core needs `SEQCORE_API_TOKEN` in the environment of the bio-142 service account."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "access_path"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-040",
+      "entity": "hpc-allocation",
+      "attribute": "location",
+      "value": "docs/allocation/ in the repository",
+      "keywords": [
+        "docs/allocation"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/docs/RUNBOOK.md",
+        "contains": "The renewal form template and last year's usage report for the bio-142 allocation are in docs/allocation/ in this repository."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "protocol_location"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-041",
+      "entity": "pipeline-env",
+      "attribute": "dependency",
+      "value": "the nightly run uses env/environment.lock.yml, not environment.yml",
+      "keywords": [
+        "environment.lock.yml"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/env/environment.yml",
+        "contains": "# Request file only. The nightly run does not use this file; it uses env/environment.lock.yml."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-042",
+      "entity": "pipeline-env",
+      "attribute": "status",
+      "value": "locked on 21 September 2026, tag v1.4.2",
+      "keywords": [
+        "v1.4.2",
+        "locked"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/env/environment.lock.yml",
+        "contains": "# Locked on 21 September 2026 after the samtools incident. Tag: v1.4.2."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-043",
+      "entity": "qc-pipeline",
+      "attribute": "procedure",
+      "value": "nightly run starts at 02:00 IST (cron 30 20 * * * UTC)",
+      "keywords": [
+        "02:00",
+        "nightly"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/.github/workflows/nightly-qc.yml",
+        "contains": "# Nightly QC and assembly run: starts at 20:30 UTC, which is 02:00 IST."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R01",
+        "checkKey": "steps"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-044",
+      "entity": "soil-dataset-v3",
+      "attribute": "location",
+      "value": "/project/bio-142/raw_v3",
+      "keywords": [
+        "/project/bio-142/raw_v3"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/config/samples.yaml",
+        "contains": "raw_dir: /project/bio-142/raw_v3"
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "where_it_lives"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-045",
+      "entity": "revision-analysis",
+      "attribute": "location",
+      "value": "analysis/revision_r2/ on the branch revision-r2",
+      "keywords": [
+        "analysis/revision_r2",
+        "revision-r2"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/analysis/revision_r2/README.md",
+        "contains": "The revision analysis lives in analysis/revision_r2/ on the branch revision-r2."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "where_it_lives"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-046",
+      "entity": "revision-analysis",
+      "attribute": "dependency",
+      "value": "raw reads of run SR-0398, sample sheet samples_r2.tsv, checksum manifest /project/bio-142/runs/SR-0398/MANIFEST.sha256",
+      "keywords": [
+        "sr-0398",
+        "sample sheet",
+        "manifest"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/files/analysis/revision_r2/README.md",
+        "contains": "The reviewer 2 analysis uses the raw reads of sequencing run SR-0398, the sample sheet analysis/revision_r2/samples_r2.tsv and the checksum manifest /project/bio-142/runs/SR-0398/MANIFEST.sha256."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "data_provenance"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-047",
+      "entity": "revision-analysis",
+      "attribute": "procedure",
+      "value": "try per-sample depth normalisation in normalise.py (unfinished)",
+      "keywords": [
+        "per-sample",
+        "normalisation"
+      ],
+      "source": {
+        "kind": "github",
+        "path": "data/lab/github/commits.json",
+        "contains": "WIP revision_r2: try per-sample depth normalisation in normalise.py (not finished)"
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "next_concrete_step"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-048",
+      "entity": "pipeline-env",
+      "attribute": "decision",
+      "value": "pin the conda environment in env/environment.lock.yml",
+      "keywords": [
+        "pinned",
+        "samtools"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-09-22-environment-pin.md",
+        "contains": "We pinned the conda environment in env/environment.lock.yml because an unpinned samtools update on 14 September 2026 changed the duplicate counts in the nightly QC."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-049",
+      "entity": "soil-dataset-v3",
+      "attribute": "decision",
+      "value": "six samples excluded for read depth below 2 million reads",
+      "keywords": [
+        "excluded",
+        "read depth"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-08-dataset-v3-exclusions.md",
+        "contains": "Six samples were excluded from dataset v3 because their read depth was below 2 million reads."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-050",
+      "entity": "soil-dataset-v3",
+      "attribute": "location",
+      "value": "MANIFEST.sha256 in /project/bio-142/raw_v3 (212 files)",
+      "keywords": [
+        "manifest.sha256",
+        "212"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-08-dataset-v3-exclusions.md",
+        "contains": "The file list of dataset v3 is MANIFEST.sha256 in /project/bio-142/raw_v3; it lists 212 files."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "where_it_lives"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-051",
+      "entity": "soil-dataset-v3",
+      "attribute": "status",
+      "value": "206 of 212 samples through QC",
+      "keywords": [
+        "206"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-08-dataset-v3-exclusions.md",
+        "contains": "Dataset v3 has 206 of 212 samples through QC."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-052",
+      "entity": "soil-dataset-v3",
+      "attribute": "procedure",
+      "value": "regenerate MANIFEST.sha256 with scripts/make_manifest.sh raw_v3, then write the release notes",
+      "keywords": [
+        "make_manifest.sh",
+        "release notes"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-08-dataset-v3-exclusions.md",
+        "contains": "Next step for dataset v3: regenerate MANIFEST.sha256 with `scripts/make_manifest.sh raw_v3`, then write the release notes."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "next_concrete_step"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-053",
+      "entity": "revision-analysis",
+      "attribute": "status",
+      "value": "figures 1, 2 and 4 redrawn; figure 3 waits on one normalisation issue",
+      "keywords": [
+        "figure 3",
+        "normalisation"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-28-revision-state.md",
+        "contains": "Figures 1, 2 and 4 are redrawn; one normalisation issue is left before figure 3 can be redrawn."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-054",
+      "entity": "helix-agreement",
+      "attribute": "contact",
+      "value": "Dr. Elena Petrova",
+      "keywords": [
+        "elena petrova"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+        "contains": "Our contact at Helix Agritech is Dr. Elena Petrova"
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "contact_person"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-055",
+      "entity": "helix-agreement",
+      "attribute": "status",
+      "value": "call on 27 October 2026; delivery format agreed",
+      "keywords": [
+        "27 october",
+        "delivery format"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+        "contains": "Call with Dr. Petrova on 27 October 2026: she agreed to the delivery format."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "last_interaction"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-056",
+      "entity": "seq-core",
+      "attribute": "contact",
+      "value": "Dr. Joseph Mathew",
+      "keywords": [
+        "joseph mathew"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+        "contains": "The sequencing core contact is Dr. Joseph Mathew."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "contact_person"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-057",
+      "entity": "seq-core",
+      "attribute": "deadline",
+      "value": "2026-11-26",
+      "keywords": [
+        "26 november"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+        "contains": "Our next flow cell slot at the sequencing core is 26 November 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "next_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-058",
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "value": "2026-12-10",
+      "keywords": [
+        "10 december"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+        "contains": "The biosafety committee approval renewal is due 10 December 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-059",
+      "entity": "biosafety-approval",
+      "attribute": "location",
+      "value": "shared drive, Compliance/Biosafety/IBSC-protocol-v4.docx",
+      "keywords": [
+        "ibsc-protocol-v4",
+        "shared drive"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+        "contains": "The current biosafety protocol (version 4) is in the shared drive at Compliance/Biosafety/IBSC-protocol-v4.docx; only the PI and the lab manager can edit it."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "protocol_location"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-060",
+      "entity": "assembler-choice",
+      "attribute": "status",
+      "value": "not chosen; Flye is what the pipeline runs today",
+      "keywords": [
+        "flye",
+        "hifiasm"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-30-assembler-notes.md",
+        "contains": "We have not chosen between Flye and hifiasm; Flye is what the pipeline runs today."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "current_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-061",
+      "entity": "assembler-choice",
+      "attribute": "reason",
+      "value": "Flye copes with low coverage; hifiasm is more contiguous but needs HiFi reads at 20x or more",
+      "keywords": [
+        "low-coverage",
+        "20x"
+      ],
+      "source": {
+        "kind": "markdown",
+        "path": "data/lab/notes/2026-10-30-assembler-notes.md",
+        "contains": "Flye copes with our low-coverage soil samples; hifiasm gives more contiguous assemblies but needs HiFi reads at 20x coverage or more."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R10",
+        "checkKey": "options_considered"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-062",
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "value": "2026-12-10",
+      "keywords": [
+        "10 december"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "Committee office confirmed the renewal is due 10 December 2026, not 3 December."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-063",
+      "entity": "hpc-allocation",
+      "attribute": "deadline",
+      "value": "yearly",
+      "keywords": [
+        "yearly"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "Yearly renewal of the compute allocation on Kaveri."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R08",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-064",
+      "entity": "helix-agreement",
+      "attribute": "contact",
+      "value": "Dr. Elena Petrova",
+      "keywords": [
+        "elena petrova"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "Contact at Helix: Dr. Elena Petrova."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "contact_person"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-065",
+      "entity": "helix-agreement",
+      "attribute": "deadline",
+      "value": "2026-12-15",
+      "keywords": [
+        "2026-12-15"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "T-017,Helix Agritech data-sharing agreement,In progress,Farhan Qureshi,farhan.qureshi@sils.example,2026-12-15",
+        "segmentContains": "due: 2026-12-15"
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "next_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-066",
+      "entity": "revision-analysis",
+      "attribute": "status",
+      "value": "figures 1, 2 and 4 redrawn; figure 3 still open",
+      "keywords": [
+        "figure 3"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "Figures 1, 2 and 4 are redrawn. Figure 3 is still open."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R02",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-067",
+      "entity": "revision-analysis",
+      "attribute": "deadline",
+      "value": "2026-11-28",
+      "keywords": [
+        "2026-11-28"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "T-018,Manuscript revision analysis (reviewer 2),In progress,Farhan Qureshi,farhan.qureshi@sils.example,2026-11-28",
+        "segmentContains": "due: 2026-11-28"
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-068",
+      "entity": "soil-dataset-v3",
+      "attribute": "status",
+      "value": "206 of 212 samples through QC; release notes not written",
+      "keywords": [
+        "206",
+        "release notes"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "206 of 212 samples are through QC. The release notes are not written."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "last_state"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-069",
+      "entity": "soil-dataset-v3",
+      "attribute": "owner",
+      "value": "Farhan Qureshi",
+      "keywords": [
+        "farhan"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "T-019,Soil reference dataset v3,In progress,Farhan Qureshi",
+        "segmentContains": "owner: Farhan Qureshi"
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R03",
+        "checkKey": "who_reviews_it"
+      },
+      "state": "conflicting"
+    },
+    {
+      "id": "gt-070",
+      "entity": "standing-order",
+      "attribute": "deadline",
+      "value": "every quarter",
+      "keywords": [
+        "every quarter"
+      ],
+      "source": {
+        "kind": "tasks_csv",
+        "path": "data/lab/tasks/tasks.csv",
+        "contains": "Standing order for flow cells and library prep reagents, raised every quarter."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R09",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-071",
+      "entity": "lab-meeting",
+      "attribute": "deadline",
+      "value": "Thursday",
+      "keywords": [
+        "thursday"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/lab/calendar/menon-lab.ics",
+        "contains": "Lab meeting is held every Thursday at 10:00 in seminar room 2."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-072",
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "value": "yearly",
+      "keywords": [
+        "yearly"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/lab/calendar/menon-lab.ics",
+        "contains": "Yearly renewal of the biosafety committee approval for isolate work."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "cadence"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-073",
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "value": "2026-12-10",
+      "keywords": [
+        "10 december"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/lab/calendar/menon-lab.ics",
+        "contains": "This year the renewal is due 10 December 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R06",
+        "checkKey": "next_due_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-074",
+      "entity": "seq-core",
+      "attribute": "deadline",
+      "value": "2026-11-26",
+      "keywords": [
+        "26 november"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/lab/calendar/menon-lab.ics",
+        "contains": "The flow cell slot for the next run is 26 November 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R04",
+        "checkKey": "next_date"
+      },
+      "state": "active"
+    },
+    {
+      "id": "gt-075",
+      "entity": "revision-analysis",
+      "attribute": "deadline",
+      "value": "2026-11-28",
+      "keywords": [
+        "28 november"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/lab/calendar/menon-lab.ics",
+        "contains": "The revised manuscript is due on 28 November 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": null,
+      "state": "active"
+    },
+    {
+      "id": "gt-076",
+      "entity": "helix-agreement",
+      "attribute": "deadline",
+      "value": "2026-12-15",
+      "keywords": [
+        "15 december"
+      ],
+      "source": {
+        "kind": "ics",
+        "path": "data/lab/calendar/menon-lab.ics",
+        "contains": "The first dataset is delivered to Helix on 15 December 2026."
+      },
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "phd_student",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "check": {
+        "responsibility": "R05",
+        "checkKey": "next_date"
+      },
+      "state": "active"
+    }
+  ],
+  "gaps": [
+    {
+      "responsibility": "R01",
+      "checkKey": "credential_owner",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "docs/RUNBOOK.md and the workflow file name SEQCORE_API_TOKEN, and Nisha asked in #pipeline on 5 Nov who holds it; nobody answered. No record says who holds the token."
+    },
+    {
+      "responsibility": "R02",
+      "checkKey": "next_concrete_step",
+      "coverage": "partial",
+      "blocking": true,
+      "why": "The notebook says one normalisation issue is left before figure 3 can be redrawn; only the WIP commit of 5 Nov hints at what (per-sample depth normalisation, not finished)."
+    },
+    {
+      "responsibility": "R03",
+      "checkKey": "data_provenance",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "MANIFEST.sha256 lists the files of dataset v3, but no record says which sequencing runs and sample sheets it is built from, or which run the six excluded samples came from."
+    },
+    {
+      "responsibility": "R03",
+      "checkKey": "who_reviews_it",
+      "coverage": "conflicting",
+      "blocking": false,
+      "why": "The task sheet (T-019) names Farhan as owner; a newer message from the PI (6 Nov) says Tara is taking dataset v3 over."
+    },
+    {
+      "responsibility": "R04",
+      "checkKey": "open_commitments",
+      "coverage": "partial",
+      "blocking": false,
+      "why": "The incoming postdoc can see the submission rule (form and sample sheet two working days before the slot); the two prepaid flow cells for the January run are only in #lab-admin."
+    },
+    {
+      "responsibility": "R05",
+      "checkKey": "open_commitments",
+      "coverage": "restricted",
+      "blocking": false,
+      "why": "The embargo (until 30 June 2027) and the data access fee are stated only in #lab-admin."
+    },
+    {
+      "responsibility": "R06",
+      "checkKey": "how_to_do_it",
+      "coverage": "partial",
+      "blocking": false,
+      "why": "All anyone wrote is that it is a form on the committee portal; Nisha asked on 9 Nov what goes into the form and nobody answered."
+    },
+    {
+      "responsibility": "R06",
+      "checkKey": "consequence_if_missed",
+      "coverage": "restricted",
+      "blocking": false,
+      "why": "That isolate work must stop if the approval lapses (it stopped for two weeks last year) is stated only in #lab-admin."
+    },
+    {
+      "responsibility": "R07",
+      "checkKey": "next_due_date",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "Past checks are in the chat and the check is once a week, but no upcoming date or weekday is written anywhere."
+    },
+    {
+      "responsibility": "R07",
+      "checkKey": "how_to_do_it",
+      "coverage": "missing",
+      "blocking": false,
+      "why": "Nobody wrote how the check is done or what to do when the alarm sounds; Nisha asked on 10 Nov and nobody answered."
+    },
+    {
+      "responsibility": "R08",
+      "checkKey": "next_due_date",
+      "coverage": "conflicting",
+      "blocking": true,
+      "why": "Vikram (cluster support desk, 15 Oct) says the renewal form is due 1 Dec 2026; Tara (22 Oct) says 8 Dec 2026. Same channel, no reply link, no calendar entry."
+    },
+    {
+      "responsibility": "R09",
+      "checkKey": "next_due_date",
+      "coverage": "restricted",
+      "blocking": true,
+      "why": "The card has no due date; 24 Nov 2026 is stated only in #lab-admin."
+    },
+    {
+      "responsibility": "R09",
+      "checkKey": "how_to_do_it",
+      "coverage": "restricted",
+      "blocking": false,
+      "why": "That the PI signs the indent and the lab manager then raises the purchase order is stated only in #lab-admin."
+    },
+    {
+      "responsibility": "R10",
+      "checkKey": "owner",
+      "coverage": "missing",
+      "blocking": true,
+      "why": "The PI wrote on 4 Nov that someone has to own the assembler decision once Farhan leaves and that nobody is picked yet."
+    },
+    {
+      "responsibility": "R10",
+      "checkKey": "deadline",
+      "coverage": "conflicting",
+      "blocking": false,
+      "why": "Tara (29 Oct) says decide at the lab meeting on 19 Nov 2026; Imran (30 Oct) says 26 Nov 2026."
+    }
+  ],
+  "restrictedChecks": [
+    {
+      "responsibility": "R05",
+      "checkKey": "open_commitments",
+      "visibleTo": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ]
+    },
+    {
+      "responsibility": "R06",
+      "checkKey": "consequence_if_missed",
+      "visibleTo": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ]
+    },
+    {
+      "responsibility": "R09",
+      "checkKey": "next_due_date",
+      "visibleTo": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ]
+    },
+    {
+      "responsibility": "R09",
+      "checkKey": "how_to_do_it",
+      "visibleTo": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ]
+    },
+    {
+      "responsibility": "R01",
+      "checkKey": "rollback",
+      "visibleTo": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ]
+    },
+    {
+      "responsibility": "R08",
+      "checkKey": "how_to_do_it",
+      "visibleTo": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ]
+    }
+  ],
+  "supersessions": [
+    {
+      "entity": "biosafety-approval",
+      "attribute": "deadline",
+      "old": "2026-12-03",
+      "new": "2026-12-10",
+      "rule": 1,
+      "claims": {
+        "old": [
+          "gt-004"
+        ],
+        "new": [
+          "gt-073",
+          "gt-062",
+          "gt-058"
+        ]
+      },
+      "note": "#lab-general said 3 Dec (10 Sep, slack authority 1); the calendar and the task sheet (authority 3 for deadline) and the notebook say 10 Dec."
+    },
+    {
+      "entity": "seq-core",
+      "attribute": "deadline",
+      "old": "2026-11-24",
+      "new": "2026-11-26",
+      "rule": 1,
+      "claims": {
+        "old": [
+          "gt-010"
+        ],
+        "new": [
+          "gt-074",
+          "gt-057"
+        ]
+      },
+      "note": "#lab-general said 24 Nov (13 Oct); the calendar entry (authority 3 for deadline, modified 3 Nov) and the notebook say 26 Nov."
+    },
+    {
+      "entity": "soil-dataset-v3",
+      "attribute": "location",
+      "old": "/scratch/bio-142/raw",
+      "new": "/project/bio-142/raw_v3",
+      "rule": 2,
+      "claims": {
+        "old": [
+          "gt-026"
+        ],
+        "new": [
+          "gt-028",
+          "gt-044"
+        ]
+      },
+      "note": "Same author (Farhan) in #pipeline: 5 Aug, then 7 Oct ('Scratch is purged after 30 days'). config/samples.yaml agrees with the newer value."
+    },
+    {
+      "entity": "freezer-rota",
+      "attribute": "owner",
+      "old": "Tara Bose",
+      "new": "Gauri Patil",
+      "rule": 2,
+      "claims": {
+        "old": [
+          "gt-012"
+        ],
+        "new": [
+          "gt-017"
+        ]
+      },
+      "note": "Tara (20 Oct) says she keeps the rota; Gauri replies in the thread (thread_ts, 28 Oct) that it is hers from November."
+    }
+  ],
+  "conflicts": [
+    {
+      "entity": "hpc-allocation",
+      "attribute": "deadline",
+      "values": [
+        "2026-12-01",
+        "2026-12-08"
+      ],
+      "rule": 3,
+      "claims": [
+        "gt-011",
+        "gt-014"
+      ],
+      "note": "Vikram (15 Oct) and Tara (22 Oct) in #lab-general, different authors, no reply link, equal authority."
+    },
+    {
+      "entity": "assembler-choice",
+      "attribute": "deadline",
+      "values": [
+        "2026-11-19",
+        "2026-11-26"
+      ],
+      "rule": 3,
+      "claims": [
+        "gt-018",
+        "gt-019"
+      ],
+      "note": "Tara (29 Oct) and Imran (30 Oct) in #lab-general, different authors, no reply link."
+    },
+    {
+      "entity": "soil-dataset-v3",
+      "attribute": "owner",
+      "values": [
+        "Farhan Qureshi",
+        "Tara Bose"
+      ],
+      "rule": 4,
+      "claims": [
+        "gt-069",
+        "gt-023"
+      ],
+      "note": "Possibly outdated owner: the task sheet (authority 3 for owner, updated 20 Oct) names Farhan; a newer chat message from the PI (6 Nov) names Tara."
+    }
+  ],
+  "restricted": [
+    {
+      "token": "CANARY-L2FA",
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "where": "data/lab/slack/lab-admin/lab-admin.json",
+      "fact": "Two flow cells are prepaid for the January run."
+    },
+    {
+      "token": "CANARY-L9HX",
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "where": "data/lab/slack/lab-admin/lab-admin.json",
+      "fact": "The standing order must be raised by 24 Nov 2026; the PI signs the indent, then the lab manager raises the order."
+    },
+    {
+      "token": "CANARY-L4PE",
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "where": "data/lab/slack/lab-admin/lab-admin.json",
+      "fact": "Helix embargo until 30 June 2027 and the data access fee."
+    },
+    {
+      "token": "CANARY-L6BT",
+      "roleSet": [
+        "pi",
+        "lab_manager",
+        "leaving_postdoc"
+      ],
+      "where": "data/lab/slack/lab-admin/lab-admin.json",
+      "fact": "A biosafety lapse stops all isolate work."
+    },
+    {
+      "token": "CANARY-L3SN",
+      "roleSet": [
+        "pi",
+        "leaving_postdoc"
+      ],
+      "where": "data/lab/notes/2026-11-06-handover-prep.md",
+      "fact": "A note about one student's progress review."
+    },
+    {
+      "token": "CANARY-L8RV",
+      "roleSet": [
+        "pi",
+        "incoming_postdoc",
+        "leaving_postdoc"
+      ],
+      "where": "data/lab/slack/pipeline/pipeline.json",
+      "fact": "The rollback tag (v1.4.2) and the node it must run on (kaveri-login2)."
+    }
+  ],
+  "secrets": [
+    {
+      "where": "data/lab/slack/pipeline/pipeline.json",
+      "type": "github_token",
+      "value": "ghp_FAKElab00EXAMPLE00token"
+    },
+    {
+      "where": "data/lab/slack/pipeline/pipeline.json",
+      "type": "password",
+      "value": "SeqPortal-FAKE-2026"
+    },
+    {
+      "where": "data/lab/github/files/docs/RUNBOOK.md",
+      "type": "slack_token",
+      "value": "xoxb-FAKE-menonlab-EXAMPLE-000"
+    },
+    {
+      "where": "data/lab/notes/2026-09-22-environment-pin.md",
+      "type": "aws_access_key",
+      "value": "AKIAFAKEMENONLAB0000"
+    },
+    {
+      "where": "data/lab/github/commits.json",
+      "type": "token",
+      "value": "lab-token-EXAMPLE-0000"
+    },
+    {
+      "where": "data/lab/github/files/config/samples.yaml",
+      "type": "api_key",
+      "value": "sk-FAKE-lab-EXAMPLE-0000000000"
+    },
+    {
+      "where": "data/lab/notes/2026-10-08-dataset-v3-exclusions.md",
+      "type": "private_key",
+      "value": "FAKE-EXAMPLE-NOT-A-REAL-KEY-0000"
+    },
+    {
+      "where": "data/lab/tasks/tasks.csv",
+      "type": "high_entropy",
+      "value": "FAKE9xLq2Vd7Kp4Zt8Wn3Rb6Yc1Mh5Gs"
+    },
+    {
+      "where": "data/lab/slack/lab-general/lab-general.json",
+      "type": "contact_email",
+      "value": "joseph.mathew@genomicscore.example"
+    },
+    {
+      "where": "data/lab/slack/lab-general/lab-general.json",
+      "type": "contact_phone",
+      "value": "+91 90220 00173"
+    },
+    {
+      "where": "data/lab/notes/2026-10-29-partners-facilities-compliance.md",
+      "type": "contact_email",
+      "value": "elena.petrova@helixagritech.example"
+    },
+    {
+      "where": "data/lab/slack/lab-general/lab-general.json",
+      "type": "contact_phone",
+      "value": "+91 90220 00404"
+    }
+  ],
+  "keptCredentialNames": [
+    "SEQCORE_API_TOKEN",
+    "HPC_PROJECT"
+  ],
+  "offBoard": [
+    {
+      "responsibility": "R01",
+      "rule": "ownership_share",
+      "evidence": "Farhan authored 9 of 11 commits touching pipeline/ (82%), 2 of 2 touching env/ and 2 of 2 touching .github/workflows/ in the last 6 months. No open card."
+    },
+    {
+      "responsibility": "R04",
+      "rule": "sole_external_contact",
+      "evidence": "Dr. Joseph Mathew (sequencing core) only ever replies to Farhan in #lab-general (15 Sep and 3 Nov). Also an incoming_postdoc role-template duty."
+    },
+    {
+      "responsibility": "R06",
+      "rule": "schedule",
+      "evidence": "Yearly RRULE 'Biosafety committee approval renewal due' organised by Farhan (next 2026-12-10). Also an incoming_postdoc role-template duty."
+    },
+    {
+      "responsibility": "R08",
+      "rule": "schedule",
+      "evidence": "Renewal mentioned by Farhan: 'The bio-142 allocation on Kaveri is renewed once a year' (#lab-general, 24 Aug) and the renewal steps in #pipeline (14 Oct). The card T-016 has no date."
+    },
+    {
+      "responsibility": "R07",
+      "rule": "repeat",
+      "evidence": "Farhan posted 'Freezer check done' on 5, 12, 19 and 26 Oct and 2 and 9 Nov 2026 (6 times in 6 distinct weeks). No card on the task sheet."
+    },
+    {
+      "responsibility": "R10",
+      "rule": "role_template",
+      "evidence": "No card on the task sheet; incoming_postdoc role-template duty; discussed in #lab-general and the notebook with no owner."
+    }
+  ],
+  "readback": [
+    {
+      "key": "biosafety_renewal_date",
+      "expected": "2026-12-10",
+      "claims": [
+        "gt-073",
+        "gt-062",
+        "gt-058"
+      ]
+    },
+    {
+      "key": "env_rollback",
+      "expected": "./scripts/restore_env.sh v1.4.2",
+      "claims": [
+        "gt-027"
+      ]
+    },
+    {
+      "key": "seq_core_contact",
+      "expected": "Dr. Joseph Mathew",
+      "claims": [
+        "gt-005",
+        "gt-056"
+      ]
+    },
+    {
+      "key": "revision_due_date",
+      "expected": "2026-11-28",
+      "claims": [
+        "gt-067",
+        "gt-075",
+        "gt-015"
+      ]
+    },
+    {
+      "key": "lab_meeting_day",
+      "expected": "Thursday",
+      "claims": [
+        "gt-001",
+        "gt-071"
+      ]
+    }
+  ],
+  "footprintNoise": [
+    {
+      "entity": "intern-training",
+      "rule": "repeat",
+      "why": "Finished work: Farhan ran three intern training sessions in June and July; the cards T-003 and T-004 are Done and nothing happened in the last 30 days. Expected dropped."
+    },
+    {
+      "entity": "pipeline-env",
+      "rule": "repeat|ownership",
+      "why": "Part of R01 (Nightly QC and assembly pipeline); merge into R01, not a separate responsibility."
+    },
+    {
+      "entity": "(none)",
+      "rule": "none",
+      "why": "The move off the old Tapti cluster (T-005, T-006, Done in August) and the symposium poster (T-009, T-010, Done in September) are finished and match no entity: they must not become responsibilities."
+    }
+  ],
+  "corroborated": [
+    [
+      "gt-025",
+      "gt-036"
+    ],
+    [
+      "gt-053",
+      "gt-066"
+    ],
+    [
+      "gt-015",
+      "gt-067",
+      "gt-075"
+    ],
+    [
+      "gt-028",
+      "gt-044"
+    ],
+    [
+      "gt-051",
+      "gt-068"
+    ],
+    [
+      "gt-005",
+      "gt-056"
+    ],
+    [
+      "gt-074",
+      "gt-057"
+    ],
+    [
+      "gt-054",
+      "gt-064"
+    ],
+    [
+      "gt-065",
+      "gt-076"
+    ],
+    [
+      "gt-003",
+      "gt-072"
+    ],
+    [
+      "gt-073",
+      "gt-062",
+      "gt-058"
+    ],
+    [
+      "gt-002",
+      "gt-063"
+    ],
+    [
+      "gt-001",
+      "gt-071"
+    ]
+  ],
+  "sensitivityPlaceholders": [
+    {
+      "where": "data/lab/slack/lab-general/lab-general.json",
+      "contains": "Imran is on medical leave until 23 October.",
+      "proposedCategory": "health"
+    },
+    {
+      "where": "data/lab/slack/lab-general/lab-general.json",
+      "contains": "Stipend arrears for the two PhD students for August and September will be paid with the October stipend.",
+      "proposedCategory": "hr"
+    },
+    {
+      "where": "data/lab/slack/lab-general/lab-general.json",
+      "contains": "Tara, your conference reimbursement of Rs 18,400 was approved by accounts today.",
+      "proposedCategory": "finance"
+    }
+  ],
+  "firstWeeks": {
+    "example": {
+      "responsibility": "R07",
+      "checkKey": "next_due_date",
+      "date": "2026-11-16",
+      "note": "Gauri confirmed the freezer check is every Monday morning. The next one is Monday 16 Nov. If the alarm sounds, call the facilities desk.",
+      "expected": {
+        "gapCloses": true,
+        "blockingDelta": -1,
+        "conflictsDelta": 0
+      }
+    }
+  },
+  "demoAnswer": {
+    "responsibility": "R01",
+    "checkKey": "credential_owner",
+    "role": "leaving_postdoc",
+    "text": "Gauri holds it in the lab password manager. I showed her on 6 Nov. Ask her, never post it in a channel."
+  },
+  "expectedSuccessorBlockingGaps": 7
+}

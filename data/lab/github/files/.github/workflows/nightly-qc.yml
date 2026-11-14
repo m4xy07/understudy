@@ -1,0 +1,20 @@
+name: nightly-qc
+
+# Nightly QC and assembly run: starts at 20:30 UTC, which is 02:00 IST.
+on:
+  schedule:
+    - cron: "30 20 * * *"
+  workflow_dispatch:
+
+env:
+  HPC_PROJECT: bio-142
+  SEQCORE_API_TOKEN: ${{ secrets.SEQCORE_API_TOKEN }}
+
+jobs:
+  nightly:
+    runs-on: [self-hosted, kaveri]
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/fetch_run.sh
+      - run: conda run -n soilmeta snakemake --profile profiles/kaveri --cores 32
+      - run: tail -n 1 logs/nightly.log | grep "nightly-qc: OK"
