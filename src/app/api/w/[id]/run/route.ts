@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { getRunStatus, getWorkspace } from "@/lib/db/queries";
 import { executeRun, startRun } from "@/lib/pipeline/run";
 import { leaseHeld } from "@/lib/pipeline/guard";
+import { publicRun } from "@/lib/pipeline/public-run";
 import { REJUDGE_KEY } from "@/lib/pipeline/rejudge";
 
 export const maxDuration = 300;
@@ -18,7 +19,8 @@ export async function GET(_req: Request, ctx: Ctx) {
   try {
     if (!(await getWorkspace(id))) return Response.json({ error: "Workspace not found." }, { status: 404, headers: noStore });
     const [run, background] = await Promise.all([getRunStatus(id), leaseHeld(id, REJUDGE_KEY).catch(() => false)]);
-    return Response.json({ run, background }, { headers: noStore });
+    // Raw error text (database and model messages) stays in the server log and the runs row.
+    return Response.json({ run: publicRun(run), background }, { headers: noStore });
   } catch (err) {
     console.error(`[run ${id}] status failed`, err);
     return Response.json({ error: "The server could not read the run status. It will retry." }, { status: 503, headers: noStore });

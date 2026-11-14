@@ -3,7 +3,9 @@
 import { getWorkspace } from "@/lib/db/queries";
 import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { ingestUpload, UPLOAD_KINDS, UPLOAD_KIND_LABEL, UPLOAD_LIMIT_BYTES, UPLOAD_LIMIT_MESSAGE, type IngestResult } from "@/lib/pipeline/ingest";
-import { exclusive } from "@/lib/pipeline/guard";
+import { runWithModelContext } from "@/lib/model/client";
+import { exclusive, spendContext } from "@/lib/pipeline/guard";
+import { readBodyWithin } from "@/lib/pipeline/body-limit";
 import { viewingRole } from "@/lib/session";
 import type { RoleKey, SourceKind } from "@/lib/types";
 
@@ -19,9 +21,13 @@ export async function POST(req: Request, ctx: Ctx) {
     if (!(await getWorkspace(id))) return refuse("Workspace not found.", 404);
     const declared = Number(req.headers.get("content-length") ?? 0);
     if (declared > UPLOAD_LIMIT_BYTES + 64 * 1024) return refuse(UPLOAD_LIMIT_MESSAGE, 413);
+    // Content-Length can be missing (chunked) or wrong: count the bytes while reading, and stop
+    // at the limit instead of buffering whatever is sent.
+    const body = await readBodyWithin(req.body, UPLOAD_LIMIT_BYTES + 64 * 1024);
+    if (body === "too_large") return refuse(UPLOAD_LIMIT_MESSAGE, 413);
     let form: FormData;
     try {
-      form = await req.formData();
+      form = await new Response(body, { headers: { "content-type": req.headers.get("content-type") ?? "" } }).formData();
     } catch {
       return refuse("Could not read the upload. Choose the file again and press Upload.");
     }
@@ -40,8 +46,10 @@ export async function POST(req: Request, ctx: Ctx) {
     const narrow = form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
     const actor = await viewingRole(id);
     // One ingest at a time per workspace: two uploads at once would number new people in parallel.
+    // Live classifier calls made while reading the upload count against the workspace's model budget.
     const busy: IngestResult = { ok: false, error: "Another upload to this workspace is still being read. Wait a few seconds and press Upload again." };
-    const res = await exclusive(id, "ingest", () => ingestUpload(id, kind, files, { narrowRoles: narrow, actor, kindLabel: UPLOAD_KIND_LABEL[kind] }), busy, 60_000, 15_000);
+    const res = await exclusive(id, "ingest", () => runWithModelContext(spendContext(id), () =>
+      ingestUpload(id, kind, files, { narrowRoles: narrow, actor, kindLabel: UPLOAD_KIND_LABEL[kind] })), busy, 60_000, 15_000);
     return Response.json(res, { status: res.ok ? 200 : 400 });
   } catch (err) {
     console.error(`[upload ${id}] failed`, err);

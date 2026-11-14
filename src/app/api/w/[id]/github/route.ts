@@ -3,7 +3,8 @@
 import { getWorkspace } from "@/lib/db/queries";
 import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { ingestGithubUrl, type IngestResult } from "@/lib/pipeline/ingest";
-import { exclusive } from "@/lib/pipeline/guard";
+import { runWithModelContext } from "@/lib/model/client";
+import { exclusive, spendContext } from "@/lib/pipeline/guard";
 import { viewingRole } from "@/lib/session";
 import type { RoleKey } from "@/lib/types";
 
@@ -32,7 +33,8 @@ export async function POST(req: Request, ctx: Ctx) {
     const narrow = roles.map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
     const actor = await viewingRole(id);
     const busy: IngestResult = { ok: false, error: "Another import to this workspace is still being read. Wait a few seconds and try again." };
-    const res = await exclusive(id, "ingest", () => ingestGithubUrl(id, url, { narrowRoles: narrow, actor }), busy, 60_000, 15_000);
+    const res = await exclusive(id, "ingest", // Live classifier calls made while reading the repository count against the workspace's model budget.
+      () => runWithModelContext(spendContext(id), () => ingestGithubUrl(id, url, { narrowRoles: narrow, actor })), busy, 60_000, 15_000);
     return Response.json(res, { status: res.ok ? 200 : 400 });
   } catch (err) {
     console.error(`[github ${id}] failed`, err);

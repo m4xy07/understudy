@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getRunStatus, listSources } from "@/lib/db/queries";
 import { modelAvailable, modelTag } from "@/lib/model/client";
+import { publicRun } from "@/lib/pipeline/public-run";
 import { dataLevel, DATA_LEVEL_LABEL } from "@/lib/tether/data-level";
 import { loadWorkspace, roleOptions, type WsParams } from "@/lib/page";
 import { roleLabel } from "@/lib/pack";
@@ -146,7 +147,7 @@ async function Connect({ params }: { params: WsParams }) {
           )}
 
           {/* Keyed by run: a run started by a widen (a server action) gets a fresh, polling panel. */}
-          <RunPanel key={run?.id ?? "none"} ws={id} initial={run} hasSources={imported.length > 0} />
+          <RunPanel key={run?.id ?? "none"} ws={id} initial={publicRun(run)} hasSources={imported.length > 0} />
         </div>
 
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
