@@ -31,6 +31,7 @@ import {
   type DroppedDraft,
 } from "./core/verify";
 import { applyRules, isSensitive, tierOf, type RuleFiring } from "./core/rules";
+import { flagRoleSets } from "./core/flags";
 import { EXTRACTION_SKIP_KINDS, isCarriedOrigin, isRecordOrigin, takesPartInRules } from "./core/origins";
 import type { AttestPack } from "./core/verify";
 import { supportCheck, weakerTrust } from "./core/support";
@@ -468,7 +469,11 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
     segmentsById: segsById,
     entityKinds,
   });
-  const finalClaims = ruled.claims;
+  // A claim that cites a segment the content classifier marked is tier C, whatever its role set.
+  const marked = (c: Claim) => c.citations.some((x) => x.accepted && (segsById.get(x.segmentId)?.sensitivity?.length ?? 0) > 0);
+  const finalClaims = ruled.claims.map((c) => (c.tier !== "C" && marked(c) ? { ...c, tier: "C" as const } : c));
+  // Flag visibility: a conflict or supersession with a side a role cannot read hides every side from it.
+  const flags = flagRoleSets(finalClaims, ruled.firings);
   const firingByOlder = new Map(ruled.firings.map((f) => [f.olderId, f]));
   const firingByNewer = new Map(ruled.firings.filter((f) => f.rule >= 3).map((f) => [f.newerId, f]));
 
@@ -481,7 +486,7 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
 
   // 7. Write the projection (review fields untouched) and one event per change.
   const toWrite = [...finalClaims, ...stale];
-  const rows = toWrite.map((c) => claimRow(c, sourceIdsOf(c, segsById)));
+  const rows = toWrite.map((c) => ({ ...claimRow(c, sourceIdsOf(c, segsById)), flag_role_set: flags.get(c.id) ?? null }));
   for (let i = 0; i < rows.length; i += 200) {
     const chunk = rows.slice(i, i + 200);
     await sql`
@@ -494,7 +499,8 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
         state_note = EXCLUDED.state_note, superseded_by = EXCLUDED.superseded_by, role_set = EXCLUDED.role_set,
         valid_from = EXCLUDED.valid_from, author_id = EXCLUDED.author_id, source_kinds = EXCLUDED.source_kinds,
         importance = EXCLUDED.importance, tier = EXCLUDED.tier, origin = EXCLUDED.origin,
-        support_check = EXCLUDED.support_check, source_ids = EXCLUDED.source_ids, updated_at = now()`;
+        support_check = EXCLUDED.support_check, source_ids = EXCLUDED.source_ids,
+        flag_role_set = EXCLUDED.flag_role_set, updated_at = now()`;
   }
 
   const events: { workspace_id: string; claim_id: string; event: string; data: string; actor: string }[] = [];

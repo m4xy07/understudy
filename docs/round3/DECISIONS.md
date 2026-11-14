@@ -61,6 +61,12 @@ Split between two builders. It must merge before the three improvement builders 
   asked.
 - **Conflict flags:** a role sees a conflict only if it can see every side. Otherwise it
   sees a stub and the check reads Restricted. Same rule for Superseded notes.
+  - *Changed at integration (as built):* a conflicting claim is visible to the roles that can
+    read at least one claim it conflicts with (`claims.flag_role_set`, enforced by RLS through
+    `us_can_see`). With two sides this is the rule above. With three or more, a role that reads
+    two sides sees those two as a conflict, because each explains the other's flag and a
+    further hidden side adds nothing the role can notice; "every side" would have hidden a
+    conflict the role can fully read on its own.
 - **Hard reworded probes** live in an evaluation set scored in a scratch workspace, not
   in the live demo sources.
 - **Leak grid** columns for recovery and findings read `recoverySurfaces(ws, role)` and

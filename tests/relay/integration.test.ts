@@ -222,7 +222,7 @@ describe("Relay handover", () => {
     expect(renderMarkdown(lead.doc!)).not.toContain(CANARIES[0].token);
     const report = await runLeakCheck(ws);
     expect(report.source).toBe("ground_truth");
-    expect(report.cells.length).toBe(5 * 6);
+    expect(report.cells.length).toBe(5 * report.surfaces.length * 2);   // roles x surfaces x (tokens, reworded facts)
     expect(report.allPass).toBe(true);
   });
 

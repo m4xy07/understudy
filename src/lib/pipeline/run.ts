@@ -17,6 +17,7 @@ import { reconstruct, verify } from "@/lib/attest";
 import { buildInventory, buildQuestions, runTest } from "@/lib/lacuna";
 import { modelAvailable, runWithModelContext, type ModelContext } from "@/lib/model/client";
 import { chargeModelCall } from "./guard";
+import { reclassify } from "@/lib/tether/visibility";
 import type { RoleKey } from "@/lib/types";
 
 export const STEP_LABELS: Record<RunStepKey, string> = {
@@ -200,6 +201,8 @@ export async function executeRun(ws: string, runId: string, opts: ExecuteOptions
 
   const fns: Record<RunStepKey, StepFn> = {
     connect: async () => {
+      // Segments an older rules version stored are looked at again; newly sensitive ones are limited.
+      await reclassify(ws);
       const sources = await listSources(ws);
       const segments = sources.reduce((n, s) => n + s.segmentCount, 0);
       return {

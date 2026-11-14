@@ -10,6 +10,8 @@ import { loadDemoSources } from "@/lib/tether/demo";
 import { fetchPublicRepo, GithubFetchError } from "@/lib/tether/github-fetch";
 import { sha256Hex } from "@/lib/text/norm";
 import { syncRoleHolders } from "@/lib/roles";
+import { applySensitivity, nameParts, packSensitivity, type SensitivityModelCall } from "@/lib/tether/sensitivity";
+import { sensitivityModelCall } from "@/lib/tether/visibility";
 import type { AdapterResult, Person, RoleKey, SourceKind } from "@/lib/types";
 
 // The live host refuses a request body over about 4.5 MB before our code runs, so the limit and
@@ -124,19 +126,42 @@ async function storePeople(ws: string, people: Person[]): Promise<void> {
   }
 }
 
-/** Parse and store several sources with one shared PersonRegistry. */
-export async function ingestSources(ws: string, inputs: IngestInput[], origin: string): Promise<StoredSource[]> {
+export interface IngestOptions {
+  /** The classifier's model call (tests inject one). null: no model, borderline segments are held. */
+  sensitivityCall?: SensitivityModelCall | null;
+  sensitivityBudgetMs?: number;
+}
+
+/**
+ * Parse and store several sources with one shared PersonRegistry. Between parsing and the first
+ * write, the content classifier narrows the role set of sensitive segments (rules, then the model
+ * for borderline ones), so the narrowed role set is the only one ever stored for version 1.
+ */
+export async function ingestSources(ws: string, inputs: IngestInput[], origin: string, opts: IngestOptions = {}): Promise<StoredSource[]> {
   const { identityKey, contactsKey } = keys();
   const { reg } = await registryFor(ws, identityKey);
   const out = ingestAll(
     inputs.map((s) => ({ ...s, sourceId: s.sourceId ?? sourceIdFor(s.kind, s.name) })),
     { identityKey, contactsKey, registry: reg },
   );
+  const pack = await getWorkspacePack(ws);
+  const authorNames: Record<string, string[]> = {};
+  for (const p of out.people) authorNames[p.id] = nameParts([p.displayName, ...p.aliases]);
+  const call = opts.sensitivityCall === undefined ? await sensitivityModelCall() : (opts.sensitivityCall ?? undefined);
+  const classified = await applySensitivity(out.sources, packSensitivity(pack), {
+    knownNames: nameParts(out.people.flatMap((p) => [p.displayName, ...p.aliases])),
+    authorNames,
+    call,
+    budgetMs: opts.sensitivityBudgetMs,
+  });
   await storePeople(ws, out.people);
   // New sources can bring new person records: match the pack's role holders to them.
   await syncRoleHolders(ws);
   const stored: StoredSource[] = [];
-  for (const s of out.sources) stored.push(await storeResult(ws, s, origin));
+  for (const s of classified.sources) stored.push(await storeResult(ws, s, origin));
+  const { decisions: _decisions, ...counts } = classified.report;
+  void _decisions; // counts only in the audit trail: never text, ids or categories
+  await audit(ws, "system", "classify_sensitivity", counts);
   return stored;
 }
 
@@ -161,12 +186,12 @@ export async function createEmptyWorkspace(name = "My handover", packId: string 
 }
 
 /** A private copy of a pack's demo: workspace + all demo sources stored + role holders matched. */
-export async function createDemoWorkspace(packId: string): Promise<{ id: string; sources: StoredSource[] }> {
+export async function createDemoWorkspace(packId: string, opts: IngestOptions = {}): Promise<{ id: string; sources: StoredSource[] }> {
   const pack = getPack(packId);
   if (!pack.demo) throw new Error(`Setting pack "${pack.id}" has no demo.`);
   const id = await insertWorkspace(pack.name + " (demo)", "demo", pack);
   const demo = loadDemoSources(pack.demo.dataDir);
-  const sources = await ingestSources(id, demo.map((d) => ({ kind: d.kind, name: d.name, roleSet: d.roleSet, files: d.files })), "demo");
+  const sources = await ingestSources(id, demo.map((d) => ({ kind: d.kind, name: d.name, roleSet: d.roleSet, files: d.files })), "demo", opts);
   await audit(id, "system", "create_workspace", { kind: "demo", pack: pack.id, sources: sources.length });
   return { id, sources };
 }

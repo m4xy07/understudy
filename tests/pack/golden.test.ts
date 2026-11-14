@@ -14,7 +14,8 @@ import { EXTRACT_MAX_CHARS, extractionPack } from "@/lib/attest";
 import { planBatches } from "@/lib/attest/core/extract";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/attest/core/prompts";
 import { EXTRACTION_JSON_SCHEMA_NAME } from "@/lib/attest/core/schema";
-import { cacheKey } from "@/lib/model/client";
+import { cacheKey, decodeCacheOutput } from "@/lib/model/client";
+import { classifySegments, nameParts, packSensitivity, type SensitivityModelCall } from "@/lib/tether/sensitivity";
 import { getPack } from "@/lib/pack";
 import { sourceIdFor } from "@/lib/pipeline/ingest";
 import { loadDemoSources } from "@/lib/tether/demo";
@@ -29,9 +30,26 @@ interface Golden {
   batchIds: string[];
   segmentIdsSha256: string;
   segmentCount: number;
+  /** Ids and narrowed role sets of the segments the content classifier limits (rules, then the cached model answers). */
+  limitedSha256: string;
+  limitedCount: number;
 }
 
-function current() {
+const CACHE_FILE = path.join(process.cwd(), getPack("club").demo!.dataDir, "model_cache.json");
+
+/** The classifier's model call, answered only from the committed cache file (no database, no network). */
+function committedCacheCall(): SensitivityModelCall {
+  const rows = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8")) as { input_hash: string; model_tag: string; output: unknown }[];
+  const byHash = new Map(rows.map((r) => [r.input_hash, r]));
+  const tag = rows[0]?.model_tag ?? "";
+  return async (o) => {
+    const row = byHash.get(cacheKey(tag, o.system, `${o.user.trimEnd()}\n/no_think`, o.jsonSchemaName));
+    if (!row) return { ok: false, error: "not in the committed cache" };
+    return { ok: true, cached: true, data: decodeCacheOutput(row.output) as never };
+  };
+}
+
+async function current() {
   const pack = getPack("club");
   const system = buildSystemPrompt(extractionPack(pack));
   const demo = loadDemoSources(pack.demo!.dataDir);
@@ -42,9 +60,17 @@ function current() {
   const names = Object.fromEntries(out.people.map((p) => [p.id, p.displayName]));
   // The pipeline reads segments back from Postgres, where `ts` is a timestamptz: it comes back as
   // Date.toISOString(). The prompt prints that form, so the same conversion is applied here.
-  const segments = out.sources.flatMap((s) =>
+  const parsed = out.sources.flatMap((s) =>
     s.result.segments.map((seg) => ({ ...seg, sourceId: s.sourceId, ts: new Date(seg.ts).toISOString() })),
   );
+  // The pipeline narrows sensitive segments before it stores them, so the batches extraction
+  // plans are the batches of the narrowed role sets. Same classifier, answers from the cache file.
+  const authorNames = Object.fromEntries(out.people.map((p) => [p.id, nameParts([p.displayName, ...p.aliases])]));
+  const classified = await classifySegments(parsed, packSensitivity(pack), {
+    knownNames: nameParts(out.people.flatMap((p) => [p.displayName, ...p.aliases])), authorNames, call: committedCacheCall(),
+  });
+  const segments = classified.segments;
+  const limited = segments.filter((s) => s.roleSetOriginal).map((s) => `${s.id}:${s.roleSet.join(",")}:${s.sensitivityStage}`).sort();
   const batches = planBatches(segments, { roleOrder: pack.roleOrder, maxChars: EXTRACT_MAX_CHARS });
   const users = batches.map((b) => buildUserPrompt(b, { authorLabel: (id) => (id ? (names[id] ?? id) : "unknown") }));
   const golden: Golden = {
@@ -53,12 +79,15 @@ function current() {
     batchIds: batches.map((b) => b.id),
     segmentIdsSha256: sha(segments.map((s) => s.id).sort().join(",")),
     segmentCount: segments.length,
+    limitedSha256: sha(limited.join("|")),
+    limitedCount: limited.length,
   };
-  return { system, users, golden };
+  return { system, users, golden, held: classified.report.held };
 }
 
+const now = await current();
+
 describe("club demo golden hashes (model cache keys stay stable)", () => {
-  const now = current();
   if (process.env.UPDATE_GOLDEN === "1") fs.writeFileSync(GOLDEN_FILE, JSON.stringify(now.golden, null, 2) + "\n");
   const golden = JSON.parse(fs.readFileSync(GOLDEN_FILE, "utf8")) as Golden;
 
@@ -73,9 +102,14 @@ describe("club demo golden hashes (model cache keys stay stable)", () => {
     expect(now.golden.userPromptSha256).toEqual(golden.userPromptSha256);
   });
 
+  it("the content classifier limits the recorded segments, with every borderline answer in the committed cache", () => {
+    expect(now.held).toBe(0);
+    expect(now.golden.limitedCount).toBe(golden.limitedCount);
+    expect(now.golden.limitedSha256).toBe(golden.limitedSha256);
+  });
+
   it("every extraction batch of the club demo has its answer in the committed model cache", () => {
-    const file = path.join(process.cwd(), getPack("club").demo!.dataDir, "model_cache.json");
-    const rows = JSON.parse(fs.readFileSync(file, "utf8")) as { input_hash: string; model_tag: string }[];
+    const rows = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8")) as { input_hash: string; model_tag: string }[];
     const tags = [...new Set(rows.map((r) => r.model_tag))];
     expect(tags.length).toBe(1);
     const have = new Set(rows.map((r) => r.input_hash));

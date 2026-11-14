@@ -1,9 +1,93 @@
 [
  {
+  "input_hash": "00e97c82b1608afcc7c51c63ce020e04e64c9b416c7084dd66ff73187a04f3b7",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:22.668Z"
+ },
+ {
+  "input_hash": "0150859a0e69e0564a96bf55681dcc62981732c19e1564b87fcff034861cbed6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:21.572Z"
+ },
+ {
+  "input_hash": "03243cf11d128955f25e160fd7b32de79f1048846e3ad0249431c77196ce03f4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:33.440Z"
+ },
+ {
+  "input_hash": "038abaac2d832f6284fe4c072770da98e8d9aac86c26b88f274890c31e4fe535",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:20.876Z"
+ },
+ {
+  "input_hash": "03f7c98c32c79b418d9f9d5b005f3dadf6aafe8b953ecb13413615a21c730291",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"contact_person\",\"status\":\"partial\",\"claim_ids\":[\"clm_d53ad7f8515a11b3\",\"clm_35a74a1f6aef35a3\",\"clm_40271eda65de1810\"],\"blocker\":\"Conflicting contact persons (Meera Shah vs Rahul Desai)\"}]}",
+  "created_at": "2026-11-14T06:11:36.772Z"
+ },
+ {
+  "input_hash": "04bd433c16a8129eba563a74b66260795dfe14bd6dc4ac66770eecadeefcfc78",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b908eaffedb772de\",\"clm_aa0173d1c92f3144\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_467287c73b584589\",\"clm_b908eaffedb772de\",\"clm_aa0173d1c92f3144\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4cc1eb4adba278b3\",\"clm_6b4742c51cbc9945\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim directly addresses the consequences of missing the domain and DNS renewal.\"}]}",
+  "created_at": "2026-11-14T06:09:36.216Z"
+ },
+ {
+  "input_hash": "052654e7f14ce251bcb4ec20f33acb74f0dcb4f9859b5ee076d670c7e48af3be",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:48.447Z"
+ },
+ {
+  "input_hash": "0575f9a6ba468a65558645f453fe018dec6707338453d111ac404e8f33be0bd9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"no\"},{\"id\":\"c20\",\"verdict\":\"partly\"}]}",
+  "created_at": "2026-11-14T06:08:31.500Z"
+ },
+ {
   "input_hash": "05e076d081d1c69a9b8f5c8f0dec0faa2917a38223676566cf1f87c4233725bf",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"title-sponsor\",\"attribute\":\"contact\",\"value\":\"Rahul Desai\",\"statement\":\"The sponsor contact at Vertex Motors is now Rahul Desai.\",\"citations\":[{\"segment_id\":\"seg_0c1a32494f3d22ac\",\"quote\":\"Our sponsor contact at Vertex Motors is now Rahul Desai.\"}]}]}",
   "created_at": "2026-11-10T19:56:25.813Z"
+ },
+ {
+  "input_hash": "068ba2847cf9ddf9b416dc9f96139db17a559d168d8120b8d1179fbaea208e20",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:44.551Z"
+ },
+ {
+  "input_hash": "073b7c3fb2d68f0478f03fd77b0709d395c0ce9e30601084585edc584e7d3b31",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:39.204Z"
+ },
+ {
+  "input_hash": "07d39ee65157aacb5b9bd342a0f2c58e86c939312fff517385dbaa536671071a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:48.701Z"
+ },
+ {
+  "input_hash": "0856cd8726808c655b97d3c73701d9119b942f12a14022c48b593a5166048ddd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b908eaffedb772de\",\"clm_aa0173d1c92f3144\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b908eaffedb772de\",\"clm_aa0173d1c92f3144\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_fea795b5a3b4fd4b\",\"clm_fb007a96f6157334\",\"clm_6b4742c51cbc9945\"],\"blocker\":\"Need to access NameHarbor and the dns/ folder using the DNS_API_TOKEN repo secret to perform the renewal.\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information on the consequences of missing the domain and DNS renewal.\"}]}",
+  "created_at": "2026-11-14T06:12:33.590Z"
+ },
+ {
+  "input_hash": "087e5a58ecaf5d364a650bbbbd73b59f58c408260b29c9ed2d5082c8b80bc8db",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:38.468Z"
+ },
+ {
+  "input_hash": "09c98335b3a5c400cd0cfbafc981987cd0373553df7658f79e5027dd5fb3bebf",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"no\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:08:48.958Z"
  },
  {
   "input_hash": "0d4d2a06e233cf6453110db7760cd822a810cfd696b19ddd227ccca5400d91f1",
@@ -12,10 +96,82 @@
   "created_at": "2026-11-11T09:06:34.404Z"
  },
  {
+  "input_hash": "0e3727a61ce573b17405a03f9bb888454deecb3d277f4524f28122179b43ffa6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:02.229Z"
+ },
+ {
+  "input_hash": "0f550cb2986f360134b84828838744c08ff7c60d986293966072af7db78ec0af",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:34.778Z"
+ },
+ {
+  "input_hash": "0f5d75c8bcd006d86c533a65122d1f772a2d75fd62231fb7e5efffe187007c7e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:06.733Z"
+ },
+ {
+  "input_hash": "108e494194ea426ea0e282a22739b3701ae1e5fba25127fc62043eefed200719",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:43.314Z"
+ },
+ {
+  "input_hash": "11a69093020f412903927fcc9aa0a589e6a953af62e370c00ed79d4ad69e5eee",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:32.850Z"
+ },
+ {
+  "input_hash": "125b4c3340fdb8fd3ebe06a7033026021977d9e09d5f7936edd70a35f73f17bc",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:54.953Z"
+ },
+ {
+  "input_hash": "12968bc09b1852174b3b8a0c1663abe24f26aa9cc04c053d3b2fdaca65ab8084",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:57.093Z"
+ },
+ {
+  "input_hash": "12e2ae52a543e7bbd165667dbb279a1c5bb6741f071bdf1814932eea236fd790",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:54.708Z"
+ },
+ {
   "input_hash": "12fae798f88eca68dea0c6790167f5831f75c8baf8efe7dc0a22d63aea73d5c4",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"competition\",\"attribute\":\"deadline\",\"value\":\"2026-12-19\",\"statement\":\"Deccan RoboLeague 2026 is on 19 December 2026.\",\"citations\":[{\"segment_id\":\"seg_79d0c1d39d2caea1\",\"quote\":\"Organisers moved Deccan RoboLeague 2026 to 19 Dec 2026.\"}]},{\"entity\":\"competition\",\"attribute\":\"location\",\"value\":\"Hall B\",\"statement\":\"The competition will be held in Hall B.\",\"citations\":[{\"segment_id\":\"seg_ff9d73428ced0657\",\"quote\":\"Venue is still not final. Hall B is preferred because it has 3-phase power and room for the arena.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"decision\",\"value\":\"trial lap times\",\"statement\":\"The drive team will be selected based on trial lap times.\",\"citations\":[{\"segment_id\":\"seg_3c38937f7d20ac91\",\"quote\":\"Drive team will be picked by trial lap times, not by seniority.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"deadline\",\"value\":\"2026-11-29\",\"statement\":\"Drive team selection trials will be held on 29 November 2026.\",\"citations\":[{\"segment_id\":\"seg_3e36135491b5e37b\",\"quote\":\"Drive team selection trials will be held on 29 Nov.\"}]},{\"entity\":\"website-registration\",\"attribute\":\"location\",\"value\":\"website/register.html on feature/registration-form branch\",\"statement\":\"The registration form lives in website/register.html on the feature/registration-form branch.\",\"citations\":[{\"segment_id\":\"seg_13e115176d10b9dc\",\"quote\":\"The registration form lives in website/register.html on the feature/registration-form branch.\"}]},{\"entity\":\"entry-fee\",\"attribute\":\"risk\",\"value\":\"double fee if late\",\"statement\":\"Late registration for RoboLeague costs double, so the entry fee deadline must be met.\",\"citations\":[{\"segment_id\":\"seg_2f3ae4b88fe2d1e5\",\"quote\":\"Late registration for RoboLeague costs double, so let's not miss the entry fee deadline.\"}]},{\"entity\":\"recruitment\",\"attribute\":\"deadline\",\"value\":\"2026-08-08\",\"statement\":\"14 first years signed up for the recruitment drive on 8 August 2026.\",\"citations\":[{\"segment_id\":\"seg_768847b2480ba4d9\",\"quote\":\"14 first years signed up today\"}]},{\"entity\":\"recruitment\",\"attribute\":\"location\",\"value\":\"near the canteen\",\"statement\":\"The recruitment drive stall was near the canteen.\",\"citations\":[{\"segment_id\":\"seg_3e9ebdf305fbed49\",\"quote\":\"Recruitment drive on 8 Aug, stall near the canteen\"}]},{\"entity\":\"faculty-approval\",\"attribute\":\"deadline\",\"value\":\"end of June 2026\",\"statement\":\"The season plan needed to be shared with Dr. Kulkarni by the end of June 2026.\",\"citations\":[{\"segment_id\":\"seg_e7a4b0bec74ca2c9\",\"quote\":\"Please share the season plan with me by the end of June.\"}]},{\"entity\":\"faculty-approval\",\"attribute\":\"status\",\"value\":\"shared\",\"statement\":\"The season plan was shared with Dr. Kulkarni.\",\"citations\":[{\"segment_id\":\"seg_10726f6e0d5c1f1b\",\"quote\":\"Sent the season plan to Dr. Kulkarni.\"}]},{\"entity\":\"competition\",\"attribute\":\"decision\",\"value\":\"hosted at our college\",\"statement\":\"Deccan RoboLeague 2026 will be hosted at our college.\",\"citations\":[{\"segment_id\":\"seg_226463017c4bed25\",\"quote\":\"Deccan RoboLeague 2026 is on 12 Dec 2026, hosted at our college!\"}]},{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"confirmation email not wired\",\"statement\":\"The registration form submits to the Google Sheet, but the confirmation email is not wired yet.\",\"citations\":[{\"segment_id\":\"seg_f2ebca6a3f114ac1\",\"quote\":\"Registration form status: it submits to the Google Sheet, but the confirmation email is not wired yet.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"status\",\"value\":\"logos on homepage\",\"statement\":\"Sponsor logos are on the homepage.\",\"citations\":[{\"segment_id\":\"seg_f41c80590f279065\",\"quote\":\"Sponsor logos are on the homepage now\"}]},{\"entity\":\"other\",\"attribute\":\"owner\",\"value\":\"Tanvi Deshpande\",\"statement\":\"Tanvi Deshpande owns the T-shirt design.\",\"citations\":[{\"segment_id\":\"seg_2549903fdf3fc323\",\"quote\":\"Yes, Tanvi please own the T-shirt design.\"}]},{\"entity\":\"other\",\"attribute\":\"deadline\",\"value\":\"2026-10-08\",\"statement\":\"T-shirt design v1 was posted with a vote deadline of Monday, 8 October 2026.\",\"citations\":[{\"segment_id\":\"seg_d90e8f5978e2f6d4\",\"quote\":\"T-shirt vote: design 2 wins\"}]},{\"entity\":\"other\",\"attribute\":\"status\",\"value\":\"design 2 wins\",\"statement\":\"Design 2 won the T-shirt vote.\",\"citations\":[{\"segment_id\":\"seg_af5d8a60a6c02b36\",\"quote\":\"T-shirt vote: design 2 wins\"}]},{\"entity\":\"other\",\"attribute\":\"location\",\"value\":\"Lab 3\",\"statement\":\"T-shirts can be collected from Lab 3 on Saturday.\",\"citations\":[{\"segment_id\":\"seg_cab6c56e99f57ef7\",\"quote\":\"T-shirts are here! Collect them from Lab 3 on Saturday\"}]}]}",
   "created_at": "2026-11-10T19:55:43.048Z"
+ },
+ {
+  "input_hash": "139122531ba5f9afecd6d91bdabccb19de6c65a61aabe5c2b291c997052ae8e9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:54.378Z"
+ },
+ {
+  "input_hash": "142e23f3add7134337a4e7736ea528b7760066b28c329cb3985139f224f2939c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:28.322Z"
+ },
+ {
+  "input_hash": "152859e2fcbddb8f9dca656cbbb37fa4f30b0066b119ca00ffbe11f3f9e680d2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:04.926Z"
+ },
+ {
+  "input_hash": "1545ff8ae2b1e17cac46abd83e76eccdb02d34b11ba8ffc2bbe814992357596e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:31.103Z"
  },
  {
   "input_hash": "16e9c69203bea490b5c62d88adf1e899a3b8a55f82c8267ff2a003f509c5f3b4",
@@ -24,10 +180,40 @@
   "created_at": "2026-11-10T20:01:15.870Z"
  },
  {
+  "input_hash": "1761ba5cb2a913b237d2e0bd9315bb283bdc6e8b8ed4739e8a8fc0400fce0619",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:09:17.689Z"
+ },
+ {
   "input_hash": "181a0ebd562a806459d926e23dc216ae4e92a9f9986871804f238fa1b69946da",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"no\"},{\"id\":\"c7\",\"verdict\":\"no\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"no\"},{\"id\":\"c10\",\"verdict\":\"no\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-10T19:57:48.831Z"
+ },
+ {
+  "input_hash": "19c04add565b8f3845a82e26f926bd0a619e2e911437fb738baca8bfa9e68fc1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:41.767Z"
+ },
+ {
+  "input_hash": "1a48ec25c36a632f9b50e13ed89a435a98a7c786dd3ad5dd8497239d7063d8b9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:44.578Z"
+ },
+ {
+  "input_hash": "1af2193b83c405e96c552cb114371bc264b58ea405b6f5b33c951ad468123c56",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:04.546Z"
+ },
+ {
+  "input_hash": "1b009147e7683ccce3a00017d740e0bb9efa8dffd50e48aca0131b879f2da507",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:26.974Z"
  },
  {
   "input_hash": "1b37134852057b1d188b435d2c8064dc8f2e2ab7412936ba12074cff79163ccf",
@@ -42,10 +228,64 @@
   "created_at": "2026-11-10T20:01:07.693Z"
  },
  {
+  "input_hash": "1bbb27b8773513e8650cd000c1abf622cb3c421a05288d0bbf96a77cc00993a9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:07.758Z"
+ },
+ {
+  "input_hash": "1bc8fc550cf33dc8b639384f860ed6047f26360555e4c1bafa93e3392268d47c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[{\"fact_id\":\"pf-09\",\"quote\":\"What has been promised for Title sponsor relationship (Vertex Motors) that is still open, and to whom?\"},{\"fact_id\":\"pf-09\",\"quote\":\"The record only partly answers this for this relationship. Who is the person to contact for Title sponsor relationship (Vertex Motors), and how do they expect to be reached?\"},{\"fact_id\":\"pf-09\",\"quote\":\"When did you last talk to them about Title sponsor relationship (Vertex Motors), and what was agreed?\"}]}",
+  "created_at": "2026-11-14T06:26:02.473Z"
+ },
+ {
+  "input_hash": "1c3f9296ae297e38f483cbf3f9c1412da9c704320ce0f63001473fd6fef54ce5",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:23.161Z"
+ },
+ {
+  "input_hash": "1dcda43ce2aea66cdda987202e91d1234d1206c27c7d96b97123d4daae3e2480",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:26:03.213Z"
+ },
+ {
+  "input_hash": "1f2389d3374775f610bae887c6ab4b65420d72627e9df5de947e9233aa9ac8ca",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:52.154Z"
+ },
+ {
+  "input_hash": "1f641808e0180ebaa172bedea59a65c15f41354b3ed4222f5317dd7f81e028ae",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:17.112Z"
+ },
+ {
+  "input_hash": "20efe2585ca8511b61fd81ccca436d58b2c282a0f31b92055570650025551b31",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:45.847Z"
+ },
+ {
+  "input_hash": "210d0df6346c50f6cbb4e59ce6804e4647ecc74c921108aef5426f5dce52f77b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:07.144Z"
+ },
+ {
   "input_hash": "214a970cd4e93f774ed7903ab8d4e7958d4eec6f5a33f6aa4c7026238b3f359b",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_9a75881aa4d7c12a\",\"clm_ca4a118496e1d68c\",\"clm_b605993a3da276a1\",\"clm_c97ad45de6ad5fc4\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a96a991cd8888d13\",\"clm_10bbfd063c18ecd1\",\"clm_fd2d7a9426e39781\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b37aea90c976a4d4\",\"clm_4cfd6530626537d9\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d56426c633dc34ed\",\"clm_31cb77a047fc5b73\",\"clm_c5502c3b6fe35168\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_182aee60abca5355\",\"clm_45588ced768a2caf\",\"clm_e68660ce9e8457fa\",\"clm_f3de76cef24e8e3f\"],\"blocker\":\"\"}]}",
   "created_at": "2026-11-10T20:00:38.064Z"
+ },
+ {
+  "input_hash": "22016712afaf35e0e30844dd58492d9cc6203b861fccf9097dd3e8c8737109eb",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:56.418Z"
  },
  {
   "input_hash": "22425d7bc1cc9e4932a667bd3e95e4256ea50ee918d071a575863f49272a2ed2",
@@ -54,16 +294,130 @@
   "created_at": "2026-11-10T19:48:30.672Z"
  },
  {
+  "input_hash": "23ef4c24e3c4ea4c71a9946e2c2cff92fb0ecbad36bcfdbb06878f7a85db30b5",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:30.154Z"
+ },
+ {
   "input_hash": "24149bc7c797a11990ddd475d7a7c51479fd47349253d2068f678e2196930a0f",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"lab-late-access\",\"attribute\":\"deadline\",\"value\":\"2026-11-05T16:00:00.000Z\",\"statement\":\"Lab 3 has late access till 11 pm on 5 November 2026.\",\"citations\":[{\"segment_id\":\"seg_3dcb0c06b977997e\",\"quote\":\"Pawar sir, can we get late access to Lab 3 tonight till 11 pm?\"},{\"segment_id\":\"seg_f37aa8085ee2995f\",\"quote\":\"Ok, till 11 pm.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"status\",\"value\":\"pending\",\"statement\":\"Drive team selection needs an owner after Priya leaves.\",\"citations\":[{\"segment_id\":\"seg_eac54d6de8444e6d\",\"quote\":\"Someone has to own drive team selection after Priya leaves.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"location\",\"value\":\"drawer 2\",\"statement\":\"The spare ESP32 is in drawer 2.\",\"citations\":[{\"segment_id\":\"seg_10ebbde600828fcb\",\"quote\":\"drawer 2\"}]},{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"pending\",\"statement\":\"The registration form has one thing pending before launch.\",\"citations\":[{\"segment_id\":\"seg_e50894ac913757ea\",\"quote\":\"The registration form still has one thing pending before launch\"}]}]}",
   "created_at": "2026-11-10T19:49:51.405Z"
  },
  {
+  "input_hash": "244c86f465c390ea81624315ec2eec30988e46fd3e40abd69ebd9003867310ae",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:40.539Z"
+ },
+ {
+  "input_hash": "248118fca179b49dea3e84c69be2468eb7a8707a030ead0fac4b44bf37735eda",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:08.011Z"
+ },
+ {
+  "input_hash": "24e44db24c7eefe30fda328c3818f160cb2a4a4d31df8404fbd1a60da1264402",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"lab-booking\",\"attribute\":\"status\",\"value\":\"deposit paid by Priya\",\"statement\":\"The lab booking deposit was paid by Priya.\",\"citations\":[{\"segment_id\":\"seg_969cc6e700260b2d\",\"quote\":\"Priya paid Rs 450 for the lab booking deposit\"}]},{\"entity\":\"club-budget\",\"attribute\":\"status\",\"value\":\"Rs 1,500 membership dues unpaid\",\"statement\":\"Kabir's Rs 1,500 membership dues remain unpaid.\",\"citations\":[{\"segment_id\":\"seg_8b21189fff206be7\",\"quote\":\"Kabir, you still owe the Rs 1,500 season membership fee from August\"},{\"segment_id\":\"seg_9757ea52400a2c8d\",\"quote\":\"Kabir's 1.5k membership dues are still unpaid in my sheet\"}]},{\"entity\":\"club-budget\",\"attribute\":\"dependency\",\"value\":\"membership dues cleared\",\"statement\":\"The motor driver reimbursement depends on Kabir's membership dues being cleared.\",\"citations\":[{\"segment_id\":\"seg_8b21189fff206be7\",\"quote\":\"Your Rs 2,340 reimbursement for the motor drivers is on hold until it is cleared (dues ref CANARY-F9KS)\"},{\"segment_id\":\"seg_9757ea52400a2c8d\",\"quote\":\"Kabir's 1.5k membership dues are still unpaid in my sheet, so his motor driver refund stays on hold (ref CANARY-F9KS)\"}]}]}",
+  "created_at": "2026-11-14T06:08:12.236Z"
+ },
+ {
+  "input_hash": "25aff39a9a508baa428b007d2df3216953cb825e3c30489b67447422b7cc82df",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:40.055Z"
+ },
+ {
+  "input_hash": "2609467ee9029ec5c3ccc21c8de42935eb5f972ff3e3c5b4faac86cec75a4894",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:40.611Z"
+ },
+ {
+  "input_hash": "263cb3dbc39b372f113c263bcb9a1e816aff98fca5081268c153d78da3106c73",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:37.391Z"
+ },
+ {
+  "input_hash": "27a5b8505da2713ff649adfb798163e5b4ad575fb3c78c093dc8580af3f34bf3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:53.702Z"
+ },
+ {
+  "input_hash": "286abb90360da642e2802aa1bbd2d3e89a29b9f26bc69f9fbd4798bc08601890",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:22.347Z"
+ },
+ {
+  "input_hash": "2a4743b40a9a1d01e9b959cf0b32a59408b589d60c47be9d8c92c0f3ff354e1f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:08.473Z"
+ },
+ {
+  "input_hash": "2afdf00cb750f681f91d5866ed0c1ee65f3c9dc118ec2ba68f4d3e2eea22ce0a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:31.919Z"
+ },
+ {
+  "input_hash": "2b56b25e004d3f668a9abc2d7d73daa7c62ece9d97d14e6f47b4f34913d56c99",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:52.568Z"
+ },
+ {
+  "input_hash": "2b6e652a88aaf531e14af7b005c32ab7373f63e9beda95b64a5b7aa5ea5d9660",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:34.950Z"
+ },
+ {
+  "input_hash": "2c6346300fb0c36ad2b9946578c13304bda2952fdaa6dff22c188c187d4f719d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"no\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:08:40.432Z"
+ },
+ {
+  "input_hash": "2daf280c0704868f94e468cb62001b4ead92e4bf036354ba8b89766f7d1c3ebd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:39.777Z"
+ },
+ {
+  "input_hash": "2e33033c508ee3adff21ff3995f2716a8712456c88cd650b3ac80377c3f33e02",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:09.063Z"
+ },
+ {
   "input_hash": "307ecf2da4b6dfa75bcf6bca06d0e7785d35fbb7ba206c39a272aa7002d035fa",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"no\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"no\"},{\"id\":\"c11\",\"verdict\":\"no\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"no\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"no\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-11T09:06:23.203Z"
+ },
+ {
+  "input_hash": "309f68f83c90ab7380186915dce6ebc0b10719c2b68b31417069194ad9c74450",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"partly\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:09:11.470Z"
+ },
+ {
+  "input_hash": "3101113e432f7b410bb690f8de807877e65a66fd13a36227ac996be188955f57",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2c0c8d5de2473300\",\"clm_ca4a118496e1d68c\",\"clm_b2daf24e8aedb35f\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_fd2d7a9426e39781\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4cfd6530626537d9\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ae4a66796a84f997\",\"clm_ba786b4fdc10e235\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_45588ced768a2caf\",\"clm_32183a97537408bb\",\"clm_05c77b48a1fce357\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:10:10.315Z"
+ },
+ {
+  "input_hash": "321a7db58bd18a1db1eebb1b94934479827bdf052bd434f14c855faed18c897f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:48.479Z"
  },
  {
   "input_hash": "338f61854c5786ec8d582f72dafe207b794380c7c00239b8ca160255a6d90850",
@@ -78,16 +432,160 @@
   "created_at": "2026-11-10T19:48:09.650Z"
  },
  {
+  "input_hash": "343212c92e0258fdecd56ac0b1868ce2506f45a0921ea6c864a441bc2c412fc6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:09:18.744Z"
+ },
+ {
+  "input_hash": "34955a09b1179795133c4450b99cb9e2ae122f91f7a561e4f296ece32c6895d8",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:19.605Z"
+ },
+ {
+  "input_hash": "3658547a688947f43f5a8208809afd8599fb8cbe47cd8e0f88a178d8331ede9f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2c0c8d5de2473300\",\"clm_ca4a118496e1d68c\",\"clm_b2daf24e8aedb35f\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_67ed3a95962d64c8\",\"clm_fd2d7a9426e39781\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4cfd6530626537d9\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ae4a66796a84f997\",\"clm_ba786b4fdc10e235\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_45588ced768a2caf\",\"clm_f3de76cef24e8e3f\",\"clm_32183a97537408bb\",\"clm_05c77b48a1fce357\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:17:18.338Z"
+ },
+ {
+  "input_hash": "3860c5f3345f47aa10e40e52b40004fbb8bcda06c97e646d344c0155017dcf31",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:55.291Z"
+ },
+ {
+  "input_hash": "397349553172e29e9533c74a8fff14ec83b2c859f92e3661ddf5ec9c8b1649d6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[{\"fact_id\":\"pf-01\",\"quote\":\"Due 2026-06-12: Other. Owner: Tanvi Deshpande and Dev Malhotra and Rohan Mehta and Sneha Joshi and Kabir Sethi and Priya Nair and Arjun Rao and Ananya Iyer. Status: Done and design 2 wins.\"},{\"fact_id\":\"pf-04\",\"quote\":\"R08 Drive team selection: owner not named; status blocked on owner and Kabir has missed builds and Sneha is most consistent; due disputed (see Situation awareness).\"}]}",
+  "created_at": "2026-11-14T06:28:04.554Z"
+ },
+ {
+  "input_hash": "3982cd2bbe42bc3bef4a852209c0c7268c5e7a3f2ba9d48b0a5710219a9596cd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:57.652Z"
+ },
+ {
+  "input_hash": "398597ff4b9068da5d3c1895831b66e73559efe67f66624d2b118f89dac828fe",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:36.229Z"
+ },
+ {
+  "input_hash": "39a5825001e0b69245a34a3dabcac66fd6487fd220e98c842cd8cb93508cc677",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"lab-booking\",\"attribute\":\"procedure\",\"value\":\"fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar\",\"statement\":\"To book Workshop Lab 3 for a term, fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar.\",\"citations\":[{\"segment_id\":\"seg_fd24c9860b0d8c0f\",\"quote\":\"To book Workshop Lab 3 for a term: fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar.\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"status\",\"value\":\"submitted to Mr. Pawar\",\"statement\":\"The lab booking for the odd semester has been submitted to Mr. Pawar.\",\"citations\":[{\"segment_id\":\"seg_9faca53ce6809fbb\",\"quote\":\"Lab booking for the odd semester submitted to Mr. Pawar ✅\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"deadline\",\"value\":\"once-a-term\",\"statement\":\"Booking Workshop Lab 3 is a once-a-term job.\",\"citations\":[{\"segment_id\":\"seg_c58fd0ab0613fa73\",\"quote\":\"Reminder: booking Workshop Lab 3 is a once-a-term job.\"}]},{\"entity\":\"recruitment\",\"attribute\":\"deadline\",\"value\":\"8 Aug 2026\",\"statement\":\"The recruitment drive for first years is on 8 August 2026.\",\"citations\":[{\"segment_id\":\"seg_b4708735442b0ff2\",\"quote\":\"recruitment drive for first years on 8 Aug, need 3 volunteers\"}]},{\"entity\":\"recruitment\",\"attribute\":\"location\",\"value\":\"stall near the canteen\",\"statement\":\"The recruitment drive for first years is at a stall near the canteen.\",\"citations\":[{\"segment_id\":\"seg_b4708735442b0ff2\",\"quote\":\"stall near the canteen\"}]},{\"entity\":\"recruitment\",\"attribute\":\"deadline\",\"value\":\"10 am to 1 pm\",\"statement\":\"The recruitment drive for first years runs from 10 am to 1 pm.\",\"citations\":[{\"segment_id\":\"seg_b4708735442b0ff2\",\"quote\":\"10 am to 1 pm\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"status\",\"value\":\"granted till 11 pm\",\"statement\":\"Late access to Lab 3 was granted till 11 pm for testing the drivetrain.\",\"citations\":[{\"segment_id\":\"seg_50dec4ecd86c3282\",\"quote\":\"Ok. Till 11 pm only.\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"status\",\"value\":\"granted till 11 pm\",\"statement\":\"Late access to Lab 3 was granted till 11 pm for sensor calibration.\",\"citations\":[{\"segment_id\":\"seg_5107525b9bc26b80\",\"quote\":\"Ok beta.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"access\",\"value\":\"Spare ESP32 dev boards ordered\",\"statement\":\"Spare ESP32 dev boards have been ordered.\",\"citations\":[{\"segment_id\":\"seg_912729daf0a94091\",\"quote\":\"Spare ESP32 dev boards ordered, 3 pcs, Rs 1,350, voucher filed.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"run on GitHub Actions on every push to main\",\"statement\":\"Firmware builds now run on GitHub Actions on every push to main.\",\"citations\":[{\"segment_id\":\"seg_e65facb0574b9b7c\",\"quote\":\"Decision: firmware builds now run on GitHub Actions on every push to main. Reason: everyone gets the same binary and every release is kept for rollback.\"}]},{\"entity\":\"competition\",\"attribute\":\"deadline\",\"value\":\"2026-12-12\",\"statement\":\"The Deccan RoboLeague 2026 is on 12 December 2026.\",\"citations\":[{\"segment_id\":\"seg_fe099194bc8ee19a\",\"quote\":\"Big news: Deccan RoboLeague 2026 is on 12 Dec 2026, and our college is hosting it!\"}]},{\"entity\":\"competition\",\"attribute\":\"location\",\"value\":\"Sports Complex Hall B or Main Auditorium\",\"statement\":\"The venue options for Deccan RoboLeague 2026 are Sports Complex Hall B or the Main Auditorium.\",\"citations\":[{\"segment_id\":\"seg_6d41a5cc80d05452\",\"quote\":\"The organisers want us to propose a venue on campus. The options are Sports Complex Hall B or the Main Auditorium.\"}]}]}",
+  "created_at": "2026-11-14T06:06:21.126Z"
+ },
+ {
+  "input_hash": "3b9fdf39c4252d1a5d6413839b232f8b817c37bd115f430dbc8ad5a158a6c863",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:30.950Z"
+ },
+ {
+  "input_hash": "3be221ec36282a9c7baff081ba31b5e4233c8574c2bc19772b4328ca5aa234a1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:49.746Z"
+ },
+ {
+  "input_hash": "3d2492eb4c7241892261b3e0e0c92e73a2e66ef6787963c45299086be5f3a515",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_9a9359f8b7ed0407\",\"clm_551a7af171d98d86\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_35b1541284429fb4\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0fee822550c6b8c8\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_9a9359f8b7ed0407\",\"clm_551a7af171d98d86\"],\"blocker\":\"No explicit risk claims available.\"}]}",
+  "created_at": "2026-11-14T06:09:40.010Z"
+ },
+ {
+  "input_hash": "3e1464b72173d85c656827e049f84b3cd81283545d797d80848f53464ff2e222",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:33.975Z"
+ },
+ {
+  "input_hash": "403a5b5573445c333c23f072a0f615800332cf5ec34d05d0319110f7543264d5",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:05.192Z"
+ },
+ {
+  "input_hash": "404ef98ffe93bdf59f22524670acfed91e04ff5b2aaa821098edbee5452b6f56",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"club-budget\",\"attribute\":\"status\",\"value\":\"on hold\",\"statement\":\"Kabir's motor driver refund is on hold.\",\"citations\":[{\"segment_id\":\"seg_9757ea52400a2c8d\",\"quote\":\"Kabir's 1.5k membership dues are still unpaid in my sheet, so his motor driver refund stays on hold (ref CANARY-F9KS).\"}]},{\"entity\":\"club-budget\",\"attribute\":\"dependency\",\"value\":\"membership fee payment\",\"statement\":\"The motor driver refund waits on membership fee payment.\",\"citations\":[{\"segment_id\":\"seg_9757ea52400a2c8d\",\"quote\":\"Kabir's 1.5k membership dues are still unpaid in my sheet, so his motor driver refund stays on hold (ref CANARY-F9KS).\"}]}]}",
+  "created_at": "2026-11-14T06:10:39.255Z"
+ },
+ {
+  "input_hash": "40803e8b05be676a0ca10d0d5c22225baee3334fa95e30f5cce5ac364d060fcd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"entry-fee\",\"attribute\":\"owner\",\"value\":\"Ananya Iyer and Priya Nair\",\"statement\":\"Ananya Iyer and Priya Nair own the competition entry fee.\",\"citations\":[{\"segment_id\":\"seg_5474d204fe7edcff\",\"quote\":\"The competition entry fee is a yearly payment, I'll handle it with Priya.\"}]},{\"entity\":\"firmware-rollback\",\"attribute\":\"status\",\"value\":\"stable\",\"statement\":\"The firmware rollback to v2.3.1 is stable.\",\"citations\":[{\"segment_id\":\"seg_d9c764b82a96a407\",\"quote\":\"Pushed v2.3.1, this is the build we used in the trial run. Stable.\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"procedure\",\"value\":\"ask Pawar sir for permission\",\"statement\":\"To get late-night lab access, ask Pawar sir for permission.\",\"citations\":[{\"segment_id\":\"seg_d46b1f2aff09d010\",\"quote\":\"I ask Pawar sir for late lab access almost every week in build season.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"contact\",\"value\":\"Rahul Desai ([CONTACT:c-2], [CONTACT:c-4])\",\"statement\":\"The title sponsor contact is Rahul Desai ([CONTACT:c-2], [CONTACT:c-4]).\",\"citations\":[{\"segment_id\":\"seg_c43655891a5191b8\",\"quote\":\"Our sponsor contact at Vertex Motors is now Rahul Desai ([CONTACT:c-2], [CONTACT:c-4]).\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"decision\",\"value\":\"Vertex logo on robot shell\",\"statement\":\"The team decided to put the Vertex logo on the robot shell.\",\"citations\":[{\"segment_id\":\"seg_a737a08d1d97da0d\",\"quote\":\"We promised Vertex their logo on the robot shell this season.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"deadline\",\"value\":\"2026-11-27\",\"statement\":\"The next check-in with the title sponsor is on 27 November 2026.\",\"citations\":[{\"segment_id\":\"seg_1efce2c4bf5e6dbf\",\"quote\":\"Update: Vertex moved our check-in with Rahul to 27 Nov.\"}]},{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"live on staging\",\"statement\":\"The website registration page is live on staging.\",\"citations\":[{\"segment_id\":\"seg_92dd297474d6d548\",\"quote\":\"website registration page is live on staging\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"deadline\",\"value\":\"2026-12-05\",\"statement\":\"The lab booking deadline for next term is 5 December 2026.\",\"citations\":[{\"segment_id\":\"seg_acfff7c0ec589eb1\",\"quote\":\"Pawar sir told me the lab booking deadline for next term is 5 Dec.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"deadline\",\"value\":\"2026-11-22\",\"statement\":\"Drive team trials are on 22 November 2026.\",\"citations\":[{\"segment_id\":\"seg_c52c55943dc5033e\",\"quote\":\"Drive team trials are on 22 Nov.\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"location\",\"value\":\"docs/BOM.md in the repo\",\"statement\":\"The drivetrain parts order is in docs/BOM.md in the repo.\",\"citations\":[{\"segment_id\":\"seg_3bd843d28405bf56\",\"quote\":\"Drivetrain BOM is in docs/BOM.md in the repo.\"}]}]}",
+  "created_at": "2026-11-14T06:06:35.380Z"
+ },
+ {
+  "input_hash": "4232c7bd02e14033502f66155eaac34501dc7b0dafe909d89301f8039efe7759",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:37.998Z"
+ },
+ {
+  "input_hash": "428ec16b987d739ecb0ff622fe8d2a88f60306a5e2b21f474897073cbe751ca8",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_60f7d7156879ecf9\",\"quote\":\"firmware: telemetry over Wi-Fi\"},{\"segment_id\":\"seg_466aaec086387604\",\"quote\":\"firmware: v2.4.0\"},{\"segment_id\":\"seg_620afd63f5287f8a\",\"quote\":\"firmware: new encoder filter (testing)\"},{\"segment_id\":\"seg_225bcc066bb0fd30\",\"quote\":\"firmware: encoder filter tuned\"}]},{\"entity\":\"website-registration\",\"attribute\":\"owner\",\"value\":\"Sneha Joshi\",\"statement\":\"Sneha Joshi owns the website registration form.\",\"citations\":[{\"segment_id\":\"seg_0c82b71ad5567f37\",\"quote\":\"website: privacy note on the form\"},{\"segment_id\":\"seg_23da6f2706f868fb\",\"quote\":\"website: WIP confirmation email template, not wired yet\"},{\"segment_id\":\"seg_c4ccac3ea95ca7f2\",\"quote\":\"website: competition date on the homepage\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the drivetrain parts order.\",\"citations\":[{\"segment_id\":\"seg_dec9a12285ced02f\",\"quote\":\"docs: add the drivetrain BOM\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the domain and DNS renewal.\",\"citations\":[{\"segment_id\":\"seg_4540e53fcc113a46\",\"quote\":\"dns: lower the TTL before the renewal\"}]},{\"entity\":\"recruitment\",\"attribute\":\"owner\",\"value\":\"Tanvi Deshpande\",\"statement\":\"Tanvi Deshpande owns the first-year recruitment and outreach.\",\"citations\":[{\"segment_id\":\"seg_876022b1066f279a\",\"quote\":\"website: compress gallery images\"},{\"segment_id\":\"seg_1450e53fcc113a46\",\"quote\":\"README: setup steps for new members\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"testing\",\"statement\":\"The firmware deploy is in testing.\",\"citations\":[{\"segment_id\":\"seg_620afd63f5287f8a\",\"quote\":\"firmware: new encoder filter (testing)\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"tuned\",\"statement\":\"The firmware deploy is tuned.\",\"citations\":[{\"segment_id\":\"seg_225bcc066bb0fd30\",\"quote\":\"firmware: encoder filter tuned\"}]},{\"entity\":\"competition\",\"attribute\":\"status\",\"value\":\"date on homepage\",\"statement\":\"The competition has its date on the homepage.\",\"citations\":[{\"segment_id\":\"seg_c4ccac3ea95ca7f2\",\"quote\":\"website: competition date on the homepage\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"telemetry over Wi-Fi\",\"statement\":\"To deploy, use telemetry over Wi-Fi.\",\"citations\":[{\"segment_id\":\"seg_60f7d7156879ecf9\",\"quote\":\"firmware: telemetry over Wi-Fi\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"v2.4.0\",\"statement\":\"To deploy, use v2.4.0.\",\"citations\":[{\"segment_id\":\"seg_466aaec086387604\",\"quote\":\"firmware: v2.4.0\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"new encoder filter\",\"statement\":\"To deploy, use the new encoder filter.\",\"citations\":[{\"segment_id\":\"seg_620afd63f5287f8a\",\"quote\":\"firmware: new encoder filter (testing)\"}]}]}",
+  "created_at": "2026-11-14T06:05:24.257Z"
+ },
+ {
+  "input_hash": "42953bcb65ff3b1915f2e1f34e8d5fed70d32f762be188048b289ba154027a6c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_f65d56edfb1ce0b6\",\"quote\":\"Setting up #infra for firmware, CI and DNS.\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"location\",\"value\":\"dns/ folder in the repo\",\"statement\":\"The domain and DNS records live in the dns/ folder in the repo.\",\"citations\":[{\"segment_id\":\"seg_a952718fe619c759\",\"quote\":\"Added the dns/ folder with the zone file for witroboclub.example.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"location\",\"value\":\"firmware/src/pid.h\",\"statement\":\"The PID loop code is in firmware/src/pid.h.\",\"citations\":[{\"segment_id\":\"seg_2c4597f69e2b2471\",\"quote\":\"PID loop is in firmware/src/pid.h, tuning on Saturday\"}]},{\"entity\":\"controller-board\",\"attribute\":\"decision\",\"value\":\"ESP32 port started\",\"statement\":\"The team decided to start the ESP32 port.\",\"citations\":[{\"segment_id\":\"seg_b94319cf6fccef47\",\"quote\":\"Started the ESP32 port. The Arduino Mega runs out of RAM once the PID loop and the sensor filter both run.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"plug lab laptop into robot over USB and upload from Arduino IDE\",\"statement\":\"To deploy, plug the lab laptop into the robot over USB and upload the firmware from the Arduino IDE.\",\"citations\":[{\"segment_id\":\"seg_38a2b562f3ca7eba\",\"quote\":\"Deploy steps for now: plug the lab laptop into the robot over USB and upload the firmware from the Arduino IDE.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"old Mega sketch removed\",\"statement\":\"The old Mega sketch has been removed from the repo.\",\"citations\":[{\"segment_id\":\"seg_b3182971a3a7f5b5\",\"quote\":\"Removed the old Mega sketch from the repo\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"ArduinoOTA works on dev board\",\"statement\":\"ArduinoOTA works on the dev board.\",\"citations\":[{\"segment_id\":\"seg_541bb704c1614e66\",\"quote\":\"ArduinoOTA works on the dev board\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"scripts/flash.sh added\",\"statement\":\"The scripts/flash.sh script was added for deployment.\",\"citations\":[{\"segment_id\":\"seg_722db8df5ccc58db\",\"quote\":\"Added scripts/flash.sh\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"dependency\",\"value\":\"esp32 platform needs to be installed\",\"statement\":\"The build depends on installing the esp32 platform first.\",\"citations\":[{\"segment_id\":\"seg_4dccef905498c4e6\",\"quote\":\"build fails on my machine, missing esp32 platform\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run pio pkg install first\",\"statement\":\"To fix the build failure, run pio pkg install first.\",\"citations\":[{\"segment_id\":\"seg_d7664b4d353317c5\",\"quote\":\"run pio pkg install first\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"procedure\",\"value\":\"www pointed at new host in dns/witroboclub.zone\",\"statement\":\"The www subdomain was pointed at the new host in dns/witroboclub.zone.\",\"citations\":[{\"segment_id\":\"seg_5cd6f91d85091267\",\"quote\":\"Pointed www at the new host in dns/witroboclub.zone\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"GitHub Actions workflow added in .github/workflows/deploy.yml\",\"statement\":\"A GitHub Actions workflow was added in .github/workflows/deploy.yml.\",\"citations\":[{\"segment_id\":\"seg_c49b47c1dfc484ac\",\"quote\":\"GitHub Actions workflow added in .github/workflows/deploy.yml\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"firmware builds move to GitHub Actions\",\"statement\":\"The team decided to move firmware builds to GitHub Actions.\",\"citations\":[{\"segment_id\":\"seg_02c49308ec2ed46c\",\"quote\":\"Decision: firmware builds move to GitHub Actions. Reason: every push to main builds the same binary, and each release is kept so we can roll back.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"access\",\"value\":\"CI bot token for release step\",\"statement\":\"The CI bot token for the release step is [SECRET:github_token].\",\"citations\":[{\"segment_id\":\"seg_5adbeb0963de73d7\",\"quote\":\"CI bot token for the release step: [SECRET:github_token]\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"every build attaches firmware.bin to GitHub release\",\"statement\":\"Every build now attaches firmware.bin to a GitHub release.\",\"citations\":[{\"segment_id\":\"seg_1c45121271869bb0\",\"quote\":\"Every build now attaches firmware.bin to a GitHub release\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"location\",\"value\":\"firmware/src/battery.h\",\"statement\":\"The battery monitor code is in firmware/src/battery.h.\",\"citations\":[{\"segment_id\":\"seg_144c743e970566fa\",\"quote\":\"yes, it is in firmware/src/battery.h\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"flash.sh now defaults to OTA\",\"statement\":\"The flash.sh script now defaults to OTA deployment.\",\"citations\":[{\"segment_id\":\"seg_518b6e41566dfad8\",\"quote\":\"flash.sh now defaults to OTA\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run ./scripts/flash.sh --ota 192.168.4.1 from lab laptop on RoboClub-AP Wi-Fi\",\"statement\":\"To deploy over the air, run ./scripts/flash.sh --ota 192.168.4.1 from the lab laptop on the RoboClub-AP Wi-Fi.\",\"citations\":[{\"segment_id\":\"seg_4521b60362873a40\",\"quote\":\"Update: deploy is now over the air. Run `./scripts/flash.sh --ota 192.168.4.1` from the lab laptop on the RoboClub-AP Wi-Fi. USB upload is no longer used.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"start button debounce pushed\",\"statement\":\"The start button debounce has been pushed.\",\"citations\":[{\"segment_id\":\"seg_3ca419214dcc4601\",\"quote\":\"start button debounce pushed\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"v2.3.0 tagged for trial run\",\"statement\":\"Version v2.3.0 was tagged for the trial run.\",\"citations\":[{\"segment_id\":\"seg_7e725e8ebc92359f\",\"quote\":\"v2.3.0 tagged for the trial run\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"procedure\",\"value\":\"A record added for register.witroboclub.example\",\"statement\":\"An A record was added for register.witroboclub.example.\",\"citations\":[{\"segment_id\":\"seg_4534a74f024558e8\",\"quote\":\"Added an A record for register.witroboclub.example\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"PID windup fixed on long straights\",\"statement\":\"The PID windup on long straights was fixed.\",\"citations\":[{\"segment_id\":\"seg_cc9f6e4ccbac0e4e\",\"quote\":\"Fixed PID windup on long straights\"}]},{\"entity\":\"firmware-rollback\",\"attribute\":\"procedure\",\"value\":\"run ./scripts/flash.sh --rollback v2.3.1\",\"statement\":\"To roll back, run ./scripts/flash.sh --rollback v2.3.1.\",\"citations\":[{\"segment_id\":\"seg_4cf86c65bf48147f\",\"quote\":\"If a new build misbehaves, roll back with `./scripts/flash.sh --rollback v2.3.1`. v2.3.1 is the last known-good build.\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"deadline\",\"value\":\"2026-12-02\",\"statement\":\"The domain witroboclub.example is due for renewal on 2 December 2026.\",\"citations\":[{\"segment_id\":\"seg_272625534a068c33\",\"quote\":\"The domain witroboclub.example is due for renewal on 2 Dec 2026 at NameHarbor, and it renews every year.\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"procedure\",\"value\":\"renewal is a few clicks on NameHarbor dashboard\",\"statement\":\"Domain renewal is a few clicks on the NameHarbor dashboard.\",\"citations\":[{\"segment_id\":\"seg_e53217d035e4a0b3\",\"quote\":\"Renewal is a few clicks on the NameHarbor dashboard, I'll show whoever takes over.\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"procedure\",\"value\":\"dns/update.sh pushes records and needs DNS_API_TOKEN secret\",\"statement\":\"The dns/update.sh script pushes DNS records and needs the DNS_API_TOKEN secret.\",\"citations\":[{\"segment_id\":\"seg_36e98ebf65606d4d\",\"quote\":\"DNS records live in dns/ in the repo. dns/update.sh pushes them and needs the DNS_API_TOKEN secret.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"flash.sh argument parsing cleaned up\",\"statement\":\"The flash.sh script's argument parsing was cleaned up.\",\"citations\":[{\"segment_id\":\"seg_d7399dd126ef95cc\",\"quote\":\"flash.sh argument parsing cleaned up\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"gearbox current limit added to motor driver\",\"statement\":\"The gearbox current limit was added to the motor driver.\",\"citations\":[{\"segment_id\":\"seg_d0f1f673ec1a4693\",\"quote\":\"Gearbox current limit added to the motor driver\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"procedure\",\"value\":\"IT request filed to whitelist robot's MAC on campus Wi-Fi\",\"statement\":\"An IT request was filed to whitelist the robot's MAC on campus Wi-Fi.\",\"citations\":[{\"segment_id\":\"seg_a713c9875b2913be\",\"quote\":\"Filed the IT request to whitelist the robot's MAC on campus Wi-Fi, ticket CANARY-J5LD.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"CI now runs unit tests before build\",\"statement\":\"CI now runs unit tests before the build.\",\"citations\":[{\"segment_id\":\"seg_8b12c7b1b9173616\",\"quote\":\"CI now runs unit tests before the build\"}]}]}",
+  "created_at": "2026-11-14T06:07:48.546Z"
+ },
+ {
   "input_hash": "42ed0b6e48f7294ffd6e877487464fedbe9d185a0efab8e8138e77f119ea944d",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"lab-slot\",\"attribute\":\"location\",\"value\":\"Workshop Lab 3\",\"statement\":\"The weekly workshop lab slot is in Workshop Lab 3.\",\"citations\":[{\"segment_id\":\"seg_dc52b785df569d3f\",\"quote\":\"The workshop lab is booked for the club every Saturday, 10:00 to 17:00. That is our build day.\"}]},{\"entity\":\"lab-slot\",\"attribute\":\"deadline\",\"value\":\"every Saturday\",\"statement\":\"The weekly workshop lab slot is every Saturday.\",\"citations\":[{\"segment_id\":\"seg_dc52b785df569d3f\",\"quote\":\"The workshop lab is booked for the club every Saturday, 10:00 to 17:00. That is our build day.\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"procedure\",\"value\":\"fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar\",\"statement\":\"To book Workshop Lab 3 for a term, fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar.\",\"citations\":[{\"segment_id\":\"seg_fd24c9860b0d8c0f\",\"quote\":\"To book Workshop Lab 3 for a term: fill the lab booking form, get Dr. Kulkarni's signature, and hand it to Mr. Pawar.\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"contact\",\"value\":\"Mr. Pawar\",\"statement\":\"Mr. Pawar is the contact for lab bookings.\",\"citations\":[{\"segment_id\":\"seg_5a17d1f2d5aa7477\",\"quote\":\"Mr. Pawar is the lab in-charge for Workshop Lab 3. His number for lab matters is [CONTACT:c-6].\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"contact\",\"value\":\"Meera Shah\",\"statement\":\"Meera Shah is the contact for the title sponsor.\",\"citations\":[{\"segment_id\":\"seg_d9c43ae9f97f7db3\",\"quote\":\"Meera Shah at Vertex Motors is our sponsor contact.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"decision\",\"value\":\"ESP32\",\"statement\":\"The team decided to use the ESP32 as the controller board.\",\"citations\":[{\"segment_id\":\"seg_8d54ca0089a0e627\",\"quote\":\"Decision from today's tech review: we are moving the robot controller from the Arduino Mega to the ESP32.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"reason\",\"value\":\"built-in Wi-Fi lets us flash over the air, and it has more RAM for the PID loop\",\"statement\":\"The team chose the ESP32 because built-in Wi-Fi lets us flash over the air, and it has more RAM for the PID loop.\",\"citations\":[{\"segment_id\":\"seg_8d54ca0089a0e627\",\"quote\":\"Decision from today's tech review: we are moving the robot controller from the Arduino Mega to the ESP32. Reason: built-in Wi-Fi lets us flash over the air, and it has more RAM for the PID loop.\"}]},{\"entity\":\"club-budget\",\"attribute\":\"owner\",\"value\":\"Ananya Iyer\",\"statement\":\"Ananya Iyer owns the club budget and reimbursements.\",\"citations\":[{\"segment_id\":\"seg_70fcd87321efcf50\",\"quote\":\"Reminder: all reimbursements go through me, please keep the bills 🙏\"}]},{\"entity\":\"faculty-approval\",\"attribute\":\"contact\",\"value\":\"Dr. Kulkarni\",\"statement\":\"Dr. Kulkarni is the contact for faculty advisor approvals.\",\"citations\":[{\"segment_id\":\"seg_8ca69e19028ed2bf\",\"quote\":\"Dr. Kulkarni wants a status update by Friday, can someone send me 3 lines?\"}]}]}",
   "created_at": "2026-11-10T19:49:00.719Z"
  },
  {
+  "input_hash": "436cd5d00e87a910cf8eeb80626b70d710c2f57d1ffff9fd71108f958387b2d2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:53.457Z"
+ },
+ {
+  "input_hash": "450438bf4bf665b7253694b7389b06026d370cc581c65270968ecd64ce4bf899",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:09.920Z"
+ },
+ {
+  "input_hash": "4739e9acb1ab7b4a59069cc3a6dd57be3d785bda0abe66b60336e1910c50ab2e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:46.051Z"
+ },
+ {
+  "input_hash": "47d0f5b084cc591ac019658eaf5c01906a9a5e4edf937efc37e8045f092d2756",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:02.614Z"
+ },
+ {
   "input_hash": "47dd2397b7226cb953883b976fcf4e63fd3db13877f6d5a456abaadcd54a78f8",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"team-selection\",\"attribute\":\"status\",\"value\":\"Sneha is most consistent\",\"statement\":\"Sneha is the most consistent driver in practice.\",\"citations\":[{\"segment_id\":\"seg_23fbb873ae6212ff\",\"quote\":\"Priya's view (CANARY-B6HN): Sneha is the most consistent driver in practice.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"status\",\"value\":\"Kabir has missed builds\",\"statement\":\"Kabir has missed four Saturday builds.\",\"citations\":[{\"segment_id\":\"seg_23fbb873ae6212ff\",\"quote\":\"Kabir is fast but has missed four Saturday builds, so he should not be the main driver.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"risk\",\"value\":\"may cut sponsorship to ₹40,000\",\"statement\":\"Vertex Motors may cut the sponsorship to ₹40,000 next season if the sponsorship report is late.\",\"citations\":[{\"segment_id\":\"seg_d1f48aaa6f6c6f3c\",\"quote\":\"Vertex Motors may cut the sponsorship to ₹40,000 next season if the sponsorship report is late (CANARY-B6HN).\"}]},{\"entity\":\"other\",\"attribute\":\"deadline\",\"value\":\"2026-12-31\",\"statement\":\"Priya can answer questions by email until 31 December 2026.\",\"citations\":[{\"segment_id\":\"seg_f2c03c147b67bd0c\",\"quote\":\"Priya can answer questions by email until 31 December 2026, but not by phone (CANARY-B6HN).\"}]}]}",
   "created_at": "2026-11-10T19:56:40.655Z"
+ },
+ {
+  "input_hash": "489bf21cfa7d0b23967e78d9136137c9939021bb99b0b1ad9957f9122ba6df1a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:39.120Z"
+ },
+ {
+  "input_hash": "4a3cfdbd8d8eefe4d1450664ad098e76ab2c71d2f15b00da7e94d95b756c1d80",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:24.353Z"
  },
  {
   "input_hash": "4b74fc67a9adce9ca4b089025dad635c4f3bdbcea275902c537d8d02fb7cab87",
@@ -108,6 +606,144 @@
   "created_at": "2026-11-10T19:56:50.638Z"
  },
  {
+  "input_hash": "4e24f7b6ee7730dfab8cf0e49104a333ac310ade552d40ef59e97c7d43000070",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:29.503Z"
+ },
+ {
+  "input_hash": "4ea3856153bf2fc9f0c2a5fcd56fbf8125f7fb191026d1ac913148e880aad77e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:58.384Z"
+ },
+ {
+  "input_hash": "4f38fdf83af5fdbca343d7fc2acd3d96cb0fbefb5a76687f0e8bf5310bc655bf",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:23.778Z"
+ },
+ {
+  "input_hash": "4f778d70865c1f1ea13ddf1fab85818873356739df2931f25d0576342e15cc03",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:17.744Z"
+ },
+ {
+  "input_hash": "4ffcd9bec0033504f1c87df1391bed16d24791582ee2275cf53f0f737a92fc24",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:08.597Z"
+ },
+ {
+  "input_hash": "51b6764e20a544940901f84ceec60a889999e4f767bf0d2cf605e5d3d05ebaed",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:27.644Z"
+ },
+ {
+  "input_hash": "521f7f4e55f7a4d8721c8074b347470e64f8c41b306b83089bc50bddccc33534",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:20.520Z"
+ },
+ {
+  "input_hash": "523f7cc05ac0ae33cd96611ca72ae86f4c743550ce61c7692641ed671c243e6c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:31.549Z"
+ },
+ {
+  "input_hash": "52b5909c9643d6a3b27e81eba1c78a2e8b1dae813771046a941e93afbf7f8c6e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:58.106Z"
+ },
+ {
+  "input_hash": "5486090b95ab34738acd3c92eabada530cbabf7d06735f9d3217b11d16b2ecd5",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_7fd08a81910448eb\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_7fd08a81910448eb\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_bc73794463038ed6\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_54d8789ea06e9b59\",\"clm_45fc51fe3d0bfd3c\"],\"blocker\":\"Specific reasons for access (drivetrain testing, sensor calibration) are documented, but general consequences for missing access are not explicitly stated.\"}]}",
+  "created_at": "2026-11-14T06:09:43.247Z"
+ },
+ {
+  "input_hash": "5734141c5e87c8249c9a3e8df27304b4636328895a3de6701ab4c6764cdd59dd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:46.448Z"
+ },
+ {
+  "input_hash": "577b48229e7f4189aad0b1319cc95bdeca5610c8b7aedcc211d23203ccdf6a76",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:50.324Z"
+ },
+ {
+  "input_hash": "5795f69f97e587106981831c5dad581ffbe9595e73df0493457db0c430649ef8",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:52.852Z"
+ },
+ {
+  "input_hash": "57fede18d6091cef1f4bd984629254ed88b6372bd6f23c24c2b6103a6532ac69",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dbf809aff19a02f3\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_52d85958eb6f4239\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dbf809aff19a02f3\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_52d85958eb6f4239\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:09:25.944Z"
+ },
+ {
+  "input_hash": "5b3b5a8be48744a23ae41be96b816bacb62eccaaa2688c5530008e1911d8a12c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:01.143Z"
+ },
+ {
+  "input_hash": "5bfb4339b44dd83320590af1796d11749d6db5fc95c9fe76c6da9519040465e0",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"no\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"no\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"no\"},{\"id\":\"c18\",\"verdict\":\"no\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:11:13.343Z"
+ },
+ {
+  "input_hash": "5cd2c823f45925f293ac4f6587375f7046f54ded4d753859bce32256be65f0a3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_912729daf0a94091\",\"category\":\"none\"},{\"segment_id\":\"seg_5474d204fe7edcff\",\"category\":\"none\"},{\"segment_id\":\"seg_c6eb721028686cbb\",\"category\":\"health\"}]}",
+  "created_at": "2026-11-14T05:51:20.136Z"
+ },
+ {
+  "input_hash": "5d80d7b489b894ff14bbd1edd0f1f548dd504689ebcf69e2041195996c8d8e43",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:10.113Z"
+ },
+ {
+  "input_hash": "5e9a108b1d6f59b9ffeda23150b0220b7de907e6bf7a5f349c6eada720572ab6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b4f113dc5b91696\",\"clm_28fc0804248cfe0c\",\"clm_3186a0d68123a050\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1b425215a968bda0\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1e8be9cb7e846e9c\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d99ba6664f04a166\",\"clm_9f0a03784e9720be\",\"clm_aa4d9b385abe1864\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:09:53.804Z"
+ },
+ {
+  "input_hash": "5efda4bfc02859c3ae90796c8161cd3e429b417d68ad19e652b4313108b5d236",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:46.701Z"
+ },
+ {
+  "input_hash": "5f2695a2fba7393add3dbf9ed630ef4a9cec34b3ce54875fa1599b6e2462eb8b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:29.782Z"
+ },
+ {
+  "input_hash": "62dd2b81327c714a377910cf576feb4ec2509713a23a4b6c87d74822db2ebbc0",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:26:14.063Z"
+ },
+ {
+  "input_hash": "62f3830a1b8f9d360fb8b6375ce88e2a193a297576578fcb1cbd68aa94a966e7",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:01.614Z"
+ },
+ {
   "input_hash": "641cbcba04ee119233ef88720dfb1fc0a2a0598199a9d1d9c4b8c7587d6b638a",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_8ea76a4dd7b6129e\",\"clm_aa8045ec8cca8e8a\"],\"blocker\":\"Conflicting statuses: In progress vs. blocked on date announcement.\"},{\"check_key\":\"options_considered\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claims directly address options considered for venue and date.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_904ca06fec8d6ccf\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"cannot\",\"claim_ids\":[\"clm_c1fd40a0cad4b2bf\",\"clm_8afdc3aa2a1568ee\",\"clm_6926aa9b6a1cc0dd\"],\"blocker\":\"Conflicting deadlines: 2026-12-19 vs. 2026-11-08.\"}]}",
@@ -126,10 +762,70 @@
   "created_at": "2026-11-10T19:57:06.397Z"
  },
  {
+  "input_hash": "65fbdebbfd89c1e74e81730ea561be4bb26ae2ad00d1ebd968fd96409a663013",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:06.406Z"
+ },
+ {
+  "input_hash": "66078d56b42e2c8a97d61740311ed42db5a16e79f14f53e001b42cdc8a97b7ee",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:55.882Z"
+ },
+ {
+  "input_hash": "6650fc6a65df421504a8adc68fb33643253afdd2cafb6c415cf6ab2b366cfc7d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[{\"fact_id\":\"pf-01\",\"quote\":\"Due 2026-06-12: Other. Owner: Tanvi Deshpande and Dev Malhotra and Rohan Mehta and Sneha Joshi and Kabir Sethi and Priya Nair and Arjun Rao and Ananya Iyer. Status: Done and design 2 wins.\"},{\"fact_id\":\"pf-04\",\"quote\":\"R01 Firmware deploy to the robot: owner Priya Nair; status tuned and stable; due Saturday after build.\"},{\"fact_id\":\"pf-09\",\"quote\":\"R02 Title sponsor relationship (Vertex Motors): owner not named; status logos on homepage and confirmed; due 2026-11-27.\"}]}",
+  "created_at": "2026-11-14T06:27:43.871Z"
+ },
+ {
   "input_hash": "67b558d6489318abab4ff0ccdc0532e08463d2a88de8263cf1b94e843d651a0c",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_9297d11f4f780f12\",\"quote\":\"name: firmware-deploy\"}]}]}",
   "created_at": "2026-11-10T19:56:28.408Z"
+ },
+ {
+  "input_hash": "67f2dba9f2ab24f37fc165cc66051f305da81c911a5df4d1e39d0f06b65d5299",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:54.141Z"
+ },
+ {
+  "input_hash": "6c7783743ac248596fe479cb4b9a3cadc72e8e9dc0aec147f4416e8cfed95c31",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:59.169Z"
+ },
+ {
+  "input_hash": "6e3a3a243341e71afb149ee4c533bff44f9ecc1ddfddb851b8fbafa45a1b015e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b908eaffedb772de\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_aa0173d1c92f3144\",\"clm_b908eaffedb772de\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_6b4742c51cbc9945\",\"clm_f882c25ef95daa1e\",\"clm_da173addd7df7a05\"],\"blocker\":\"Ownership is assigned to Priya Nair, and DNS updates require the DNS_API_TOKEN repo secret. No procedure is explicitly provided.\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim explicitly states the consequence of missing the domain renewal.\"}]}",
+  "created_at": "2026-11-14T06:10:04.726Z"
+ },
+ {
+  "input_hash": "6e5be3a7af487e66755d83e6d4c00ebc46a357e4382de77f131e710e24b04900",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_9297d11f4f780f12\",\"quote\":\"name: firmware-deploy\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run make flash then power-cycle\",\"statement\":\"To deploy, run make flash and power-cycle the robot.\",\"citations\":[{\"segment_id\":\"seg_691c8bcea023e5d7\",\"quote\":\"steps: - uses: actions/checkout@v4 - uses: actions/cache@v4\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"access\",\"value\":\"OTA_PASSWORD in repo secrets\",\"statement\":\"Deploys need the OTA_PASSWORD repo secret.\",\"citations\":[{\"segment_id\":\"seg_053e29d3ddb3770f\",\"quote\":\"env: OTA_PASSWORD: ${{ secrets.OTA_PASSWORD }}\"}]}]}",
+  "created_at": "2026-11-14T06:08:25.070Z"
+ },
+ {
+  "input_hash": "6f0ac799e77d2c047ef9b96acecdfbef65bba45217078c0ee72f22c47b5378f6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:41.186Z"
+ },
+ {
+  "input_hash": "6f2df47ca340a391c43b3ccfa5b1cb6714de148aea4c94534d45bdc465698734",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:59.767Z"
+ },
+ {
+  "input_hash": "6f3860299ca96bca8b22764d093c432f83ad47f80aa7e9256699f1dd255d51bc",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:27:45.724Z"
  },
  {
   "input_hash": "701d6141018646586a75016609e288190b15ac4bb861274bb698f2faf311303a",
@@ -144,10 +840,46 @@
   "created_at": "2026-11-10T20:00:15.509Z"
  },
  {
+  "input_hash": "72d32fbac651ba97fa3de6b99356ff02b5100137875e60dcea73f14a01f91e0f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:00.447Z"
+ },
+ {
+  "input_hash": "73ec5ff79239c95c5e65f0f72ece5adec628cea0716015733e3fa49be199daf1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:47.402Z"
+ },
+ {
+  "input_hash": "74aa9fa65e628034b7220148c858c7f6b684afd74b82053df3eee0b2e41dc1a7",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:43.520Z"
+ },
+ {
+  "input_hash": "75a81d3bc5340a560566422e40d7a6ee82b5dd9600a6dfb26a71b96d9e047c29",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:43.919Z"
+ },
+ {
   "input_hash": "76c4a52802cced65a01f126a1456390d10197a4563ae014555384e05f990d8b9",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_8ea76a4dd7b6129e\"],\"blocker\":\"\"},{\"check_key\":\"options_considered\",\"status\":\"partial\",\"claim_ids\":[\"clm_faf5d6d0bf4e1ba5\"],\"blocker\":\"No claims found that list the options considered for the competition venue and date.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_904ca06fec8d6ccf\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c1fd40a0cad4b2bf\",\"clm_8afdc3aa2a1568ee\"],\"blocker\":\"\"}]}",
   "created_at": "2026-11-11T09:07:04.946Z"
+ },
+ {
+  "input_hash": "76c798373fa47814ac21ef615b42820ca75473d5db0cc7fe5c32c54ec69a93e4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:41.078Z"
+ },
+ {
+  "input_hash": "773da269f3fc4dd39814259aeb124c4c920e290a857781398def4a8b0472ebd6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:58.331Z"
  },
  {
   "input_hash": "77849a4719ea63522a911b124f927ac7aee30fd6de8997cd8a4baee4e6fd67df",
@@ -156,10 +888,46 @@
   "created_at": "2026-11-11T09:06:29.390Z"
  },
  {
+  "input_hash": "7814ce25c22be949557bafd95031c6ff356c6c5c339ca93974ae6976bd96f7b4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:40.718Z"
+ },
+ {
+  "input_hash": "7821967e98575b48875aa051c1452e4003052f19c5e6b0479cdafd55d9b73260",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:30.522Z"
+ },
+ {
   "input_hash": "790e9e76528f475c2aa0bc4bc5aaee9b30c9315982749716247a1cf34d44ee5d",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-10T19:58:01.889Z"
+ },
+ {
+  "input_hash": "793d11bb72ea8884faf2451921e997d897e484f86395f89318d9f7be24994ecd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:57.264Z"
+ },
+ {
+  "input_hash": "79777e10e015201cc924b060e6489d3dcdb05e05dc575834818f0378f691982a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_1a9ca6d8fc19b301\"],\"blocker\":\"Drive team selection is blocked on owner.\"},{\"check_key\":\"options_considered\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"\"},{\"check_key\":\"owner\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about the owner.\"},{\"check_key\":\"deadline\",\"status\":\"partial\",\"claim_ids\":[\"clm_426741ad87ef04ee\",\"clm_855b5826e6f1088f\"],\"blocker\":\"Conflicting deadlines: 22 November 2026 and 29 November 2026.\"}]}",
+  "created_at": "2026-11-14T06:17:13.155Z"
+ },
+ {
+  "input_hash": "7a1eb38564433f62e29bbc2283ac6c0dedcb06c1a7e4be5a55393e834774cac6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:28.916Z"
+ },
+ {
+  "input_hash": "7bcc336baf0abfde33e6dabdf824bc97b1d3a1e8d073afe33d95c47d0ab16a98",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:21.839Z"
  },
  {
   "input_hash": "7bf9875ee8553c4a16f7f2687e9085259a20180a9d13a5a66c4ab1581634aa13",
@@ -168,10 +936,52 @@
   "created_at": "2026-11-10T19:57:29.531Z"
  },
  {
+  "input_hash": "7c2c697635dee2fb30bf8973776e6831ea4f74c76f15502c66801b057ce17d38",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0ecd8dbc803b1a87\",\"clm_58dd8b952cc10fdd\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_65332ab03840affc\",\"clm_6f5e38043a344c84\",\"clm_f19294b31fc12f12\",\"clm_8f47657f8d572d29\",\"clm_e0db7ab716513163\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"partial\",\"claim_ids\":[\"clm_5891a2b5ae0bea59\"],\"blocker\":\"Missing information about the next concrete step.\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_09e87c1f66f95a37\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:09:57.667Z"
+ },
+ {
+  "input_hash": "7ddfa7976675a8ca9e697191859dc67f36d3bca624c948661d7e700c4473ffab",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:48.828Z"
+ },
+ {
+  "input_hash": "7e56d9709d54160b3036aed8f79a242347ae1bfaca45ebacfc17b5aebd7758c3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:26:04.302Z"
+ },
+ {
+  "input_hash": "7e9d25542b8bcf987f7909554eef05682b50c0ac119b2113866c87c09b681b38",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:51.095Z"
+ },
+ {
+  "input_hash": "7f672c9b704f6cdffa0b0014be4ed3a92814e029db3eff5f530e74261ada76c1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:13.089Z"
+ },
+ {
   "input_hash": "7f858689a0d16cca7ef28465f9d8a5f311c1a6f81d250b02e5b96ef9b8f7422b",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"no\"},{\"id\":\"c6\",\"verdict\":\"no\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"no\"},{\"id\":\"c9\",\"verdict\":\"no\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-11T09:06:45.521Z"
+ },
+ {
+  "input_hash": "817e53664564e0e64955036b4f0175c81dcd5bb73c9510f81608f70f5c480957",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:14.391Z"
+ },
+ {
+  "input_hash": "8201ed389f6b3345fc9e572cec4f60b39d05a2210ada90c88c983ebf15c0028a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"no\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"no\"},{\"id\":\"c19\",\"verdict\":\"no\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:08:59.283Z"
  },
  {
   "input_hash": "821dbe3ff9215e4c81e48a8998d95f1f55537ff81901982c5fc5f37f66140670",
@@ -180,10 +990,64 @@
   "created_at": "2026-11-10T19:56:04.269Z"
  },
  {
+  "input_hash": "835831454c641673e17b1ffda8202de58209f004a45328751508020e5ffd4ce3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:49.139Z"
+ },
+ {
+  "input_hash": "83d584f727e28bbcbb63fccbc397abd6a11048245c6fc4b8e14e695490492f75",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:35.020Z"
+ },
+ {
+  "input_hash": "83e8925b1b21861e6704acc7f2fecff806783a87944ce611038c84aac77a15a7",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:42.369Z"
+ },
+ {
   "input_hash": "861c7d52e064468bbd856fd93771cfb75bc98c888a146cb31560d5c45096879b",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"stable\",\"statement\":\"The firmware deploy is stable.\",\"citations\":[{\"segment_id\":\"seg_d9c764b82a96a407\",\"quote\":\"Pushed v2.3.1, this is the build we used in the trial run. Stable.\"}]},{\"entity\":\"lab-slot\",\"attribute\":\"status\",\"value\":\"still on\",\"statement\":\"The Saturday build slot is still on.\",\"citations\":[{\"segment_id\":\"seg_5c406d0dd1f8b947\",\"quote\":\"Saturday build still on?\"},{\"segment_id\":\"seg_2e6d6fbc0f1753c8\",\"quote\":\"yes, but come after your paper\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"procedure\",\"value\":\"ask Pawar sir for late lab access almost every week in build season\",\"statement\":\"To get late-night lab access, ask Pawar sir almost every week in build season.\",\"citations\":[{\"segment_id\":\"seg_d46b1f2aff09d010\",\"quote\":\"I ask Pawar sir for late lab access almost every week in build season.\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"dependency\",\"value\":\"Pawar sir's OK\",\"statement\":\"Late-night lab access waits on Pawar sir's OK.\",\"citations\":[{\"segment_id\":\"seg_d46b1f2aff09d010\",\"quote\":\"without his OK there is no evening testing.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"contact\",\"value\":\"Rahul Desai\",\"statement\":\"The title sponsor contact is Rahul Desai.\",\"citations\":[{\"segment_id\":\"seg_c43655891a5191b8\",\"quote\":\"Our sponsor contact at Vertex Motors is now Rahul Desai ([CONTACT:c-2], [CONTACT:c-4]).\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"deadline\",\"value\":\"2026-11-27\",\"statement\":\"The next check-in with the title sponsor is on 27 November 2026.\",\"citations\":[{\"segment_id\":\"seg_1efce2c4bf5e6dbf\",\"quote\":\"Update: Vertex moved our check-in with Rahul to 27 Nov.\"}]},{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"live on staging\",\"statement\":\"The website registration page is live on staging.\",\"citations\":[{\"segment_id\":\"seg_92dd297474d6d548\",\"quote\":\"website registration page is live on staging\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"deadline\",\"value\":\"2026-12-05\",\"statement\":\"The lab booking deadline for the next term is 5 December 2026.\",\"citations\":[{\"segment_id\":\"seg_acfff7c0ec589eb1\",\"quote\":\"Pawar sir told me the lab booking deadline for next term is 5 Dec.\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"location\",\"value\":\"docs/BOM.md in the repo\",\"statement\":\"The drivetrain BOM is in docs/BOM.md in the repo.\",\"citations\":[{\"segment_id\":\"seg_3bd843d28405bf56\",\"quote\":\"Drivetrain BOM is in docs/BOM.md in the repo.\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"dependency\",\"value\":\"faculty sign-off\",\"statement\":\"The drivetrain order waits on faculty sign-off.\",\"citations\":[{\"segment_id\":\"seg_ad7e25cd7441e513\",\"quote\":\"Dr. Kulkarni has to approve the drivetrain order before we place it.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"deadline\",\"value\":\"2026-11-22\",\"statement\":\"Drive team trials are on 22 November 2026.\",\"citations\":[{\"segment_id\":\"seg_c52c55943dc5033e\",\"quote\":\"Drive team trials are on 22 Nov.\"}]}]}",
   "created_at": "2026-11-10T19:52:42.298Z"
+ },
+ {
+  "input_hash": "890a3410344fb29d2b18b8dc2194e2d45832e04ff948dd58728380d0025f9cf9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:39.719Z"
+ },
+ {
+  "input_hash": "894d21a117b62b3446377a649bfa1a6d3ed13c65ada632c6b3aafcd3dfeabb6e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"no\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"no\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"partly\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:11:17.488Z"
+ },
+ {
+  "input_hash": "894da313ed2c46e83aa6bedf415b6781c9db8981f9615e575cd4fce0e860ce3c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:08:55.940Z"
+ },
+ {
+  "input_hash": "89e453dd2b2f91041718fb36caefb989471c6a4c24ecee27acbd4bfcc7b9a616",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:37.462Z"
+ },
+ {
+  "input_hash": "8b1fde66cd7d41f8ba9435641b7e3559924a273fbc3f121808db04eee3c1fd18",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:11.258Z"
+ },
+ {
+  "input_hash": "8c8c71f744862f99127ce461caa12c06d38766d5613ef17c6020dfe569e93460",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:51.204Z"
  },
  {
   "input_hash": "8db689301cd39ca765cc5f1d3f9119b78f69ac98bef0ad647b84ce7a15b1a4bc",
@@ -192,10 +1056,58 @@
   "created_at": "2026-11-10T19:54:12.513Z"
  },
  {
+  "input_hash": "8e1e53062d64923d52d6c74ac85eb099315e2bcb2d4b620e544366ac82d6c3b4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ace2b96e026ed2d2\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ace2b96e026ed2d2\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ace2b96e026ed2d2\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_54d8789ea06e9b59\",\"clm_45fc51fe3d0bfd3c\"],\"blocker\":\"Specific consequences for missing late-night lab access are not directly provided, but the importance of the access for tasks like testing the drivetrain and sensor calibration implies potential delays or issues if missed.\"}]}",
+  "created_at": "2026-11-14T06:11:59.582Z"
+ },
+ {
+  "input_hash": "8ed93f0f171aa4743eaba7deba94f6872603c8c9f463429404a9418f7772024f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:35.601Z"
+ },
+ {
+  "input_hash": "9296f813fbb91fffc1898be5fba455ad49e30e26dc510df9343c63844f6d7642",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:49.737Z"
+ },
+ {
+  "input_hash": "93855ab716a5aa2299da57c89e6d831a70eda9bcdf6a52f038e155c7207f4084",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:35.566Z"
+ },
+ {
+  "input_hash": "9481ec9c8e73592699d6cba31dc1852a1a9d76beda423db163868de8b31e08a1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:46.487Z"
+ },
+ {
+  "input_hash": "955eedf232b17521061c02afe1d4fce7670f503b594f17f275f02cf7fc2bc94c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"entry-fee\",\"attribute\":\"owner\",\"value\":\"Ananya Iyer\",\"statement\":\"Ananya Iyer owns the competition entry fee.\",\"citations\":[{\"segment_id\":\"seg_5474d204fe7edcff\",\"quote\":\"The competition entry fee is a yearly payment, I'll handle it with Priya.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"stable\",\"statement\":\"The firmware deploy is stable.\",\"citations\":[{\"segment_id\":\"seg_d9c764b82a96a407\",\"quote\":\"Pushed v2.3.1, this is the build we used in the trial run. Stable.\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"procedure\",\"value\":\"ask Pawar sir\",\"statement\":\"To get late-night lab access, ask Pawar sir.\",\"citations\":[{\"segment_id\":\"seg_a23adeb5999c7a30\",\"quote\":\"Pawar sir, can we stay late in Lab 3 tonight till 11 pm? Full run test before the demo.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"contact\",\"value\":\"Rahul Desai\",\"statement\":\"The title sponsor contact is Rahul Desai.\",\"citations\":[{\"segment_id\":\"seg_c43655891a5191b8\",\"quote\":\"Our sponsor contact at Vertex Motors is now Rahul Desai ([CONTACT:c-2], [CONTACT:c-4]).\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"deadline\",\"value\":\"2026-12-05\",\"statement\":\"The lab booking deadline for next term is 5 December 2026.\",\"citations\":[{\"segment_id\":\"seg_acfff7c0ec589eb1\",\"quote\":\"Pawar sir told me the lab booking deadline for next term is 5 Dec.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"deadline\",\"value\":\"2026-11-22\",\"statement\":\"The drive team trials are on 22 November 2026.\",\"citations\":[{\"segment_id\":\"seg_c52c55943dc5033e\",\"quote\":\"Drive team trials are on 22 Nov.\"}]},{\"entity\":\"competition\",\"attribute\":\"location\",\"value\":\"Hall B\",\"statement\":\"The competition happens in Hall B.\",\"citations\":[{\"segment_id\":\"seg_81c905d81fdc4f05\",\"quote\":\"Organisers moved the competition. The board has the new date, check it.\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the lab booking.\",\"citations\":[{\"segment_id\":\"seg_6d336978132442bf\",\"quote\":\"Lab booking for the Diwali block submitted ✅\"}]},{\"entity\":\"club-budget\",\"attribute\":\"status\",\"value\":\"Rs 450 deposit paid\",\"statement\":\"The lab booking deposit of Rs 450 has been paid.\",\"citations\":[{\"segment_id\":\"seg_969cc6e700260b2d\",\"quote\":\"Priya paid Rs 450 for the lab booking deposit, I will reimburse her on Monday.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"deadline\",\"value\":\"2026-11-27\",\"statement\":\"The next check-in with the title sponsor is on 27 November 2026.\",\"citations\":[{\"segment_id\":\"seg_1efce2c4bf5e6dbf\",\"quote\":\"Update: Vertex moved our check-in with Rahul to 27 Nov.\"}]}]}",
+  "created_at": "2026-11-14T06:11:06.908Z"
+ },
+ {
+  "input_hash": "95be2a3fb0278e1d32ba15aa6a659951963159b2a071ce41503e6e2e4a1539c6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:36.782Z"
+ },
+ {
   "input_hash": "95e37d9a4bc051882b7dead5bc5439e383077468bcc5f5962e4617c038d6736c",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_f4054188f0c9af3a\",\"quote\":\"Deploying firmware to the robot\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run .github/workflows/deploy.yml on main branch pushes\",\"statement\":\"To deploy, run .github/workflows/deploy.yml on main branch pushes.\",\"citations\":[{\"segment_id\":\"seg_768edb28c95c6717\",\"quote\":\"Every push to `main` runs .github/workflows/deploy.yml.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"location\",\"value\":\"Wi-Fi access point RoboClub-AP\",\"statement\":\"The firmware deploy uses the Wi-Fi access point RoboClub-AP.\",\"citations\":[{\"segment_id\":\"seg_13264e1eb348359b\",\"quote\":\"Flash from the lab laptop while it is connected to the robot's Wi-Fi access point `RoboClub-AP`.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"download firmware.bin from latest GitHub release\",\"statement\":\"To deploy, download firmware.bin from the latest GitHub release.\",\"citations\":[{\"segment_id\":\"seg_f3d92be2a238ff26\",\"quote\":\"Download `firmware.bin` from the latest GitHub release.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run ./scripts/flash.sh --ota 192.168.4.1\",\"statement\":\"To deploy, run ./scripts/flash.sh --ota 192.168.4.1.\",\"citations\":[{\"segment_id\":\"seg_f3d92be2a238ff26\",\"quote\":\"Run `./scripts/flash.sh --ota 192.168.4.1` from the lab laptop.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"access\",\"value\":\"OTA_PASSWORD environment variable\",\"statement\":\"The firmware deploy needs the OTA_PASSWORD environment variable.\",\"citations\":[{\"segment_id\":\"seg_f3d92be2a238ff26\",\"quote\":\"`flash.sh` reads the `OTA_PASSWORD` environment variable before it uploads.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"check boot banner version and run 30-second motor test\",\"statement\":\"To verify a firmware deploy, check the boot banner version and run the 30-second motor test.\",\"citations\":[{\"segment_id\":\"seg_f5767d055888ec2a\",\"quote\":\"Open the serial monitor at 115200 baud and check that the boot banner shows the new version number, then run the 30-second motor test from the bench menu.\"}]}]}",
   "created_at": "2026-11-10T19:56:23.194Z"
+ },
+ {
+  "input_hash": "983575f9ec4f3d50fbc2ca1515addf1fcb7e4aedaae7433941d260503dfade1d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:52.738Z"
  },
  {
   "input_hash": "992977db460b20dbb289cdb0f3a399825efbc2a46c86295f5436c598a60d7eaa",
@@ -210,10 +1122,46 @@
   "created_at": "2026-11-10T19:50:23.744Z"
  },
  {
+  "input_hash": "9b5f403580eb52159b5931fad002ef66dc4e18256a0e5055b151449c0f329070",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:48.094Z"
+ },
+ {
+  "input_hash": "9be98e59d13588c1d0679eba6152a8156305b26ed0d0f91fe0200679bc527c68",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:19.935Z"
+ },
+ {
   "input_hash": "9cb46a88d4c4e12bb741ed5e453c24ee0c966ac685763f45f4bebf5727c258a7",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"lab-slot\",\"attribute\":\"deadline\",\"value\":\"every Saturday\",\"statement\":\"The workshop lab slot is every Saturday.\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"The club's workshop lab slot is every Saturday, 10:00 to 17:00, in Workshop Lab 3.\"}]},{\"entity\":\"lab-slot\",\"attribute\":\"location\",\"value\":\"Workshop Lab 3\",\"statement\":\"The workshop lab slot is in Workshop Lab 3.\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"The club's workshop lab slot is every Saturday, 10:00 to 17:00, in Workshop Lab 3.\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"contact\",\"value\":\"[CONTACT:c-1]\",\"statement\":\"The lab booking contact is [CONTACT:c-1].\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"Workshop Lab 3 has to be booked once per term with Mr. Pawar, the lab in-charge ([CONTACT:c-1]).\"}]},{\"entity\":\"lab-booking\",\"attribute\":\"deadline\",\"value\":\"once per term\",\"statement\":\"The lab booking is once per term.\",\"citations\":[{\"segment_id\":\"seg_ec9e239b7e8fd4fe\",\"quote\":\"Workshop Lab 3 has to be booked once per term with Mr. Pawar, the lab in-charge ([CONTACT:c-1]).\"}]},{\"entity\":\"club-budget\",\"attribute\":\"owner\",\"value\":\"Ananya Iyer\",\"statement\":\"Ananya Iyer owns the club budget.\",\"citations\":[{\"segment_id\":\"seg_fbf5bec2403f28d1\",\"quote\":\"Ananya Iyer: Treasurer. Handles all payments and reimbursements.\"}]},{\"entity\":\"faculty-approval\",\"attribute\":\"owner\",\"value\":\"Dr. S. Kulkarni\",\"statement\":\"Dr. S. Kulkarni owns the faculty approval.\",\"citations\":[{\"segment_id\":\"seg_42ae75f020303d89\",\"quote\":\"Dr. Kulkarni approves every purchase above ₹5,000 before the Treasurer pays.\"}]},{\"entity\":\"competition\",\"attribute\":\"status\",\"value\":\"blocked on date announcement\",\"statement\":\"The competition is blocked on date announcement.\",\"citations\":[{\"segment_id\":\"seg_bcb55f8c73e5f0b3\",\"quote\":\"We will enter Deccan RoboLeague 2026. The organisers have not announced the date yet.\"}]}]}",
   "created_at": "2026-11-10T19:51:39.300Z"
+ },
+ {
+  "input_hash": "9cfff71b8a356a5776bf488d545a0d6b69a433690e8c0a052ead6c63bbb824ea",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:18.112Z"
+ },
+ {
+  "input_hash": "9dd3441592fddd9afe1de3f05fbf4598b3a0f192fc99deb56932a16ea3dd161a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:44.834Z"
+ },
+ {
+  "input_hash": "9ffd2776f2d8ae9226f31956bee2451ce89196bdfb92a0c67e9c71f8d84533f9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:21.253Z"
+ },
+ {
+  "input_hash": "a0184a9462ad9e34c7d1d04963aac2a2f79fd1eaa374583fd66b465ab3006a23",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:23.230Z"
  },
  {
   "input_hash": "a07d48ef4ce698a0bb55073f0437601a795142a599f26bd1c3aed39ae78fa982",
@@ -228,10 +1176,58 @@
   "created_at": "2026-11-10T20:00:47.520Z"
  },
  {
+  "input_hash": "a391aebac04ef1fd6d8fdeed6fc519d0ee5d5471addd399661d684be45e71c28",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:26.225Z"
+ },
+ {
+  "input_hash": "a39c8d897b69ee91ea165b6e5dcfa49bb8250137b1a68b1dfca1c419d5101247",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:26:03.784Z"
+ },
+ {
+  "input_hash": "a4ee0edb84b79e2fb7549c0bfa9787814646a8a5c25712f220351711a9c6cf95",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:41.293Z"
+ },
+ {
+  "input_hash": "a77353260319f409e6dc4e742125ff07f541a970320fc61d2885304b671721f2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:51.215Z"
+ },
+ {
+  "input_hash": "a7e426197dff19ebb5025997ffa816ad503965542eaa2a0692670289a221ec09",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:27:45.173Z"
+ },
+ {
+  "input_hash": "a8008daab112324211af9018afdaf0688389f038ceb3479592726e5ca1c67876",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b4f113dc5b91696\",\"clm_28fc0804248cfe0c\",\"clm_3186a0d68123a050\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1b425215a968bda0\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1e8be9cb7e846e9c\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d99ba6664f04a166\",\"clm_aa4d9b385abe1864\",\"clm_9f0a03784e9720be\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:10:17.403Z"
+ },
+ {
   "input_hash": "a9127e21fa3078ec132193c987a7faa33a61f93995e3cb4c735bea83829557f4",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"partly\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-10T19:57:42.077Z"
+ },
+ {
+  "input_hash": "a9985494b19fbca441f32657ebf00e04a108ae03bbd86f1942e28eb42340513e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:16.498Z"
+ },
+ {
+  "input_hash": "aa68b21309012d0fd1df331d7579629cda55eca40ca71660a39729263bfe3581",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:15.274Z"
  },
  {
   "input_hash": "aaceffd3219eb4d6cfbf8bb5c1a0e52fc3efdd20ad966ea195a87bcb7ac30802",
@@ -240,10 +1236,22 @@
   "created_at": "2026-11-10T19:53:54.338Z"
  },
  {
+  "input_hash": "abfd86060741ec03a8a9ec719d03492740014eb2bfefd1f77d0b0c9866afdd66",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"drivetrain-parts\",\"attribute\":\"location\",\"value\":\"docs/BOM.md in the repo\",\"statement\":\"The drivetrain BOM is in docs/BOM.md in the repo.\",\"citations\":[{\"segment_id\":\"seg_3bd843d28405bf56\",\"quote\":\"Drivetrain BOM is in docs/BOM.md in the repo. Got the quote from Kothrud Robotics Supply today.\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"dependency\",\"value\":\"faculty sign-off\",\"statement\":\"The drivetrain order waits on faculty sign-off.\",\"citations\":[{\"segment_id\":\"seg_ad7e25cd7441e513\",\"quote\":\"Dr. Kulkarni has to approve the drivetrain order before we place it.\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the drivetrain order.\",\"citations\":[{\"segment_id\":\"seg_3bd843d28405bf56\",\"quote\":\"Drivetrain BOM is in docs/BOM.md in the repo. Got the quote from Kothrud Robotics Supply today.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_5da6efd1939b716e\",\"quote\":\"Sure, Saturday after build\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"location\",\"value\":\"Lab 3\",\"statement\":\"The late-night lab access is in Lab 3.\",\"citations\":[{\"segment_id\":\"seg_3dcb0c06b977997e\",\"quote\":\"Pawar sir, can we get late access to Lab 3 tonight till 11 pm? Testing the new firmware.\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"deadline\",\"value\":\"2026-11-05\",\"statement\":\"The late-night lab access is till 11 pm on 5 November 2026.\",\"citations\":[{\"segment_id\":\"seg_f37aa8085ee2995f\",\"quote\":\"Ok, till 11 pm.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"deadline\",\"value\":\"30 Nov 2026\",\"statement\":\"Drive team selection needs an owner by 30 November 2026.\",\"citations\":[{\"segment_id\":\"seg_eac54d6de8444e6d\",\"quote\":\"Someone has to own drive team selection after Priya leaves. Let's decide at the next meeting.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"location\",\"value\":\"drawer 2\",\"statement\":\"The spare ESP32 is in drawer 2.\",\"citations\":[{\"segment_id\":\"seg_10ebbde600828fcb\",\"quote\":\"drawer 2\"}]},{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"pending one item\",\"statement\":\"The registration form has one item pending before launch.\",\"citations\":[{\"segment_id\":\"seg_e50894ac913757ea\",\"quote\":\"The registration form still has one thing pending before launch, I'll write it down.\"}]}]}",
+  "created_at": "2026-11-14T06:10:51.821Z"
+ },
+ {
   "input_hash": "ac27d55aa66bc8aef0263bc0b11341cfd40ce6009b58cab3dba6f146b0e85665",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"controller-board\",\"attribute\":\"decision\",\"value\":\"use the ESP32\",\"statement\":\"The team decided to use the ESP32 board.\",\"citations\":[{\"segment_id\":\"seg_578ab9447134aa3c\",\"quote\":\"ESP32 port started July 2026\"}]},{\"entity\":\"controller-board\",\"attribute\":\"reason\",\"value\":\"Arduino Mega ran out of RAM for the PID loop\",\"statement\":\"The ESP32 was chosen because the Arduino Mega ran out of RAM for the PID loop.\",\"citations\":[{\"segment_id\":\"seg_578ab9447134aa3c\",\"quote\":\"the Arduino Mega ran out of RAM for the PID loop\"}]}]}",
   "created_at": "2026-11-10T19:54:53.867Z"
+ },
+ {
+  "input_hash": "acc2fb097d3d0043b633e2c0e29e36656ba86f3c0943642dbc9cd55f607686bc",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:56.476Z"
  },
  {
   "input_hash": "accfe34c849a52b21d74f2e00912ea4d87da70e238218b6a085b78eff423c224",
@@ -252,10 +1260,106 @@
   "created_at": "2026-11-10T19:57:21.517Z"
  },
  {
+  "input_hash": "af0c7ee6f50c426fe033e5eb1cb17d09a71c3bcc5893ae2b7afd83aa08192913",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"no\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"no\"},{\"id\":\"c18\",\"verdict\":\"no\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"no\"}]}",
+  "created_at": "2026-11-14T06:11:29.776Z"
+ },
+ {
+  "input_hash": "b01242e4f3b509632488a204de7c0b6e7f3a42601eb6905d3858f7938088fedf",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"partly\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:11:25.745Z"
+ },
+ {
+  "input_hash": "b03844861fadcb3e72052ad77725f7809a4049286650d97d7c26585fd985628b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:56.589Z"
+ },
+ {
+  "input_hash": "b12542f10304f0788a296a95ef9d2d0a87b02901da50b074c66710787786b38d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"waiting on Priya\",\"statement\":\"The registration form PR is waiting on Priya.\",\"citations\":[{\"segment_id\":\"seg_d850c2eb5f4382b8\",\"quote\":\"Registration form PR is waiting on Priya\"}]},{\"entity\":\"entry-fee\",\"attribute\":\"deadline\",\"value\":\"2026-11-28\",\"statement\":\"The competition entry fee has to be paid by 28 November 2026.\",\"citations\":[{\"segment_id\":\"seg_6554f4ccf6bb2e35\",\"quote\":\"competition entry fee has to be paid by 28 Nov 2026.\"}]},{\"entity\":\"competition\",\"attribute\":\"location\",\"value\":\"Lab 3\",\"statement\":\"The practice arena is set up in Lab 3.\",\"citations\":[{\"segment_id\":\"seg_aedc72473f446a34\",\"quote\":\"Practice arena is set up in Lab 3\"}]},{\"entity\":\"other\",\"attribute\":\"decision\",\"value\":\"volunteers needed for competition day\",\"statement\":\"Volunteers are needed for competition day.\",\"citations\":[{\"segment_id\":\"seg_5e62efc33ce6a24c\",\"quote\":\"Volunteers needed for competition day, sign up in the sheet\"}]}]}",
+  "created_at": "2026-11-14T06:08:04.837Z"
+ },
+ {
   "input_hash": "b31524f595d19024eb03051d8356bd2e759970a8467a50feb7b680f0e3424537",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"no\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-10T19:57:55.014Z"
+ },
+ {
+  "input_hash": "b3ff5124cc35ec3b8061f7ec3670d4776169aadbda10a0b3b8d973305e84e208",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"\"},{\"check_key\":\"options_considered\",\"status\":\"partial\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"No claims explicitly list options considered for drive team selection.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_89a0f331d803668f\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"partial\",\"claim_ids\":[\"clm_426741ad87ef04ee\",\"clm_855b5826e6f1088f\"],\"blocker\":\"Conflicting deadlines for drive team trials (22 November 2026 vs. 29 November 2026).\"}]}",
+  "created_at": "2026-11-14T06:17:42.660Z"
+ },
+ {
+  "input_hash": "b6e470a222cab4f10296ce90d27e2a4341443fcf32df7046d4b95f3f087d71bb",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:40.366Z"
+ },
+ {
+  "input_hash": "b702c49316b9291f3e79df8c646a8d85eadec81fe8de8b3ec7034e8ce91bd4e9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:36.160Z"
+ },
+ {
+  "input_hash": "b78d1e68a494be920808965102ea34a25801d2643c0b8cc6770718bc07ee69ce",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:37.105Z"
+ },
+ {
+  "input_hash": "b8171e19e452db0c3fd91fdfadc401eb16d9f6506eb64b6dc70263dacb2897cb",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_aa8045ec8cca8e8a\",\"clm_8ea76a4dd7b6129e\",\"clm_22e86a1148a4618b\"],\"blocker\":\"Conflicting status claims: 'blocked on date announcement' vs 'In progress' vs 'date on homepage'.\"},{\"check_key\":\"options_considered\",\"status\":\"partial\",\"claim_ids\":[\"clm_8e0f89a3ccc42b86\",\"clm_2b4ff31e4974099a\"],\"blocker\":\"Conflicting venue options: Sports Complex Hall B vs Main Auditorium vs inferred Hall B.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_904ca06fec8d6ccf\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c1fd40a0cad4b2bf\",\"clm_8afdc3aa2a1568ee\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:09:47.963Z"
+ },
+ {
+  "input_hash": "b94141426df598753fc57402a08c2d0a93d7cb47f0c8418522737d7be36a2e84",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"v2.4.0 released\",\"statement\":\"The firmware deploy is at v2.4.0.\",\"citations\":[{\"segment_id\":\"seg_67952b30130637f6\",\"quote\":\"v2.4.0 released. Keep v2.3.1 as the rollback target until after the competition.\"}]},{\"entity\":\"firmware-rollback\",\"attribute\":\"status\",\"value\":\"v2.3.1 is rollback target\",\"statement\":\"The firmware rollback target is v2.3.1.\",\"citations\":[{\"segment_id\":\"seg_67952b30130637f6\",\"quote\":\"v2.4.0 released. Keep v2.3.1 as the rollback target until after the competition.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"access\",\"value\":\"OTA_PASSWORD\",\"statement\":\"Firmware deploy requires the OTA_PASSWORD.\",\"citations\":[{\"segment_id\":\"seg_dc5ab6c3d2374625\",\"quote\":\"Who has the OTA password? flash.sh asks for OTA_PASSWORD.\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run CI builds for bench and competition robots\",\"statement\":\"To deploy, run CI builds for both the bench robot and the competition robot.\",\"citations\":[{\"segment_id\":\"seg_de128395d21f4ee6\",\"quote\":\"CI builds both the bench robot and the competition robot now\"}]},{\"entity\":\"controller-board\",\"attribute\":\"status\",\"value\":\"new encoder filter tested\",\"statement\":\"The controller board has a new encoder filter being tested.\",\"citations\":[{\"segment_id\":\"seg_1345f90a923f0a53\",\"quote\":\"New encoder filter is on the bench robot, testing tonight\"}]},{\"entity\":\"controller-board\",\"attribute\":\"status\",\"value\":\"encoder filter tuned and merged\",\"statement\":\"The controller board's encoder filter is tuned and merged.\",\"citations\":[{\"segment_id\":\"seg_8b9c8e47e665b9cb\",\"quote\":\"Encoder filter tuned and merged\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"CI builds failing\",\"statement\":\"The firmware deploy CI builds are failing.\",\"citations\":[{\"segment_id\":\"seg_9f3835ad10467c4f\",\"quote\":\"Actions shows red on the last few pushes to main. Not sure which build the release page has now.\"}]}]}",
+  "created_at": "2026-11-14T06:07:58.583Z"
+ },
+ {
+  "input_hash": "ba007c44e511351f1296b027ee751ad5b4fdac07ce1f0112f5acf5b4e912d1e2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:09:01.289Z"
+ },
+ {
+  "input_hash": "befb369af2d8bf2b8fca100edf2ef5fa4d09e961c9b8a489c64d2c2282ae6f2a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:58.986Z"
+ },
+ {
+  "input_hash": "bf123685d6610d3ee3e96f1018959de2ea9b767de6ae38edfa8961fbd8248263",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:39.881Z"
+ },
+ {
+  "input_hash": "bfa5f5890011e455ec90f9f093613ecb197897b7818d8d7373b13467bb7836de",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:47.949Z"
+ },
+ {
+  "input_hash": "bfa71ae04f787ed662ca51c1095027c2f8dff55c806a00d82ab30b3162505d55",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_fbf5bec2403f28d1\",\"category\":\"none\"},{\"segment_id\":\"seg_42ae75f020303d89\",\"category\":\"none\"},{\"segment_id\":\"seg_24dd79f9576f17b8\",\"category\":\"none\"}]}",
+  "created_at": "2026-11-14T05:51:21.777Z"
+ },
+ {
+  "input_hash": "bfba0e044db3575b7c3f9e56d68116119b61d80c565c65c850862ad593c6f9b3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_43811954be818b94\",\"quote\":\"Initial import of the Arduino Mega firmware\"}]},{\"entity\":\"website-registration\",\"attribute\":\"owner\",\"value\":\"Sneha Joshi\",\"statement\":\"Sneha Joshi owns the website registration form.\",\"citations\":[{\"segment_id\":\"seg_a6c2ca2c6218afaf\",\"quote\":\"website: start the registration form\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the domain and DNS renewal.\",\"citations\":[{\"segment_id\":\"seg_8330563dafc3e02b\",\"quote\":\"dns: add zone file for witroboclub.example\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"run flash.sh for USB and OTA flashing\",\"statement\":\"To deploy, run flash.sh for USB and OTA flashing.\",\"citations\":[{\"segment_id\":\"seg_75b8ddc35c926962\",\"quote\":\"scripts: add flash.sh for USB and OTA flashing\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"access\",\"value\":\"OTA_PASSWORD in repo secrets\",\"statement\":\"Deploys need the OTA_PASSWORD repo secret.\",\"citations\":[{\"segment_id\":\"seg_92b0450c08b4f65d\",\"quote\":\"ci: read OTA_PASSWORD from the repo secrets\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"use ESP32 instead of Arduino Mega\",\"statement\":\"The team decided to use the ESP32 instead of the Arduino Mega.\",\"citations\":[{\"segment_id\":\"seg_39aea3848afec8fa\",\"quote\":\"firmware: start the ESP32 port (the Arduino Mega runs out of RAM for the PID loop)\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"reason\",\"value\":\"Arduino Mega runs out of RAM for the PID loop\",\"statement\":\"The ESP32 was chosen because the Arduino Mega runs out of RAM for the PID loop.\",\"citations\":[{\"segment_id\":\"seg_39aea3848afec8fa\",\"quote\":\"firmware: start the ESP32 port (the Arduino Mega runs out of RAM for the PID loop)\"}]},{\"entity\":\"firmware-rollback\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware rollback.\",\"citations\":[{\"segment_id\":\"seg_bd62ca1572696ce7\",\"quote\":\"firmware: v2.3.1 known-good build used in the trial run\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"flash.sh defaults to OTA\",\"statement\":\"The deploy procedure defaults to OTA via flash.sh.\",\"citations\":[{\"segment_id\":\"seg_2b66322dcd8bf9ca\",\"quote\":\"scripts: flash.sh defaults to OTA\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"procedure\",\"value\":\"flash.sh argument parsing\",\"statement\":\"The deploy procedure includes flash.sh argument parsing.\",\"citations\":[{\"segment_id\":\"seg_7f0a94d401118311\",\"quote\":\"scripts: flash.sh argument parsing\"}]},{\"entity\":\"domain-dns\",\"attribute\":\"access\",\"value\":\"DNS_API_TOKEN in repo secrets\",\"statement\":\"DNS updates need the DNS_API_TOKEN repo secret.\",\"citations\":[{\"segment_id\":\"seg_ca991814f09fe507\",\"quote\":\"dns: update.sh reads DNS_API_TOKEN from the repo secrets\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"add battery voltage monitor\",\"statement\":\"The team decided to add a battery voltage monitor.\",\"citations\":[{\"segment_id\":\"seg_a19fb9b32b52b556\",\"quote\":\"firmware: battery voltage monitor\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"add soft-start for drive motors\",\"statement\":\"The team decided to add a soft-start for the drive motors.\",\"citations\":[{\"segment_id\":\"seg_c868f935d44cc682\",\"quote\":\"firmware: soft-start for the drive motors\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"debounce the start button\",\"statement\":\"The team decided to debounce the start button.\",\"citations\":[{\"segment_id\":\"seg_f380c52aaecce65b\",\"quote\":\"firmware: debounce the start button\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"fix PID windup on long straights\",\"statement\":\"The team decided to fix PID windup on long straights.\",\"citations\":[{\"segment_id\":\"seg_98880efedd15ac61\",\"quote\":\"firmware: fix PID windup on long straights\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"add gearbox current limit\",\"statement\":\"The team decided to add a gearbox current limit.\",\"citations\":[{\"segment_id\":\"seg_de60d09f8f54af83\",\"quote\":\"firmware: gearbox current limit\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"decision\",\"value\":\"run unit tests before build\",\"statement\":\"The team decided to run unit tests before the build.\",\"citations\":[{\"segment_id\":\"seg_d2f2775e344c9622\",\"quote\":\"ci: run unit tests before the build\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"v2.4.0-rc1\",\"statement\":\"The firmware is at v2.4.0-rc1 status.\",\"citations\":[{\"segment_id\":\"seg_b2d0d098e3b35cfb\",\"quote\":\"firmware: v2.4.0-rc1\"}]}]}",
+  "created_at": "2026-11-14T06:05:45.688Z"
  },
  {
   "input_hash": "c1fa24fa8e503aff826853734bbeaaefdd7875e9c31a58836dc736a1c5d1af97",
@@ -264,10 +1368,58 @@
   "created_at": "2026-11-10T19:57:15.700Z"
  },
  {
+  "input_hash": "c3d02a2c358ce79e61695ae72e94c6e2d2f0e6cb7231e593ee52e13236ce095a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:26:13.236Z"
+ },
+ {
+  "input_hash": "c3f1702eab26508f83060e3c3d708a5f8b0a2caca0b0c9bfbfc5c68f4e06db20",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:09.270Z"
+ },
+ {
+  "input_hash": "c505db022455c3f81cb0cf4cdecc86866f41b445b011efccf23f258253eef876",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:55.800Z"
+ },
+ {
   "input_hash": "c53a636273ccb127584997a6707e3cc0f2a3939f7606d11c40a900294c44bf76",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dbf809aff19a02f3\",\"clm_aafe00f8b002c85f\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dbf809aff19a02f3\",\"clm_aafe00f8b002c85f\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_dbf809aff19a02f3\"],\"blocker\":\"No procedure provided for entry fee payment.\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_52d85958eb6f4239\"],\"blocker\":\"\"}]}",
   "created_at": "2026-11-10T20:00:25.757Z"
+ },
+ {
+  "input_hash": "c6226e3a47c7968fb378533e8b91a4b395e13fe14f36f3fe6f768ef3cf959ca0",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:08.659Z"
+ },
+ {
+  "input_hash": "c661b95523dc788ef331ebaedb76a6f9e1aad20317144a078cb89f86e58c29b2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:41.937Z"
+ },
+ {
+  "input_hash": "c718bfb75fc8af77a362af5ff0d48b59458b383819531b02b877f0ab0f60839f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"no\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:08:52.467Z"
+ },
+ {
+  "input_hash": "c74fbc2a8f6b78873e9a5a0a4b20ada31c2daac61f0547545787df0686cd56f6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:57.788Z"
+ },
+ {
+  "input_hash": "c80ff7bfb8a83b64c03d1b712b66f262fa26c73bbde71ea3f3ea8b83593cd457",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:57.033Z"
  },
  {
   "input_hash": "c88daee7637795e5572c773fb3e53ca435925dd6f4de49120ee160b6a5ac7794",
@@ -276,10 +1428,40 @@
   "created_at": "2026-11-10T20:01:02.528Z"
  },
  {
+  "input_hash": "c9ce5b4c538d90cf5b8fc0bf9f410468c7befe0c256378a79582744969d530df",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:59.604Z"
+ },
+ {
+  "input_hash": "ca720d76f095864bae7892244660a109111c9f16ed7d2a28834b15970e42b2e9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:37.753Z"
+ },
+ {
+  "input_hash": "cc3ee1b190ba589dc56b60f48be7953c0db5b21f9380dcadc81778a8da219f3d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:47.344Z"
+ },
+ {
   "input_hash": "cde022eb513d629513bc12f58f94b527f2502a200d6af33563088c6638739204",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"no\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"no\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"no\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-10T19:57:36.512Z"
+ },
+ {
+  "input_hash": "cea226dab489585e1aa32d4987d11c7190856a7d2ef8e718a3df36a96b20088e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"contact_person\",\"status\":\"partial\",\"claim_ids\":[\"clm_d53ad7f8515a11b3\",\"clm_ade3cbbcd18447da\",\"clm_40271eda65de1810\"],\"blocker\":\"Conflicting contact persons listed; need to confirm current contact.\"},{\"check_key\":\"last_interaction\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information on the last interaction.\"},{\"check_key\":\"open_commitments\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information on open commitments.\"},{\"check_key\":\"next_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6aae1353c8a11c14\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:09:22.491Z"
+ },
+ {
+  "input_hash": "d1bcce63f06fcdf831d326ac2317d6b2010a90c6618f536c072bf91d0a21c68f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:49.325Z"
  },
  {
   "input_hash": "d25368f6b89f31b162b1b7a4a29be005de65bc064bdd2829f3608d553b85ce58",
@@ -294,10 +1476,190 @@
   "created_at": "2026-11-10T20:00:20.130Z"
  },
  {
+  "input_hash": "d55327eacf9e83425e16a1bf0784db0e16d3fcc757df9620421451bfa8426f8d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:10.492Z"
+ },
+ {
+  "input_hash": "d563a4c490f794f342f9cb7290dfdf374a9d4a41418fd52ce62aa0df3864be72",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b908eaffedb772de\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_aa0173d1c92f3144\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4cc1eb4adba278b3\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[],\"blocker\":\"No claims directly address the consequences of missing the domain renewal.\"}]}",
+  "created_at": "2026-11-14T06:11:52.346Z"
+ },
+ {
+  "input_hash": "d5d9fdbfdee4d49e8e444d12b40756b1a7643ad61de900526b1651b0b11660d4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:38.528Z"
+ },
+ {
+  "input_hash": "d6a43a16e3245f3923c2ac18e492d2081c27fa78f917ac1a0ce122c21922546e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2c0c8d5de2473300\",\"clm_ca4a118496e1d68c\",\"clm_7d74b12a08a86122\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_fd2d7a9426e39781\",\"clm_0c3390ba656ee831\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4cfd6530626537d9\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d56426c633dc34ed\",\"clm_ba786b4fdc10e235\",\"clm_c702312d165a4b69\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_182aee60abca5355\",\"clm_45588ced768a2caf\",\"clm_f3de76cef24e8e3f\",\"clm_32183a97537408bb\",\"clm_05c77b48a1fce357\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:09:32.906Z"
+ },
+ {
+  "input_hash": "d705222a1ac969dc75ad4f121ec699b7d18f534de6a502371e74554b9316484a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:28:05.760Z"
+ },
+ {
+  "input_hash": "d7168692e4001fb7a836562d2b5be0282661c53114943b4407f5a0101c739005",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:47.698Z"
+ },
+ {
+  "input_hash": "d7cb848c481a5ad6308061beb5e3b2a4dff35d53220389e9bdb76a87aa27e305",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:03.945Z"
+ },
+ {
+  "input_hash": "d8348055d7990c90591019ea24afcd8a2ca4375759bf0c36cf6c1c57ecebce96",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_8ea76a4dd7b6129e\",\"clm_aa8045ec8cca8e8a\"],\"blocker\":\"Conflicting statuses: In progress vs. blocked on date announcement.\"},{\"check_key\":\"options_considered\",\"status\":\"partial\",\"claim_ids\":[\"clm_8e0f89a3ccc42b86\",\"clm_90d985084fac4dfa\"],\"blocker\":\"Conflicting locations: Sports Complex Hall B vs. Lab 3 mentioned as practice arena.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_904ca06fec8d6ccf\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c1fd40a0cad4b2bf\",\"clm_8afdc3aa2a1568ee\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:12:03.791Z"
+ },
+ {
+  "input_hash": "d8b28f70e4be7e9e60cbeded2f7a52306159d48f99414dcf2cb22530cd750454",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:50.408Z"
+ },
+ {
+  "input_hash": "d9682c863d44564d18538cbbeaee85cf1802fbba54e9612dcaca6e7e5c740d14",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:52.180Z"
+ },
+ {
+  "input_hash": "da4740adc2ab16a8cceb89c28e2dec2e22cdd6b9fae15b13ac939082526e32f4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:35.618Z"
+ },
+ {
+  "input_hash": "daa0c14492794833401bd55f5bd8d5b236479d9a752edb195985d7b4fbdb55bf",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:58.971Z"
+ },
+ {
+  "input_hash": "dcfee1353ccfd050c2912779d8d5706304f766f8ca420762e8a695cb2bfc3982",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:33.417Z"
+ },
+ {
+  "input_hash": "dd5939ec485a6ccb2c87cff41c1f4737ee14d7201191b14b18d6a3d0552eeff3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:12.062Z"
+ },
+ {
+  "input_hash": "dd6b5099990bf090e162c54dd89b0c0ba208c0fd85a2ab99e56cac787cd58ac7",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6a2d4a9cbdf1c905\",\"clm_0c3390ba656ee831\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_fd2d7a9426e39781\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4cfd6530626537d9\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d56426c633dc34ed\",\"clm_ba786b4fdc10e235\",\"clm_c702312d165a4b69\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659536ff26c07\",\"clm_182aee60abca5355\",\"clm_45588ced768a2caf\",\"clm_f3de76cef24e8e3f\",\"clm_32183a97537408bb\",\"clm_05c77b48a1fce357\",\"clm_2c0c8d5de2473300\",\"clm_b2daf24e8aedb35f\",\"clm_7d74b12a08a86122\",\"clm_07536307cc4e5f92\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:12:52.681Z"
+ },
+ {
+  "input_hash": "ddbfd394e9babba8e6c4a765207a551277280d3b1593bb5fb91ce36ede51f7b6",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:50.295Z"
+ },
+ {
   "input_hash": "dea50648c0033e8cf3cc5359f433861df7e36c0a05cd13d5ac3288cb28d74b8f",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ca4a118496e1d68c\",\"clm_b605993a3da276a1\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_fd2d7a9426e39781\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b37aea90c976a4d4\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"partial\",\"claim_ids\":[\"clm_31cb77a047fc5b73\"],\"blocker\":\"Rollback procedure not explicitly described.\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_45588ced768a2caf\",\"clm_e68660ce9e8457fa\",\"clm_f3de76cef24e8e3f\"],\"blocker\":\"\"}]}",
   "created_at": "2026-11-10T20:01:27.530Z"
+ },
+ {
+  "input_hash": "e07e9ae8ef5449a8f5bb76aa6f2b182dd2a93c86254b4bdf21db7b38d73056f8",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[{\"fact_id\":\"pf-01\",\"quote\":\"Due 2026-06-12: Other. Owner: Tanvi Deshpande and Dev Malhotra and Rohan Mehta and Sneha Joshi and Kabir Sethi and Priya Nair and Arjun Rao and Ananya Iyer. Status: Done and design 2 wins.\"}]}",
+  "created_at": "2026-11-14T06:27:35.998Z"
+ },
+ {
+  "input_hash": "e0bf7d39b0e50e7d0276632c33a86034264042cc46fca0c6c3ee9ddcf11a5433",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"drivetrain-parts\",\"attribute\":\"dependency\",\"value\":\"faculty-approval\",\"statement\":\"The drivetrain order waits on faculty approval.\",\"citations\":[{\"segment_id\":\"seg_ad7e25cd7441e513\",\"quote\":\"Dr. Kulkarni has to approve the drivetrain order before we place it.\"}]},{\"entity\":\"drivetrain-parts\",\"attribute\":\"deadline\",\"value\":\"2026-11-30\",\"statement\":\"Priya Nair is around till 30 November for the drivetrain order.\",\"citations\":[{\"segment_id\":\"seg_bd7b620237c1c67e\",\"quote\":\"Graduation formalities done, I'm around till 30 Nov 😢\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"owner\",\"value\":\"Priya Nair\",\"statement\":\"Priya Nair owns the firmware deploy.\",\"citations\":[{\"segment_id\":\"seg_61eed009d44a492d\",\"quote\":\"Priya, can you walk me through the firmware deploy this week?\"}]},{\"entity\":\"firmware-deploy\",\"attribute\":\"deadline\",\"value\":\"Saturday after build\",\"statement\":\"The firmware deploy is scheduled for Saturday after build.\",\"citations\":[{\"segment_id\":\"seg_5da6efd1939b716e\",\"quote\":\"Sure, Saturday after build\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"location\",\"value\":\"Lab 3\",\"statement\":\"The late-night lab access is in Lab 3.\",\"citations\":[{\"segment_id\":\"seg_3dcb0c06b977997e\",\"quote\":\"Pawar sir, can we get late access to Lab 3 tonight till 11 pm? Testing the new firmware.\"}]},{\"entity\":\"lab-late-access\",\"attribute\":\"deadline\",\"value\":\"11 pm\",\"statement\":\"The late-night lab access is till 11 pm.\",\"citations\":[{\"segment_id\":\"seg_f37aa8085ee2995f\",\"quote\":\"Ok, till 11 pm.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"status\",\"value\":\"blocked on owner\",\"statement\":\"Drive team selection is blocked on owner.\",\"citations\":[{\"segment_id\":\"seg_eac54d6de8444e6d\",\"quote\":\"Someone has to own drive team selection after Priya leaves. Let's decide at the next meeting.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"location\",\"value\":\"drawer 2\",\"statement\":\"The spare ESP32 is in drawer 2.\",\"citations\":[{\"segment_id\":\"seg_10ebbde600828fcb\",\"quote\":\"drawer 2\"}]},{\"entity\":\"website-registration\",\"attribute\":\"status\",\"value\":\"pending one item\",\"statement\":\"The registration form has one item pending.\",\"citations\":[{\"segment_id\":\"seg_e50894ac913757ea\",\"quote\":\"The registration form still has one thing pending before launch, I'll write it down.\"}]}]}",
+  "created_at": "2026-11-14T06:07:03.346Z"
+ },
+ {
+  "input_hash": "e15400e92143a3ee0d21794c240d83d5dcc1c4f8aad94a4f9e13c4cc079db777",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:11:34.668Z"
+ },
+ {
+  "input_hash": "e16514f32ee7bb22363b6092f1df1d76d2c9e9a816eb22312118dd539a422419",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:06.220Z"
+ },
+ {
+  "input_hash": "e1b726f94d27fff4d79531ff6331ae1c701c74478570db5d8731ee2f6959595e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"lab-slot\",\"attribute\":\"location\",\"value\":\"Workshop Lab 3\",\"statement\":\"The lab slot is in Workshop Lab 3.\",\"citations\":[{\"segment_id\":\"seg_73c274d0a4ebed54\",\"quote\":\"Kickoff meeting on 20 June in Workshop Lab 3 at 4 pm.\"}]},{\"entity\":\"lab-slot\",\"attribute\":\"deadline\",\"value\":\"every Saturday\",\"statement\":\"The lab slot is every Saturday.\",\"citations\":[{\"segment_id\":\"seg_dc52b785df569d3f\",\"quote\":\"The workshop lab is booked for the club every Saturday, 10:00 to 17:00.\"}]},{\"entity\":\"lab-slot\",\"attribute\":\"contact\",\"value\":\"[CONTACT:c-6]\",\"statement\":\"For lab matters, contact [CONTACT:c-6].\",\"citations\":[{\"segment_id\":\"seg_5a17d1f2d5aa7477\",\"quote\":\"Mr. Pawar is the lab in-charge for Workshop Lab 3. His number for lab matters is [CONTACT:c-6].\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"contact\",\"value\":\"Meera Shah\",\"statement\":\"Meera Shah is the contact for the title sponsor.\",\"citations\":[{\"segment_id\":\"seg_d9c43ae9f97f7db3\",\"quote\":\"Meera Shah at Vertex Motors is our sponsor contact.\"}]},{\"entity\":\"title-sponsor\",\"attribute\":\"status\",\"value\":\"confirmed\",\"statement\":\"The title sponsor status is confirmed.\",\"citations\":[{\"segment_id\":\"seg_b3afe00210ff7162\",\"quote\":\"Vertex Motors confirmed they are our title sponsor for this season 🎉\"}]},{\"entity\":\"controller-board\",\"attribute\":\"decision\",\"value\":\"ESP32\",\"statement\":\"The team decided to use the ESP32 controller board.\",\"citations\":[{\"segment_id\":\"seg_8d54ca0089a0e627\",\"quote\":\"Decision from today's tech review: we are moving the robot controller from the Arduino Mega to the ESP32.\"}]},{\"entity\":\"controller-board\",\"attribute\":\"reason\",\"value\":\"built-in Wi-Fi and more RAM\",\"statement\":\"The ESP32 was chosen because it has built-in Wi-Fi and more RAM for the PID loop.\",\"citations\":[{\"segment_id\":\"seg_8d54ca0089a0e627\",\"quote\":\"Decision from today's tech review: we are moving the robot controller from the Arduino Mega to the ESP32. Reason: built-in Wi-Fi lets us flash over the air, and it has more RAM for the PID loop.\"}]},{\"entity\":\"faculty-approval\",\"attribute\":\"contact\",\"value\":\"Dr. Kulkarni\",\"statement\":\"Dr. Kulkarni is the faculty advisor for approvals.\",\"citations\":[{\"segment_id\":\"seg_8ca69e19028ed2bf\",\"quote\":\"Dr. Kulkarni wants a status update by Friday, can someone send me 3 lines?\"}]},{\"entity\":\"club-budget\",\"attribute\":\"owner\",\"value\":\"Ananya Iyer\",\"statement\":\"Ananya Iyer owns the club budget and reimbursements.\",\"citations\":[{\"segment_id\":\"seg_70fcd87321efcf50\",\"quote\":\"Reminder: all reimbursements go through me, please keep the bills 🙏\"}]}]}",
+  "created_at": "2026-11-14T06:05:59.383Z"
+ },
+ {
+  "input_hash": "e38b3c20aef7a61a0f92b78e4db537f033c1c54d18ac16930b9dd4aa29812ee0",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:24:32.482Z"
+ },
+ {
+  "input_hash": "e390d2ec4cc3b95afabf46430a55c206901bb0d5e9ab8d9c9e109a7c28f27745",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:46.325Z"
+ },
+ {
+  "input_hash": "e4318e901330964809cc851da749413587a5cc2d935eb6fcd351085963895615",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:09.923Z"
+ },
+ {
+  "input_hash": "e56c90e4407e7d5d2bf054d70ee47876c72d433de2761b2f6b85e97ec63d75cb",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:34.220Z"
+ },
+ {
+  "input_hash": "e5a4433693719fcc66f9a1984ab46215864ddcf7d1bbef01ebf8acf80e621c71",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:44.160Z"
+ },
+ {
+  "input_hash": "e78305fa7bbbe358587f53acd00938166ef737d014d7cb92f6fd4e1af968daa2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:09:04.617Z"
+ },
+ {
+  "input_hash": "e78726e5b6e5e8a7a3192e35243dac6e255c76c00acf482db68c9c682c04e8bc",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_9a9359f8b7ed0407\",\"clm_551a7af171d98d86\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_35b1541284429fb4\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0fee822550c6b8c8\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"partial\",\"claim_ids\":[\"clm_9a9359f8b7ed0407\",\"clm_551a7af171d98d86\"],\"blocker\":\"No explicit consequence claim provided, but the recurring nature implies missing it disrupts the schedule.\"}]}",
+  "created_at": "2026-11-14T06:11:56.084Z"
+ },
+ {
+  "input_hash": "e7e1245cb147640540f3ae6ef82f3ce618a0998bb7d446588fdb6df4ca2239c0",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"firmware-deploy\",\"attribute\":\"status\",\"value\":\"harassment complaint raised\",\"statement\":\"The firmware work has a harassment complaint raised.\",\"citations\":[{\"segment_id\":\"seg_0fdf3bdb4b92664d\",\"quote\":\"Arjun Rao keeps dismissing my firmware work in reviews, and on Saturday he called it useless in front of the first years.\"},{\"segment_id\":\"seg_6feb1ee76130668c\",\"quote\":\"Arjun insulted my code in last night's review with everyone watching, this is harassment now.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"status\",\"value\":\"rescheduled due to surgery\",\"statement\":\"Dev's drive team trial is rescheduled due to surgery.\",\"citations\":[{\"segment_id\":\"seg_f7370af5fc1daf7f\",\"quote\":\"I am having knee surgery on 17 Nov 2026 and will be out for two weeks, so I cannot take my drive team trial on the planned date.\"},{\"segment_id\":\"seg_c73ed5054be42f01\",\"quote\":\"Dev's operation is on the 17th and he is out till December, so do not count on him for arena setup this month.\"}]},{\"entity\":\"team-selection\",\"attribute\":\"deadline\",\"value\":\"2026-11-17\",\"statement\":\"Dev's surgery is on 17 November 2026.\",\"citations\":[{\"segment_id\":\"seg_f7370af5fc1daf7f\",\"quote\":\"I am having knee surgery on 17 Nov 2026 and will be out for two weeks.\"},{\"segment_id\":\"seg_c73ed5054be42f01\",\"quote\":\"Dev's operation is on the 17th and he is out till December.\"}]}]}",
+  "created_at": "2026-11-14T06:08:20.995Z"
+ },
+ {
+  "input_hash": "e8c07e4dd73695b639db720e79c5af37cf99a21f18f0f5b8b3cb8db0bb2bd8c3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b4f113dc5b91696\",\"clm_28fc0804248cfe0c\",\"clm_3186a0d68123a050\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1b425215a968bda0\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1e8be9cb7e846e9c\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d99ba6664f04a166\",\"clm_2d2217ec60ff7fb0\",\"clm_aa4d9b385abe1864\",\"clm_9f0a03784e9720be\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:12:38.677Z"
  },
  {
   "input_hash": "ea4ec1146a358cb576be8b46142ad9a4d5b7becc1453d13ee25bd935df61463c",
@@ -306,15 +1668,171 @@
   "created_at": "2026-11-11T09:06:55.694Z"
  },
  {
+  "input_hash": "ea7c721e32481fde4dc57e333490adf051b3e78e3b967d934b02e39bd5fe2f83",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:24.976Z"
+ },
+ {
+  "input_hash": "ea9f90f85bb3bf5b066f848f19a3c09fa38668cf5729bb4ca65828155d44dddc",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:10.596Z"
+ },
+ {
+  "input_hash": "ebed0b806e2d779c30a7c5c93e9163593df18c45af198e11ecd501bb5b33d5bd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:15.579Z"
+ },
+ {
+  "input_hash": "ec0ee7ff789015948639dea6ecdb3e98f0e2e2fc03d38cd3ec4a3e75efbd7b5f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[{\"fact_id\":\"pf-09\",\"quote\":\"The Vertex Motors title sponsorship is received in full.\"},{\"fact_id\":\"pf-04\",\"quote\":\"Sneha Joshi owns the website registration form.\"},{\"fact_id\":\"pf-04\",\"quote\":\"Priya Nair owns \\\"Website registration form\\\".\"}]}",
+  "created_at": "2026-11-14T06:26:12.585Z"
+ },
+ {
+  "input_hash": "edc5ad198ea16d616c89662d3683edce0f389384cb2adcb48074db367273548f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:16.207Z"
+ },
+ {
+  "input_hash": "ee41f6b1d50303caf086ab1341ec6e1e9b65821464992dc372afd51b2ac495b4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:49.099Z"
+ },
+ {
   "input_hash": "ee59cdef2987794bbcfcfc7d5abc07f8bc507f112360c49cbd46a97e4aa5346c",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"website-registration\",\"attribute\":\"owner\",\"value\":\"Priya\",\"statement\":\"Priya owns the website registration form.\",\"citations\":[{\"segment_id\":\"seg_d850c2eb5f4382b8\",\"quote\":\"Registration form PR is waiting on Priya\"}]},{\"entity\":\"competition\",\"attribute\":\"location\",\"value\":\"Lab 3\",\"statement\":\"The practice arena is in Lab 3.\",\"citations\":[{\"segment_id\":\"seg_aedc72473f446a34\",\"quote\":\"Practice arena is set up in Lab 3\"}]},{\"entity\":\"competition\",\"attribute\":\"dependency\",\"value\":\"organisers approval\",\"statement\":\"Livestreaming the competition waits on organisers approval.\",\"citations\":[{\"segment_id\":\"seg_2da08e5911e69c87\",\"quote\":\"Can we livestream the competition?\"},{\"segment_id\":\"seg_e1053ef835d35bc2\",\"quote\":\"Let's ask the organisers\"}]},{\"entity\":\"competition\",\"attribute\":\"dependency\",\"value\":\"volunteer sign-ups\",\"statement\":\"Competition day needs volunteer sign-ups.\",\"citations\":[{\"segment_id\":\"seg_5e62efc33ce6a24c\",\"quote\":\"Volunteers needed for competition day, sign up in the sheet\"}]}]}",
   "created_at": "2026-11-10T19:53:18.857Z"
  },
  {
+  "input_hash": "ee9a9446c3e7cf7707812aa4675015fbc6b305945b30abc863817289cb897016",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1a9ca6d8fc19b301\"],\"blocker\":\"\"},{\"check_key\":\"options_considered\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"\"},{\"check_key\":\"owner\",\"status\":\"partial\",\"claim_ids\":[\"clm_1a9ca6d8fc19b301\"],\"blocker\":\"Owner is blocking drive team selection.\"},{\"check_key\":\"deadline\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No deadline information provided.\"}]}",
+  "created_at": "2026-11-14T06:09:50.308Z"
+ },
+ {
+  "input_hash": "eeddce1c8bf33eaaabdf5404fc0c7501115117d56f155a360d0ca6205856725b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:41.242Z"
+ },
+ {
+  "input_hash": "ef9550f25c8d0eb0eeda3ccf8e27b3685219a78fb18dbf60682b891366ec78fd",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"reveals\":false}",
+  "created_at": "2026-11-14T06:26:14.822Z"
+ },
+ {
+  "input_hash": "eff55aa386d7025d83382a5bd9e86fba22579b26d79b6a1b060a70d00959994f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:54.917Z"
+ },
+ {
+  "input_hash": "f09347456a8b2281da1ae724139e17650314d172645d85d028ca22fa615fb8e5",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:32.214Z"
+ },
+ {
+  "input_hash": "f1847c67671385f3eb4ba72369aa09291399495bc501e9f5de197d473d0d9eee",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:18.781Z"
+ },
+ {
+  "input_hash": "f43850080f2d5ba6c17ad316e9551acbdcc721987b07604a39b54aa976f54a66",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:24:38.320Z"
+ },
+ {
+  "input_hash": "f43c07b9c7444f128f0a71806ad1126753a7b0f9cb6f3bcef0de037af1b84fe2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:28:00.399Z"
+ },
+ {
+  "input_hash": "f46b958e27309feb61669c9065e221ce97898d44f2ce87bbfe807ce92f99b268",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"no\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:11:31.736Z"
+ },
+ {
   "input_hash": "f5679db9f2b36884f5eb8cb149da1514a3489834edf764ac42cfa42476b288e6",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ca4a118496e1d68c\",\"clm_b605993a3da276a1\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_fd2d7a9426e39781\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b37aea90c976a4d4\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"partial\",\"claim_ids\":[\"clm_31cb77a047fc5b73\"],\"blocker\":\"Rollback procedure is not explicitly described, only the version of a known-good build is mentioned.\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_45588ced768a2caf\",\"clm_e68660ce9e8457fa\",\"clm_f3de76cef24e8e3f\"],\"blocker\":\"\"}]}",
   "created_at": "2026-11-11T09:07:16.041Z"
+ },
+ {
+  "input_hash": "f765dff8ee9830eeb299edb90f1b79379a7a422f5110f825bf444dc39e0e889c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:49.701Z"
+ },
+ {
+  "input_hash": "f85160c21bbaa5359637fba78293dc0028b83c90965675865cb0b3016456dcd2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:47.036Z"
+ },
+ {
+  "input_hash": "f8c32c9706efa07f677d28932d2aa7dcf7898855edb3c203bbbb1a47b9b8b9ad",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:47.041Z"
+ },
+ {
+  "input_hash": "f9eaed6e1f13268ee1c0df7f7ac7d48224d6e486fc72ae2bb0a35f251c5beb6d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:03.382Z"
+ },
+ {
+  "input_hash": "fa8e8606f2eb667571a47cda5fa646ccaa2da077bf628e01c0215b49f358758d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"\"},{\"check_key\":\"options_considered\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4ab6dcf98036c7d2\"],\"blocker\":\"\"},{\"check_key\":\"owner\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about the owner of the responsibility.\"},{\"check_key\":\"deadline\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about the deadline for the responsibility.\"}]}",
+  "created_at": "2026-11-14T06:12:06.170Z"
+ },
+ {
+  "input_hash": "fb5cbe0a8b1fdecd165a1aa9a23f56f790477a20df7b35be8e46de147be587cf",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:38.337Z"
+ },
+ {
+  "input_hash": "fc7183bde35b4fe76570b4ffee5339263b5466b619ff82214719910e7054b3e2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:26:42.408Z"
+ },
+ {
+  "input_hash": "fd6bcbc91b0885418574426a76ba874abffcbde6f08b0a1d3657c2cce25c48e4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b4f113dc5b91696\",\"clm_28fc0804248cfe0c\",\"clm_3186a0d68123a050\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1b425215a968bda0\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_1e8be9cb7e846e9c\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2d2217ec60ff7fb0\",\"clm_d99ba6664f04a166\",\"clm_9f0a03784e9720be\",\"clm_aa4d9b385abe1864\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:12:10.289Z"
+ },
+ {
+  "input_hash": "fdddcf77963f212c1010bb1be35f55a6da9104a4689fbfa951c7b9205e3e3274",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:27:51.072Z"
+ },
+ {
+  "input_hash": "fef944cd5e9f6d76119474b3fdfe063d1106e38ee7ba8c254af946d6fb4d0c18",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"revealed\":[]}",
+  "created_at": "2026-11-14T06:25:30.403Z"
+ },
+ {
+  "input_hash": "ff1a31b209c70b60e359320b677cc4af24b17f50a1cfb40cab6e49bfd460e48b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_4fdb38c9942fcc67\",\"category\":\"none\"}]}",
+  "created_at": "2026-11-14T05:51:23.875Z"
  }
 ]

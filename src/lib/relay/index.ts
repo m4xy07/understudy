@@ -35,9 +35,13 @@ import { insertSnapshotChange, prepareSnapshotChange } from "./changeStore";
 
 export {
   compileHandover, checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown,
-  runLeakCheck, resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
-  type Handover, type HandoverItem, type ReadbackCheck, type AckRow, type LeakReport, type LeakCell,
+  resolveReadbackItems, parsePayload, ATTRIBUTE_ORDER,
+  type Handover, type HandoverItem, type ReadbackCheck, type AckRow,
 } from "./handover";
+export {
+  runLeakCheck, runProbes, latestProbeRun,
+  type LeakReport, type LeakCell, type LeakFinding, type LeakRow, type ProbeRun,
+} from "./probes";
 
 export type ActionResult = { ok: true } | { ok: false; error: string; code?: string };
 
@@ -306,10 +310,11 @@ export async function approveSnapshot(
       const c = byId.get(pc.id)!;
       await tx`
         INSERT INTO snapshot_claims (workspace_id, snapshot_id, claim_id, entity, entity_label, attribute, statement, value,
-          trust, state, review, importance, valid_from, citations, role_set)
+          trust, state, review, importance, valid_from, citations, role_set, flag_role_set)
         VALUES (${ws}, ${id}, ${c.id}, ${c.entity}, ${c.entityLabel}, ${c.attribute}, ${c.statement}, ${c.value},
           ${c.trust}, ${c.state === "conflicting" ? "conflicting" : "active"}, ${c.review === "edited" ? "edited" : "approved"},
-          ${c.importance}, ${c.validFrom}, ${JSON.stringify(c.citations)}::jsonb, ${pc.roleSet}::text[])`;
+          ${c.importance}, ${c.validFrom}, ${JSON.stringify(c.citations)}::jsonb, ${pc.roleSet}::text[],
+          ${c.flagRoleSet ?? null}::text[])`;
     }
     // The approved snapshot settles the scores it was built on: the latest run per role stops being provisional.
     await tx`

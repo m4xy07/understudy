@@ -27,6 +27,9 @@ export interface ResolvedPack extends Pack {
 
 export class PackError extends Error {}
 
+/** The closed list of sensitive content categories (core vocabulary, the same in every setting). */
+export const SENSITIVITY_CATEGORIES = ["finance", "hr", "health"] as const;
+
 const cache = new Map<string, ResolvedPack>();
 
 export function packPath(id: string): string {
@@ -83,6 +86,18 @@ export function resolvePack(raw: unknown, opts: { checkFiles?: boolean } = {}): 
   if (!pack.uploadDefaults.roleSet.includes(approverRole)) {
     throw new PackError("uploadDefaults.roleSet must include the approver");
   }
+  if (pack.sensitivity) {
+    // The approver must be able to open everything the Sensitive content panel lists.
+    for (const category of SENSITIVITY_CATEGORIES) {
+      const list = pack.sensitivity[category];
+      if (!list?.length) throw new PackError(`sensitivity.${category}: list the roles that may see this category`);
+      if (!list.includes(approverRole)) throw new PackError(`sensitivity.${category} must include the approver`);
+    }
+    const extra = Object.keys(pack.sensitivity).find((k) => !(SENSITIVITY_CATEGORIES as readonly string[]).includes(k));
+    if (extra !== undefined) throw new PackError(`sensitivity: unknown category "${extra}"`);
+  }
+  const badTerms = Object.keys(pack.sensitivityTerms ?? {}).find((k) => !(SENSITIVITY_CATEGORIES as readonly string[]).includes(k));
+  if (badTerms !== undefined) throw new PackError(`sensitivityTerms: unknown category "${badTerms}"`);
 
   const entities = new Set(pack.entities.map((e) => e.key));
   for (const item of pack.readback) {

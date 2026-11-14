@@ -46,6 +46,7 @@ const garden = () => {
   p.contactsRoles = ["chair", "new_keeper"];
   p.roleTemplates = { new_keeper: [] };
   p.uploadDefaults = { roleSet: ["chair", "new_keeper", "volunteer", "old_keeper"] };
+  p.sensitivity = { finance: ["chair", "old_keeper"], hr: ["chair"], health: ["chair"] };
   delete p.demo;
   delete p.extraction;
   return resolvePack(p);
@@ -111,6 +112,9 @@ describe("pack loader", () => {
     ["unknown role in roleTemplates", (p: Raw) => { p.roleTemplates.janitor = []; }, /roleTemplates: unknown role "janitor"/],
     ["unknown role in roleHolders", (p: Raw) => { p.roleHolders.janitor = ["X Y"]; }, /roleHolders: unknown role "janitor"/],
     ["unknown role in sensitivity", (p: Raw) => { p.sensitivity = { finance: ["janitor"] }; }, /sensitivity\.finance: unknown role "janitor"/],
+    ["sensitivity list without the approver", (p: Raw) => { p.sensitivity.hr = ["treasurer"]; }, /sensitivity\.hr must include the approver/],
+    ["sensitivity with a missing category", (p: Raw) => { delete p.sensitivity.health; }, /sensitivity\.health: list the roles/],
+    ["sensitivity with an unknown category", (p: Raw) => { p.sensitivity.legal = ["president"]; }, /sensitivity: unknown category "legal"/],
     ["upload default without the approver", (p: Raw) => { p.uploadDefaults.roleSet = ["tech_lead"]; }, /uploadDefaults\.roleSet must include the approver/],
     ["legacy approverRole disagrees", (p: Raw) => { p.approverRole = "treasurer"; }, /approverRole disagrees with the role flagged approver/],
     ["legacy leaverRole disagrees", (p: Raw) => { p.leaverRole = "treasurer"; }, /leaverRole disagrees with the role flagged leaver/],

@@ -1,5 +1,11 @@
 [
  {
+  "input_hash": "00deaf04b424aaa601f3f2e57c0080969c4cedee3889493a937d25ce4a12dd56",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"contact_person\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a9e89ebf0ecd6c89\",\"clm_aa06647cc1d3047a\"],\"blocker\":\"\"},{\"check_key\":\"last_interaction\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about the last interaction with the sequencing core facility.\"},{\"check_key\":\"open_commitments\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about agreement terms or open commitments with the sequencing core facility.\"},{\"check_key\":\"next_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2ba6357bcaa56b43\",\"clm_a7ae8125c859b400\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:56.214Z"
+ },
+ {
   "input_hash": "0266a2654fdb5bf48ebdb3419b01eb685ce5fddc63d412f26f44caff580f7080",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"pipeline-env\",\"attribute\":\"procedure\",\"value\":\"./scripts/restore_env.sh <tag>\",\"statement\":\"The pipeline environment is restored by running ./scripts/restore_env.sh <tag>.\",\"citations\":[{\"segment_id\":\"seg_2370eead9a52557a\",\"quote\":\"#!/usr/bin/env bash\\n    # Restores the soilmeta conda environment from a tagged copy of env/environment.lock.yml.\\n    # Usage: ./scripts/restore_env.sh <tag>\"}]}]}",
@@ -10,6 +16,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"revision-analysis\",\"attribute\":\"procedure\",\"value\":\"normalise.py script\",\"statement\":\"The normalisation for reviewer 2 figures is done using the normalise.py script.\",\"citations\":[{\"segment_id\":\"seg_8452e47ea54e55c0\",\"quote\":\"Read-count normalisation for the reviewer 2 figures.\"}]}]}",
   "created_at": "2026-11-14T05:45:38.154Z"
+ },
+ {
+  "input_hash": "039e9622f9f2b01e7e8536c29c7ec86dd95a957b40f1c2e7eaff39375d09e120",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"contact_person\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a9e89ebf0ecd6c89\",\"clm_aa06647cc1d3047a\"],\"blocker\":\"\"},{\"check_key\":\"last_interaction\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claims provide information about the last interaction with the sequencing core facility.\"},{\"check_key\":\"open_commitments\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claims provide information about agreement terms or open commitments related to the sequencing core facility bookings.\"},{\"check_key\":\"next_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2ba6357bcaa56b43\",\"clm_a7ae8125c859b400\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:14.092Z"
  },
  {
   "input_hash": "043f699d01e30938d18b6db923072fb06fa6ecc1861994b82a7990f99ba36df1",
@@ -30,6 +42,18 @@
   "created_at": "2026-11-14T05:47:15.299Z"
  },
  {
+  "input_hash": "0934df639bc083b6b3598217f7770e5954f6d3981a0620305c4fa06ddf6bca18",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"no\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:31:43.385Z"
+ },
+ {
+  "input_hash": "0ad372447a770c33ff48ff667a2a6d2f8bc7825db599644fd2ef5a2bc7ee2032",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"no\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:31:46.887Z"
+ },
+ {
   "input_hash": "0db044b953d787bdc619ef2a6e3bb976ac41c4bbd21f095d5c2b4890b2a1bf23",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"contact_person\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b9cd487ce2c7cc4a\"],\"blocker\":\"\"},{\"check_key\":\"last_interaction\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dfdff5b3ddf9c3b1\"],\"blocker\":\"\"},{\"check_key\":\"open_commitments\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about agreement terms or open commitments.\"},{\"check_key\":\"next_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2815b9bcb05f38b8\",\"clm_a4e310e05af808f5\"],\"blocker\":\"\"}]}",
@@ -46,6 +70,12 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"partly\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-14T05:46:05.591Z"
+ },
+ {
+  "input_hash": "17d71c6f625fcf6ab7ceace7387a0dcf3fd8d3b5b007c38a66903786e9fe5200",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information on the cadence or frequency of the Flow-cell and reagent standing order.\"},{\"check_key\":\"next_due_date\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information on the next due date for the Flow-cell and reagent standing order.\"},{\"check_key\":\"how_to_do_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_d02158b5dffce7ef\"],\"blocker\":\"The indent form location is provided, but no specific protocol or steps for executing the standing order are detailed in the claims.\"},{\"check_key\":\"protocol_location\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d02158b5dffce7ef\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_e35e16b55418d627\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:36.704Z"
  },
  {
   "input_hash": "1bf25601cd142689ab90601d5b6d91f333011b66f9882f4221ec6ace206ab5b4",
@@ -90,10 +120,40 @@
   "created_at": "2026-11-14T05:46:53.498Z"
  },
  {
+  "input_hash": "2f9237d6c80a7b99861119e7f04a32c0ebb673ed25ad05c0b8a831ab615c697e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:31:56.827Z"
+ },
+ {
+  "input_hash": "300a7fa6883ca1a4fd19424838a365231f6548936c9c5f2d6e5210cc0be14d84",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_a0460d16c12b5ac7\",\"category\":\"finance\"},{\"segment_id\":\"seg_047d864d97e6ad93\",\"category\":\"finance\"}]}",
+  "created_at": "2026-11-14T06:30:39.488Z"
+ },
+ {
+  "input_hash": "31e533a844e215f337eb5b8a36c20c439116b2b15157586ab34fe596cf49c44f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2c8539ab655711be\"],\"blocker\":\"\"},{\"check_key\":\"options_considered\",\"status\":\"can_do\",\"claim_ids\":[\"clm_4de12019859ae1bc\",\"clm_199f2211cbe50466\",\"clm_df144601859e65d2\"],\"blocker\":\"\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d6e778206c41fa0d\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"partial\",\"claim_ids\":[\"clm_b8b706800288bef4\",\"clm_caeb4f01e8661d22\"],\"blocker\":\"Conflicting deadlines: 19 November 2026 vs 26 November 2026 after hifiasm benchmark\"}]}",
+  "created_at": "2026-11-14T06:32:39.882Z"
+ },
+ {
   "input_hash": "323cdfe6739c6d239feb3e3ac5ea65bb3e36b3424cafa190aed4bafc279727dc",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"cannot\",\"claim_ids\":[\"clm_66377ae5230fee06\"],\"blocker\":\"The deadline is specified as 1 December 2026, but there is no information on how often the renewal occurs beyond that date.\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_66377ae5230fee06\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c5c336755ae67970\"],\"blocker\":\"\"},{\"check_key\":\"protocol_location\",\"status\":\"partial\",\"claim_ids\":[\"clm_512ed857f0a3abb7\",\"clm_e7454d03ad5e8f70\"],\"blocker\":\"There are conflicting claims about the location of the protocol. One claim states it is under the bio-142 project, while another specifies it is in docs/allocation/ in this repository.\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"There is no claim that directly addresses the consequences of missing the renewal deadline.\"}]}",
   "created_at": "2026-11-14T05:47:20.019Z"
+ },
+ {
+  "input_hash": "394ffe519a5a2da62bca13f8f1b36228df96bce8a270abd97d843f1bd31ade4e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:31:51.896Z"
+ },
+ {
+  "input_hash": "3a3d5b5b799258546c89c1580dcec2784c8c2393da94595d74cb9e4dc6b8115c",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:31:57.815Z"
  },
  {
   "input_hash": "3f835f359c156f253123b23a67b5ecc6f2d8554607a124da378c084d639c4525",
@@ -120,10 +180,22 @@
   "created_at": "2026-11-14T05:46:57.945Z"
  },
  {
+  "input_hash": "4f85a3f7021ef75bae84910621139213d366e25b930b41ffb9e4d04d4de27859",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"contact_person\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b9cd487ce2c7cc4a\"],\"blocker\":\"\"},{\"check_key\":\"last_interaction\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dfdff5b3ddf9c3b1\"],\"blocker\":\"\"},{\"check_key\":\"open_commitments\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claims provide information about agreement terms or open commitments.\"},{\"check_key\":\"next_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4e310e05af808f5\",\"clm_2815b9bcb05f38b8\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:21.907Z"
+ },
+ {
   "input_hash": "51b461e11ce44ca7430f59c0f6e6113c2125e0316050efd31965247a84ccfbc2",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"partly\"}]}",
   "created_at": "2026-11-14T05:46:30.612Z"
+ },
+ {
+  "input_hash": "55b1aed1bb294e3cbdc48000dfb653039a213aac8b9991a02b97bb0273804368",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_99c855e5b4eb40e9\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_99c855e5b4eb40e9\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_2c2aacc35ba8be78\"],\"blocker\":\"No procedure provided.\"},{\"check_key\":\"protocol_location\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2c2aacc35ba8be78\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_406f7a6611cdd44e\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:28.010Z"
  },
  {
   "input_hash": "5d0c1fb8dab1d740c3e852eaea4421447fa07b371eca31f7548eb0c373145feb",
@@ -136,6 +208,18 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"pipeline-env\",\"attribute\":\"procedure\",\"value\":\"uses env/environment.lock.yml\",\"statement\":\"The nightly run uses env/environment.lock.yml.\",\"citations\":[{\"segment_id\":\"seg_bdf245362837d62c\",\"quote\":\"The nightly run does not use this file; it uses env/environment.lock.yml.\"}]}]}",
   "created_at": "2026-11-14T05:43:53.455Z"
+ },
+ {
+  "input_hash": "5ea1ea943ff903166f03ca5939009f62f400175f4e8bc45254fb2409b4a9d96e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dae353116b0d2079\",\"clm_518a776d4553f5d8\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_28187c5bf662e6a8\",\"clm_1f6af230d70d459b\",\"clm_f712a99d8e2f3379\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f712a99d8e2f3379\",\"clm_93a29002bffe91b9\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_390edce29f6ac606\",\"clm_61db20cb85743211\",\"clm_7bb084e81bdfe0d6\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"partial\",\"claim_ids\":[\"clm_c5f61572af3beeee\",\"clm_df55f806b82123f7\",\"clm_bd309d60efbe060d\"],\"blocker\":\"Conflicting ownership claims between Farhan Qureshi and Nisha. Need to clarify who is currently responsible.\"}]}",
+  "created_at": "2026-11-14T06:32:06.482Z"
+ },
+ {
+  "input_hash": "5f80def65e79f33cc7c3322b0bf16e600d311907c503e0b47d7b3d642f217422",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_9a4b9d08b383ab42\",\"clm_dfcc56af468732b5\",\"clm_d92b2b6f517a3014\"],\"blocker\":\"\"},{\"check_key\":\"data_provenance\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claims provide dataset provenance information.\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6cfa79e03c12071c\",\"clm_0f9c9635c084ef3d\",\"clm_809a8fcfa583fd5d\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5d45baced1448d00\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_681350c201ec32c7\",\"clm_f456572fb1b5d43a\"],\"blocker\":\"Conflicting ownership claims between Farhan Qureshi and Tara.\"}]}",
+  "created_at": "2026-11-14T06:32:18.756Z"
  },
  {
   "input_hash": "616459d23bbaf8ccc292f3c58593cce7b432a6a8dc46188ad527f36e178a3cf3",
@@ -186,10 +270,22 @@
   "created_at": "2026-11-14T05:39:45.575Z"
  },
  {
+  "input_hash": "7f5c8af22cda99ecf6efacbc8a42af449298c69c00d24c1752121b48a340076d",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dfcc56af468732b5\",\"clm_9a4b9d08b383ab42\"],\"blocker\":\"\"},{\"check_key\":\"data_provenance\",\"status\":\"can_do\",\"claim_ids\":[\"clm_681350c201ec32c7\",\"clm_0f9c9635c084ef3d\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0f9c9635c084ef3d\",\"clm_809a8fcfa583fd5d\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5d45baced1448d00\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"partial\",\"claim_ids\":[\"clm_681350c201ec32c7\",\"clm_f456572fb1b5d43a\"],\"blocker\":\"Ownership transition is pending, current owner is Farhan Qureshi but Tara will take over next week.\"}]}",
+  "created_at": "2026-11-14T06:33:02.227Z"
+ },
+ {
   "input_hash": "84b76ce89517357d037791726f0fcffae0b77d2b14b5f23d15b7aa3767a318c8",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"attribute\":\"owner\",\"citations\":[{\"quote\":\"Maintainer: Farhan Qureshi.\",\"segment_id\":\"seg_181681dd2909aebf\"}],\"entity\":\"qc-pipeline\",\"statement\":\"Farhan Qureshi is the maintainer of the nightly read QC and long-read assembly pipeline.\",\"value\":\"Farhan Qureshi\"},{\"attribute\":\"procedure\",\"citations\":[{\"quote\":\"To run it by hand: `conda activate soilmeta`, then `snakemake --profile profiles/kaveri --cores 32` from the repository root.\",\"segment_id\":\"seg_212db31ba77e8dcd\"}],\"entity\":\"qc-pipeline\",\"statement\":\"To run the pipeline by hand, first activate the conda environment 'soilmeta', then execute 'snakemake --profile profiles/kaveri --cores 32' from the repository root.\",\"value\":\"conda activate soilmeta, then snakemake --profile profiles/kaveri --cores 32 from the repository root\"},{\"attribute\":\"location\",\"citations\":[{\"quote\":\"See docs/RUNBOOK.md for where it runs and how to check it.\",\"segment_id\":\"seg_212db31ba77e8dcd\"}],\"entity\":\"qc-pipeline\",\"statement\":\"The documentation for where the pipeline runs and how to check it is located in docs/RUNBOOK.md.\",\"value\":\"docs/RUNBOOK.md\"}]}",
   "created_at": "2026-11-14T05:43:34.959Z"
+ },
+ {
+  "input_hash": "8ece8189fd1aad4143b166bbd1e2aba198cac626e4352ac64d09f359fd53c8d2",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"freezer-rota\",\"attribute\":\"status\",\"value\":\"check done\",\"statement\":\"Freezer check was done.\",\"citations\":[{\"segment_id\":\"seg_51f62f8776f5f3cb\",\"quote\":\"Freezer check done. -79 C, log signed.\"}]},{\"entity\":\"assembler-choice\",\"attribute\":\"owner\",\"value\":\"to be assigned\",\"statement\":\"Someone has to own the assembler decision once Farhan leaves.\",\"citations\":[{\"segment_id\":\"seg_64fbad7d00dd3023\",\"quote\":\"Someone has to own the assembler decision once Farhan leaves. I have not picked anyone yet.\"}]},{\"entity\":\"standing-order\",\"attribute\":\"location\",\"value\":\"purchase portal under Forms, Recurring indents\",\"statement\":\"The indent form for the standing order is on the purchase portal under Forms, Recurring indents.\",\"citations\":[{\"segment_id\":\"seg_20ae416667064465\",\"quote\":\"The indent form for the standing order is on the purchase portal under Forms, Recurring indents. I can edit it.\"}]},{\"entity\":\"standing-order\",\"attribute\":\"dependency\",\"value\":\"flow cells take six weeks to arrive\",\"statement\":\"If the standing order is late, flow cells take about six weeks to arrive.\",\"citations\":[{\"segment_id\":\"seg_4d864a0362d775e1\",\"quote\":\"If the standing order is late, flow cells take about six weeks to arrive.\"}]},{\"entity\":\"soil-dataset-v3\",\"attribute\":\"owner\",\"value\":\"Tara\",\"statement\":\"Tara is taking over dataset v3 from Farhan from next week.\",\"citations\":[{\"segment_id\":\"seg_1e1932dc8a0c05bf\",\"quote\":\"Tara is taking over dataset v3 from Farhan from next week.\"}]},{\"entity\":\"freezer-rota\",\"attribute\":\"contact\",\"value\":\"CONTACT:c-2\",\"statement\":\"Facilities desk for power cuts and air conditioning problems is [CONTACT:c-2].\",\"citations\":[{\"segment_id\":\"seg_30e32e1201df0f41\",\"quote\":\"Facilities desk for power cuts and air conditioning problems: [CONTACT:c-2].\"}]},{\"entity\":\"freezer-rota\",\"attribute\":\"status\",\"value\":\"check done\",\"statement\":\"Freezer check was done.\",\"citations\":[{\"segment_id\":\"seg_ccab07cc9d6b9b1e\",\"quote\":\"Freezer check done. -80 C, log signed.\"}]},{\"entity\":\"biosafety-approval\",\"attribute\":\"procedure\",\"value\":\"form on the committee portal\",\"statement\":\"The biosafety renewal is a form on the committee portal.\",\"citations\":[{\"segment_id\":\"seg_30324d7e71ecd1b1\",\"quote\":\"The biosafety renewal is a form on the committee portal. Ms. Deepa Rao at the biosafety office sends the link.\"}]},{\"entity\":\"biosafety-approval\",\"attribute\":\"contact\",\"value\":\"Ms. Deepa Rao\",\"statement\":\"Ms. Deepa Rao at the biosafety office sends the link.\",\"citations\":[{\"segment_id\":\"seg_30324d7e71ecd1b1\",\"quote\":\"The biosafety renewal is a form on the committee portal. Ms. Deepa Rao at the biosafety office sends the link.\"}]},{\"entity\":\"freezer-rota\",\"attribute\":\"risk\",\"value\":\"alarm goes off at night\",\"statement\":\"What to do if the alarm goes off at night is a risk.\",\"citations\":[{\"segment_id\":\"seg_d430a840fa6edf69\",\"quote\":\"When is the next freezer check due, and what do I do if the alarm goes off at night?\"}]}]}",
+  "created_at": "2026-11-14T06:31:28.433Z"
  },
  {
   "input_hash": "9b3c45f7fc1db4043e739fb69c363b88a87791d539ef1eef809d9cc2b9e2d31e",
@@ -198,10 +294,40 @@
   "created_at": "2026-11-14T05:45:36.065Z"
  },
  {
+  "input_hash": "a6aaa18c453f817f54aacea477c3bb193eee886057baa5e284bb01e122c23078",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:31:38.729Z"
+ },
+ {
+  "input_hash": "a7761f8c5413a56d59e2e816abb4abd6d10f8999e51951d3c46304694d676ba1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b9521e04b2b32d4\"],\"blocker\":\"\"},{\"check_key\":\"data_provenance\",\"status\":\"can_do\",\"claim_ids\":[\"clm_8644f3fc18fc6251\",\"clm_1148b95f9f388501\",\"clm_2e9fe71f40165574\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"can_do\",\"claim_ids\":[\"clm_0f5fbfcdc9ac9670\"],\"blocker\":\"\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f0d4b86b394a2262\",\"clm_1dd4d3dab9088966\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4a3ee2c84458478\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:50.059Z"
+ },
+ {
   "input_hash": "a913a6f5b30fe91790cf427a1baf9e8f0082a2ff3c37a13ca8ee531530f2c6d1",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"no\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"yes\"},{\"id\":\"c14\",\"verdict\":\"yes\"},{\"id\":\"c15\",\"verdict\":\"yes\"},{\"id\":\"c16\",\"verdict\":\"yes\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"yes\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
   "created_at": "2026-11-14T05:46:20.080Z"
+ },
+ {
+  "input_hash": "aa036902f45eb2f7e6cd454da248725631344429828819d15c466f4aa50f82bf",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:32:00.742Z"
+ },
+ {
+  "input_hash": "ae6aef9d5e756482b8b4fcf896d1fabbcb09eb8e8af7bab04a33c1e7721678c1",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c3af6d5465c1cfce\",\"clm_9212afb2c2eb6ad3\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c3af6d5465c1cfce\",\"clm_9212afb2c2eb6ad3\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c5c336755ae67970\"],\"blocker\":\"\"},{\"check_key\":\"protocol_location\",\"status\":\"can_do\",\"claim_ids\":[\"clm_e7454d03ad5e8f70\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f93d8daa04f51e28\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:33.683Z"
+ },
+ {
+  "input_hash": "b49fd903838f50926fe913ad71a1845db220cf89ea57bc31fdad61d0babd5476",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"lab-meeting\",\"attribute\":\"deadline\",\"value\":\"every Thursday\",\"statement\":\"The lab meeting happens every Thursday at 10:00 in seminar room 2.\",\"citations\":[{\"segment_id\":\"seg_8dd05bba116ade6d\",\"quote\":\"Lab meeting is every Thursday at 10:00 in seminar room 2.\"}]},{\"entity\":\"intern-training\",\"attribute\":\"deadline\",\"value\":\"2026-06-15\",\"statement\":\"The first training session for the summer interns starts on Monday.\",\"citations\":[{\"segment_id\":\"seg_c283d67106ac321a\",\"quote\":\"Summer interns start on Monday. I will run the first training session, on command line basics.\"}]},{\"entity\":\"intern-training\",\"attribute\":\"deadline\",\"value\":\"2026-06-29\",\"statement\":\"The second training session for the interns is on Wednesday.\",\"citations\":[{\"segment_id\":\"seg_bc7c864c56d2e90b\",\"quote\":\"Second training session for the interns is on Wednesday: read QC and what the plots mean.\"}]},{\"entity\":\"intern-training\",\"attribute\":\"deadline\",\"value\":\"2026-07-13\",\"statement\":\"The last training session for the interns is this Friday.\",\"citations\":[{\"segment_id\":\"seg_d777ac6f205786ac\",\"quote\":\"Last training session for the interns is this Friday. After that they present their projects.\"}]},{\"entity\":\"hpc-allocation\",\"attribute\":\"status\",\"value\":\"moved to Kaveri\",\"statement\":\"The move off the old Tapti cluster is finished. Everything now runs on Kaveri.\",\"citations\":[{\"segment_id\":\"seg_aecc670e31514c15\",\"quote\":\"The move off the old Tapti cluster is finished. Everything now runs on Kaveri.\"}]},{\"entity\":\"hpc-allocation\",\"attribute\":\"deadline\",\"value\":\"2026-12-01\",\"statement\":\"The bio-142 allocation on Kaveri is renewed once a year. The renewal form is due 1 December 2026.\",\"citations\":[{\"segment_id\":\"seg_52a775498dddee0c\",\"quote\":\"The bio-142 allocation on Kaveri is renewed once a year. I have done the renewal for the last two years.\"},{\"segment_id\":\"seg_da1360bcc8c83032\",\"quote\":\"The renewal form for the bio-142 allocation is due 1 December 2026.\"}]},{\"entity\":\"biosafety-approval\",\"attribute\":\"deadline\",\"value\":\"2026-12-03\",\"statement\":\"The biosafety committee approval for the isolate work is due 3 December 2026.\",\"citations\":[{\"segment_id\":\"seg_5a44459c47829a88\",\"quote\":\"This year the biosafety renewal is due 3 December 2026. I checked last year's letter.\"}]},{\"entity\":\"seq-core\",\"attribute\":\"contact\",\"value\":\"Dr. Joseph Mathew\",\"statement\":\"The contact at the sequencing core is Dr. Joseph Mathew.\",\"citations\":[{\"segment_id\":\"seg_463bebbc21e496e3\",\"quote\":\"Our contact at the sequencing core is Dr. Joseph Mathew. Email [CONTACT:p-7], phone [CONTACT:c-1].\"}]},{\"entity\":\"seq-core\",\"attribute\":\"procedure\",\"value\":\"submit form and sample sheet two working days before slot\",\"statement\":\"The run submission form and the sample sheet must reach the core two working days before the flow cell slot.\",\"citations\":[{\"segment_id\":\"seg_2b8f1d9347630bac\",\"quote\":\"The run submission form and the sample sheet must reach the core two working days before the flow cell slot.\"}]},{\"entity\":\"freezer-rota\",\"attribute\":\"deadline\",\"value\":\"once a week\",\"statement\":\"The minus 80 freezer check is once a week.\",\"citations\":[{\"segment_id\":\"seg_d016bcdb4b6ed20b\",\"quote\":\"Reminder: the minus 80 freezer check is once a week, and whoever does it signs the log.\"}]},{\"entity\":\"freezer-rota\",\"attribute\":\"location\",\"value\":\"clipboard on freezer door in room B-114\",\"statement\":\"The freezer log sheet is on the clipboard on the freezer door in room B-114.\",\"citations\":[{\"segment_id\":\"seg_48211d637d5d60d1\",\"quote\":\"The freezer log sheet is on the clipboard on the freezer door in room B-114. I keep the scanned copies.\"}]},{\"entity\":\"freezer-rota\",\"attribute\":\"risk\",\"value\":\"lose isolate stocks if above -60 C for hours\",\"statement\":\"If the minus 80 stays above -60 C for more than a few hours we lose the isolate stocks.\",\"citations\":[{\"segment_id\":\"seg_36b70fc52484dc40\",\"quote\":\"If the minus 80 stays above -60 C for more than a few hours we lose the isolate stocks.\"}]},{\"entity\":\"seq-core\",\"attribute\":\"deadline\",\"value\":\"2026-11-24\",\"statement\":\"The sequencing core gave us a flow cell slot on 24 November 2026 for the next run.\",\"citations\":[{\"segment_id\":\"seg_b297a4673b9a4af8\",\"quote\":\"The sequencing core gave us a flow cell slot on 24 November 2026 for the next run.\"}]},{\"entity\":\"hpc-allocation\",\"attribute\":\"dependency\",\"value\":\"nightly pipeline depends on allocation\",\"statement\":\"If the allocation lapses, bio-142 jobs stop being scheduled and the nightly pipeline stops with them.\",\"citations\":[{\"segment_id\":\"seg_e968b7bf9143a568\",\"quote\":\"If the allocation lapses, bio-142 jobs stop being scheduled and the nightly pipeline stops with them.\"}]},{\"entity\":\"hpc-allocation\",\"attribute\":\"deadline\",\"value\":\"2026-12-08\",\"statement\":\"The bio-142 allocation renewal is due 8 December 2026.\",\"citations\":[{\"segment_id\":\"seg_3d540298abcddae7\",\"quote\":\"I thought the bio-142 allocation renewal is due 8 December 2026. That is what last year's mail said.\"}]},{\"entity\":\"student-progress\",\"attribute\":\"deadline\",\"value\":\"2026-12-05\",\"statement\":\"The progress review for the first-years is in the first week of December.\",\"citations\":[{\"segment_id\":\"seg_3664127aa4753af2\",\"quote\":\"Progress review for the first-years is in the first week of December. Please send me your committee meeting slides a week before.\"}]},{\"entity\":\"revision-analysis\",\"attribute\":\"deadline\",\"value\":\"2026-11-28\",\"statement\":\"The revised manuscript is due back at the journal on 28 November 2026.\",\"citations\":[{\"segment_id\":\"seg_9596412a3a2e5281\",\"quote\":\"The revised manuscript is due back at the journal on 28 November 2026.\"}]},{\"entity\":\"assembler-choice\",\"attribute\":\"deadline\",\"value\":\"2026-11-19\",\"statement\":\"The decision on the long-read assembler will be made at the lab meeting on 19 November 2026.\",\"citations\":[{\"segment_id\":\"seg_54cbb34f05f627b0\",\"quote\":\"For the long-read assembler, let us decide at the lab meeting on 19 November 2026.\"}]},{\"entity\":\"assembler-choice\",\"attribute\":\"deadline\",\"value\":\"2026-11-26\",\"statement\":\"The decision on the long-read assembler should be taken on 26 November 2026, after the hifiasm benchmark is done.\",\"citations\":[{\"segment_id\":\"seg_e09ff6da44f01466\",\"quote\":\"The assembler decision should be taken on 26 November 2026, after my hifiasm benchmark is done.\"}]},{\"entity\":\"qc-pipeline\",\"attribute\":\"owner\",\"value\":\"Nisha\",\"statement\":\"Nisha takes over the pipeline and the sequencing bookings from Farhan, who leaves on 30 November.\",\"citations\":[{\"segment_id\":\"seg_4b93fd0829050bbe\",\"quote\":\"Welcome Nisha, our new postdoc. She takes over the pipeline and the sequencing bookings from Farhan, who leaves on 30 November.\"}]}]}",
+  "created_at": "2026-11-14T06:31:13.222Z"
  },
  {
   "input_hash": "bc270299ee5d3b2cd06af39d922b54ddfd655d00c635f443650c246693374402",
@@ -222,6 +348,24 @@
   "created_at": "2026-11-14T05:42:59.559Z"
  },
  {
+  "input_hash": "c7792b89194db40c2cafc618295be387631feaf0e66617af3b03a75e73e97c0a",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"lab-budget\",\"attribute\":\"status\",\"value\":\"approved\",\"statement\":\"Tara's conference reimbursement of Rs 18,400 was approved by accounts.\",\"citations\":[{\"segment_id\":\"seg_047d864d97e6ad93\",\"quote\":\"Tara, your conference reimbursement of Rs 18,400 was approved by accounts today.\"}]}]}",
+  "created_at": "2026-11-14T06:31:32.297Z"
+ },
+ {
+  "input_hash": "cb6b0893f0fc2bbe9da925b056a6c25c042159cded03bb3b02640a0538caa9e4",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d5a6f739b0438a3a\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f2bae11a362e68e4\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_6faa94f51575fd4d\"],\"blocker\":\"\"},{\"check_key\":\"protocol_location\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4ec7fc5c85e63e5\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information about consequences of missing the biosafety approval renewal.\"}]}",
+  "created_at": "2026-11-14T06:32:24.799Z"
+ },
+ {
+  "input_hash": "cde282a58cda4098d3f76d5ec431f0e49be0293449a54b218987de2f44654c9b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"yes\"},{\"id\":\"c2\",\"verdict\":\"yes\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"yes\"}]}",
+  "created_at": "2026-11-14T06:32:00.029Z"
+ },
+ {
   "input_hash": "d488e1ffec04e2ba30a541013a00dfd1a90cfb332ee53b08cd8634cb408be9a4",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"entity\":\"revision-analysis\",\"attribute\":\"status\",\"value\":\"Figures 1, 2 and 4 are redrawn; one normalisation issue is left\",\"statement\":\"Figures 1, 2 and 4 are redrawn; one normalisation issue is left before figure 3 can be redrawn.\",\"citations\":[{\"segment_id\":\"seg_4ff02da820cff7bd\",\"quote\":\"Figures 1, 2 and 4 are redrawn; one normalisation issue is left before figure 3 can be redrawn.\"}]}]}",
@@ -240,16 +384,40 @@
   "created_at": "2026-11-14T05:43:51.424Z"
  },
  {
+  "input_hash": "ded2015ca363ab8c05662f76eabc2aefdefc9dfb0114aa44e3b8e0b71ff24d11",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c3af6d5465c1cfce\",\"clm_9212afb2c2eb6ad3\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_c3af6d5465c1cfce\",\"clm_9212afb2c2eb6ad3\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f93d8daa04f51e28\"],\"blocker\":\"\"},{\"check_key\":\"protocol_location\",\"status\":\"can_do\",\"claim_ids\":[\"clm_e7454d03ad5e8f70\",\"clm_512ed857f0a3abb7\"],\"blocker\":\"\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f93d8daa04f51e28\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:33:05.778Z"
+ },
+ {
+  "input_hash": "e5f1769f52a4459a17644cb651499378ba0571f7e5a197adf2657773d20eeb3e",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_dae353116b0d2079\",\"clm_d7ff08a021a44528\",\"clm_518a776d4553f5d8\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_28187c5bf662e6a8\",\"clm_1f6af230d70d459b\",\"clm_0a4ab89f9331a964\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f712a99d8e2f3379\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"can_do\",\"claim_ids\":[\"clm_8fb032feed85fe6f\",\"clm_61db20cb85743211\",\"clm_7bb084e81bdfe0d6\"],\"blocker\":\"\"},{\"check_key\":\"credential_owner\",\"status\":\"partial\",\"claim_ids\":[\"clm_c5f61572af3beeee\",\"clm_df55f806b82123f7\",\"clm_bd309d60efbe060d\"],\"blocker\":\"Conflicting ownership claims between Farhan Qureshi and Nisha.\"}]}",
+  "created_at": "2026-11-14T06:32:46.444Z"
+ },
+ {
   "input_hash": "ea4bad1891102e25f1a3746e4ffdd0cbd0a70949dcefee04e676fb344e05aeda",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"cadence\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d5a6f739b0438a3a\",\"clm_f2bae11a362e68e4\",\"clm_ab8600cbae721267\"],\"blocker\":\"\"},{\"check_key\":\"next_due_date\",\"status\":\"can_do\",\"claim_ids\":[\"clm_d5a6f739b0438a3a\",\"clm_f2bae11a362e68e4\",\"clm_ab8600cbae721267\"],\"blocker\":\"\"},{\"check_key\":\"how_to_do_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_5cc05324c4b022b0\"],\"blocker\":\"\"},{\"check_key\":\"protocol_location\",\"status\":\"partial\",\"claim_ids\":[\"clm_a4ec7fc5c85e63e5\",\"clm_d8ce7f873fcedd95\"],\"blocker\":\"Conflicting locations provided; need to verify which is current.\"},{\"check_key\":\"consequence_if_missed\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claim provides information on consequences of missing the biosafety approval renewal.\"}]}",
   "created_at": "2026-11-14T05:47:11.688Z"
  },
  {
+  "input_hash": "ec640e5618b70756db9f1dbfdb7e8063bea5b979ef75d89a3d4b28a20333ada9",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"claims\":[{\"entity\":\"other\",\"attribute\":\"status\",\"value\":\"on medical leave until 23 October\",\"statement\":\"Imran is on medical leave until 23 October.\",\"citations\":[{\"segment_id\":\"seg_286eda5fb2f62dad\",\"quote\":\"Imran is on medical leave until 23 October.\"}]}]}",
+  "created_at": "2026-11-14T06:31:30.275Z"
+ },
+ {
   "input_hash": "ed4a0ad6f58478483783cb4d46b048d684bf2ce5d2b458680d968a0365244e59",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"claims\":[{\"attribute\":\"status\",\"citations\":[{\"quote\":\"Documentation only. The environment is unchanged from v1.4.2.\",\"segment_id\":\"seg_a0fb321239e7f103\"}],\"entity\":\"pipeline-env\",\"statement\":\"The environment is unchanged from v1.4.2\",\"value\":\"unchanged from v1.4.2\"},{\"attribute\":\"location\",\"citations\":[{\"quote\":\"The conda environment is pinned in env/environment.lock.yml.\",\"segment_id\":\"seg_65c44fa6ad55a944\"}],\"entity\":\"pipeline-env\",\"statement\":\"The conda environment is pinned in env/environment.lock.yml\",\"value\":\"env/environment.lock.yml\"}]}",
   "created_at": "2026-11-14T05:45:54.221Z"
+ },
+ {
+  "input_hash": "ef3c36eaea0314a45bbcd1dc0781b2e00d5fa00d76703eecbd432e2a9405e92f",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"checks\":[{\"check_key\":\"where_it_lives\",\"status\":\"can_do\",\"claim_ids\":[\"clm_2b9521e04b2b32d4\"],\"blocker\":\"\"},{\"check_key\":\"data_provenance\",\"status\":\"can_do\",\"claim_ids\":[\"clm_8644f3fc18fc6251\",\"clm_1148b95f9f388501\",\"clm_2e9fe71f40165574\"],\"blocker\":\"\"},{\"check_key\":\"last_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_9f899a1ec7762d60\",\"clm_0f5fbfcdc9ac9670\",\"clm_b68ef4172de012b4\"],\"blocker\":\"Conflicting status claims indicate incomplete work with unresolved normalisation issues.\"},{\"check_key\":\"next_concrete_step\",\"status\":\"can_do\",\"claim_ids\":[\"clm_f0d4b86b394a2262\",\"clm_1dd4d3dab9088966\"],\"blocker\":\"\"},{\"check_key\":\"who_reviews_it\",\"status\":\"can_do\",\"claim_ids\":[\"clm_a4a3ee2c84458478\"],\"blocker\":\"\"}]}",
+  "created_at": "2026-11-14T06:32:11.200Z"
  },
  {
   "input_hash": "f5b5570e14d7e27555da646377c121090b10e8873def808968971de1354c2f28",

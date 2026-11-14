@@ -69,7 +69,21 @@ export interface Segment {
   roleSet: RoleKey[];
   version: number;
   meta: Record<string, unknown>; // e.g. task fields, replyTo segment id, commit sha, file path
+  // Content-level confidentiality (db/migrations/0008). All optional: absent means "not sensitive".
+  sensitivity?: SensitivityCategory[];          // categories found; empty when not sensitive
+  sensitivityStage?: SensitivityStage | null;   // how the current visibility was decided
+  sensitivityReason?: string | null;            // fixed reason string shown on Connect
+  roleSetOriginal?: RoleKey[] | null;           // the source role set, kept when the segment was narrowed
+  visibilityNote?: string | null;               // the approver's written reason, on the version it created
+  visibilityActor?: RoleKey | null;             // role that made this version
+  classifierVersion?: number;                   // rules version that last looked at the row
 }
+
+/** Closed list of sensitive content categories (core vocabulary, not a setting literal). */
+export type SensitivityCategory = "finance" | "hr" | "health";
+
+/** How a segment's visibility was decided: by a rule, a follow-up, the model, held, or the approver. */
+export type SensitivityStage = "rule" | "follow" | "model" | "held" | "manual" | "widened";
 
 export interface RejectedRow {
   line: number;
@@ -138,6 +152,8 @@ export interface Claim {
   reviewNote: string | null;
   origin: ClaimOrigin;
   supportCheck: "yes" | "partly" | "no" | null;
+  /** When set, only these roles may see the claim at all (a conflict or supersession with a hidden side). */
+  flagRoleSet?: RoleKey[] | null;
 }
 
 export interface CheckDef {
