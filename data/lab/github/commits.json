@@ -1,0 +1,328 @@
+[
+  {
+    "sha": "68b0a3225c2e1b790b2bd0e5b2dae899ab147336",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-06-09T18:10:00+05:30",
+    "message": "Import the pipeline from the old Tapti layout",
+    "files": [
+      {
+        "path": "pipeline/Snakefile",
+        "status": "added"
+      },
+      {
+        "path": "pipeline/rules/qc.smk",
+        "status": "added"
+      },
+      {
+        "path": "README.md",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "5ddb259898522e4e94cb1c278644717e07ccbc30",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-06-12T11:30:00+05:30",
+    "message": "env: add the conda environment for the pipeline",
+    "files": [
+      {
+        "path": "env/environment.yml",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "53f5efba88e757989d69692a78e8420b414f1593",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-06-16T16:45:00+05:30",
+    "message": "pipeline: add fastp trimming rule",
+    "files": [
+      {
+        "path": "pipeline/rules/qc.smk",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "750ce8f9abfe4ebd88d881206c82a99008b6d268",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-06-24T19:20:00+05:30",
+    "message": "ci: nightly QC workflow on the self-hosted Kaveri runner",
+    "files": [
+      {
+        "path": ".github/workflows/nightly-qc.yml",
+        "status": "added"
+      },
+      {
+        "path": "pipeline/Snakefile",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "27ce73cf5554b4b232590859a0f7d130b58119cb",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-07-01T15:05:00+05:30",
+    "message": "docs: first RUNBOOK with run and check steps",
+    "files": [
+      {
+        "path": "docs/RUNBOOK.md",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "2f05c22c967eedf6bac06c82bd5456a9dc170112",
+    "author_name": "Tara Bose",
+    "author_email": "tara.bose@sils.example",
+    "date": "2026-07-08T12:40:00+05:30",
+    "message": "pipeline: fix sample name parsing for dual-index runs",
+    "files": [
+      {
+        "path": "pipeline/rules/qc.smk",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "1baf0dfdac12aee3ddc00b5ae00902fdc101687b",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-07-15T17:55:00+05:30",
+    "message": "pipeline: add Flye assembly rule for long reads",
+    "files": [
+      {
+        "path": "pipeline/rules/assembly.smk",
+        "status": "added"
+      },
+      {
+        "path": "pipeline/Snakefile",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "4aa4df2096fa8798f49dfa384db9595677684ff5",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-07-29T14:10:00+05:30",
+    "message": "pipeline: multiqc report at the end of every run",
+    "files": [
+      {
+        "path": "pipeline/Snakefile",
+        "status": "modified"
+      },
+      {
+        "path": "pipeline/rules/report.smk",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "5146f409833e714cef57f5ffbd3e8e504f2028a3",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-08-12T18:30:00+05:30",
+    "message": "config: Kaveri paths, drop Tapti",
+    "files": [
+      {
+        "path": "config/samples.yaml",
+        "status": "modified"
+      },
+      {
+        "path": "pipeline/Snakefile",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "a6cd3c500ec1618dbab6806605b08d1413ddad63",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-08-18T10:15:00+05:30",
+    "message": "ci: run the nightly QC at 02:00 IST",
+    "files": [
+      {
+        "path": ".github/workflows/nightly-qc.yml",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "a7c5b351621ed6e7a0c68a7e717fe8455a57d8b1",
+    "author_name": "Imran Sheikh",
+    "author_email": "imran.sheikh@sils.example",
+    "date": "2026-08-26T16:00:00+05:30",
+    "message": "pipeline: typo in the threads setting of the long-read rule",
+    "files": [
+      {
+        "path": "pipeline/rules/assembly.smk",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "d2baeb0dd9e76de702fdfbba90079d8786fbc805",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-09-14T19:40:00+05:30",
+    "message": "pipeline: log tool versions at the start of every run",
+    "files": [
+      {
+        "path": "pipeline/Snakefile",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "eef0458991fbc489a1fde667f1af1f9c03cebb00",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-09-21T16:20:00+05:30",
+    "message": "env: pin the environment in environment.lock.yml, tag v1.4.2",
+    "files": [
+      {
+        "path": "env/environment.lock.yml",
+        "status": "added"
+      },
+      {
+        "path": "env/environment.yml",
+        "status": "modified"
+      },
+      {
+        "path": "pipeline/Snakefile",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "6dec106d33b0881977b34bffde8d90e49ceacd02",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-09-21T16:35:00+05:30",
+    "message": "scripts: restore_env.sh restores a tagged lock file",
+    "files": [
+      {
+        "path": "scripts/restore_env.sh",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "5c8594d1c4e633afb75d5c7e4a77e592955cfe28",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-09-23T11:10:00+05:30",
+    "message": "docs: RUNBOOK section on the pinned environment",
+    "files": [
+      {
+        "path": "docs/RUNBOOK.md",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "8d1d3051b32f19435cab913cf5f00e8b0be8f033",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-10-07T12:10:00+05:30",
+    "message": "config: raw_dir is now /project/bio-142/raw_v3",
+    "files": [
+      {
+        "path": "config/samples.yaml",
+        "status": "modified"
+      },
+      {
+        "path": "pipeline/rules/qc.smk",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "ae5528c8ffced5f41fa650a4f1b085c01039f4e0",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-10-13T18:25:00+05:30",
+    "message": "analysis: start revision_r2 for reviewer 2",
+    "files": [
+      {
+        "path": "analysis/revision_r2/README.md",
+        "status": "added"
+      },
+      {
+        "path": "analysis/revision_r2/normalise.py",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "fc4e765c847cbcf070bf17c6e2d403bd225792c7",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-10-20T20:05:00+05:30",
+    "message": "analysis: redraw figures 1, 2 and 4 for revision_r2",
+    "files": [
+      {
+        "path": "analysis/revision_r2/normalise.py",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "79ecb1a4fc04a3242b9d9063430702f2c7c82d14",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-10-26T17:05:00+05:30",
+    "message": "scripts: fetch_run.sh test call with token=lab-token-EXAMPLE-0000 (remove before merge)",
+    "files": [
+      {
+        "path": "scripts/fetch_run.sh",
+        "status": "added"
+      }
+    ]
+  },
+  {
+    "sha": "f680ae81f405e83589806e842b6d33fe58b78e20",
+    "author_name": "Nisha Iyer",
+    "author_email": "nisha.iyer@sils.example",
+    "date": "2026-11-03T15:50:00+05:30",
+    "message": "docs: fix the RUNBOOK path to the kaveri profile",
+    "files": [
+      {
+        "path": "docs/RUNBOOK.md",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "55662856627f168a16a64dd08dbea2a78650ce0b",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-11-05T21:15:00+05:30",
+    "message": "WIP revision_r2: try per-sample depth normalisation in normalise.py (not finished)",
+    "files": [
+      {
+        "path": "analysis/revision_r2/normalise.py",
+        "status": "modified"
+      }
+    ]
+  },
+  {
+    "sha": "a9b53b4ecb40ad9e54c998e9637df6f41e6fc182",
+    "author_name": "Farhan Qureshi",
+    "author_email": "farhan.qureshi@sils.example",
+    "date": "2026-11-09T18:00:00+05:30",
+    "message": "CHANGELOG: v1.4.3 notes, environment unchanged",
+    "files": [
+      {
+        "path": "CHANGELOG.md",
+        "status": "modified"
+      }
+    ]
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "kind": "slack",
+    "name": "Slack #lab-general",
+    "path": "data/lab/slack/lab-general",
+    "roleSet": [
+      "pi",
+      "incoming_postdoc",
+      "phd_student",
+      "lab_manager",
+      "leaving_postdoc"
+    ]
+  },
+  {
+    "kind": "slack",
+    "name": "Slack #pipeline",
+    "path": "data/lab/slack/pipeline",
+    "roleSet": [
+      "pi",
+      "incoming_postdoc",
+      "leaving_postdoc"
+    ]
+  },
+  {
+    "kind": "slack",
+    "name": "Slack #lab-admin",
+    "path": "data/lab/slack/lab-admin",
+    "roleSet": [
+      "pi",
+      "lab_manager",
+      "leaving_postdoc"
+    ]
+  },
+  {
+    "kind": "github",
+    "name": "Git repository soil-metagenomics-pipeline",
+    "path": "data/lab/github",
+    "roleSet": [
+      "pi",
+      "incoming_postdoc",
+      "phd_student",
+      "lab_manager",
+      "leaving_postdoc"
+    ]
+  },
+  {
+    "kind": "markdown",
+    "name": "Lab notebook",
+    "path": "data/lab/notes",
+    "roleSet": [
+      "pi",
+      "incoming_postdoc",
+      "phd_student",
+      "lab_manager",
+      "leaving_postdoc"
+    ]
+  },
+  {
+    "kind": "tasks_csv",
+    "name": "Task sheet",
+    "path": "data/lab/tasks/tasks.csv",
+    "roleSet": [
+      "pi",
+      "incoming_postdoc",
+      "phd_student",
+      "lab_manager",
+      "leaving_postdoc"
+    ]
+  },
+  {
+    "kind": "ics",
+    "name": "Lab calendar",
+    "path": "data/lab/calendar/menon-lab.ics",
+    "roleSet": [
+      "pi",
+      "incoming_postdoc",
+      "phd_student",
+      "lab_manager",
+      "leaving_postdoc"
+    ]
+  }
+]

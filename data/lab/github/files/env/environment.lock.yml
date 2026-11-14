@@ -1,0 +1,12 @@
+# Locked on 21 September 2026 after the samtools incident. Tag: v1.4.2.
+name: soilmeta
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11.9
+  - snakemake=8.20.5
+  - fastp=0.23.4
+  - flye=2.9.5
+  - samtools=1.21
+  - multiqc=1.25.1

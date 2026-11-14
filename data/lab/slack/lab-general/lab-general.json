@@ -1,0 +1,232 @@
+[
+  {
+    "ts": "1780893300.000100",
+    "user": "U02LEELA",
+    "text": "Welcome to the lab workspace. Lab meeting is every Thursday at 10:00 in seminar room 2."
+  },
+  {
+    "ts": "1781502600.000200",
+    "user": "U01FARHAN",
+    "text": "Summer interns start on Monday. I will run the first training session, on command line basics."
+  },
+  {
+    "ts": "1782731400.000300",
+    "user": "U01FARHAN",
+    "text": "Second training session for the interns is on Wednesday: read QC and what the plots mean."
+  },
+  {
+    "ts": "1783935600.000400",
+    "user": "U01FARHAN",
+    "text": "Last training session for the interns is this Friday. After that they present their projects."
+  },
+  {
+    "ts": "1785739500.000500",
+    "user": "U01FARHAN",
+    "text": "The move off the old Tapti cluster is finished. Everything now runs on Kaveri."
+  },
+  {
+    "ts": "1787560500.000600",
+    "user": "U01FARHAN",
+    "text": "The bio-142 allocation on Kaveri is renewed once a year. I have done the renewal for the last two years."
+  },
+  {
+    "ts": "1788781800.000700",
+    "user": "U01FARHAN",
+    "text": "Poster for the Soil Microbiome Symposium is printed. Thanks Tara for the figures."
+  },
+  {
+    "ts": "1789015500.000800",
+    "user": "U01FARHAN",
+    "text": "Biosafety committee approval for the isolate work has to be renewed every year."
+  },
+  {
+    "ts": "1789017000.000900",
+    "user": "U06GAURI",
+    "text": "This year the biosafety renewal is due 3 December 2026. I checked last year's letter."
+  },
+  {
+    "ts": "1789363800.001000",
+    "user": "U01FARHAN",
+    "text": "Our contact at the sequencing core is Dr. Joseph Mathew. Email joseph.mathew@genomicscore.example, phone +91 90220 00173."
+  },
+  {
+    "ts": "1789445400.001100",
+    "user": "U07JOSEPH",
+    "text": "Happy to help. The run submission form and the sample sheet must reach the core two working days before the flow cell slot.",
+    "thread_ts": "1789363800.001000"
+  },
+  {
+    "ts": "1791171600.001200",
+    "user": "U01FARHAN",
+    "text": "Freezer check done. Minus 80 reads -79 C, log signed."
+  },
+  {
+    "ts": "1791261000.001300",
+    "user": "U06GAURI",
+    "text": "Reminder: the minus 80 freezer check is once a week, and whoever does it signs the log."
+  },
+  {
+    "ts": "1791261240.001400",
+    "user": "U06GAURI",
+    "text": "The freezer log sheet is on the clipboard on the freezer door in room B-114. I keep the scanned copies."
+  },
+  {
+    "ts": "1791456600.001500",
+    "user": "U06GAURI",
+    "text": "If the minus 80 stays above -60 C for more than a few hours we lose the isolate stocks."
+  },
+  {
+    "ts": "1791776100.001600",
+    "user": "U01FARHAN",
+    "text": "Freezer check done, -80 C on the display, log signed."
+  },
+  {
+    "ts": "1791788400.001700",
+    "user": "U02LEELA",
+    "text": "Imran is on medical leave until 23 October. Please do not book him for bench work."
+  },
+  {
+    "ts": "1791867000.001800",
+    "user": "U01FARHAN",
+    "text": "The sequencing core gave us a flow cell slot on 24 November 2026 for the next run."
+  },
+  {
+    "ts": "1792044000.001900",
+    "user": "U08VIKRAM",
+    "text": "Cluster support desk here. The renewal form for the bio-142 allocation is due 1 December 2026."
+  },
+  {
+    "ts": "1792143000.002000",
+    "user": "U06GAURI",
+    "text": "Stipend arrears for the two PhD students for August and September will be paid with the October stipend."
+  },
+  {
+    "ts": "1792381500.002100",
+    "user": "U01FARHAN",
+    "text": "Freezer check done. -79 C, log signed."
+  },
+  {
+    "ts": "1792472400.002200",
+    "user": "U04TARA",
+    "text": "I keep the freezer alarm rota this term."
+  },
+  {
+    "ts": "1792572000.002300",
+    "user": "U01FARHAN",
+    "text": "If the allocation lapses, bio-142 jobs stop being scheduled and the nightly pipeline stops with them."
+  },
+  {
+    "ts": "1792667700.002400",
+    "user": "U04TARA",
+    "text": "I thought the bio-142 allocation renewal is due 8 December 2026. That is what last year's mail said."
+  },
+  {
+    "ts": "1792729800.002500",
+    "user": "U02LEELA",
+    "text": "Progress review for the first-years is in the first week of December. Please send me your committee meeting slides a week before."
+  },
+  {
+    "ts": "1792986600.002600",
+    "user": "U01FARHAN",
+    "text": "Freezer check done. -80 C, log signed."
+  },
+  {
+    "ts": "1793079900.002700",
+    "user": "U02LEELA",
+    "text": "The revised manuscript is due back at the journal on 28 November 2026."
+  },
+  {
+    "ts": "1793080080.002800",
+    "user": "U02LEELA",
+    "text": "For the revision, Prof. Menon reviews every redrawn figure before it goes to the co-authors."
+  },
+  {
+    "ts": "1793160300.002900",
+    "user": "U06GAURI",
+    "text": "Correction: from November the freezer alarm rota is mine. Tara hands it over on 1 November.",
+    "thread_ts": "1792472400.002200"
+  },
+  {
+    "ts": "1793267400.003000",
+    "user": "U04TARA",
+    "text": "For the long-read assembler, let us decide at the lab meeting on 19 November 2026."
+  },
+  {
+    "ts": "1793334900.003100",
+    "user": "U05IMRAN",
+    "text": "The assembler decision should be taken on 26 November 2026, after my hifiasm benchmark is done."
+  },
+  {
+    "ts": "1793590200.003200",
+    "user": "U02LEELA",
+    "text": "Welcome Nisha, our new postdoc. She takes over the pipeline and the sequencing bookings from Farhan, who leaves on 30 November."
+  },
+  {
+    "ts": "1793591700.003300",
+    "user": "U01FARHAN",
+    "text": "Freezer check done. -79 C, log signed."
+  },
+  {
+    "ts": "1793682000.003400",
+    "user": "U07JOSEPH",
+    "text": "Your flow cell slot is confirmed. Please use the new run submission form from our portal.",
+    "thread_ts": "1791867000.001800"
+  },
+  {
+    "ts": "1793695800.003500",
+    "user": "U06GAURI",
+    "text": "Tara, your conference reimbursement of Rs 18,400 was approved by accounts today."
+  },
+  {
+    "ts": "1793772600.003600",
+    "user": "U02LEELA",
+    "text": "Someone has to own the assembler decision once Farhan leaves. I have not picked anyone yet."
+  },
+  {
+    "ts": "1793853600.003700",
+    "user": "U06GAURI",
+    "text": "The indent form for the standing order is on the purchase portal under Forms, Recurring indents. I can edit it."
+  },
+  {
+    "ts": "1793853840.003800",
+    "user": "U06GAURI",
+    "text": "If the standing order is late, flow cells take about six weeks to arrive."
+  },
+  {
+    "ts": "1793946600.003900",
+    "user": "U02LEELA",
+    "text": "Tara is taking over dataset v3 from Farhan from next week."
+  },
+  {
+    "ts": "1793959200.004000",
+    "user": "U06GAURI",
+    "text": "Facilities desk for power cuts and air conditioning problems: +91 90220 00404."
+  },
+  {
+    "ts": "1794195900.004100",
+    "user": "U01FARHAN",
+    "text": "Freezer check done. -80 C, log signed."
+  },
+  {
+    "ts": "1794203400.004200",
+    "user": "U03NISHA",
+    "text": "Is there a written protocol for the biosafety renewal?"
+  },
+  {
+    "ts": "1794204900.004300",
+    "user": "U01FARHAN",
+    "text": "The biosafety renewal is a form on the committee portal. Ms. Deepa Rao at the biosafety office sends the link.",
+    "thread_ts": "1794203400.004200"
+  },
+  {
+    "ts": "1794205320.004400",
+    "user": "U03NISHA",
+    "text": "Thanks. Is there a list of what goes into the form? I could not find one.",
+    "thread_ts": "1794203400.004200"
+  },
+  {
+    "ts": "1794285300.004500",
+    "user": "U03NISHA",
+    "text": "When is the next freezer check due, and what do I do if the alarm goes off at night?"
+  }
+]

@@ -1,0 +1,17 @@
+# Sample sheet for the current nightly batch.
+data:
+  raw_dir: /project/bio-142/raw_v3
+  manifest: /project/bio-142/raw_v3/MANIFEST.sha256
+  batch: nightly-2026-11
+
+annotation:
+  service: https://annotate.sils.example/v2
+  api_key: sk-FAKE-lab-EXAMPLE-0000000000
+
+excluded_samples:
+  - S017
+  - S044
+  - S051
+  - S102
+  - S130
+  - S188
