@@ -8,8 +8,10 @@ import { viewingRole } from "@/lib/session";
 import { getWorkspacePack, isRoleOf } from "@/lib/pack";
 import { buildQuestions, confirmInventory, runTest, savePlanItem } from "@/lib/lacuna";
 import { runWithModelContext } from "@/lib/model/client";
-import { exclusive, spendContext } from "@/lib/pipeline/guard";
+import { ACTION_LEASE_MS, actionContext, exclusive } from "@/lib/pipeline/guard";
 import { busyMessage, planProblem } from "@/lib/pipeline/once";
+import { evidenceChanged } from "@/lib/pipeline/rejudge";
+import { RETEST_KEY } from "@/lib/pipeline/retest";
 import type { RoleKey } from "@/lib/types";
 
 export interface ActionState {
@@ -38,8 +40,9 @@ export async function rerunTestAction(_prev: ActionState, form: FormData): Promi
   const successor = pack.successorRole;
   const asked = String(form.get("target") ?? "");
   const target: RoleKey = isRoleOf(pack, asked) ? asked : successor;
-  // One re-test at a time per workspace; live model calls count against the workspace's budget.
-  return exclusive(ws, "retest", () => runWithModelContext(spendContext(ws), async () => {
+  // One re-test at a time per workspace; live model calls count against the workspace's budget,
+  // none starts after the action's time budget, and the lease outlives the action (maxDuration).
+  return exclusive(ws, RETEST_KEY, () => runWithModelContext(actionContext(ws), async () => {
     try {
       const t = await runTest(ws, target, { trigger: "re-run" });
       if (target !== successor) await runTest(ws, successor, { trigger: "re-run" });
@@ -49,7 +52,7 @@ export async function rerunTestAction(_prev: ActionState, form: FormData): Promi
     } catch (err) {
       return fail(`The test could not run: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }), fail(busyMessage("A re-test")), 180_000);
+  }), fail(busyMessage("A re-test")), ACTION_LEASE_MS);
 }
 
 export async function confirmInventoryAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -76,6 +79,7 @@ export async function savePlanItemAction(_prev: ActionState, form: FormData): Pr
     owner, dueDate, riskNote,
   }, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
+  await evidenceChanged(ws);
   refresh();
   return done("Plan saved.");
 }

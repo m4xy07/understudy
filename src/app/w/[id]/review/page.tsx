@@ -16,6 +16,9 @@ import { approveSnapshotAction, bulkApproveAction, reviewClaimAction, savePlanAc
 import { TierCReview, type EvidenceItem } from "./TierCReview";
 import { FindingsGroup } from "./FindingsGroup";
 
+// Server actions of this page re-test with the model (pipeline/guard.ts: ACTION_MAX_DURATION_S).
+export const maxDuration = 300;
+
 export default function ReviewPage({ params, searchParams }: { params: WsParams; searchParams: SearchParams }) {
   return (
     <Suspense fallback={<PageLoading />}>

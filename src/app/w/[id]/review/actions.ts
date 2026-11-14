@@ -5,11 +5,14 @@ import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
 import { viewingRole } from "@/lib/session";
-import { getWorkspacePack } from "@/lib/pack";
-import { runTest, savePlanItem } from "@/lib/lacuna";
+import { savePlanItem } from "@/lib/lacuna";
 import { bulkApprove, reviewClaim } from "@/lib/relay";
-import { exclusive } from "@/lib/pipeline/guard";
-import { approveSnapshotOnce, busyMessage, planProblem, REPEAT_WAIT_MS, reviewAlreadyDone, reviewTextProblem } from "@/lib/pipeline/once";
+import { exclusive, isSafeId } from "@/lib/pipeline/guard";
+import {
+  approveSnapshotOnce, busyMessage, findingClaimProblem, planProblem, REPEAT_WAIT_MS, reviewAlreadyDone, reviewTextProblem,
+} from "@/lib/pipeline/once";
+import { evidenceChanged } from "@/lib/pipeline/rejudge";
+import { retestAfterReview, SAVED_NOT_RETESTED } from "@/lib/pipeline/retest";
 import type { ActionState } from "@/components/ActionForm";
 
 const fail = (message: string): ActionState => ({ ok: false, message });
@@ -28,9 +31,14 @@ export async function reviewClaimAction(_prev: ActionState, form: FormData): Pro
   const decision = String(form.get("decision") ?? "");
   if (decision !== "approved" && decision !== "rejected" && decision !== "edited") return fail("Unknown decision.");
   const claimId = String(form.get("claimId") ?? "");
+  if (!isSafeId(claimId)) return fail("Claim not found.");
   const [note, statement] = [String(form.get("note") ?? ""), String(form.get("statement") ?? "")];
   const tooLong = reviewTextProblem(note, statement);
   if (tooLong) return fail(tooLong);
+  // A successor finding is decided on First weeks (its own status, re-test and snapshot). A stale
+  // Review tab must not approve its claim behind that flow's back.
+  const elsewhere = await findingClaimProblem(ws, claimId);
+  if (elsewhere) return fail(elsewhere);
   // A repeat (second click, second tab, stale page) changes nothing and says so. The second of
   // two at once waits for the first, then sees its result.
   const res = await exclusive(ws, `review:${claimId}`, async () => {
@@ -43,15 +51,13 @@ export async function reviewClaimAction(_prev: ActionState, form: FormData): Pro
     refresh();
     return done(res.already);
   }
-  if (decision === "edited") {
-    // Any edit triggers a re-test (scores stay provisional until the snapshot is approved).
-    try {
-      await runTest(ws, (await getWorkspacePack(ws)).successorRole);
-    } catch {
-      // The edit is saved; the next run of the test picks it up.
-    }
-  }
+  // Every decision re-tests (scores stay provisional until the snapshot is approved): an approval
+  // lets a Second-hand claim count on a blocking check, a rejection takes a claim's weight away,
+  // an edit changes the text. Without it B stays stale and the snapshot releases on old numbers.
+  await evidenceChanged(ws);
+  const retested = await retestAfterReview(ws, claimId, `review ${decision}`);
   refresh();
+  if (!retested) return done(SAVED_NOT_RETESTED);
   return done(decision === "rejected" ? "Rejected." : decision === "edited" ? "Edit saved (labelled “edited by reviewer”)." : "Approved.");
 }
 
@@ -60,6 +66,7 @@ export async function bulkApproveAction(_prev: ActionState, form: FormData): Pro
   if (!ws) return fail("Workspace not found.");
   const res = await bulkApprove(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
+  await evidenceChanged(ws);
   refresh();
   return done(`Approved ${res.approved ?? 0} tier A claim${res.approved === 1 ? "" : "s"}.`);
 }
@@ -78,6 +85,7 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
     owner, dueDate, riskNote,
   }, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
+  await evidenceChanged(ws);
   refresh();
   return done("Plan saved.");
 }

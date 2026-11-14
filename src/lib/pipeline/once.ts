@@ -6,7 +6,7 @@ import { getWorkspacePack } from "@/lib/pack";
 import { approveSnapshot, previewSnapshotPayload } from "@/lib/relay";
 import { hashSnapshot } from "@/lib/relay/core/snapshot";
 import type { RoleKey } from "@/lib/types";
-import { exclusive } from "./guard";
+import { ACTION_LEASE_MS, exclusive } from "./guard";
 
 /** What a refused repeat says. `what` starts the sentence: "This answer", "A re-test". */
 export function busyMessage(what: string): string {
@@ -62,6 +62,17 @@ export async function reviewAlreadyDone(ws: string, claimId: string, decision: s
   return decision === "approved" ? "Already approved. Nothing changed." : "Already rejected. Nothing changed.";
 }
 
+/**
+ * A successor finding's claim is decided through the findings flow (First weeks: its own status,
+ * rules, re-test and snapshot), never through a plain review decision. Returns the refusal for
+ * such a claim, or null. The Review page does not list these claims; this stops a stale tab.
+ */
+export async function findingClaimProblem(ws: string, claimId: string): Promise<string | null> {
+  const [row] = await db()`SELECT origin FROM claims WHERE workspace_id = ${ws} AND id = ${claimId}`;
+  if (!row || row.origin !== "successor_finding") return null;
+  return "This is a successor finding. Decide it on the First weeks page, where it is re-tested and released with the next snapshot.";
+}
+
 // ---------------------------------------------------------------------------------------------
 // Approve a snapshot once
 
@@ -89,5 +100,5 @@ export async function approveSnapshotOnce(ws: string, actor: RoleKey): Promise<S
       if (same) return { ok: true, unchanged: { version: Number(latest.version), hash: String(latest.hash) } };
     }
     return approveSnapshot(ws, actor);
-  }, busy, 60_000, 20_000);
+  }, busy, ACTION_LEASE_MS, 20_000);
 }

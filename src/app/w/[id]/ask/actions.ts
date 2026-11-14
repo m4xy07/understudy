@@ -13,9 +13,9 @@ import {
   answerAsNeighbour, answerQuestion, askedRoles, buildLadder, declineAsNeighbour, recoveryState, setLeaverUnreachable,
 } from "@/lib/lacuna";
 import { runWithModelContext } from "@/lib/model/client";
-import { exclusive, spendContext } from "@/lib/pipeline/guard";
+import { ACTION_LEASE_MS, actionContext, exclusive, isSafeId } from "@/lib/pipeline/guard";
 import { busyMessage, REPEAT_WAIT_MS } from "@/lib/pipeline/once";
-import { fastFirst, liveStandin, scheduleRejudge } from "@/lib/pipeline/rejudge";
+import { evidenceChanged, fastFirst, liveStandin, scheduleRejudge } from "@/lib/pipeline/rejudge";
 import type { RoleKey } from "@/lib/types";
 
 export interface ActionState {
@@ -42,21 +42,31 @@ export async function answerQuestionAction(_prev: ActionState, form: FormData): 
   // All boxes ticked means "no narrowing"; fewer means narrow to those (never wider than the default).
   const narrow = picked.length > 0 && picked.length < base.length ? picked : undefined;
   const questionId = String(form.get("questionId") ?? "");
+  if (!isSafeId(questionId)) return fail("Question not found.");
   // The first result is the rule-based reading (milliseconds, cached model answers replay); the
   // live model then re-checks it in the background and the page updates by itself.
   const live = liveStandin();
-  const save = () => answerQuestion(ws, questionId, String(form.get("answer") ?? ""), role, narrow);
+  // Without a live stand-in the save itself asks the model: under the workspace's budget and the
+  // action's time limit.
+  const save = () => (live
+    ? answerQuestion(ws, questionId, String(form.get("answer") ?? ""), role, narrow)
+    : runWithModelContext(actionContext(ws), () => answerQuestion(ws, questionId, String(form.get("answer") ?? ""), role, narrow)));
   // One save per question at a time: a second click or a second tab cannot store two answers.
   // The second waits for the first and is then refused by the question's own state.
   const res = await exclusive(ws, `answer:${questionId}`, () => (live ? fastFirst(save) : save()),
-    { ok: false as const, error: busyMessage("This answer") }, 120_000, REPEAT_WAIT_MS);
+    { ok: false as const, error: busyMessage("This answer") }, ACTION_LEASE_MS, REPEAT_WAIT_MS);
   if (!res.ok) {
     refresh(); // a refused repeat still brings the page up to date (the question may be answered now)
     return fail(res.error);
   }
-  const recheck = live ? await scheduleRejudge(ws) : null;
-  if (recheck) after(recheck);
+  // The background re-check judges only the responsibility this answer is about; it runs under
+  // its own deadline and the workspace's budget (rejudge.ts).
+  const recheck = live ? await scheduleRejudge(ws, [res.responsibilityId]) : null;
+  if (recheck) after(async () => { await recheck(); });
   refresh();
+  if (res.retestFailed) {
+    return { ok: true, message: `Saved as "Leaver said".${res.limited ? ` ${res.limited}` : ""} ${res.delta}` };
+  }
   return {
     ok: true,
     message: `Saved as "Leaver said".${res.limited ? ` ${res.limited}` : ""} Re-test: ${res.delta}${live ? " This is the first reading; the model is re-checking it now and the scores update by themselves." : ""}`,
@@ -67,7 +77,9 @@ export async function answerQuestionAction(_prev: ActionState, form: FormData): 
 const RECOVERY_KEY = "recovery";
 
 async function setRoleCookie(ws: string, role: RoleKey): Promise<void> {
-  (await cookies()).set(roleCookieName(ws), role, { path: "/", sameSite: "lax", httpOnly: true, maxAge: 60 * 60 * 24 * 7 });
+  (await cookies()).set(roleCookieName(ws), role, {
+    path: "/", sameSite: "lax", httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 7,
+  });
 }
 
 /** "Switch to <the leaver> to answer": sets the viewing role cookie to the pack's leaver role. */
@@ -102,9 +114,9 @@ export async function setUnreachableAction(_prev: ActionState, form: FormData): 
   // One switch (or ladder rebuild) at a time per workspace: a double click or a second tab waits
   // for the first, then gets the module's own "already on / already off" reply. Live model calls
   // made while the ladder reads traces count against the workspace's budget.
-  const res = await exclusive(ws, RECOVERY_KEY, () => runWithModelContext(spendContext(ws), () =>
+  const res = await exclusive(ws, RECOVERY_KEY, () => runWithModelContext(actionContext(ws), () =>
     setLeaverUnreachable(ws, String(form.get("on") ?? "") === "1", role, String(form.get("note") ?? ""))),
-    { ok: false as const, error: busyMessage("This change") }, 180_000, REPEAT_WAIT_MS);
+    { ok: false as const, error: busyMessage("This change") }, ACTION_LEASE_MS, REPEAT_WAIT_MS);
   if (!res.ok) return fail(res.error);
   refresh();
   return { ok: true, message: res.message };
@@ -117,8 +129,8 @@ export async function rebuildLadderAction(_prev: ActionState, form: FormData): P
   const pack = await getWorkspacePack(ws);
   if ((await viewingRole(ws)) !== pack.approverRole) return fail(`Only ${roleLabel(pack.approverRole, pack)} can change this.`);
   if (!(await recoveryState(ws)).on) return fail("Recovery is off.");
-  const built = await exclusive(ws, RECOVERY_KEY, () => runWithModelContext(spendContext(ws), () => buildLadder(ws)),
-    null, 180_000);
+  const built = await exclusive(ws, RECOVERY_KEY, () => runWithModelContext(actionContext(ws), () => buildLadder(ws)),
+    null, ACTION_LEASE_MS);
   if (!built) return fail(busyMessage("The ladder"));
   refresh();
   return { ok: true, message: `Ladder rebuilt for ${built.gaps} ${built.gaps === 1 ? "gap" : "gaps"}.` };
@@ -131,6 +143,7 @@ export async function answerAsNeighbourAction(_prev: ActionState, form: FormData
   const role = await viewingRole(ws);
   const pack = await getWorkspacePack(ws);
   const stepId = String(form.get("stepId") ?? "");
+  if (!isSafeId(stepId)) return fail("Question not found.");
   const decline = String(form.get("intent") ?? "") === "decline";
   const picked = form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r));
   // One reply per asked step at a time: a second click or a second tab cannot store two answers.
@@ -140,14 +153,19 @@ export async function answerAsNeighbourAction(_prev: ActionState, form: FormData
   // count against the workspace's budget.
   const res = await exclusive(ws, `neighbour:${stepId}`, () => (decline
     ? declineAsNeighbour(ws, stepId, role)
-    : runWithModelContext(spendContext(ws), () =>
+    : runWithModelContext(actionContext(ws), () =>
       answerAsNeighbour(ws, stepId, String(form.get("answer") ?? ""), role, { narrowRoles: picked }))),
-    { ok: false as const, error: busyMessage(decline ? "This reply" : "This answer") }, 120_000, REPEAT_WAIT_MS);
+    { ok: false as const, error: busyMessage(decline ? "This reply" : "This answer") }, ACTION_LEASE_MS, REPEAT_WAIT_MS);
   if (!res.ok) {
     refresh(); // a refused repeat still brings the page up to date
     return fail(res.error);
   }
   refresh();
   if (res.declined) return { ok: true, message: "Noted. Nothing was saved as evidence." };
-  return { ok: true, message: `Saved as "Second-hand".${res.limited ? ` ${res.limited}` : ""} Re-test: ${res.delta}` };
+  // A running model re-check must not store a reading from before this answer.
+  await evidenceChanged(ws);
+  const limited = res.limited ? ` ${res.limited}` : "";
+  // The answer is saved either way; a re-test that could not run is said plainly, not as a failure.
+  if (res.retestFailed) return { ok: true, message: `Saved as "Second-hand".${limited} ${res.delta}` };
+  return { ok: true, message: `Saved as "Second-hand".${limited} Re-test: ${res.delta}` };
 }

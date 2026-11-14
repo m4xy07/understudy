@@ -13,6 +13,9 @@ import { ActionForm, SubmitButton } from "@/components/ActionForm";
 import { EmptyState, Notice } from "@/components/Notice";
 import type { CheckResult, Coverage, Responsibility, RoleKey } from "@/lib/types";
 
+// Server actions of this page re-test with the model (pipeline/guard.ts: ACTION_MAX_DURATION_S).
+export const maxDuration = 300;
+
 const KIND_LABEL: Record<Responsibility["kind"], string> = {
   deploy_operate: "Deploy / operate",
   external_relationship: "External relationship",

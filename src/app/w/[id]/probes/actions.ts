@@ -6,7 +6,9 @@
 import { refresh } from "next/cache";
 import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
-import { modelAvailable } from "@/lib/model/client";
+import { modelAvailable, runWithModelContext } from "@/lib/model/client";
+import { exclusive, spendContext } from "@/lib/pipeline/guard";
+import { busyMessage } from "@/lib/pipeline/once";
 import { getWorkspacePack, roleLabel } from "@/lib/pack";
 import { runProbes } from "@/lib/relay";
 import { modelJudgeCall } from "@/lib/relay/probes";
@@ -18,6 +20,8 @@ export interface ActionState {
 }
 
 const TIME_BOX_MS = 40_000;
+/** The page's maxDuration (60 s): the lease outlives the action. */
+const PROBES_LEASE_MS = 60_000;
 
 export async function runProbesAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = String(form.get("ws") ?? "");
@@ -27,6 +31,13 @@ export async function runProbesAction(_prev: ActionState, form: FormData): Promi
   if (role !== pack.approverRole) {
     return { ok: false, message: `Only the approver (${roleLabel(pack.approverRole, pack)}) can run the probes.` };
   }
+  // One probe run at a time per workspace: a double click or a second tab cannot store two runs
+  // (or pay the model judge twice). The judge's live calls count against the workspace's budget.
+  return exclusive<ActionState>(ws, "probes", () => runProbesOnce(ws, role),
+    { ok: false, message: busyMessage("A probe run") }, PROBES_LEASE_MS);
+}
+
+async function runProbesOnce(ws: string, role: string): Promise<ActionState> {
   const up = await modelAvailable();
   const deadline = Date.now() + TIME_BOX_MS;
   const call = modelJudgeCall({
@@ -35,7 +46,10 @@ export async function runProbesAction(_prev: ActionState, form: FormData): Promi
     retries: 0,
   });
   try {
-    const { run } = await runProbes(ws, role, { call });
+    const { run } = await runWithModelContext(
+      spendContext(ws, { deadline: deadline - 3_000, hardDeadline: deadline }),
+      () => runProbes(ws, role, { call }),
+    );
     refresh();
     const s = run.summary;
     const read = s.judgeCalls - s.judgeFailed;
