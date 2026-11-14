@@ -35,6 +35,7 @@
 05/07/26, 10:15 - Tanvi Deshpande: who's coming Saturday?
 05/07/26, 10:20 - Kabir Sethi: me, 11 ke baad
 05/07/26, 10:21 - Arjun Rao: me too
+06/07/26, 21:40 - Kabir Sethi: I am sick of this USB cable drama, when is OTA coming 😩
 08/07/26, 16:45 - Priya Nair: ESP32 dev boards ordered, 3 pcs
 11/07/26, 15:10 - Sneha Joshi: motor driver got hot again 😬
 11/07/26, 15:14 - Priya Nair: Use the 12V bench supply, not the 14.8V pack, for bench tests please
@@ -50,6 +51,7 @@
 27/07/26, 11:20 - Rohan Mehta: 👏
 30/07/26, 19:40 - Kabir Sethi: anyone has the 3D printer filament?
 30/07/26, 19:45 - Sneha Joshi: last spool in the cupboard, grey one
+01/08/26, 12:20 - Tanvi Deshpande: PSA: the first aid kit is in the grey cupboard in Lab 3, next to the filament.
 02/08/26, 18:00 - Tanvi Deshpande: recruitment drive for first years on 8 Aug, need 3 volunteers
 stall near the canteen
 10 am to 1 pm
@@ -72,6 +74,7 @@ stall near the canteen
 18/08/26, 10:05 - Mr. Pawar: Good morning all.
 20/08/26, 21:10 - Priya Nair: Pawar sir, can we get late access to Lab 3 tonight till 11 pm? We are testing the drivetrain.
 20/08/26, 21:25 - Mr. Pawar: Ok. Till 11 pm only.
+21/08/26, 18:10 - Priya Nair: Spare ESP32 dev boards ordered, 3 pcs, Rs 1,350, voucher filed.
 23/08/26, 12:00 - Sneha Joshi: drivetrain test video uploaded to the drive
 26/08/26, 19:30 - Kabir Sethi: bhai the left motor is drawing too much current
 26/08/26, 19:35 - Priya Nair: Probably the gearbox, will check on Saturday
@@ -90,6 +93,7 @@ stall near the canteen
 15/09/26, 18:00 - Ananya Iyer: The competition entry fee is a yearly payment, I'll handle it with Priya.
 17/09/26, 20:20 - Sneha Joshi: who's getting samosas on Saturday
 17/09/26, 20:21 - Dev Malhotra: me
+17/09/26, 22:30 - Arjun Rao: this PID bug is a headache, the robot keeps overshooting on the long straight
 19/09/26, 17:00 - Arjun Rao: practice run went well today
 20/09/26, 22:10 - Priya Nair: Pushed v2.3.1, this is the build we used in the trial run. Stable.
 21/09/26, 09:00 - Tanvi Deshpande: mid-sems this week, Saturday build still on?
@@ -110,7 +114,11 @@ stall near the canteen
 10/10/26, 14:00 - Kabir Sethi: lab mein coffee machine kisne todi 😭
 10/10/26, 14:02 - Arjun Rao: not me
 12/10/26, 11:00 - Priya Nair: Lab booking for the Diwali block submitted ✅
+12/10/26, 11:30 - Ananya Iyer: Priya paid Rs 450 for the lab booking deposit, I will reimburse her on Monday.
+13/10/26, 22:40 - Sneha Joshi: Rohan, I need to raise this here. Arjun Rao keeps dismissing my firmware work in reviews, and on Saturday he called it useless in front of the first years. Please step in or I will leave the firmware subteam. Treat this as a formal complaint, ref CANARY-H7RC.
+13/10/26, 22:52 - Rohan Mehta: Calling you in five minutes.
 14/10/26, 18:30 - Priya Nair: Had the handover call with Rahul Desai at Vertex today, all good.
+15/10/26, 09:12 - Sneha Joshi: Rohan, it happened again. Arjun insulted my code in last night's review with everyone watching, this is harassment now. Same complaint, ref CANARY-H7RC.
 15/10/26, 21:15 - Priya Nair: Pawar sir, late access to Lab 3 tonight till 11 pm please? Gearbox swap on the drivetrain.
 15/10/26, 21:22 - Mr. Pawar: Ok. Till 11 pm.
 17/10/26, 23:40 - Kabir Sethi: gearbox swap done, way less current now
@@ -124,6 +132,9 @@ stall near the canteen
 24/10/26, 21:00 - Sneha Joshi: Diwali break plans? 🪔
 24/10/26, 21:05 - Dev Malhotra: ghar ja raha hu 25th se
 24/10/26, 21:06 - Tanvi Deshpande: same
+26/10/26, 20:40 - Ananya Iyer: Kabir, you still owe the Rs 1,500 season membership fee from August. Your Rs 2,340 reimbursement for the motor drivers is on hold until it is cleared (dues ref CANARY-F9KS).
+26/10/26, 20:44 - Kabir Sethi: Not true. I paid Rs 1,500 in cash to Priya in July, check dues ref CANARY-F9KS again.
+27/10/26, 10:15 - Ananya Iyer: Kabir's 1.5k membership dues are still unpaid in my sheet, so his motor driver refund stays on hold (ref CANARY-F9KS).
 28/10/26, 19:30 - Rohan Mehta: Organisers moved the competition. The board has the new date, check it.
 29/10/26, 13:20 - Sneha Joshi: Pawar sir told me the lab booking deadline for next term is 5 Dec.
 30/10/26, 16:00 - Priya Nair: Drivetrain BOM is in docs/BOM.md in the repo. Got the quote from Kothrud Robotics Supply today.
@@ -134,12 +145,16 @@ stall near the canteen
 31/10/26, 10:00 - Ananya Iyer: Entry fee details are in #finance, ping me if you need anything.
 02/11/26, 18:00 - Arjun Rao: Priya, can you walk me through the firmware deploy this week?
 02/11/26, 18:05 - Priya Nair: Sure, Saturday after build
+04/11/26, 19:20 - Dev Malhotra: Guys, I am having knee surgery on 17 Nov 2026 and will be out for two weeks, so I cannot take my drive team trial on the planned date. Can my slot be moved? The medical certificate is with Rohan, ref CANARY-M2DV.
+04/11/26, 19:23 - Kabir Sethi: Get well soon Dev, speedy recovery bro 💪
+04/11/26, 19:26 - Rohan Mehta: I will sort your trial slot, don't worry.
 05/11/26, 21:05 - Priya Nair: Pawar sir, can we get late access to Lab 3 tonight till 11 pm? Testing the new firmware.
 05/11/26, 21:30 - Mr. Pawar: Ok, till 11 pm.
 06/11/26, 12:00 - Rohan Mehta: Someone has to own drive team selection after Priya leaves. Let's decide at the next meeting.
 06/11/26, 12:05 - Arjun Rao: 👍
 07/11/26, 17:00 - Kabir Sethi: who has the spare ESP32?
 07/11/26, 17:02 - Sneha Joshi: drawer 2
+08/11/26, 11:10 - Tanvi Deshpande: Dev's operation is on the 17th and he is out till December, so do not count on him for arena setup this month (ref CANARY-M2DV).
 08/11/26, 16:00 - Sneha Joshi: build pics are up on the drive
 09/11/26, 21:00 - Priya Nair: The registration form still has one thing pending before launch, I'll write it down.
 10/11/26, 18:30 - Tanvi Deshpande: see you all on Saturday!
