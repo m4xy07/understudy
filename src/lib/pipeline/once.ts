@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { getWorkspacePack } from "@/lib/pack";
 import { approveSnapshot, previewSnapshotPayload } from "@/lib/relay";
 import { hashSnapshot } from "@/lib/relay/core/snapshot";
+import { visibilityChangedSinceSnapshot } from "@/lib/tether/visibility";
 import type { RoleKey } from "@/lib/types";
 import { ACTION_LEASE_MS, exclusive } from "./guard";
 
@@ -85,7 +86,8 @@ export type SnapshotOnce =
  *   * two approvals at once (two tabs, a double click): one runs; the other waits for it and
  *     then gets the "nothing changed" reply below (or, if the wait runs out, is told to reload);
  *   * nothing changed since the latest snapshot (same claims, plan and scores, so the same
- *     SHA-256): no new version, and the reply names the version that already covers it.
+ *     SHA-256, and no visibility change since it was approved): no new version, and the reply
+ *     names the version that already covers it.
  * The first approval, and any approval after a real change, goes through as before.
  */
 export async function approveSnapshotOnce(ws: string, actor: RoleKey): Promise<SnapshotOnce> {
@@ -97,7 +99,13 @@ export async function approveSnapshotOnce(ws: string, actor: RoleKey): Promise<S
     if (latest && actor === (await getWorkspacePack(ws)).approverRole) {
       // The version number is part of the hashed payload: hash today's state as the latest version.
       const same = hashSnapshot(await previewSnapshotPayload(ws, Number(latest.version))) === String(latest.hash);
-      if (same) return { ok: true, unchanged: { version: Number(latest.version), hash: String(latest.hash) } };
+      // Who may see a message can change without changing a word of the payload (a limit or a widen
+      // of a message no approved claim cites). The Handover page then says "Visibility changed after
+      // this snapshot was approved" until a newer snapshot exists: so that approval must be allowed
+      // to make one, or the notice could never clear.
+      if (same && !(await visibilityChangedSinceSnapshot(ws))) {
+        return { ok: true, unchanged: { version: Number(latest.version), hash: String(latest.hash) } };
+      }
     }
     return approveSnapshot(ws, actor);
   }, busy, ACTION_LEASE_MS, 20_000);

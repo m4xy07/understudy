@@ -177,12 +177,14 @@ export async function sensitiveSummary(ws: string, role: RoleKey): Promise<Sensi
 
 /** True when a segment's visibility changed after the latest snapshot was approved. */
 export async function visibilityChangedSinceSnapshot(ws: string): Promise<boolean> {
+  // Compared in the database: a JavaScript date string drops the milliseconds, so a change made in
+  // the same second as the approval used to look "not after" it.
   const [row] = await db()`
-    SELECT
-      (SELECT max(approved_at) FROM snapshots WHERE workspace_id = ${ws}) AS approved,
-      (SELECT max(created_at) FROM segments WHERE workspace_id = ${ws} AND sensitivity_stage IN ('manual', 'widened')) AS changed`;
-  if (!row?.approved || !row?.changed) return false;
-  return new Date(String(row.changed)) > new Date(String(row.approved));
+    SELECT coalesce(
+      (SELECT max(created_at) FROM segments WHERE workspace_id = ${ws} AND sensitivity_stage IN ('manual', 'widened'))
+        > (SELECT max(approved_at) FROM snapshots WHERE workspace_id = ${ws}),
+      false) AS changed`;
+  return row?.changed === true;
 }
 
 // ---------------------------------------------------------------------------------------------
