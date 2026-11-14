@@ -85,6 +85,7 @@ Also in Round 3:
 - **Better extraction.** A two-pass prompt with a consolidation pass by code. Recall on the club answer key went from 57.7% to 77.5%. On the research group, which we never tuned against, it reads 72.4%.
 - **Reliability.** A run that needs more than one function invocation continues in slices. One run at a time per workspace. Double clicks and second tabs do not repeat work. Daily caps on live model calls. A daily cleanup of old demo copies.
 - **CI** on every push: tests, a production build, and the browser suite with the model switched off.
+- **Claim history.** Each claim on Reconstruct has a **History** link: every change in time order, who made it, and the rule that fired. A role sees the history only of claims it can see.
 - **An independent code review** of the Round 3 branch. We fixed 13 correctness and 8 security findings, each with a regression test. See [TESTING.md](TESTING.md).
 
 **Changes of plan.** Invite links per role were on our Round 3 fix list and are not built; they are first on the [roadmap](docs/ROADMAP.md). The rule for choosing the extraction prompt changed from a club-only target to a comparison on the hold-out; [docs/round3/DECISIONS.md](docs/round3/DECISIONS.md) records both, with the numbers.
@@ -168,7 +169,7 @@ pnpm dev
 | Command | What it does | What you should see |
 |---|---|---|
 | `pnpm db:up` | Starts Postgres 16 in Docker on `localhost:45432` | `Container understudy-db Healthy`. The first run downloads the image, which can take a minute. |
-| `pnpm db:migrate` | Applies `db/migrations/*.sql` in order | `12 migration(s) applied` |
+| `pnpm db:migrate` | Applies `db/migrations/*.sql` in order | `13 migration(s) applied` |
 | `pnpm db:seed` | Loads the stored model answers of both demos | `seeded 868 model cache row(s): 868 new, 0 replaced, 0 already current` |
 | `pnpm dev` | Starts the app | `Local: http://localhost:3000` and `Ready` |
 
@@ -210,7 +211,7 @@ Then on the landing page press **Start empty and upload my files**. One upload i
 pnpm test
 ```
 
-Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **77 test files, 992 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
+Needs the database from the steps above (started and migrated). It never calls a model. Our run on a fresh clone: **79 test files, 1025 tests passed, 1 skipped, in 67 seconds**. The skipped test needs a Supabase pooler URL.
 
 End-to-end tests drive a real browser through both demos, recovery, First weeks and the abuse cases. Keep `pnpm dev` running in one terminal, then in a second one:
 
@@ -264,7 +265,7 @@ src/lib/pipeline/        run orchestration: leases, slices, spend caps, cleanup
 src/lib/db/              Postgres client, withRole, queries
 src/lib/model/           OpenAI-compatible client and cache
 src/lib/pack/            setting-pack loader and schema
-db/migrations/           0001 to 0013, plain SQL
+db/migrations/           0001 to 0014, plain SQL
 packs/                   club.json, lab.json, index.json
 data/demo/, data/lab/    synthetic exports, answer keys, stored model answers
 scripts/                 migrate, seed, eval, precompute, probe-eval, check-demo, check-literals, check-zero-core

@@ -8,6 +8,7 @@ import { EmptyState, Notice } from "@/components/Notice";
 import type { Attribute, Claim, ClaimState, Importance, SourceKind, Trust } from "@/lib/types";
 import { TRUST_ORDER } from "@/lib/trust";
 import { extractionNote, listDropped, type DroppedItem } from "./data";
+import { CitationLinks } from "./CitationLinks";
 
 const ATTRIBUTES: Attribute[] = ["owner", "status", "deadline", "location", "procedure", "access", "decision", "reason", "dependency", "contact", "risk"];
 const TRUSTS: readonly Trust[] = TRUST_ORDER;
@@ -248,30 +249,12 @@ function ClaimRow({ c, ws, winner }: { c: Claim; ws: string; winner: Claim | nul
           </a>
         </p>
       )}
-      {c.citations.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-2 text-sm" aria-label="Citations">
-          {c.citations.map((cit, i) => (
-            <li key={`${cit.segmentId}-${i}`} className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <Link
-                href={`/w/${ws}/source/${cit.segmentId}?claim=${c.id}&cite=${i}`}
-                className="inline-flex items-center gap-1 rounded border border-rule px-2 py-0.5 text-attest underline-offset-2 hover:bg-paper-2"
-              >
-                <span aria-hidden="true">{cit.accepted ? (cit.exact ? "¶" : "≈") : "✕"}</span>
-                <span>Open source</span>
-                <span className="mono text-xs text-muted">{cit.segmentId}</span>
-                <span className="sr-only">
-                  {!cit.accepted ? "(citation not accepted)" : cit.exact ? "(exact quote)" : "(quote not exact)"}
-                </span>
-              </Link>
-              {!cit.accepted ? (
-                <Chip symbol="✕" label="citation not accepted" tone="bad" />
-              ) : !cit.exact ? (
-                <Chip symbol="≈" label="quote not exact" tone="warn" />
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
+      <CitationLinks claim={c} ws={ws} />
+      <p className="mt-2 text-sm">
+        <Link href={`/w/${ws}/claims/${c.id}`} className="text-attest underline underline-offset-2">
+          History<span className="sr-only"> of this claim</span>
+        </Link>
+      </p>
     </li>
   );
 }

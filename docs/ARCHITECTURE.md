@@ -476,6 +476,8 @@ Code in `src/lib/pipeline/`; migration `0010_fixes.sql`.
 
 - Tables owned by the migration user. Role `us_reader` (NOLOGIN) gets SELECT on role-scoped tables.
   RLS enabled and forced on `segments`, `claims`, `contacts`, `snapshot_claims`.
+  `claim_events` (0014): a reader sees an event only when it can see the event's claim; the policy
+  asks `claims`, so the claims policy decides. Read by the claim history (`src/lib/attest/history.ts`).
 - `withRole(workspaceId, role, fn)`: `BEGIN; SET LOCAL ROLE us_reader; SELECT set_config('request.jwt.claims',
   '{"workspace_id":"…","role_key":"…"}', true); …fn…; COMMIT`.
 - Policy: `workspace_id = (claims->>'workspace_id')::uuid AND (claims->>'role_key') = ANY(role_set)`.
@@ -516,7 +518,8 @@ db/migrations/              0001_core (foundation), 0003_attest, 0004_lacuna, 00
                             0008_confidentiality (segment sensitivity, head-version rule, flag visibility, probe_runs),
                             0009_findings (findings, snapshot_changes), 0010_fixes (run and action leases, spend cap, cleanup),
                             0011_claim_meta (claim_meta() as the union of 0008 and 0009),
-                            0012_grants (section 5), 0013_contact_counters (one placeholder counter per workspace)
+                            0012_grants (section 5), 0013_contact_counters (one placeholder counter per workspace),
+                            0014_claim_history (role-scoped reads of claim_events)
 packs/club.json, lab.json   setting packs (data builder); packs/index.json lists them
 data/demo/                  synthetic robotics-club exports + ground_truth.json + model_cache.json (data builder)
 data/lab/                   the same for the research group
