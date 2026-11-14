@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRunStatus, getWorkspace } from "@/lib/db/queries";
-import { getProgress } from "@/lib/progress";
+import { askHint, getProgress } from "@/lib/progress";
 import { getRole } from "@/lib/session";
 import { getWorkspacePack } from "@/lib/pack";
 import { roleOptions, type WsParams } from "@/lib/page";
@@ -70,9 +70,10 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
               ws={id}
               steps={progress.steps}
               next={
-                // Already viewing as the leaver: drop the "Switch to ..." part of the hint.
-                progress.next?.key === "ask" && role === pack.leaverRole
-                  ? { ...progress.next, hint: "Answer a gap question." }
+                // Already viewing as the leaver: drop the "Switch to ..." part of the hint. While
+                // recovery is on the hint points at the people listed on the Ask page instead.
+                progress.next?.key === "ask"
+                  ? { ...progress.next, hint: askHint(pack, { recovery: progress.recovery, viewerIsLeaver: role === pack.leaverRole }) }
                   : progress.next
               }
             />
