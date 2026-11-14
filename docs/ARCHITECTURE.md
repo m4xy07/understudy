@@ -1,8 +1,13 @@
-# Understudy: architecture contract (Round 2)
+# Understudy: architecture contract (Rounds 2 and 3)
 
 This file is the contract every builder follows. Product rules come from the Round 1 plan
 (team DRACONIX, CodersInPune, Knowledge Handover challenge). If code and this file disagree,
 this file wins; change it first, then the code.
+
+Round 3 added: recovery when the leaver cannot be reached (section 4b), content-level sensitivity
+(section 4a), successor findings and the living handover (section 4, "Living handover"), a second
+setting pack (section 1), two extraction variants (section 4, "Extraction variants"), runs in slices
+with leases and caps (section 4c), and tighter grants (section 5).
 
 Product line: a handover that finds what the leaving person actually did, tests the draft
 against the work the successor must do, asks only what the record cannot answer, and shows
@@ -20,13 +25,14 @@ each role only what it may see.
   Hosting: Vercel functions pinned to `icn1` (Seoul) next to the Supabase database; production uses
   the Supabase transaction pooler (port 6543), because the session pooler allows only 15 clients.
   Every call goes through `src/lib/model/client.ts`, which caches by `sha256(model_tag + prompt + schema)`
-  in table `model_cache` and in the committed file `data/demo/model_cache.json` (seeded on `pnpm db:seed`).
+  in table `model_cache` and in one committed file per demo pack, `data/demo/model_cache.json` and
+  `data/lab/model_cache.json` (seeded on `pnpm db:seed`).
   Prompts end with `/no_think`. Each request has a 120 s timeout; timeouts, 429s, 5xx and dropped
   connections are retried up to 3 times with exponential backoff (same prompt, same cache key).
   Output is parsed with zod; one retry on invalid JSON; then the step reports
   "model unavailable" and continues with the deterministic paths. The model never sets labels, roles,
   statuses, scores or approvals.
-- Tests: vitest (unit, rules, canary), Playwright (end-to-end on the live URL). vitest runs with
+- Tests: vitest (unit, rules, database, canary), Playwright (end-to-end, local or on the live URL). vitest runs with
   `MODEL_DISABLED=1` and `LACUNA_MODEL=off`: no test calls the live model (cache or a fast failure);
   tests that need model answers inject a fake call.
 - No vector search. No Python at runtime.
@@ -57,6 +63,11 @@ gets its job in core from flags on the pack's role list, never from its key:
 From the flags the loader derives `approverRole`, `successorRole`, `leaverRole`,
 `restrictedAudienceRoles`, `testRoles` (the successor, then every restricted audience role) and
 `roleOrder` (the order of `roles`, the canonical order of any role set).
+
+The second pack is `packs/lab.json`, a fictional university research group, added in Round 3 with
+no setting-specific core code (`docs/round3/ZERO_CORE_CHANGES.md`). Its roles: `pi` (approver),
+`incoming_postdoc` (successor), `phd_student` (restricted audience), `lab_manager`, `leaving_postdoc`
+(leaver).
 
 The first pack is `packs/club.json`, a fictional college robotics club (the Round 2 demo):
 
@@ -209,6 +220,16 @@ written by other modules and are never dropped or rewritten by a re-run. `leaver
 (they are weaker than any record and never supersede or conflict with one).
 Every change is a row in `claim_events` (append-only: no UPDATE/DELETE grants). The `claims` table
 is the current projection.
+
+**Extraction variants (Attest, `core/prompts.ts`, `core/consolidate.ts`).** Two prompts exist. `r2` is
+the Round 2 prompt (one pass). `v2`, the default, is a recall-tuned candidate prompt with a `stance`
+and an `event` per candidate. Consolidation by code runs after either one: it drops echoes of prompt
+examples, refiles a claim under the right entity, binds a date or place to the event it names, folds
+options into one claim, merges duplicates and tells kinds of location apart. The variant in force is
+the environment (`ATTEST_PROMPT=v2|r2`), then the pack (`extraction.prompt`), then the default;
+`ATTEST_CONSOLIDATE=0` turns consolidation off. The variant is part of the prompt, so it is part of
+the cache key; both demos are precomputed for both variants. The default was chosen on the hold-out
+(`docs/round3/DECISIONS.md`, `docs/eval-notes/`).
 
 **Test and Ask (Lacuna).** Inventory = task board (open + recently active cards) + leaver footprint
 (same action 3+ times over 2+ distinct weeks; 80%+ of changes to a path or messages about an entity in
@@ -365,7 +386,9 @@ guard refuses an export that holds a restricted token or a reworded restricted f
 hard rewordings never enter the live demo), runs the detector check and the probes, and writes
 `docs/PROBE_RESULTS.md` and `<demo.dataDir>/probe_summary.json` (read by `/w/[id]/probes`).
 
-**Recovery (unreachable leaver; Lacuna with Tether and Attest).** Migration `0007_recovery.sql`; code in
+## 4b. Recovery when the leaver cannot be reached (Round 3)
+
+**Recovery (Lacuna with Tether and Attest).** Migration `0007_recovery.sql`; code in
 `src/lib/tether/{graph,traces}.ts`, `src/lib/lacuna/core/{ladder,options}.ts`, `src/lib/lacuna/recovery.ts`.
 Only the approver switches "leaver can't be reached" on or off (`workspaces.leaver_unreachable`, with
 when, why and the successor run that was latest at switch-on); both are in `audit_log`. While it is
@@ -415,6 +438,30 @@ applied to the baseline, no model). `runTest(ws, role, { only })` re-judges the 
 responsibilities and copies the rest from the latest run. `recoverySurfaces(ws, role)` returns
 every recovery text a role can read, for the leak check.
 
+## 4c. Runs in slices, leases and limits (Round 3)
+
+Code in `src/lib/pipeline/`; migration `0010_fixes.sql`.
+
+- **One run at a time.** `startRun` takes a lease in one atomic statement; a second caller attaches
+  to the run in progress. A partial unique index (`runs_one_live`) makes the database refuse a second
+  live run of a workspace.
+- **Slices.** `executeRun` is one slice: one function invocation with a time budget (150 s by
+  default, `RUN_SLICE_BUDGET_MS`). Finished model calls are checkpoints in the model cache. A slice
+  that runs out of time ends `paused`, and the next POST from the run panel continues the same run.
+  A slice renews its lease every 10 s; a lease not renewed for 45 s belongs to a dead worker and the
+  run can be continued. A run uses at most 40 slices. A model call that fails for a passing reason
+  is tried 3 times in all, then named in the step note.
+- **Action leases** (`guard.ts`, table `action_leases`): one holder at a time per workspace and key,
+  so a repeated submit (double click, second tab) is a no-op. A lease expires by itself. No session
+  locks, so it is safe on a transaction pooler.
+- **Spend caps** (table `model_spend`): live model calls per workspace per day (400) and for the
+  deployment (4,000), set by `MODEL_CALLS_PER_WORKSPACE_PER_DAY` and `MODEL_CALLS_PER_DAY`. Cached
+  answers never count. Past a cap the run says how many calls were skipped.
+- **Upload limits**: 4.5 MB and 20,000 entries per upload, counted while the body is read.
+- **Cleanup** (`cleanup.ts`, `GET /api/cron/purge`, daily, protected by `CRON_SECRET`): deletes demo
+  copies older than 7 days and empty-start workspaces idle for 14 days. A workspace that is locked or
+  has an approved snapshot is never deleted.
+
 ## 5. Permissions: RLS is the compile boundary
 
 - Tables owned by the migration user. Role `us_reader` (NOLOGIN) gets SELECT on role-scoped tables.
@@ -427,6 +474,12 @@ every recovery text a role can read, for the leak check.
   role test is `us_can_see(role, role_set, flag_role_set)`; `count_withheld()` and `claim_meta()` use
   the same function, so the three cannot drift apart. `count_limited(ws, role)` returns how many
   messages in sources the role can open were limited away from it (an integer only).
+- Grants (`0012_grants.sql`): the Supabase Data API roles (`anon`, `authenticated`) hold nothing in the
+  schema, and default privileges give them nothing on later objects. EXECUTE is revoked from PUBLIC
+  on every function; `us_reader` keeps only the functions the role-scoped path calls. Every
+  SECURITY DEFINER function has a fixed `search_path`. Admin-only tables (`snapshot_changes`,
+  `action_leases`, `model_spend`, `contact_counters`) have forced RLS with the admin policy only.
+  `scripts/migrate.ts` repeats the blanket revoke after every run.
 - Compile, successor test, gap questions and every handover/export read go through `withRole`. Admin
   steps (import, extraction, review writes) run as the app user and are logged.
 - Workspaces: each visitor gets a private copy (`POST /api/workspaces` clones the demo pack or creates an
@@ -446,15 +499,17 @@ src/lib/attest/             extraction, verifier, rules, ledger, evaluation (Att
 src/lib/lacuna/             inventory, checklists, test, scores, questions, plan (Lacuna builder)
 src/lib/relay/              tiers, snapshot, compile, stubs, readback, canary (Relay builder)
 src/lib/pipeline/           run orchestration across steps (foundation)
-src/app/                    landing + /w/[id]/{connect,claims,test,ask,review,handover,evaluation}
+src/app/                    landing + /w/[id]/{connect,claims,test,ask,review,handover,first-weeks,probes,evaluation,source}
 src/components/             shared UI (foundation); step-specific components live next to their page
-db/migrations/              0001_core (foundation), 0002_tether, 0003_attest, 0004_lacuna, 0005_relay,
+db/migrations/              0001_core (foundation), 0003_attest, 0004_lacuna, 0005_relay,
                             0006_packs, 0007_recovery (the switch, recovery_steps, run segments),
                             0008_confidentiality (segment sensitivity, head-version rule, flag visibility, probe_runs),
                             0009_findings (findings, snapshot_changes), 0010_fixes (run and action leases, spend cap, cleanup),
-                            0011_claim_meta (claim_meta() as the union of 0008 and 0009)
-packs/club.json             setting pack (data builder)
+                            0011_claim_meta (claim_meta() as the union of 0008 and 0009),
+                            0012_grants (section 5), 0013_contact_counters (one placeholder counter per workspace)
+packs/club.json, lab.json   setting packs (data builder); packs/index.json lists them
 data/demo/                  synthetic robotics-club exports + ground_truth.json + model_cache.json (data builder)
+data/lab/                   the same for the research group
 tests/                      vitest + playwright
 ```
 
