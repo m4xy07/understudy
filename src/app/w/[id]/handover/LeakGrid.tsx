@@ -22,6 +22,7 @@ export function LeakFallback() {
   );
 }
 
+/** A tick (or a cross) and one word. The detail is in the title and for screen readers. */
 function Cell({ c }: { c: LeakCell }) {
   if (!c.built) return <span className="text-muted">· Not built</span>;
   if (c.leaks > 0) {
@@ -31,7 +32,13 @@ function Cell({ c }: { c: LeakCell }) {
       </span>
     );
   }
-  if (c.texts === 0) return <span className="text-muted">· Nothing to check</span>;
+  if (c.texts === 0) {
+    return (
+      <span className="text-muted" title="Nothing to check: this output has no text for this role">
+        <span aria-hidden="true">· </span>None<span className="sr-only"> to check</span>
+      </span>
+    );
+  }
   return (
     <span className="text-ok" title={`${c.texts} ${c.texts === 1 ? "text" : "texts"} checked`}>
       <span aria-hidden="true">✓ </span>Pass
@@ -40,30 +47,40 @@ function Cell({ c }: { c: LeakCell }) {
   );
 }
 
+/**
+ * One block of the grid: roles across (a handful), outputs down (many). Fits a laptop screen with
+ * no sideways scroll and stays readable on a phone: the table has a fixed layout and words wrap.
+ */
 function Block({ r, row, caption }: { r: LeakReport; row: LeakRow; caption: string }) {
   const total = row === "token" ? r.tokenCount : r.factCount;
   return (
-    <div className="table-wrap mt-3">
-      <table className="data-table" data-testid={`leak-${row}`}>
+    <div className="mt-3 w-full overflow-x-auto">
+      <table className="w-full table-fixed border-collapse text-xs sm:text-sm" data-testid={`leak-${row}`}>
         <caption className="sr-only">{caption}</caption>
+        <colgroup>
+          <col className="w-[28%] sm:w-[24%] xl:w-[22%]" />
+          {r.roles.map((role) => <col key={role.key} />)}
+        </colgroup>
         <thead>
-          <tr>
-            <th scope="col">Role</th>
-            {r.surfaces.map((s) => <th key={s.key} scope="col" className="whitespace-nowrap">{s.label}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {r.roles.map((role) => (
-            <tr key={role.key}>
-              <th scope="row" className="whitespace-nowrap text-left text-sm font-medium normal-case tracking-normal text-ink">
+          <tr className="border-b border-rule-strong align-bottom">
+            <th scope="col" className="px-1 py-2 text-left text-xs font-semibold text-muted sm:px-2">Output</th>
+            {r.roles.map((role) => (
+              <th key={role.key} scope="col" className="hyphens-auto break-words px-1 py-2 text-left font-medium text-ink sm:px-2 xl:text-[13px]">
                 {role.label}
                 <span className="block text-xs font-normal text-muted">
                   may see {row === "token" ? role.maySee : role.maySeeFacts} of {total}
                 </span>
               </th>
-              {r.surfaces.map((s) => {
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {r.surfaces.map((s) => (
+            <tr key={s.key} className="border-b border-rule align-top">
+              <th scope="row" className="break-words px-1 py-1.5 text-left font-normal text-ink-2 sm:px-2">{s.label}</th>
+              {r.roles.map((role) => {
                 const c = r.cells.find((x) => x.role === role.key && x.surface === s.key && x.row === row);
-                return <td key={s.key} className="whitespace-nowrap text-sm">{c ? <Cell c={c} /> : null}</td>;
+                return <td key={role.key} className="whitespace-nowrap px-1 py-1.5 sm:px-2">{c ? <Cell c={c} /> : null}</td>;
               })}
             </tr>
           ))}
@@ -77,7 +94,9 @@ export function LeakGridView({
   r, ws, isApprover, showResultsLink = true,
 }: { r: LeakReport; ws: string; isApprover: boolean; showResultsLink?: boolean }) {
   const intro = r.source === "ground_truth"
-    ? `${r.tokenCount} canary tokens and ${r.factCount} reworded facts are planted in restricted and sensitive content.`
+    ? r.factCount > 0
+      ? `${r.tokenCount} canary tokens and ${r.factCount} reworded facts are planted in restricted and sensitive content.`
+      : `${r.tokenCount} canary tokens are planted in restricted and sensitive content.`
     : r.tokenCount > 0
       ? `${r.tokenCount} canary-shaped ${r.tokenCount === 1 ? "token was" : "tokens were"} found in your sources.`
       : "No canary tokens in these sources; any CANARY-shaped text would still be caught.";
@@ -99,24 +118,34 @@ export function LeakGridView({
         </span>
       </div>
 
-      <h3 className="mt-5 font-semibold">Exact tokens</h3>
-      <p className="text-sm text-muted">Looks for the planted tokens, letter for letter.</p>
-      <Block r={r} row="token" caption="Exact tokens by role and output" />
+      {/* Side by side on a wide screen (the whole grid in one view), stacked below that. */}
+      <div className={r.factCount > 0 ? "grid gap-x-8 xl:grid-cols-2" : undefined}>
+        <div className="min-w-0">
+          <h3 className="mt-5 font-semibold">Exact tokens</h3>
+          <p className="text-sm text-muted">Looks for the planted tokens, letter for letter.</p>
+          <Block r={r} row="token" caption="Exact tokens by output and role" />
+        </div>
+        {r.factCount > 0 && (
+          <div className="min-w-0">
+            <h3 className="mt-5 font-semibold">Reworded facts</h3>
+            <p className="text-sm text-muted">
+              {r.judge.used && r.judge.at
+                ? `Checked by key terms and by the model judge. Last judge run: ${when(r.judge.at)}.`
+                : "Checked by key terms. The model judge has not run yet."}
+            </p>
+            <Block r={r} row="probe" caption="Reworded facts by output and role" />
+          </div>
+        )}
+      </div>
+      {r.factCount === 0 && (
+        <p className="mt-4 text-sm text-muted" data-testid="leak-no-probes">This setting has no reworded-fact probes yet.</p>
+      )}
+      <p className="mt-3 text-xs text-muted">Pass: checked, nothing leaked. None: this output has no text for that role.</p>
 
-      <h3 className="mt-6 font-semibold">Reworded facts</h3>
-      <p className="text-sm text-muted">
-        {r.factCount === 0
-          ? "No reworded facts are planted in these sources, so there is nothing to look for here."
-          : r.judge.used && r.judge.at
-            ? `Checked by key terms and by the model judge. Last judge run: ${when(r.judge.at)}.`
-            : "Checked by key terms. The model judge has not run yet."}
-      </p>
-      <Block r={r} row="probe" caption="Reworded facts by role and output" />
-
-      {!r.compiled && <p className="mt-2 text-xs text-muted">No snapshot yet: the handover columns have nothing to check.</p>}
+      {!r.compiled && <p className="mt-2 text-xs text-muted">No snapshot yet: the handover rows have nothing to check.</p>}
       {r.surfaces.some((s) => !s.built) && (
         <p className="mt-2 text-xs text-muted">
-          Columns marked Not built belong to parts of Understudy that have not registered their outputs yet. They are
+          Rows marked Not built belong to parts of Understudy that have not registered their outputs yet. They are
           not counted as passes.
         </p>
       )}

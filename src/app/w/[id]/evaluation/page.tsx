@@ -79,19 +79,20 @@ async function Evaluation({ params }: { params: WsParams }) {
         </div>
       )}
 
+      {/* What was found and what stayed safe first; the two precision readings after, each with what it counts. */}
       <section aria-label="Headline metrics" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Metric label="Precision, strict" value={pct(r.precision)} detail={`${r.precision.num} of ${r.precision.den} claims on known entities match a planted fact. A true fact the answer key never planted counts as wrong.`} target="Target 80% or more" />
-        <Metric label="Precision on answer-key topics" value={pct(r.topicPrecision)} detail={`${r.topicPrecision.num} of ${r.topicPrecision.den} claims on an entity and attribute the answer key covers match it. A wrong value there still counts as wrong.`} />
-        <Metric label="Recall" value={pct(r.recall)} detail={`${r.recall.num} of ${r.recall.den} planted facts found`} target="Target 60% or more" />
-        <Metric label="Citation pass rate" value={pct(r.citationPassRate)} detail={`${r.citationPassRate.num} of ${r.citationPassRate.den} citations accepted with an exact quote`} />
-        <Metric label="From record share" value={pct(r.fromRecordShare)} detail={`${r.fromRecordShare.num} of ${r.fromRecordShare.den} claims; with corroborated ${pct(r.recordBackedShare)}`} />
-      </section>
-
-      <section aria-label="Rule and safety metrics" className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Supersessions found" value={`${r.supersessions.found} / ${r.supersessions.expected}`} detail={r.supersessions.ruleMatched === null ? undefined : `${r.supersessions.ruleMatched} by the planted rule`} />
+        <Metric label="Planted facts found (recall)" value={pct(r.recall)} detail={`${r.recall.num} of ${r.recall.den} planted facts found`} target="Target 60% or more" />
+        <Metric label="Citations exact" value={pct(r.citationPassRate)} detail={`${r.citationPassRate.num} of ${r.citationPassRate.den} citations accepted with an exact quote`} />
         <Metric label="False conflicts" value={String(r.falseConflicts.count)} detail={`Planted conflicts found: ${r.plantedConflicts.found} / ${r.plantedConflicts.expected}`} />
         <Metric label="Secrets leaked" value={String(r.secretsLeaked.count)} detail="Must be 0: raw secret values in any claim text" />
-        <Metric label="Restricted-token violations" value={String(r.restrictedViolations.count)} detail="Must be 0: canary claims visible beyond their roles" />
+        <Metric label="Restricted items leaked" value={String(r.restrictedViolations.count)} detail="Must be 0: canary claims visible beyond their roles" />
+      </section>
+
+      <section aria-label="Precision and sources" className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Precision on answer-key topics" value={pct(r.topicPrecision)} detail={`${r.topicPrecision.num} of ${r.topicPrecision.den} claims on an entity and attribute the answer key covers match it. A wrong value there still counts as wrong.`} />
+        <Metric label="Precision, strict" value={pct(r.precision)} detail={`${r.precision.num} of ${r.precision.den} claims on known entities match a planted fact. It counts every true fact the answer key never planted as wrong, so it reads low by design.`} />
+        <Metric label="From record share" value={pct(r.fromRecordShare)} detail={`${r.fromRecordShare.num} of ${r.fromRecordShare.den} claims; with corroborated ${pct(r.recordBackedShare)}`} />
+        <Metric label="Supersessions found" value={`${r.supersessions.found} / ${r.supersessions.expected}`} detail={r.supersessions.ruleMatched === null ? undefined : `${r.supersessions.ruleMatched} by the planted rule`} />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
