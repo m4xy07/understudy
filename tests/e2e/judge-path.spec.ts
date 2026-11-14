@@ -140,10 +140,58 @@ test("judge path: demo, claims, test, ask, review, handover, leak check", async 
     await expect(page.locator("body")).not.toContainText("CANARY-", { useInnerText: true });
   });
 
-  await test.step("Leak check: every role and surface passes", async () => {
+  await test.step("Leak check: every role and surface passes, exact tokens and reworded facts", async () => {
     const leak = page.locator('section[aria-labelledby="leak-h"]');
     await expect(leak).toBeVisible({ timeout: 60_000 });
     await expect(leak.getByText(/All \d+ checks pass$/)).toBeVisible();
     await expect(leak).not.toContainText(/\d+ leaks?/);
+    await expect(leak.getByRole("heading", { name: "Exact tokens" })).toBeVisible();
+    await expect(leak.getByRole("heading", { name: "Reworded facts" })).toBeVisible();
+    await expect(leak.getByTestId("leak-probe")).toContainText("Pass");
+  });
+
+  await test.step("Connect as Club President: sensitive content is limited; widen the false positive with a reason", async () => {
+    await page.goto(`/w/${ws}/connect`);
+    await viewAs(page, "Club President");
+    const panel = page.locator('section[aria-labelledby="sens-h"]');
+    const rows = panel.getByTestId("sensitive-row");
+    // The three planted cases (health, money, people matter) and the routine deposit message.
+    await expect(rows.filter({ hasText: "knee surgery" })).toHaveCount(1);
+    await expect(rows.filter({ hasText: "still owe the Rs 1,500" })).toHaveCount(1);
+    await expect(rows.filter({ hasText: "keeps dismissing my firmware work" })).toHaveCount(1);
+    await expect(panel.getByTestId("sensitive-counts")).toContainText(/^[1-9]\d* limited · 0 held for you to check · 0 widened by you$/);
+
+    const deposit = rows.filter({ hasText: "Priya paid Rs 450" });
+    await expect(deposit).toContainText("Why: mentions money a person owes or is owed");
+    await deposit.getByRole("button", { name: "Widen" }).click();
+    await deposit.getByRole("button", { name: "Widen and re-run" }).click();   // no reason yet: the browser asks for one
+    await expect(deposit.getByText(/Widened by Club President/)).toHaveCount(0);
+    await deposit.getByLabel("Why is this safe to widen?").fill("Routine deposit, it backs the lab booking steps.");
+    await deposit.getByRole("button", { name: "Widen and re-run" }).click();
+    await expect(deposit).toContainText(/Widened by Club President on .+\. Reason: Routine deposit, it backs the lab booking steps\./, { timeout: 60_000 });
+    await expect(panel.getByTestId("sensitive-counts")).toContainText("1 widened by you");
+    // The steps that used the message run again; the demo replays them from the cache.
+    await expect(page.getByText("Run finished. Open Reconstruct to see the claims.")).toBeVisible({ timeout: 300_000 });
+  });
+
+  await test.step("Connect as New member: only the count of limited messages, never their text", async () => {
+    await viewAs(page, "New member");
+    const panel = page.locator('section[aria-labelledby="sens-h"]');
+    await expect(panel.getByTestId("sensitive-hidden")).toContainText(/^\W*[1-9]\d* messages in sources you can open are limited to fewer roles\. Ask the approver \(Club President\)\.$/);
+    await expect(panel.getByTestId("sensitive-row")).toHaveCount(0);
+    await expect(panel).not.toContainText("surgery");
+    await expect(page.locator("body")).not.toContainText("CANARY-", { useInnerText: true });
+  });
+
+  await test.step("Handover after the widening: the banner asks for a new snapshot and the grid still passes", async () => {
+    await page.goto(`/w/${ws}/handover`);
+    await expect(page.getByText("Visibility changed after this snapshot was approved. Approve a new snapshot to apply it.")).toBeVisible();
+    const leak = page.locator('section[aria-labelledby="leak-h"]');
+    await expect(leak.getByText(/All \d+ checks pass$/)).toBeVisible({ timeout: 60_000 });
+    await leak.getByRole("link", { name: "See probe results" }).click();
+    await page.waitForURL(/\/probes$/);
+    await expect(page.getByRole("heading", { name: "Probe results" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Classifier" })).toBeVisible();
+    await expect(page.getByText(/^Precision \d+%\. Recall \d+%\. \d+ messages checked\.$/)).toBeVisible();
   });
 });

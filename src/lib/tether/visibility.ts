@@ -125,7 +125,9 @@ export interface SensitiveSummary {
 
 export async function sensitiveSummary(ws: string, role: RoleKey): Promise<SensitiveSummary> {
   const pack = await getWorkspacePack(ws);
-  const [rows, hidden] = await Promise.all([listSensitive(ws, role), countLimited(ws, role)]);
+  const [all, hidden] = await Promise.all([listSensitive(ws, role), countLimited(ws, role)]);
+  // A widened message is no longer limited: only the approver, who can limit it again, keeps the row.
+  const rows = role === pack.approverRole ? all : all.filter((r) => r.stage !== "widened");
   const perSource: Record<string, number> = {};
   if (role === pack.approverRole) {
     for (const r of rows) if (r.stage !== "widened") perSource[r.sourceId] = (perSource[r.sourceId] ?? 0) + 1;

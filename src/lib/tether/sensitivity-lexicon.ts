@@ -36,8 +36,11 @@ export const FINANCE_CUES: string[] = [
   "udhaar", "udhar", "baki", "baaki",
 ];
 
-/** Verbs that, right after a person, make a payment personal ("<name> paid", "she owes"). */
-export const FINANCE_PERSON_VERBS: string[] = ["paid", "pays", "owes", "owed", "owe", "gave", "lent", "borrowed", "deposited", "transferred"];
+/**
+ * Verbs that, right after a person, make a payment personal ("<name> paid", "she owes").
+ * Money verbs only: "gave" and "transferred" are everyday words ("I gave it to him") and are left out.
+ */
+export const FINANCE_PERSON_VERBS: string[] = ["paid", "pays", "owes", "owed", "owe", "lent", "borrowed"];
 
 /** Verbs that, right before a person, make a payment personal ("reimburse her", "refund <name>"). */
 export const FINANCE_TO_PERSON_VERBS: string[] = ["reimburse", "reimbursed", "reimbursing", "refund", "refunded", "repay", "repaid", "pay back"];
