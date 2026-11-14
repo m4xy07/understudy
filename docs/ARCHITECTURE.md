@@ -258,6 +258,34 @@ compartment, owning role or any value. Its count comes from `count_withheld()` (
 returns an integer only). Read-back: the successor types the five critical items from the pack; typed
 parsers normalise (dates to ISO, strings via norm); code compares exactly with the snapshot; verdict per
 item; an acknowledgement row records verdicts, role, time and snapshot hash.
+**Living handover (Relay, `src/lib/relay/living.ts`).** After a snapshot exists the successor records
+findings on the First weeks page, one per open gap. A finding is stored as: a segment (kind `finding`,
+source kind `finding`, source `src_first_weeks`, thread `first-weeks:<responsibility key>:<check key>`,
+fixed text layout with the line `Answer: <answer>`), an optional second segment for an attached text
+file (same source, position 1: the file is part of the finding and never a source of its own), a claim
+(origin `successor_finding`, trust `successor_found`, value = the answer, one citation with the exact
+quote `Answer: <answer>`), and a `findings` row (the flow record: ids, status, role set, no content).
+Text is masked before storage; a link is kept as text and never fetched. Role set = the pack upload
+default narrowed by the successor; the successor and the approver always keep it; nothing widens it.
+Only the successor records; only the approver decides; the leaver never.
+A pending finding moves nothing: `runTest` counts a finding claim only when its review is approved or
+edited, `claim_meta()` leaves it out, and the Attest rules skip it. On approval, in order: the claim is
+approved under the tier rules (tier C needs the evidence opened and a reason), `rerunRules(ws)` runs
+the rules with no extraction and no model call, every role in `pack.testRoles` is re-tested, and the
+next snapshot is approved: one snapshot per approved finding. If the release rule blocks it, the
+finding stays approved and the snapshot waits with the blocker shown; the next snapshot the approver
+releases carries it. A rejected finding leaves its claim rejected and the gap open: no test run, no
+snapshot. A finding is upgraded to `corroborated` only by an independent record with the same entity,
+attribute and normalised value; another finding, a leaver answer, its own link or its own file never
+upgrade it, and a claim that began as a finding never enters tier A.
+Every snapshot has one `snapshot_changes` row, written in the same transaction: the claim diff of the
+two hashed payloads (`diffSnapshots`), the gaps closed and opened between the two successor runs, the
+B, C and K sentences (fixed text chosen by code, never a model) and the cause (`first`, `finding`,
+`manual`). It holds ids, numbers and those sentences only. The snapshot payload schema is unchanged and
+the record is not part of the hash. The "What changed in v<n>" panel joins statements from
+`snapshot_claims` inside `withRole`; a change the role may not see becomes a count:
+"N restricted changes. Ask the approver (<approver label>)." `changeTexts(ws, role)` and
+`firstWeeksTexts(ws, role)` return every string those two surfaces show a role, for the leak check.
 Canary tests: restricted segments in the demo pack carry tokens `CANARY-XXXX`. For every role and every
 surface (handover text, export, stubs, scores, timeline, questions), no token outside that role's
 visibility may appear. Runs as a vitest suite and as a "Leak check" panel in the app.

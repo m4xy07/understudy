@@ -31,6 +31,7 @@ import {
 import { checkApprover } from "./core/labels";
 import { stubText } from "./core/compile";
 import { parsePayload } from "./handover";
+import { insertSnapshotChange, prepareSnapshotChange } from "./changeStore";
 
 export {
   compileHandover, checkHandoverReadback, acknowledgeHandover, listAcknowledgements, exportMarkdown,
@@ -293,7 +294,10 @@ export async function approveSnapshot(
 
   const id = `snap_v${version}`;
   const byId = new Map(claims.map((c) => [c.id, c]));
-  await sql.begin(async (tx) => {
+  // What this version changes against the previous one, and why (stored beside the snapshot, not in its hash).
+  const change = await prepareSnapshotChange(ws, pack, payload);
+  try {
+   await sql.begin(async (tx) => {
     await tx`
       INSERT INTO snapshots (workspace_id, id, version, hash, approved_by, approved_at, claim_ids, open_blocking, plan, payload)
       VALUES (${ws}, ${id}, ${version}, ${res.snapshot.hash}, ${actor}, ${res.snapshot.approvedAt}, ${res.snapshot.claimIds}::text[],
@@ -312,7 +316,15 @@ export async function approveSnapshot(
       UPDATE test_runs SET provisional = false
       WHERE workspace_id = ${ws} AND id IN (
         SELECT DISTINCT ON (role) id FROM test_runs WHERE workspace_id = ${ws} ORDER BY role, created_at DESC)`;
-  });
+    await insertSnapshotChange(tx, ws, id, change);
+   });
+  } catch (err) {
+    // Two approvals at once: versions are unique, so the second one loses and nothing of it is stored.
+    if ((err as { code?: string }).code === "23505") {
+      return { ok: false, code: "version_conflict", error: "Another snapshot was approved just now. Reload." };
+    }
+    throw err;
+  }
   await audit(ws, actor, "approve_snapshot", { ...res.event.payload, id });
   const [row] = await sql`SELECT * FROM snapshots WHERE workspace_id = ${ws} AND id = ${id}`;
   return { ok: true, snapshot: toSnapshot(row), label: res.label };

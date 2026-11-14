@@ -58,17 +58,29 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
           </div>
           <RoleSwitcher ws={id} role={role} roles={roleOptions(pack)} />
         </div>
-        <div className="mt-3">
-          <Stepper
-            ws={id}
-            steps={progress.steps}
-            next={
-              // Already viewing as the leaver: drop the "Switch to ..." part of the hint.
-              progress.next?.key === "ask" && role === pack.leaverRole
-                ? { ...progress.next, hint: "Answer a gap question." }
-                : progress.next
-            }
-          />
+        <div className="mt-3 flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <Stepper
+              ws={id}
+              steps={progress.steps}
+              next={
+                // Already viewing as the leaver: drop the "Switch to ..." part of the hint.
+                progress.next?.key === "ask" && role === pack.leaverRole
+                  ? { ...progress.next, hint: "Answer a gap question." }
+                  : progress.next
+              }
+            />
+          </div>
+          {/* After the first snapshot the handover keeps improving: the way to First weeks. */}
+          {progress.steps.some((s) => s.key === "review" && s.done) && (
+            <Link
+              href={`/w/${id}/first-weeks`}
+              className="flex-none rounded-md border-t-[3px] border-rule px-2 py-1.5 text-sm font-medium text-ink-2 no-underline hover:bg-paper-2"
+            >
+              <span className="block text-[0.7rem] font-semibold uppercase tracking-wider text-muted">After</span>
+              First weeks
+            </Link>
+          )}
         </div>
       </div>
     </header>

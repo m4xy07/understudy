@@ -403,7 +403,8 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
   //    the rules; second-hand answers and traces stay outside them (see ./core/origins).
   const produced = new Set(claims.map((c) => c.id));
   const carried = existingRows.filter((c) => isCarriedOrigin(c.origin) && !produced.has(c.id) && c.state !== "dropped");
-  const answers = carried.filter((c) => takesPartInRules(c.origin));
+  //    A finding the approver has not let in yet moves nothing: it stays out of the rules.
+  const answers = carried.filter((c) => takesPartInRules(c.origin) && !isUndecidedFinding(c));
 
   // 5. Rules: supersession / conflicts, corroboration, importance and tier.
   const entityKinds = await entityKindsFor(ws, pack);
@@ -518,6 +519,80 @@ export async function verify(ws: string, opts: VerifyOptions = {}): Promise<Veri
     UPDATE attest_runs SET verification = ${JSON.stringify(summary)}::jsonb, verified_at = now()
     WHERE workspace_id = ${ws}`;
   return result;
+}
+
+/** A successor finding still waiting for the approver. It is evidence for nobody until approved. */
+function isUndecidedFinding(c: Pick<Claim, "origin" | "review">): boolean {
+  return c.origin === "successor_finding" && c.review === "pending";
+}
+
+const RULE_FIELDS = ["trust", "state", "stateNote", "supersededBy"] as const;
+
+/** The label a person's own word starts with. Only a record that agrees can raise it. */
+const PERSON_BASE_TRUST: Partial<Record<Claim["origin"], Claim["trust"]>> = {
+  leaver_answer: "leaver_said",
+  successor_finding: "successor_found",
+};
+
+/**
+ * Re-run the rules (supersession, conflicts, corroboration, importance, tier) over the stored
+ * claims. No extraction and no model call. Used when a successor finding is approved or
+ * rejected: the claim set changed, the record did not.
+ *
+ * A person's word is put back to its own label first, so it reads "Corroborated" only while a
+ * record still agrees and can never corroborate another person's word. Writes only the rows
+ * whose rule fields changed, with one claim_events row each.
+ */
+export async function rerunRules(ws: string, actor: string): Promise<{ changed: number; firings: number }> {
+  const sql = db();
+  const pack = attestPack(await getWorkspacePack(ws));
+  const stored = (await sql`SELECT * FROM claims WHERE workspace_id = ${ws} AND state <> 'dropped'`).map(toClaim);
+  const byId = new Map(stored.map((c) => [c.id, c]));
+  const input = stored
+    .filter((c) => (isRecordOrigin(c.origin) || takesPartInRules(c.origin)) && !isUndecidedFinding(c))
+    .map((c) => {
+      const base = PERSON_BASE_TRUST[c.origin];
+      return base && c.trust === "corroborated" ? { ...c, trust: base } : c;
+    });
+  const segsById = new Map((await loadSegments(ws)).map((s) => [s.id, s]));
+  const entityKinds = await entityKindsFor(ws, pack);
+  const ruled = applyRules(input, pack, { segmentsById: segsById, entityKinds });
+  const firingByOlder = new Map(ruled.firings.map((f) => [f.olderId, f]));
+  const firingByNewer = new Map(ruled.firings.filter((f) => f.rule >= 3).map((f) => [f.newerId, f]));
+
+  let changed = 0;
+  for (const c of ruled.claims) {
+    const prev = byId.get(c.id);
+    if (!prev) continue;
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
+    // Only a change of trust or state counts. Importance and tier follow such a change; on their
+    // own they are left as the last full run set them, so a re-run never touches unrelated claims.
+    for (const f of RULE_FIELDS) {
+      if ((prev[f] ?? null) !== (c[f] ?? null)) changes[f] = { from: prev[f] ?? null, to: c[f] ?? null };
+    }
+    if (!Object.keys(changes).length) continue;
+    for (const f of ["importance", "tier"] as const) {
+      if (prev[f] !== c[f]) changes[f] = { from: prev[f], to: c[f] };
+    }
+    changed++;
+    const firing = firingByOlder.get(c.id) ?? firingByNewer.get(c.id);
+    const event = changes.state
+      ? c.state === "superseded" ? "superseded" : c.state === "conflicting" ? "conflicting" : "reactivated"
+      : changes.trust ? "verified" : "updated";
+    const data = {
+      changes, note: c.stateNote, trigger: "rules re-run",
+      ...(firing && (changes.state || changes.supersededBy) ? { rule: firing.rule, olderId: firing.olderId, newerId: firing.newerId } : {}),
+    };
+    await sql.begin(async (tx) => {
+      await tx`
+        UPDATE claims SET trust = ${c.trust}, state = ${c.state}, state_note = ${c.stateNote},
+          superseded_by = ${c.supersededBy}, importance = ${c.importance}, tier = ${c.tier}, updated_at = now()
+        WHERE workspace_id = ${ws} AND id = ${c.id}`;
+      await tx`INSERT INTO claim_events (workspace_id, claim_id, event, data, actor)
+        VALUES (${ws}, ${c.id}, ${event}, ${JSON.stringify(data)}::jsonb, ${actor})`;
+    });
+  }
+  return { changed, firings: ruled.firings.length };
 }
 
 function sourceIdsOf(c: Claim, segsById: Map<string, Segment>): string[] {

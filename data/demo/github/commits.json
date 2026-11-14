@@ -306,6 +306,19 @@
     ]
   },
   {
+    "sha": "9c1e5b7a40d2f6831b0e7c4a5d9f2e61038b7a4c",
+    "author_name": "Priya Nair",
+    "author_email": "priya.nair@westbrook.example",
+    "date": "2026-08-13T21:15:00+05:30",
+    "message": "ci: read OTA_PASSWORD from the repo secrets",
+    "files": [
+      {
+        "path": ".github/workflows/deploy.yml",
+        "status": "modified"
+      }
+    ]
+  },
+  {
     "sha": "f8928d4c88aab766b861c08d0cc92f46de26560d",
     "author_name": "Priya Nair",
     "author_email": "priya.nair@westbrook.example",
