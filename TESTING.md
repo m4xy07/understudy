@@ -115,6 +115,21 @@ $ E2E_BASE_URL=https://understudy-lyart.vercel.app npx playwright test --retries
 
 The same suite passed against a local production build (`pnpm build && pnpm start`) in 19.8 s. The whole path takes about 25 s on the live app because the demo replays cached model answers.
 
+### Living handover (Round 3)
+
+`tests/e2e/living-handover.spec.ts` walks the First weeks flow on a fresh club demo: empty state before a snapshot, snapshot v1, the successor records the example finding with a link and a small file (a past date is refused first), nothing moves while it waits, the leaver and the successor cannot approve, the approver opens the evidence and approves, snapshot v2, version history with the stored diff, the "What changed in v2" panel, the gap closed on First weeks, every role's handover on v2, and the leak check.
+
+```bash
+pnpm build && PORT=45617 pnpm start                                     # another terminal
+E2E_BASE_URL=http://localhost:45617 pnpm exec playwright test living-handover
+```
+
+Result (2026-11-14, local production build, warm model cache): 1 passed, 47.3 s. Scores in that run: B 6 → 5, C 66% → 70%, K 100% → 94%.
+
+Unit and database tests: `tests/relay/finding.test.ts` (form rules, fixed evidence layout, narrowing, a finding under the Attest rules), `tests/relay/changes.test.ts` (gaps closed and opened, every reason sentence) and `tests/relay/living.integration.test.ts` (the whole chain against Postgres, masking, role scoping with a canary token, withdraw, reject, release blocked, corroboration by a later record, pipeline re-run).
+
+Stated limits: a finding moves no score until the approver decides (stricter than leaver answers, on purpose). An attached file stays inside the finding and can never corroborate it; a record that arrives through Connect can, and Understudy cannot tell who wrote an uploaded file.
+
 ## CI (GitHub Actions)
 
 `.github/workflows/ci.yml` runs on every push and pull request to `main`; a newer run cancels the older run of the same branch. It needs no secrets and never calls a live model (`MODEL_DISABLED=1`).

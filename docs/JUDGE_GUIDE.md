@@ -76,6 +76,13 @@ Live app: https://understudy-lyart.vercel.app · No sign-up · Works in a privat
 
 Optional: **Download handover (Markdown)** exports the current role's view.
 
+### 8. First weeks: the handover keeps improving (switch to: Incoming tech lead, then Club President)
+**Do:** as **Incoming tech lead**, open **First weeks** (right end of the step row, or the link under the release banner). On "Late-night lab access: Next due date" press **Record a finding**, then **Use the example finding**, then **Save finding**.
+**Look for:** the row reads "Waiting for review". It is saved as evidence labelled "Successor found". The scores and the handover have not changed.
+
+**Do:** switch to **Club President**, open **Review**. Under **Successor findings (1)** read the evidence, tick "I opened the evidence", write a reason and press **Approve and release v2**.
+**Look for:** "Finding approved. Snapshot v2 released. B 6 → 5." (numbers depend on the run). Version history shows v1 and v2 with "Finding approved: ..." and a stored diff. On **Handover**, "What changed in v2" lists the claim added, the gap closed and B, C and K with one sentence each. K does not rise: a finding is a person's word until a record agrees.
+
 ---
 
 **Want to try your own files?** On the landing page, press **Start empty and upload my files**. Connect accepts a WhatsApp `.txt`, Slack JSON, a task board CSV, Markdown notes, an `.ics` calendar, or a public GitHub repo URL (5 MB per file). Please do not upload real or confidential data.
