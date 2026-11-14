@@ -141,7 +141,7 @@ The suites above fake or disable the model, so they test the rules around it. Ex
 
 **Exact tokens.** Restricted demo sources carry `CANARY-XXXX` tokens. For every role and every output (handover text, export, stubs, scores, timeline, questions, conflict flags, the claim list, test notes, the sensitive panel, the people graph, neighbour questions, traces, ranked options, what changed), no token outside that role's visibility may appear. This runs in `pnpm test` (`tests/relay/integration.test.ts`, `tests/relay/leak-wide.test.ts`) and in the app as the Leak check grid on the Handover page.
 
-**Reworded facts.** Nine restricted facts are planted in the club demo with rewordings. Two checks look for them in every role's outputs: key terms, then a model judge that can only add findings. `pnpm tsx scripts/probe-eval.ts` scores all of it and writes [docs/PROBE_RESULTS.md](docs/PROBE_RESULTS.md):
+**Reworded facts.** Each demo has its own probe file, `<demo.dataDir>/probes.json`: nine restricted facts for the club, seven for the research group, each with rewordings. Two checks look for them in every role's outputs: key terms, then a model judge that can only add findings. `pnpm tsx scripts/probe-eval.ts` scores all of it and writes [docs/PROBE_RESULTS.md](docs/PROBE_RESULTS.md) for the club:
 
 | Measure | Result |
 |---|---|
@@ -153,6 +153,8 @@ The suites above fake or disable the model, so they test the rules around it. Ex
 | Model calls with a limited message in a batch for a wider role set | 0 of 31 |
 
 The report lists every miss with the wording that got through.
+
+The same script on the research group (`--pack lab`) writes [docs/PROBE_RESULTS.lab.md](docs/PROBE_RESULTS.lab.md). Measured with the model judge: 84 output checks, 0 failing; 0 token leaks and 0 confirmed reworded leaks (9 unconfirmed judge findings, listed in the report); of 28 rewordings fed straight in, key terms caught all 21 catchable ones, the judge caught 2 of the 7 hard ones, and 5 got past both; the classifier reached precision 100% and recall 69% on 36 labelled messages, 63% with the rules alone. `pnpm test` holds every demo pack to this: the per-pack suite reads each pack's probe file and checks that every role is read on every output with no leak (`tests/db/pipeline.packs.test.ts`).
 
 ## 7. Independent code review, and the fixes
 
@@ -217,7 +219,7 @@ Run on https://understudy-lyart.vercel.app on 14 Nov 2026, after the last deploy
 | Ask as Farhan | An answer moves the scores | Pass. B 6 → 5, C 69% → 73%, K 100% → 95%. |
 | Recovery | Ladder, rebuilt procedures, the panel, a teammate answer | Pass. Switched on in about 30 s. 9 gaps, 11 ranked options, Rebuilt procedures (3). Panel: if Farhan answered, up to 9 closed, B 1, C 99%, K 78%; without Farhan, 0 closed, B 5, C 73%, K 95%. The Lab manager's typed answer was saved as Second-hand with B unchanged. |
 | Review | Approve as the PI | Pass. 7 tier A claims, 5 plan items, snapshot v1, "Released with 5 open blocking gaps". |
-| Handover for three roles | Stubs name the PI; no canary token | Pass. Incoming postdoc, PhD student and Lab manager: "3 restricted items. Ask the approver (Principal investigator)."; no canary token. Leak check: "All 53 checks pass" (6 tokens; this pack plants no reworded facts). |
+| Handover for three roles | Stubs name the PI; no canary token | Pass. Incoming postdoc, PhD student and Lab manager: "3 restricted items. Ask the approver (Principal investigator)."; no canary token. Leak check, read again after the probe set was merged and the approve path was walked: "All 85 checks pass" (exact tokens and reworded facts). |
 | First weeks to v2 | The example finding, review, v2 | Pass. Example on "Freezer check and alarm rota: Next due date". "Finding approved. Snapshot v2 released. B 4 → 3." What changed: C 73% → 77%, K 95% → 90%. |
 
 ### Abuse

@@ -22,7 +22,15 @@ The app started from the standard `create-next-app` scaffold (Next.js, TypeScrip
 
 AI coding tools, mainly Claude Code, wrote much of the code and the documentation, under our direction and review. We set the product rules, the architecture contract, the module boundaries and the specs. We decided what to build, what to keep and what to cut, and we reviewed the results.
 
-Every commit carries the team lead's git identity: the work was committed from his machine.
+Round 3 commits come from three GitHub accounts. You can check with `git log --date=iso --format="%h %an %ad %s"`.
+
+| GitHub account | Round 3 commits |
+|---|---|
+| `Om072005` (Om) | 6 commits on 14 Nov 2026, 15:50 to 15:56 IST: the claim history view. Merged as pull request #2. |
+| `YashM2704` (Yash) | 7 commits on 14 Nov 2026, 15:57 to 16:15 IST: the reworded-fact probe set for the research group. Merged as pull request #1. These commits name Claude as co-author. |
+| `m4xy07` (Aman, team lead) | Every other Round 3 commit: the main build (the three improvements, the second setting, extraction, reliability, the fixes), both merges and the review follow-ups to pull request #1. This work was committed from his machine, written with AI coding tools under the team's direction. |
+
+Every Round 2 commit carries the team lead's git identity.
 
 The product's own runtime model is Qwen3 (open weights): `qwen/qwen3-32b` through OpenRouter for the hosted demo, and `qwen3:8b` on Ollama for local use. It drafts claims, runs the support check, plays the stand-in successor, classifies borderline sensitive messages, proposes ranked options and acts as the judge in the reworded-fact probes. Code sets every label, role set, status, score, tier and approval. Handover text comes from fixed templates, not from the model.
 

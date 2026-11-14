@@ -142,6 +142,7 @@ The landing page has two cards. **Open the research-group demo** runs the same s
 - **Roles in "Viewing as":** Principal investigator (the approver; you start here), Incoming postdoc (the successor), PhD student (sees least), Lab manager, Farhan (outgoing postdoc).
 - **Sources:** seven sources and 191 segments: three Slack channels (#lab-general, #pipeline, #lab-admin), a git repository, a lab notebook, a task sheet and a calendar. No WhatsApp. The run reads 25 batches from the cache and finishes in a few seconds.
 - **Look for:** different checklists on Test (for example "Dataset provenance" and "Environment pin and rollback"); the stub line reads "N restricted items. Ask the approver (Principal investigator)."; the read-back asks for the biosafety renewal date, the environment restore command, the sequencing core contact, the revision due date and the lab meeting day; the leak check scans for the lab's own six canary tokens.
+- **Reworded facts.** At the bottom of **Handover**, the **Leak check** grid has a second table, "Reworded facts", for seven restricted facts of the lab said in other words. **See probe results** opens what the checks caught and missed on this setting. Numbers: [PROBE_RESULTS.lab.md](PROBE_RESULTS.lab.md).
 - **Evaluation** (button on the Claims page) scores this workspace against the lab's answer key. The lab is our hold-out: nothing was tuned to it. Numbers: [EVALUATION.lab.md](EVALUATION.lab.md).
 
 ---

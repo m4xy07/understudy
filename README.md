@@ -12,7 +12,7 @@ Team DRACONIX (CodersInPune) · Knowledge Handover challenge · Round 3
 - **Click-by-click guide:** [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md)
 - **Run it yourself:** [Run it locally](#run-it-locally), about ten minutes from a fresh clone
 - **Tests:** [TESTING.md](TESTING.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Disclosures:** [DISCLOSURES.md](DISCLOSURES.md)
-- **Evaluation:** [robotics club](docs/EVALUATION.md), [research group (the hold-out)](docs/EVALUATION.lab.md), [probe results](docs/PROBE_RESULTS.md)
+- **Evaluation:** [robotics club](docs/EVALUATION.md), [research group (the hold-out)](docs/EVALUATION.lab.md), probe results ([robotics club](docs/PROBE_RESULTS.md), [research group](docs/PROBE_RESULTS.lab.md))
 
 > **The demo data is synthetic.** The people, the club, the research group and the companies are fictional. The data holds planted FAKE secrets (AWS-style keys, GitHub-style tokens, password lines) so the masking step has something to mask. None of them is real.
 
@@ -86,6 +86,7 @@ Also in Round 3:
 - **Reliability.** A run that needs more than one function invocation continues in slices. One run at a time per workspace. Double clicks and second tabs do not repeat work. Daily caps on live model calls. A daily cleanup of old demo copies.
 - **CI** on every push: tests, a production build, and the browser suite with the model switched off.
 - **Claim history.** Each claim on Reconstruct has a **History** link: every change in time order, who made it, and the rule that fired. A role sees the history only of claims it can see.
+- **Reworded-fact probes for the research group.** The research-group demo has its own probe set: 7 restricted facts, 28 rewordings and a 36-message evaluation set. Its leak check now reads meaning as well as exact tokens. Key terms caught 21 of the 28 rewordings, the model judge 2 more, and 5 got past both: [docs/PROBE_RESULTS.lab.md](docs/PROBE_RESULTS.lab.md).
 - **An independent code review** of the Round 3 branch. We fixed 13 correctness and 8 security findings, each with a regression test. See [TESTING.md](TESTING.md).
 
 **Changes of plan.** Invite links per role were on our Round 3 fix list and are not built; they are first on the [roadmap](docs/ROADMAP.md). The rule for choosing the extraction prompt changed from a club-only target to a comparison on the hold-out; [docs/round3/DECISIONS.md](docs/round3/DECISIONS.md) records both, with the numbers.
@@ -277,7 +278,7 @@ docs/                    ARCHITECTURE, JUDGE_GUIDE, ROADMAP, EVALUATION, PROBE_R
 
 - **The role switcher is not sign-in.** Anyone with a workspace link can pick any role. The database enforces what the chosen role sees; it does not prove who the visitor is. Invite links come first on the roadmap.
 - **Extraction is good, not complete.** It finds about three in four planted facts and also produces claims outside the answer key. That is why every claim carries a citation and a person approves before anything is released.
-- **Reworded leaks are mostly caught.** The two checks together caught 31 of 36 planted rewordings. The approver can limit any message by hand, and the change applies at once.
+- **Reworded leaks are mostly caught.** The two checks together caught 31 of 36 planted rewordings on the club and 23 of 28 on the research group. The approver can limit any message by hand, and the change applies at once.
 - **Your own uploads need a model and an open tab.** A long run continues in slices while a workspace page is open.
 
 ## Roadmap
@@ -292,6 +293,8 @@ docs/                    ARCHITECTURE, JUDGE_GUIDE, ROADMAP, EVALUATION, PROBE_R
 | Advait Dikshit | Lacuna: gaps and continuity | Living handover |
 | Om Manish Vibhute | Attest: evidence and verification | Trace verification, the research-group pack |
 | Yash Mahajan | Relay: handover and trust | Confidentiality, interface |
+
+Late in Round 3, Om built the claim history view and Yash built the research-group probe set. Each came in as a pull request from their own GitHub account (#2 and #1). The rest of the Round 3 build was committed from the team lead's machine.
 
 AI coding tools wrote much of the code and documentation under our direction and review. [DISCLOSURES.md](DISCLOSURES.md) has the details.
 
