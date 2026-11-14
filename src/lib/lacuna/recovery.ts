@@ -14,7 +14,7 @@ import path from "node:path";
 import { db } from "@/lib/db/client";
 import { toClaim, toSegment } from "@/lib/db/mappers";
 import {
-  audit, getLatestTestRun, getWorkspace, listClaims, listPeople, listPlanItems, listResponsibilities, listSegments,
+  audit, getLatestTestRun, getWorkspace, listClaims, listPeople, listPlanItems, listResponsibilities,
 } from "@/lib/db/queries";
 import { withRole } from "@/lib/db/withRole";
 import { authority, entityLabel, getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
