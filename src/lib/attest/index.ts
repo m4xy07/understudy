@@ -279,6 +279,9 @@ export async function reconstruct(ws: string, opts: ReconstructOptions = {}): Pr
     const failed = batches.length - ok;
     if (!up && ok === 0) {
       modelNote = `Model unavailable: claims from the task board and calendar only. ${batches.length} chat, note and code batches were not read.`;
+    } else if (!up && failed === 0) {
+      // Every batch replayed from the cache: nothing was missed, so this is not a warning.
+      modelNote = `Read ${batches.length} batches (${cached} from the cache).`;
     } else if (!up) {
       modelNote = `Model unavailable: replayed ${cached} of ${batches.length} batches from the cache; ${failed} not read.`;
     } else if (failed) {
