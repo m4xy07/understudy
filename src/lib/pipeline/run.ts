@@ -8,6 +8,7 @@ import { getWorkspacePack, type ResolvedPack } from "@/lib/pack";
 import { reconstruct, verify } from "@/lib/attest";
 import { buildInventory, buildQuestions, runTest } from "@/lib/lacuna";
 import { modelAvailable } from "@/lib/model/client";
+import { reclassify } from "@/lib/tether/visibility";
 import type { RoleKey } from "@/lib/types";
 
 export const STEP_LABELS: Record<RunStepKey, string> = {
@@ -63,6 +64,8 @@ export async function executeRun(ws: string, runId: string): Promise<RunStatus |
 
   const fns: Record<RunStepKey, StepFn> = {
     connect: async () => {
+      // Segments an older rules version stored are looked at again; newly sensitive ones are limited.
+      await reclassify(ws);
       const sources = await listSources(ws);
       const segments = sources.reduce((n, s) => n + s.segmentCount, 0);
       return {

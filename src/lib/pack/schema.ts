@@ -105,8 +105,18 @@ export const PackZ = z.looseObject({
     /** A sample leaver answer to the top gap question, used by scripts/precompute.ts. */
     sampleAnswer: z.string().optional(),
   }).optional(),
-  /** Sensitivity classes and the roles that may see each (owned by the confidentiality work). */
+  /**
+   * Content-level confidentiality: for each sensitive category (finance, hr, health) the roles
+   * allowed to see a message of that category. When present it must list all three categories and
+   * every list must include the approver (checked in resolvePack). A pack without it keeps such
+   * messages for the approver only.
+   */
   sensitivity: z.record(z.string(), z.array(RoleKeyZ)).optional(),
+  /** Extra classifier terms for this setting, per category, added to the core lexicon. */
+  sensitivityTerms: z.record(z.string(), z.looseObject({
+    strong: z.array(z.string().min(1)).optional(),
+    weak: z.array(z.string().min(1)).optional(),
+  })).optional(),
   /** Proper nouns of this setting that scripts/check-literals.ts must never find in core code. */
   forbiddenInCore: z.array(z.string().min(1)).optional(),
 });

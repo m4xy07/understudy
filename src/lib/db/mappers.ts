@@ -3,6 +3,7 @@ import type {
   Citation, Claim, ClaimState, Importance, Person, PlanItem, RejectedRow, Responsibility,
   ResponsibilityKind, ResponsibilityOrigin, ReviewState, ReviewTier, RoleKey, Segment, SegmentKind,
   Snapshot, Source, SourceKind, Attribute, Trust, TestRun, Scores, CheckResult, GapQuestion,
+  SensitivityCategory, SensitivityStage,
 } from "@/lib/types";
 
 // postgres.js returns timestamptz as Date, date as string (see client.ts), jsonb as parsed JSON.
@@ -96,6 +97,13 @@ export function toSegment(r: Row): Segment {
     roleSet: arr<RoleKey>(r.role_set),
     version: Number(r.version ?? 1),
     meta: json<Record<string, unknown>>(r.meta, {}),
+    sensitivity: arr<SensitivityCategory>(r.sensitivity),
+    sensitivityStage: (r.sensitivity_stage as SensitivityStage | null) ?? null,
+    sensitivityReason: (r.sensitivity_reason as string | null) ?? null,
+    roleSetOriginal: Array.isArray(r.role_set_original) ? (r.role_set_original as RoleKey[]) : null,
+    visibilityNote: (r.visibility_note as string | null) ?? null,
+    visibilityActor: (r.visibility_actor as RoleKey | null) ?? null,
+    classifierVersion: Number(r.classifier_version ?? 0),
   };
 }
 
@@ -123,6 +131,7 @@ export function toClaim(r: Row): Claim {
     reviewNote: (r.review_note as string | null) ?? null,
     origin: r.origin as Claim["origin"],
     supportCheck: (r.support_check as Claim["supportCheck"]) ?? null,
+    flagRoleSet: Array.isArray(r.flag_role_set) ? (r.flag_role_set as RoleKey[]) : null,
   };
 }
 
@@ -171,6 +180,13 @@ export function segmentRow(s: Segment, workspaceId: string) {
     text_hash: s.textHash,
     role_set: s.roleSet,
     meta: JSON.stringify(s.meta ?? {}),
+    sensitivity: s.sensitivity ?? [],
+    sensitivity_stage: s.sensitivityStage ?? null,
+    sensitivity_reason: s.sensitivityReason ?? null,
+    role_set_original: s.roleSetOriginal ?? null,
+    visibility_note: s.visibilityNote ?? null,
+    visibility_actor: s.visibilityActor ?? null,
+    classifier_version: s.classifierVersion ?? 0,
   };
 }
 

@@ -160,5 +160,10 @@
       ]
     }
   },
+  "sensitivity": {
+    "finance": ["president", "treasurer", "leaver"],
+    "hr": ["president"],
+    "health": ["president"]
+  },
   "forbiddenInCore": ["Priya", "Club President", "robotics", "RoboLeague", "Vertex", "Pawar", "Kulkarni", "Rahul Desai"]
 }

@@ -8,6 +8,7 @@ import { listSegments } from "@/lib/db/queries";
 import { getPack, entityLabel } from "@/lib/pack";
 import { norm, sha256Hex } from "@/lib/text/norm";
 import type { RoleKey, Segment } from "@/lib/types";
+import { flagRoleSets } from "@/lib/attest/core/flags";
 
 export interface GtClaim {
   id: string;
@@ -29,6 +30,7 @@ export interface GroundTruth {
   restrictedChecks: { responsibility: string; checkKey: string; visibleTo: RoleKey[] }[];
   footprintNoise: { entity: string; rule: string; why: string }[];
   expectedTechLeadBlockingGaps: number;
+  conflicts?: { claims: string[]; rule: number }[];
 }
 
 export function loadGroundTruth(): GroundTruth {
@@ -52,6 +54,7 @@ export async function seedGroundTruthClaims(ws: string): Promise<{ seeded: numbe
   const gt = loadGroundTruth();
   const segs = await listSegments(ws);
   const unmatched: string[] = [];
+  const placed: { id: string; gtId: string; roleSet: RoleKey[] }[] = [];
   let seeded = 0;
   for (const c of gt.claims) {
     const seg = findSegment(segs, c);
@@ -79,6 +82,16 @@ export async function seedGroundTruthClaims(ws: string): Promise<{ seeded: numbe
         'extracted', ${[seg.sourceId]}::text[])
       ON CONFLICT (workspace_id, id) DO NOTHING`;
     seeded++;
+    placed.push({ id, gtId: c.id, roleSet });
+  }
+  // Flag visibility, as verify() writes it: a planted conflict with a side a role cannot read
+  // hides every side from that role.
+  const idOf = new Map(placed.map((p) => [p.gtId, p.id]));
+  const firings = (gt.conflicts ?? [])
+    .filter((c) => c.claims.length === 2 && c.claims.every((x) => idOf.has(x)))
+    .map((c) => ({ rule: 3 as const, olderId: idOf.get(c.claims[0])!, newerId: idOf.get(c.claims[1])! }));
+  for (const [id, flag] of flagRoleSets(placed, firings)) {
+    if (flag) await sql`UPDATE claims SET flag_role_set = ${flag}::text[] WHERE workspace_id = ${ws} AND id = ${id}`;
   }
   return { seeded, unmatched };
 }
