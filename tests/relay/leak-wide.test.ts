@@ -20,8 +20,10 @@ const sql = db();
 let ws = "";
 const ALL: RoleKey[] = [...CLUB.roleOrder];
 const APPROVER = CLUB.approverRole;
-const NOT_BUILT = ["graph", "neighbour_questions", "traces", "ranked_options", "changes"];
-const BUILT = LEAK_SURFACES.filter((s) => !NOT_BUILT.includes(s));
+// Recovery's four columns are wired in (surface-sources.ts) and empty while recovery is off.
+const RECOVERY_COLUMNS = ["graph", "neighbour_questions", "traces", "ranked_options"];
+const BUILT = LEAK_SURFACES.filter((s) => !RECOVERY_COLUMNS.includes(s));
+const WIRED = { ...EXTERNAL_SURFACES };
 const PROBES = JSON.parse(fs.readFileSync(path.join(process.cwd(), CLUB_DEMO_DIR, "probes.json"), "utf8")) as {
   facts: { id: string; fact: string; roleSet: RoleKey[]; rewordings: string[] }[];
 };
@@ -44,8 +46,7 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-  EXTERNAL_SURFACES.recoverySurfaces = undefined;
-  EXTERNAL_SURFACES.changeTexts = undefined;
+  Object.assign(EXTERNAL_SURFACES, WIRED);
   if (ws) {
     await sql.begin(async (tx) => {
       await tx`SELECT set_config('us.allow_purge', 'on', true)`;
@@ -56,7 +57,7 @@ afterAll(async () => {
 });
 
 describe("T26: the grid on the demo workspace", () => {
-  it("five roles, every surface, both rows: zero leaks; Not built columns are excluded, not counted as passes", async () => {
+  it("five roles, every surface, both rows: zero leaks; every column is built, empty ones are not counted as passes", async () => {
     const r = await runLeakCheck(ws);
     expect(r.source).toBe("ground_truth");
     expect(r.tokenCount).toBe(GT.restricted.length);
@@ -70,12 +71,13 @@ describe("T26: the grid on the demo workspace", () => {
     expect(r.allPass).toBe(true);
     expect(r.failed).toBe(0);
 
-    for (const s of r.surfaces) expect(s.built, s.key).toBe(!NOT_BUILT.includes(s.key));
-    const notBuilt = r.cells.filter((c) => NOT_BUILT.includes(c.surface));
-    expect(notBuilt.every((c) => !c.built && c.texts === 0)).toBe(true);
+    for (const s of r.surfaces) expect(s.built, s.key).toBe(true);
+    // Recovery is off in this workspace: its columns are built and have nothing to check.
+    const recovery = r.cells.filter((c) => RECOVERY_COLUMNS.includes(c.surface));
+    expect(recovery.every((c) => c.built && c.texts === 0)).toBe(true);
     const counted = r.cells.filter((c) => c.built && c.texts > 0);
     expect(r.checks).toBe(counted.length);
-    expect(counted.some((c) => NOT_BUILT.includes(c.surface))).toBe(false);
+    expect(counted.some((c) => RECOVERY_COLUMNS.includes(c.surface))).toBe(false);
 
     // The check really read something on every built surface for the role that sees least.
     for (const role of CLUB.restrictedAudienceRoles) {
@@ -102,6 +104,21 @@ describe("T26: the grid on the demo workspace", () => {
     }
   });
 
+  it("a column whose module is not wired in reads Not built and is left out of the count", async () => {
+    EXTERNAL_SURFACES.recoverySurfaces = undefined;
+    EXTERNAL_SURFACES.changeTexts = undefined;
+    try {
+      const r = await runLeakCheck(ws);
+      const off = [...RECOVERY_COLUMNS, "changes"];
+      for (const s of r.surfaces) expect(s.built, s.key).toBe(!off.includes(s.key));
+      expect(r.cells.filter((c) => off.includes(c.surface)).every((c) => !c.built && c.texts === 0)).toBe(true);
+      expect(r.checks).toBe(r.cells.filter((c) => c.built && c.texts > 0).length);
+      expect(r.allPass).toBe(true);
+    } finally {
+      Object.assign(EXTERNAL_SURFACES, WIRED);
+    }
+  });
+
   it("a registered surface is checked like any other, and a leak in it turns its column red", async () => {
     EXTERNAL_SURFACES.recoverySurfaces = async (_ws, role) => [
       { surface: "graph", text: "Arjun replied in 14 threads about firmware." },
@@ -116,8 +133,7 @@ describe("T26: the grid on the demo workspace", () => {
       expect(r.cells.find((c) => c.role === "new_member" && c.surface === "graph" && c.row === "token")).toMatchObject({ built: true, texts: 1, leaks: 0 });
       expect(r.allPass).toBe(false);
     } finally {
-      EXTERNAL_SURFACES.recoverySurfaces = undefined;
-      EXTERNAL_SURFACES.changeTexts = undefined;
+      Object.assign(EXTERNAL_SURFACES, WIRED);
     }
   });
 });
