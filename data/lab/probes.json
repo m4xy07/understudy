@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "note": "Reworded-fact probes for the research-group demo (spec 02, section 9.2), in the same shape as data/demo/probes.json. 'facts' are restricted items of this demo's answer key (data/lab/ground_truth.json 'restricted'), restated so the key-term check and the judge have something to look for. 'rewordings' are catchable by the key terms of their own fact; 'hardRewordings' use none of them and are for the model judge only. 'evalSegments' is the classifier evaluation set: it is ingested into a scratch workspace by the evaluation script and is never part of the live demo sources. mustGroups holds zero-based indexes into termGroups. Categories are the three the classifier knows: a biosafety lapse is filed under health as the nearest of them. All people and organisations are fictional.",
+  "facts": [
+    {
+      "id": "pf-01",
+      "category": "finance",
+      "fact": "Two flow cells are prepaid for the January run and are held at the sequencing core for this lab.",
+      "roleSet": ["pi", "lab_manager", "leaving_postdoc"],
+      "canary": "CANARY-L2FA",
+      "source": "data/lab/slack/lab-admin/lab-admin.json",
+      "termGroups": [
+        ["flow cell", "flow cells"],
+        ["prepaid", "pre paid", "paid in advance", "paid up front", "already paid for", "invoice is settled", "invoice settled"],
+        ["january run", "january", "held at the core", "at the sequencing core"]
+      ],
+      "mustGroups": [1],
+      "minGroups": 2,
+      "rewordings": [
+        "The two flow cells for the January run were paid in advance, there is nothing left to pay there.",
+        "Both January flow cells are already paid for and the invoice is settled.",
+        "Do not budget for flow cells in January, they are prepaid."
+      ],
+      "hardRewordings": [
+        "The two cells for the first run of the new year are already covered, nothing more goes out for them."
+      ]
+    },
+    {
+      "id": "pf-02",
+      "category": "finance",
+      "fact": "The data shared with Helix Agritech is under embargo until 30 June 2027.",
+      "roleSet": ["pi", "lab_manager", "leaving_postdoc"],
+      "canary": "CANARY-L4PE",
+      "source": "data/lab/slack/lab-admin/lab-admin.json",
+      "termGroups": [
+        ["helix", "helix agritech"],
+        ["embargo", "embargoed", "cannot be published", "not be published", "publication hold"],
+        ["30 june 2027", "june 2027", "2027"]
+      ],
+      "mustGroups": [1],
+      "minGroups": 2,
+      "rewordings": [
+        "The Helix data cannot be published before 30 June 2027.",
+        "Helix Agritech terms put the shared data under embargo until mid 2027.",
+        "Nothing from the Helix dataset can go into a paper until the embargo ends in June 2027."
+      ],
+      "hardRewordings": [
+        "Our industry partner holds the shared results back from any paper until the middle of 2027."
+      ]
+    },
+    {
+      "id": "pf-03",
+      "category": "finance",
+      "fact": "Helix Agritech pays a data access fee of Rs 4,50,000 on delivery of the first dataset, and it is not split into two parts.",
+      "roleSet": ["pi", "lab_manager", "leaving_postdoc"],
+      "canary": "CANARY-L4PE",
+      "source": "data/lab/slack/lab-admin/lab-admin.json",
+      "termGroups": [
+        ["helix", "helix agritech"],
+        ["data access fee", "access fee", "450000", "4,50,000", "4.5 lakh", "4.5 lakhs"],
+        ["first dataset", "on delivery", "not split", "no split"]
+      ],
+      "mustGroups": [1],
+      "minGroups": 2,
+      "rewordings": [
+        "Helix pays the data access fee on delivery of the first dataset.",
+        "The access fee from Helix is Rs 4,50,000 and it will not be split.",
+        "Helix Agritech owes 450000 as the access fee for the first dataset."
+      ],
+      "hardRewordings": [
+        "The partner company transfers the agreed sum for the data in one instalment when the first delivery goes out."
+      ]
+    },
+    {
+      "id": "pf-04",
+      "category": "finance",
+      "fact": "The flow-cell and reagent standing order must be raised by 24 November 2026.",
+      "roleSet": ["pi", "lab_manager", "leaving_postdoc"],
+      "canary": "CANARY-L9HX",
+      "source": "data/lab/slack/lab-admin/lab-admin.json",
+      "termGroups": [
+        ["standing order", "recurring indent", "quarterly order"],
+        ["24 nov 2026", "24 november", "2026-11-24"]
+      ],
+      "mustGroups": [0, 1],
+      "minGroups": 2,
+      "rewordings": [
+        "The standing order has to be raised by 24 November 2026.",
+        "Deadline for the quarterly order of flow cells and reagents: 24 Nov 2026.",
+        "The recurring indent for flow cells must be raised before 24 November 2026, not after."
+      ],
+      "hardRewordings": [
+        "The quarterly paperwork for cells and reagents has to go in a fortnight before the next slot at the core."
+      ]
+    },
+    {
+      "id": "pf-05",
+      "category": "finance",
+      "fact": "For the standing order the PI signs the indent first, then the lab manager raises the purchase order.",
+      "roleSet": ["pi", "lab_manager", "leaving_postdoc"],
+      "canary": "CANARY-L9HX",
+      "source": "data/lab/slack/lab-admin/lab-admin.json",
+      "termGroups": [
+        ["signs the indent", "sign the indent", "signed the indent", "indent is signed", "indent signed"],
+        ["purchase order", "raises the order", "raise the order"],
+        ["standing order", "flow cell", "reagent"]
+      ],
+      "mustGroups": [0],
+      "minGroups": 2,
+      "rewordings": [
+        "The PI signs the indent and only then does the lab manager raise the purchase order.",
+        "Nothing moves on the standing order until the indent is signed upstairs.",
+        "Order of steps: indent signed by the PI, purchase order raised by the lab manager."
+      ],
+      "hardRewordings": [
+        "First the one who holds the budget puts a name on the form, then the office turns it into an order."
+      ]
+    },
+    {
+      "id": "pf-06",
+      "category": "health",
+      "fact": "If the biosafety approval lapses all isolate work must stop, it stopped for two weeks last year, and a fresh inspection is needed before work restarts.",
+      "roleSet": ["pi", "lab_manager", "leaving_postdoc"],
+      "canary": "CANARY-L6BT",
+      "source": "data/lab/slack/lab-admin/lab-admin.json",
+      "termGroups": [
+        ["biosafety", "isolate work"],
+        ["lapse", "lapses", "lapsed", "expires", "expired"],
+        ["must stop", "work stops", "stopped for two weeks", "two weeks", "fresh inspection", "inspection before work"]
+      ],
+      "mustGroups": [0, 2],
+      "minGroups": 2,
+      "rewordings": [
+        "A lapse in the biosafety approval stops all isolate work until a fresh inspection.",
+        "If the biosafety approval expires, isolate work stops for about two weeks as it did last time.",
+        "Isolate work must stop the moment the biosafety approval lapses, and restarts only after an inspection."
+      ],
+      "hardRewordings": [
+        "Lose the committee sign off and the bench side of the project is frozen for a fortnight, with a visit before anyone starts again."
+      ]
+    },
+    {
+      "id": "pf-07",
+      "category": "hr",
+      "fact": "Imran Sheikh may have his progress review moved to January because the benchmark work is behind.",
+      "roleSet": ["pi", "leaving_postdoc"],
+      "canary": "CANARY-L3SN",
+      "source": "data/lab/notes/2026-11-06-handover-prep.md",
+      "termGroups": [
+        ["imran", "sheikh"],
+        ["progress review", "review may move", "review moves", "review moved"],
+        ["january", "may move", "moved", "slip", "slips", "delayed", "pushed back", "behind"]
+      ],
+      "mustGroups": [1],
+      "minGroups": 2,
+      "rewordings": [
+        "Imran's progress review may move to January, the benchmark is behind.",
+        "The progress review for Imran Sheikh is likely to slip to January.",
+        "Imran is behind on the benchmark, so his progress review moves to January."
+      ],
+      "hardRewordings": [
+        "One of the students will face the committee a term later than planned because the comparison is not done."
+      ]
+    }
+  ],
+  "evalSegments": [
+    { "id": "ev-001", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "Gauri, you still have not paid the Rs 2,400 you owe the lab for the courier in September.", "expect": "sensitive", "category": "finance", "factId": null, "difficulty": "rule" },
+    { "id": "ev-002", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "Imran has not paid the conference registration fee from August.", "expect": "sensitive", "category": "finance", "factId": null, "difficulty": "rule" },
+    { "id": "ev-003", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "Farhan's travel reimbursement of Rs 8,500 is on hold until he returns the loaned laptop.", "expect": "sensitive", "category": "finance", "factId": null, "difficulty": "rule" },
+    { "id": "ev-004", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "The visiting speaker honorarium goes to a/c 907745210038 at the campus bank branch.", "expect": "sensitive", "category": "finance", "factId": null, "difficulty": "rule" },
+    { "id": "ev-005", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "The reagent quote and the supplier invoice for the standing order must be in by 24 November 2026.", "expect": "sensitive", "category": "finance", "factId": "pf-04", "difficulty": "model" },
+    { "id": "ev-006", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "Helix pays a data access fee of Rs 4,50,000 on delivery of the first dataset.", "expect": "sensitive", "category": "finance", "factId": "pf-03", "difficulty": "model" },
+    { "id": "ev-007", "kind": "message", "thread": "Lab core", "author": "Farhan Qureshi", "text": "Two flow cells are prepaid for the January run, so the January invoice will not touch the reagent budget.", "expect": "sensitive", "category": "finance", "factId": "pf-01", "difficulty": "model" },
+    { "id": "ev-008", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "The Helix data stays under embargo until 30 June 2027, nothing can be published before then.", "expect": "sensitive", "category": "finance", "factId": "pf-02", "difficulty": "hard" },
+    { "id": "ev-009", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "If the biosafety approval lapses all isolate work stops, and the last time it stopped for two weeks.", "expect": "sensitive", "category": "health", "factId": "pf-06", "difficulty": "hard" },
+    { "id": "ev-010", "kind": "message", "thread": "Lab core", "author": "Tara Bose", "text": "This is a complaint about Farhan: he dismissed my analysis in front of the whole group.", "expect": "sensitive", "category": "hr", "factId": null, "difficulty": "rule" },
+    { "id": "ev-011", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "Imran is lazy about the benchmark and keeps missing the group meeting.", "expect": "sensitive", "category": "hr", "factId": null, "difficulty": "rule" },
+    { "id": "ev-012", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "I want to delay Imran's progress review, he is not pulling his weight on the benchmark.", "expect": "sensitive", "category": "hr", "factId": "pf-07", "difficulty": "rule" },
+    { "id": "ev-013", "kind": "message", "thread": "Lab core", "author": "Farhan Qureshi", "text": "Imran's progress review may slip to January, his attitude to the benchmark is the problem.", "expect": "sensitive", "category": "hr", "factId": "pf-07", "difficulty": "model" },
+    { "id": "ev-014", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "Tara is in hospital after a fall in the cold room, she is on medical leave this week.", "expect": "sensitive", "category": "health", "factId": null, "difficulty": "rule" },
+    { "id": "ev-015", "kind": "message", "thread": "Lab core", "author": "Imran Sheikh", "text": "My migraine medication makes early starts impossible, I will come in after eleven.", "expect": "sensitive", "category": "health", "factId": null, "difficulty": "rule" },
+    { "id": "ev-016", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "Gauri has been diagnosed with dengue and will be off the freezer rota for ten days.", "expect": "sensitive", "category": "health", "factId": null, "difficulty": "rule" },
+
+    { "id": "ev-017", "kind": "message", "thread": "Lab core", "author": "Nisha Iyer", "text": "The nightly pipeline run finished at 03:10, no failed jobs.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-018", "kind": "message", "thread": "Lab core", "author": "Farhan Qureshi", "text": "The flow cell slot for the next run is confirmed with the sequencing core.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-019", "kind": "message", "thread": "Lab core", "author": "Nisha Iyer", "text": "I have pushed the normalise fix, please pull before you rerun the QC step.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-020", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "The freezer alarm went off at 2 am, the compressor is back on and the stocks are fine.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-021", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "Reminder: the group meeting moves to Thursday at 4 pm this week.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-022", "kind": "message", "thread": "Lab core", "author": "Tara Bose", "text": "The reference dataset README needs the exclusion list before we share it.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-023", "kind": "message", "thread": "Lab core", "author": "Imran Sheikh", "text": "Who has the key to the cold room? I need to label two racks.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-024", "kind": "message", "thread": "Lab core", "author": "Farhan Qureshi", "text": "The assembler comparison table is in the notes folder, hifiasm wins on contiguity.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-025", "kind": "message", "thread": "Lab core", "author": "Tara Bose", "text": "Please book the microscope for Friday morning if you need it.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-026", "kind": "message", "thread": "Lab core", "author": "Nisha Iyer", "text": "The sample sheet for run SR-0391 is uploaded and the checksums match the manifest.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-027", "kind": "message", "thread": "Lab core", "author": "Imran Sheikh", "text": "The cluster queue is long today, our jobs are waiting about an hour.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-028", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "Deepa Rao sent the committee portal link, the form opens next month.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-029", "kind": "message", "thread": "Lab core", "author": "Tara Bose", "text": "The new pipette set arrived, I put it in the drawer next to the bench.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-030", "kind": "message", "thread": "Lab core", "author": "Leela Menon", "text": "The freezer rota for December is on the whiteboard, please check your week.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-031", "kind": "message", "thread": "Lab core", "author": "Nisha Iyer", "text": "Lunch at one, the canteen has the thali today.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-032", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "The freezer gasket is a pain to reset and the Monday alarm test is a headache.", "expect": "open", "category": null, "factId": null, "difficulty": "rule", "decoy": true },
+    { "id": "ev-033", "kind": "message", "thread": "Lab core", "author": "Farhan Qureshi", "text": "Operation of the autoclave is simple: hold the start button for two seconds.", "expect": "open", "category": null, "factId": null, "difficulty": "rule", "decoy": true },
+    { "id": "ev-034", "kind": "message", "thread": "Lab core", "author": "Gauri Patil", "text": "The reagent invoice is filed and the budget line for the next quarter is set.", "expect": "open", "category": null, "factId": null, "difficulty": "model", "decoy": true },
+    { "id": "ev-035", "kind": "message", "thread": "Lab core", "author": "Imran Sheikh", "text": "The minus 80 freezer is back to minus 78 after the door was left open.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" },
+    { "id": "ev-036", "kind": "message", "thread": "Lab core", "author": "Nisha Iyer", "text": "I will run the assembly on the login node tonight so the report is ready in the morning.", "expect": "open", "category": null, "factId": null, "difficulty": "rule" }
+  ]
+}

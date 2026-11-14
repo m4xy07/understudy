@@ -692,10 +692,13 @@ function probeHit(fact: ProbeFact, text: string): boolean {
 }
 
 const probesPath = path.join(DEMO, "probes.json");
+const HAS_PROBES = fs.existsSync(probesPath);
 const probeFacts: ProbeFact[] = [];
 let evalCount = 0;
 let evalPos = 0;
-if (!fs.existsSync(probesPath)) fail("probes: data/demo/probes.json is missing");
+// A probe file is optional. A demo whose answer key references one must have it; a demo that ships
+// one is held to every probe check below, whether or not it has the other Round 3 plants.
+if (!HAS_PROBES) { if (isObj(gtObj.probes)) fail(`probes: ${rel(probesPath)} is missing`); }
 else {
   const probes = readJson(probesPath);
   const allSourceText = [...fileRoles.keys()].map((f) => fs.readFileSync(f, "utf8")).join("\n");
@@ -769,10 +772,10 @@ else {
       }
     }
     const ref = gtObj.probes;
-    check(isObj(ref) && ref.file === "data/demo/probes.json" && isStrArr(ref.facts) && sameSet(ref.facts, probeFacts.map((p) => p.id))
+    check(isObj(ref) && ref.file === rel(probesPath) && isStrArr(ref.facts) && sameSet(ref.facts, probeFacts.map((p) => p.id))
       && ref.evalSegments === evalCount && ref.evalPositives === evalPos && ref.evalNegatives === negatives.length
       && isStrArr(ref.liveRewordings) && ref.liveRewordings.every((id) => sensitiveIds.has(id)),
-    "gt: probes reference must match data/demo/probes.json (facts, counts, live rewordings)");
+    `gt: probes reference must match ${rel(probesPath)} (facts, counts, live rewordings)`);
   }
 }
 
@@ -1016,9 +1019,12 @@ for (const [k, v] of Object.entries(summary)) console.log(`${k.padEnd(30)} ${Str
 // The Round 3 plants (sensitive messages, decoys, a hidden-side conflict, probes, CI runs, recovery,
 // a demo finding) are checked only for a pack whose answer key lists them. Those checks are written
 // for the first demo and still need a generic port; until then a pack without the plants is not
-// failed for lacking them.
+// failed for lacking them. The probe checks are the ported ones: a demo that ships a probe file is
+// held to them on its own, with no other plant needed.
 if (!ROUND3_PLANTS) {
-  const round3 = /^(sensitive|decoys|conflicts|probes|runs|recovery|finding|gt: recovery|gt: finding)\b/;
+  const skipped = ["sensitive", "decoys", "conflicts", "runs", "recovery", "finding", "gt: recovery", "gt: finding"];
+  if (!HAS_PROBES) skipped.push("probes");
+  const round3 = new RegExp(`^(${skipped.join("|")})\\b`);
   const kept = errors.filter((e) => !round3.test(e));
   errors.length = 0;
   errors.push(...kept);

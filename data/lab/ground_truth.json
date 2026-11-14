@@ -2405,6 +2405,23 @@
       "fact": "The rollback tag (v1.4.2) and the node it must run on (kaveri-login2)."
     }
   ],
+  "probes": {
+    "file": "data/lab/probes.json",
+    "facts": [
+      "pf-01",
+      "pf-02",
+      "pf-03",
+      "pf-04",
+      "pf-05",
+      "pf-06",
+      "pf-07"
+    ],
+    "evalSegments": 36,
+    "evalPositives": 16,
+    "evalNegatives": 20,
+    "liveRewordings": [],
+    "note": "Reworded forms of the restricted items above, for the leak check. Hard rewordings exist only in probes.json (hardRewordings and evalSegments with difficulty 'hard'). They are scored in a scratch workspace and never appear in the live demo sources."
+  },
   "secrets": [
     {
       "where": "data/lab/slack/pipeline/pipeline.json",

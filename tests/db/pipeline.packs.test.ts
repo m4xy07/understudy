@@ -15,7 +15,7 @@ import { evaluateWorkspace } from "@/lib/attest/evaluation";
 import { getLatestTestRun, listClaims, listGapQuestions } from "@/lib/db/queries";
 import { answerQuestion, listBlockingGaps, savePlanItem } from "@/lib/lacuna";
 import { approveSnapshot, bulkApprove, compileHandover, reviewClaim, stubLine } from "@/lib/relay";
-import { checkHandoverReadback, exportMarkdown, resolveReadbackItems, runLeakCheck } from "@/lib/relay/handover";
+import { checkHandoverReadback, demoProbeFacts, exportMarkdown, resolveReadbackItems, runLeakCheck } from "@/lib/relay/handover";
 import { cacheOutputText, modelTag } from "@/lib/model/client";
 import { getPack, getWorkspacePack, listDemoPacks, roleLabel } from "@/lib/pack";
 
@@ -46,6 +46,8 @@ describe.each(PACKS)("pipeline on the $id pack: model off, committed cache", ({ 
   const leaver = pack.leaverRole;
   const least = pack.restrictedAudienceRoles[0];
   const approverLabel = roleLabel(approver, pack);
+  /** The demo's reworded-fact probes (<demo.dataDir>/probes.json), empty when it ships none. */
+  const probes = demoProbeFacts(pack);
   let ws = "";
 
   beforeAll(async () => {
@@ -208,6 +210,29 @@ describe.each(PACKS)("pipeline on the $id pack: model off, committed cache", ({ 
     expect(leak.tokenCount).toBe(key.restricted.length);
     expect(leak.roles.map((r) => r.key)).toEqual(pack.roleOrder);
     expect(leak.cells.filter((c) => c.leaks > 0)).toEqual([]);
+    expect(leak.allPass).toBe(true);
+  });
+
+  it("the leak check knows this demo's reworded-fact probes", async () => {
+    // Zero facts is a valid answer for a demo with no probe file; the grid then shows no such block.
+    expect((await runLeakCheck(ws)).factCount).toBe(probes.length);
+  });
+
+  it.skipIf(probes.length === 0)("the reworded-fact block is read for every role and output, and passes", async () => {
+    const leak = await runLeakCheck(ws);
+    expect(leak.rows).toContain("probe");
+    const builtSurfaces = leak.surfaces.filter((s) => s.built).length;
+    for (const role of pack.roleOrder) {
+      const hidden = probes.filter((f) => !f.roleSet.includes(role));
+      expect(leak.roles.find((r) => r.key === role)!.maySeeFacts, role).toBe(probes.length - hidden.length);
+      const cells = leak.cells.filter((c) => c.role === role && c.row === "probe" && c.built);
+      expect(cells.length, role).toBe(builtSurfaces);
+      // A role that may see every fact has nothing to check; any other role is read on real text.
+      expect(cells.some((c) => c.texts > 0), role).toBe(hidden.length > 0);
+      expect(cells.filter((c) => c.leaks > 0), role).toEqual([]);
+    }
+    // Every probe fact is hidden from at least one role, so the block always has something to check.
+    expect(leak.cells.filter((c) => c.row === "probe" && c.texts > 0).length).toBeGreaterThan(0);
     expect(leak.allPass).toBe(true);
   });
 

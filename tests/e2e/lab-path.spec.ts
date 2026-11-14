@@ -209,11 +209,39 @@ test("lab path: research-group demo, claims, test, ask, review, handover, read-b
     await expect(page.locator("body")).not.toContainText("Club President", { useInnerText: true });
   });
 
-  await test.step("Leak check: the lab's six tokens, every role and surface passes", async () => {
+  await test.step("Leak check: the lab's six tokens and seven reworded facts, every role and surface passes", async () => {
     const leak = page.locator('section[aria-labelledby="leak-h"]');
+    // While the page streams in, React holds the arriving section in a hidden container for a
+    // moment: wait until there is exactly one.
+    await expect(leak).toHaveCount(1, { timeout: 60_000 });
     await expect(leak).toBeVisible({ timeout: 60_000 });
     await expect(leak.getByText(/All \d+ checks pass$/)).toBeVisible();
     await expect(leak).not.toContainText(/\d+ leaks?/);
     for (const role of ROLES) await expect(leak).toContainText(role);
+    // This setting has its own probe file, so both blocks are there and both pass.
+    await expect(leak).toContainText("6 canary tokens and 7 reworded facts");
+    await expect(leak.getByRole("heading", { name: "Exact tokens" })).toBeVisible();
+    await expect(leak.getByRole("heading", { name: "Reworded facts" })).toBeVisible();
+    await expect(leak.getByTestId("leak-probe")).toContainText("Pass");
+    await expect(leak.getByTestId("leak-no-probes")).toHaveCount(0);
+  });
+
+  await test.step("Probe results: the lab's own measured numbers, for the PI", async () => {
+    await viewAs(page, "Principal investigator");
+    const leak = page.locator('section[aria-labelledby="leak-h"]');
+    // While the page streams in, React holds the arriving section in a hidden container for a
+    // moment: wait until there is exactly one.
+    await expect(leak).toHaveCount(1, { timeout: 60_000 });
+    await expect(leak.getByText(/All \d+ checks pass$/)).toBeVisible({ timeout: 60_000 });
+    await leak.getByRole("link", { name: "See probe results" }).click();
+    await page.waitForURL(/\/probes$/);
+    await expect(page.getByRole("heading", { name: "Probe results" })).toBeVisible();
+    await expect(page.getByTestId("classifier-table")).toBeVisible();
+    await expect(page.getByText(/^Precision \d+%\. Recall \d+%\. \d+ messages checked\.$/)).toBeVisible();
+    await expect(page.getByTestId("detector-line")).toContainText(/Key terms caught \d+\./);
+    // The grid is on this page too, with the same two blocks; take the first copy while it streams.
+    await expect(page.getByTestId("leak-probe").first()).toContainText("Pass");
+    await expect(page.getByTestId("leak-token").first()).toContainText("Pass");
+    await expect(page.locator("body")).not.toContainText("Club President", { useInnerText: true });
   });
 });
