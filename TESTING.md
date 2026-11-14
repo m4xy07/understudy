@@ -9,7 +9,7 @@ From a fresh clone of `main`, following the README, with no model key (2026-11-1
 | Command | Result |
 |---|---|
 | `pnpm test` | 79 test files, 1029 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
-| `pnpm test:e2e` against `pnpm dev` | 5 spec files, 9 tests passed, 3.2 min, no retry |
+| `pnpm test:e2e` against `pnpm dev` | 6 spec files, 18 tests passed, 7.6 min on a Windows laptop, no retry |
 
 `pnpm test` prints the totals on its last lines, so these numbers are easy to check.
 
@@ -81,7 +81,7 @@ These run against a real Postgres (`tests/db/`, 11 files, plus the integration s
 
 ## 3. End to end in a browser (Playwright)
 
-Five specs in `tests/e2e/`, Chromium, one worker. Each opens a fresh private copy of a demo.
+Six specs in `tests/e2e/`, Chromium, one worker. Each opens a fresh private copy of a demo.
 
 | Spec | What it walks |
 |---|---|
@@ -89,6 +89,7 @@ Five specs in `tests/e2e/`, Chromium, one worker. Each opens a fresh private cop
 | `lab-path.spec.ts` | The research-group demo: two cards on the landing page, the five lab roles, claims, evaluation, test, ask, review as the PI, handover, read-back with the lab's items, the stub for the PhD student, the leak check |
 | `recovery.spec.ts` | The approver switches recovery on; three rungs per gap; a skipped neighbour; rebuilt procedures with quoted steps; fewer gaps close without the leaver; a neighbour answers with the sample and it is saved as Second-hand with B unchanged; "I don't know" stores nothing; switching back |
 | `living-handover.spec.ts` | First weeks is empty before a snapshot; the successor records a finding with a link and a file; nothing moves while it waits; the leaver and the successor cannot approve; the approver approves; snapshot v2; "What changed in v2"; every role's handover on v2 |
+| `accessibility.spec.ts` (9 steps) | axe scans of Test, Ask (normal and with recovery on) and First weeks, failing on serious or critical violations; two keyboard-only tests (answer a question, record a finding). See [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) |
 | `reliability.spec.ts` (5 tests) | The abuse cases in section 4; fails on any page error or 5xx answer |
 
 ```bash
