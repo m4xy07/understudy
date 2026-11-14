@@ -80,6 +80,20 @@ test("judge path: demo, claims, test, ask, review, handover, leak check", async 
     await expect(page.getByText("The highlighted text below is the exact quote this claim relies on.")).toBeVisible();
   });
 
+  await test.step("Claims: History opens a superseded claim's timeline with the rule that fired", async () => {
+    await page.goto(`/w/${ws}/claims?state=superseded`);
+    await page.getByRole("link", { name: "History of this claim" }).first().click();
+    await page.waitForURL(/\/claims\/clm_/);
+    await expect(page.getByRole("heading", { name: "Claim history" })).toBeVisible();
+    const timeline = page.getByRole("list", { name: "Timeline" });
+    await expect(timeline.locator('li[data-kind="superseded"]').first()).toContainText("Rule:");
+    await expect(page.getByRole("list", { name: "Citations" }).getByRole("link").first()).toBeVisible();
+    await page.goto(`/w/${ws}/claims/clm_does_not_exist`);
+    await expect(page.getByRole("heading", { name: "Claim not found" })).toBeVisible();
+    await page.getByRole("link", { name: /Back to claims/ }).first().click();
+    await page.waitForURL(/\/claims$/);
+  });
+
   await test.step("Test: scores read B · C · K", async () => {
     await page.goto(`/w/${ws}/test`);
     await expect(page.getByRole("navigation", { name: "Role being tested" })).toContainText("Incoming tech lead");
