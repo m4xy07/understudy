@@ -23,7 +23,7 @@ function QuestionCard({ ws, q, roles, approver }: { ws: string; q: NeighbourQues
         <span className="mono">{q.responsibilityKey}</span> {q.responsibilityTitle} · {q.checkLabel}
       </p>
       <p className="mt-1 text-sm text-muted">Why you: {q.reason.charAt(0).toLowerCase() + q.reason.slice(1)}.</p>
-      <ActionForm action={answerAsNeighbourAction} hidden={{ ws, stepId: q.stepId }} className="mt-3 grid gap-2">
+      <ActionForm action={answerAsNeighbourAction} hidden={{ ws, stepId: q.stepId }} className="mt-3 grid gap-2" focusOnRemove="neighbour-questions-h">
         <label className="grid gap-1 text-sm">
           <span className="font-medium">What you know</span>
           <textarea
@@ -88,7 +88,7 @@ export function NeighbourQuestions({
   if (questions.length === 0 && replies.length === 0) return null;
   return (
     <section className="mb-8" aria-label="Questions for you">
-      <h2 className="mb-1 text-xl">Questions for you ({questions.length})</h2>
+      <h2 id="neighbour-questions-h" tabIndex={-1} className="mb-1 text-xl">Questions for you ({questions.length})</h2>
       <p className="mb-3 max-w-3xl text-sm text-ink-2">
         {leaver} can&apos;t be reached, and the record shows you worked on these together. Say what you know. Your answer is
         labelled Second-hand: it helps, but it does not count as a record.
