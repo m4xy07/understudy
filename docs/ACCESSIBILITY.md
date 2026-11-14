@@ -50,7 +50,7 @@ Scoring, questions, prompts and data were not touched.
 - **Other pages** (Connect, Reconstruct, Verify, Review, Handover, source view, landing) were not scanned or read for this pass.
 - **Not tested:** 200% and 400% zoom, a narrow phone screen, Windows high contrast, touch target size, Firefox and Safari. Only Chromium was used.
 - **The setup before the keyboard tests used the mouse** (opening the demo, approving the snapshot in Review). Only the answer and the finding are keyboard only.
-- **The tests ran against the dev server** (`pnpm dev`), not a production build.
+- **Where it ran:** the dev server for the whole spec, and once more against a production build (`pnpm build`, `pnpm start`). Both passed. Not run against the live app.
 
 ## How to run the checks
 
