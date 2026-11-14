@@ -427,10 +427,11 @@ export type SensitivityModelCall = (opts: SensitivityCallOpts) => Promise<CallRe
 export const SENSITIVITY_SYSTEM_PROMPT = [
   "You label messages from an organisation's internal channels for a privacy filter.",
   "For each message, decide whether it is private content of one of three kinds, or none.",
-  "finance: money that an identifiable person owes, is owed, paid or was fined; a person's bank or payment account; a confidential amount such as a sponsorship sum, a salary or a quote under negotiation.",
+  "finance: money that an identifiable person personally owes, is owed, paid out of pocket or was fined; a person's bank or payment account; a confidential amount such as a sponsorship sum, a salary or a quote under negotiation.",
   "hr: a complaint, an accusation or a negative judgement about an identifiable person's behaviour or work; a disciplinary matter.",
   "health: an identifiable person's illness, injury, treatment, mental health or medical leave, including good wishes that reveal it.",
   "Answer none when the text is routine business of the organisation: buying parts, public prices and fees, schedules, technical talk, idioms and jokes.",
+  "A payment the organisation itself makes (an entry fee, a purchase, a bill, a renewal) is routine, also when a task or a note names the member who handles it.",
   "A line in brackets under a message is context from the filter, not part of the message.",
   'Return JSON only: {"items":[{"segment_id":"<id>","category":"finance"|"hr"|"health"|"none"}]}, one item per message, ids copied exactly.',
 ].join("\n");

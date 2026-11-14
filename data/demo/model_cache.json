@@ -108,6 +108,12 @@
   "created_at": "2026-11-10T19:56:50.638Z"
  },
  {
+  "input_hash": "5cd2c823f45925f293ac4f6587375f7046f54ded4d753859bce32256be65f0a3",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_912729daf0a94091\",\"category\":\"none\"},{\"segment_id\":\"seg_5474d204fe7edcff\",\"category\":\"none\"},{\"segment_id\":\"seg_c6eb721028686cbb\",\"category\":\"health\"}]}",
+  "created_at": "2026-11-14T05:51:20.136Z"
+ },
+ {
   "input_hash": "641cbcba04ee119233ef88720dfb1fc0a2a0598199a9d1d9c4b8c7587d6b638a",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"current_state\",\"status\":\"partial\",\"claim_ids\":[\"clm_8ea76a4dd7b6129e\",\"clm_aa8045ec8cca8e8a\"],\"blocker\":\"Conflicting statuses: In progress vs. blocked on date announcement.\"},{\"check_key\":\"options_considered\",\"status\":\"cannot\",\"claim_ids\":[],\"blocker\":\"No claims directly address options considered for venue and date.\"},{\"check_key\":\"owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_904ca06fec8d6ccf\"],\"blocker\":\"\"},{\"check_key\":\"deadline\",\"status\":\"cannot\",\"claim_ids\":[\"clm_c1fd40a0cad4b2bf\",\"clm_8afdc3aa2a1568ee\",\"clm_6926aa9b6a1cc0dd\"],\"blocker\":\"Conflicting deadlines: 2026-12-19 vs. 2026-11-08.\"}]}",
@@ -258,6 +264,12 @@
   "created_at": "2026-11-10T19:57:55.014Z"
  },
  {
+  "input_hash": "bfa71ae04f787ed662ca51c1095027c2f8dff55c806a00d82ab30b3162505d55",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_fbf5bec2403f28d1\",\"category\":\"none\"},{\"segment_id\":\"seg_42ae75f020303d89\",\"category\":\"none\"},{\"segment_id\":\"seg_24dd79f9576f17b8\",\"category\":\"none\"}]}",
+  "created_at": "2026-11-14T05:51:21.777Z"
+ },
+ {
   "input_hash": "c1fa24fa8e503aff826853734bbeaaefdd7875e9c31a58836dc736a1c5d1af97",
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"results\":[{\"id\":\"c1\",\"verdict\":\"no\"},{\"id\":\"c2\",\"verdict\":\"partly\"},{\"id\":\"c3\",\"verdict\":\"yes\"},{\"id\":\"c4\",\"verdict\":\"yes\"},{\"id\":\"c5\",\"verdict\":\"yes\"},{\"id\":\"c6\",\"verdict\":\"yes\"},{\"id\":\"c7\",\"verdict\":\"yes\"},{\"id\":\"c8\",\"verdict\":\"yes\"},{\"id\":\"c9\",\"verdict\":\"yes\"},{\"id\":\"c10\",\"verdict\":\"partly\"},{\"id\":\"c11\",\"verdict\":\"yes\"},{\"id\":\"c12\",\"verdict\":\"yes\"},{\"id\":\"c13\",\"verdict\":\"no\"},{\"id\":\"c14\",\"verdict\":\"no\"},{\"id\":\"c15\",\"verdict\":\"no\"},{\"id\":\"c16\",\"verdict\":\"no\"},{\"id\":\"c17\",\"verdict\":\"yes\"},{\"id\":\"c18\",\"verdict\":\"yes\"},{\"id\":\"c19\",\"verdict\":\"partly\"},{\"id\":\"c20\",\"verdict\":\"yes\"}]}",
@@ -316,5 +328,11 @@
   "model_tag": "qwen/qwen3-32b@openrouter.ai",
   "output": "{\"checks\":[{\"check_key\":\"access_path\",\"status\":\"can_do\",\"claim_ids\":[\"clm_ca4a118496e1d68c\",\"clm_b605993a3da276a1\"],\"blocker\":\"\"},{\"check_key\":\"steps\",\"status\":\"can_do\",\"claim_ids\":[\"clm_fd2d7a9426e39781\",\"clm_67ed3a95962d64c8\"],\"blocker\":\"\"},{\"check_key\":\"how_to_verify\",\"status\":\"can_do\",\"claim_ids\":[\"clm_b37aea90c976a4d4\"],\"blocker\":\"\"},{\"check_key\":\"rollback\",\"status\":\"partial\",\"claim_ids\":[\"clm_31cb77a047fc5b73\"],\"blocker\":\"Rollback procedure is not explicitly described, only the version of a known-good build is mentioned.\"},{\"check_key\":\"credential_owner\",\"status\":\"can_do\",\"claim_ids\":[\"clm_adf659336ff26c07\",\"clm_45588ced768a2caf\",\"clm_e68660ce9e8457fa\",\"clm_f3de76cef24e8e3f\"],\"blocker\":\"\"}]}",
   "created_at": "2026-11-11T09:07:16.041Z"
+ },
+ {
+  "input_hash": "ff1a31b209c70b60e359320b677cc4af24b17f50a1cfb40cab6e49bfd460e48b",
+  "model_tag": "qwen/qwen3-32b@openrouter.ai",
+  "output": "{\"items\":[{\"segment_id\":\"seg_4fdb38c9942fcc67\",\"category\":\"none\"}]}",
+  "created_at": "2026-11-14T05:51:23.875Z"
  }
 ]
