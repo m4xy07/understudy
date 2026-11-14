@@ -59,7 +59,7 @@ export async function answerQuestionAction(_prev: ActionState, form: FormData): 
   refresh();
   return {
     ok: true,
-    message: `Saved as "Leaver said". Re-test: ${res.delta}${live ? " This is the first reading; the model is re-checking it now and the scores update by themselves." : ""}`,
+    message: `Saved as "Leaver said".${res.limited ? ` ${res.limited}` : ""} Re-test: ${res.delta}${live ? " This is the first reading; the model is re-checking it now and the scores update by themselves." : ""}`,
   };
 }
 
@@ -149,5 +149,5 @@ export async function answerAsNeighbourAction(_prev: ActionState, form: FormData
   }
   refresh();
   if (res.declined) return { ok: true, message: "Noted. Nothing was saved as evidence." };
-  return { ok: true, message: `Saved as "Second-hand". Re-test: ${res.delta}` };
+  return { ok: true, message: `Saved as "Second-hand".${res.limited ? ` ${res.limited}` : ""} Re-test: ${res.delta}` };
 }

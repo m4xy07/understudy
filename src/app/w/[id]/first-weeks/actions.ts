@@ -62,7 +62,7 @@ export async function recordFindingAction(_prev: ActionState, form: FormData): P
     return fail(res.error);
   }
   refresh();
-  return done(`Saved as "Successor found". It is waiting for ${roleLabel(pack.approverRole, pack)} to review. Scores do not change until it is approved.`);
+  return done(`Saved as "Successor found".${res.limited ? ` ${res.limited}` : ""} It is waiting for ${roleLabel(pack.approverRole, pack)} to review. Scores do not change until it is approved.`);
 }
 
 export async function withdrawFindingAction(_prev: ActionState, form: FormData): Promise<ActionState> {

@@ -4,6 +4,8 @@
 import type { TransactionSql } from "postgres";
 import { db } from "@/lib/db/client";
 import { maskText } from "@/lib/tether/mask";
+import type { NarrowResult } from "@/lib/tether/sensitivity";
+import { segmentSensitivityFields } from "@/lib/tether/visibility";
 import type { Claim, RoleKey } from "@/lib/types";
 import type { AnswerSegment } from "./core/questions";
 
@@ -38,6 +40,11 @@ export interface PersistAnswerParts {
   masked: MaskedAnswer;
   /** Roles that may resolve a contact placeholder in this answer. */
   contactRoles: RoleKey[];
+  /**
+   * The sensitivity decision for the answer text (narrowTypedText). The caller has already put
+   * its role set on the claim; the fields are stored on the segment row.
+   */
+  sensitivity?: NarrowResult | null;
   /** Stored as the claim's "created" event. */
   event: Record<string, unknown>;
   actor: string;
@@ -50,14 +57,17 @@ export interface PersistAnswerParts {
  */
 export async function persistAnswer(tx: TransactionSql, ws: string, p: PersistAnswerParts): Promise<boolean> {
   const { segment, claim } = p;
+  const sens = segmentSensitivityFields(p.sensitivity);
   await tx`
     INSERT INTO sources (workspace_id, id, kind, name, role_set, origin)
     VALUES (${ws}, ${p.source.id}, 'interview', ${p.source.name}, ${p.source.roleSet}::text[], 'interview')
     ON CONFLICT (workspace_id, id) DO NOTHING`;
   const seg = await tx`
-    INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta)
+    INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta,
+      sensitivity, sensitivity_stage, sensitivity_reason, role_set_original, classifier_version)
     VALUES (${ws}, ${segment.id}, 1, ${p.source.id}, 'interview', 'answer', ${segment.ts}, ${segment.authorId}, ${segment.thread}, 0,
-      ${segment.text}, ${segment.textHash}, ${claim.roleSet}::text[], ${JSON.stringify(segment.meta)}::jsonb)
+      ${segment.text}, ${segment.textHash}, ${claim.roleSet}::text[], ${JSON.stringify(segment.meta)}::jsonb,
+      ${sens.sensitivity}::text[], ${sens.stage}, ${sens.reason}, ${sens.roleSetOriginal}::text[], ${sens.classifierVersion})
     ON CONFLICT DO NOTHING RETURNING id`;
   if (seg.length > 0) {
     await tx`UPDATE sources SET segment_count = segment_count + 1, masked_secrets = masked_secrets + ${p.masked.secrets},

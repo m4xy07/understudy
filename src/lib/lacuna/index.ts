@@ -16,6 +16,7 @@ import { withRole } from "@/lib/db/withRole";
 import { getWorkspacePack, entityLabel, roleLabel, type ResolvedPack } from "@/lib/pack";
 import { claimId as makeClaimId, tierFor } from "@/lib/attest";
 import { computeFootprint } from "@/lib/tether/footprint";
+import { limitedNote, narrowTypedText } from "@/lib/tether/visibility";
 import { maskAnswer, persistAnswer } from "./persist";
 import { callJson, modelAvailable } from "@/lib/model/client";
 import type {
@@ -441,7 +442,7 @@ export async function buildQuestions(ws: string): Promise<GapQuestion[]> {
 // ---------------------------------------------------------------------------
 
 export type AnswerResult =
-  | { ok: true; claimId: string; before: Scores | null; after: Scores; delta: string }
+  | { ok: true; claimId: string; before: Scores | null; after: Scores; delta: string; /** Set when the answer was limited as sensitive. */ limited?: string | null }
   | { ok: false; error: string };
 
 const INTERVIEW_SOURCE = "src_interview";
@@ -504,7 +505,10 @@ export async function answerQuestion(
     leaverId,
     { leaverName: leaverName(pack) || "The leaver", ts, sourceId: INTERVIEW_SOURCE, workspaceId: ws, narrowTo },
   );
-  const roleSet = draft.roleSet;
+  // Sensitive content typed into an answer is limited at insert, like an ingested message: the
+  // classifier's rules can only narrow the role set the leaver chose.
+  const sensitivity = await narrowTypedText(ws, segment.text, "answer", draft.roleSet);
+  const roleSet = sensitivity.roleSet;
   const id = makeClaimId(draft.entity, draft.attribute, draft.value, [segment.id]);
   const claim: Claim = {
     id, workspaceId: ws, entity: draft.entity, entityLabel: draft.entityLabel, attribute: draft.attribute,
@@ -522,10 +526,11 @@ export async function answerQuestion(
       segment,
       claim,
       masked,
+      sensitivity,
       contactRoles: (pack.contactsRoles as RoleKey[]).filter((r) => roleSet.includes(r)),
       event: {
         origin: "leaver_answer", questionId, segmentId: segment.id, trust: "leaver_said", roleSet,
-        narrowed: roleSet.length < base.length,
+        narrowed: roleSet.length < base.length, ...(sensitivity.roleSetOriginal ? { sensitivity: sensitivity.categories, stage: sensitivity.stage } : {}),
       },
       actor,
     });
@@ -540,7 +545,7 @@ export async function answerQuestion(
   const checks = checksByResp(await listResponsibilities(ws), lpack);
   const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
   await sql`UPDATE gap_questions SET score_delta = ${delta} WHERE workspace_id = ${ws} AND id = ${questionId}`;
-  return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta };
+  return { ok: true, claimId: claim.id, before: before?.scores ?? null, after: after.scores, delta, limited: limitedNote(sensitivity) };
 }
 
 // ---------------------------------------------------------------------------

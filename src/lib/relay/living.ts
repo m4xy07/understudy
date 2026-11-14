@@ -28,6 +28,7 @@ import { checksByResp, findCheck } from "@/lib/lacuna/core/checks";
 import type { LacunaCheck } from "@/lib/lacuna/core/pack";
 import { approvalRoles, entityLabel, getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
 import { maskText } from "@/lib/tether/mask";
+import { limitedNote, narrowTypedText, segmentSensitivityFields } from "@/lib/tether/visibility";
 import { norm } from "@/lib/text/norm";
 import { TRUST_LABEL } from "@/lib/trust";
 import type { Claim, Coverage, Importance, PlanItem, Responsibility, ReviewTier, RoleKey, Scores, Snapshot, Trust } from "@/lib/types";
@@ -458,7 +459,9 @@ export interface FindingForm {
   example?: boolean;
 }
 
-export type RecordResult = { ok: true; findingId: string; claimId: string; roleSet: RoleKey[] } | { ok: false; error: string };
+export type RecordResult =
+  | { ok: true; findingId: string; claimId: string; roleSet: RoleKey[]; /** Set when the finding was limited as sensitive. */ limited?: string | null }
+  | { ok: false; error: string };
 
 const SEP = "\n␞\n";
 
@@ -536,8 +539,7 @@ export async function recordFinding(ws: string, actor: RoleKey, form: FindingFor
   const valid = validateFinding(input);
   if (!valid.ok) return fail(valid.error);
 
-  // Mask before anything is stored. (Improvement 2's sensitivity classifier, once merged, narrows
-  // the role set here: intersect input.narrowTo with its result. It can never widen.)
+  // Mask before anything is stored.
   const masked = await maskFinding(ws, {
     answer: oneLine(input.answer), note: input.note.trim(), link: input.link ?? "", file: attachment?.text ?? null,
   });
@@ -557,7 +559,13 @@ export async function recordFinding(ws: string, actor: RoleKey, form: FindingFor
   }
 
   const drafts = findingToDrafts(input);
-  const { segment, attachment: fileSegment, roleSet } = drafts;
+  const { segment, attachment: fileSegment } = drafts;
+  // Sensitive content typed into a finding (or carried by its attached file) is limited at insert
+  // (rules only). One decision for the finding as a whole: its segments, its claim and the finding
+  // row share one role set, and it can only get narrower than what the successor chose.
+  const sensitivity = await narrowTypedText(ws, [segment.text, fileSegment?.text ?? ""].join("\n"), "finding", drafts.roleSet, "finding");
+  const roleSet = sensitivity.roleSet;
+  const sens = segmentSensitivityFields(sensitivity);
   const draft = drafts.claim;
   // Citation rule, checked like any claim: the quote is an exact substring of the cited segment.
   const quote = draft.citations[0].quote ?? "";
@@ -597,9 +605,11 @@ export async function recordFinding(ws: string, actor: RoleKey, form: FindingFor
       let added = 0;
       for (const s of segs) {
         const rows = await tx`
-          INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta)
+          INSERT INTO segments (workspace_id, id, version, source_id, source_kind, kind, ts, author_id, thread, position, text, text_hash, role_set, meta,
+            sensitivity, sensitivity_stage, sensitivity_reason, role_set_original, classifier_version)
           VALUES (${ws}, ${s.id}, 1, ${FINDING_SOURCE_ID}, 'finding', 'finding', ${s.ts}, ${null}, ${s.thread}, ${s.position},
-            ${s.text}, ${s.textHash}, ${roleSet}::text[], ${JSON.stringify(s.meta)}::jsonb)
+            ${s.text}, ${s.textHash}, ${roleSet}::text[], ${JSON.stringify(s.meta)}::jsonb,
+            ${sens.sensitivity}::text[], ${sens.stage}, ${sens.reason}, ${sens.roleSetOriginal}::text[], ${sens.classifierVersion})
           ON CONFLICT DO NOTHING RETURNING id`;
         added += rows.length;
       }
@@ -623,6 +633,7 @@ export async function recordFinding(ws: string, actor: RoleKey, form: FindingFor
         VALUES (${ws}, ${claim.id}, 'created', ${JSON.stringify({
           origin: "successor_finding", findingId: drafts.findingId, segmentId: segment.id, trust: "successor_found", roleSet,
           narrowed: roleSet.length < base.length, hasLink: Boolean(input.link), hasFile: Boolean(fileSegment),
+          ...(sensitivity.roleSetOriginal ? { sensitivity: sensitivity.categories, stage: sensitivity.stage } : {}),
         })}::jsonb, ${actor})`;
       await tx`
         INSERT INTO findings (workspace_id, id, responsibility_id, check_key, segment_id, attachment_segment_id, claim_id,
@@ -639,7 +650,7 @@ export async function recordFinding(ws: string, actor: RoleKey, form: FindingFor
     findingId: drafts.findingId, claimId: claim.id, responsibilityId: resp.id, checkKey: check.key, roleSet,
     maskedSecrets: masked.secrets, maskedContacts: masked.contacts.length,
   });
-  return { ok: true, findingId: drafts.findingId, claimId: claim.id, roleSet };
+  return { ok: true, findingId: drafts.findingId, claimId: claim.id, roleSet, limited: limitedNote(sensitivity) };
 }
 
 /** The successor takes back a finding that is still waiting. Its claim is dropped, never deleted. */

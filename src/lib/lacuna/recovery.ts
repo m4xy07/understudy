@@ -30,6 +30,7 @@ import {
   type NeighbourCounts, type NeighbourScore,
 } from "@/lib/tether/graph";
 import { readTraces, type Trace, type TraceKind } from "@/lib/tether/traces";
+import { limitedNote, narrowTypedText } from "@/lib/tether/visibility";
 import type {
   Attribute, CheckResult, Claim, Coverage, Importance, Person, Responsibility, RoleKey, Scores, Segment, SourceKind, TestRun, Trust,
 } from "@/lib/types";
@@ -916,7 +917,7 @@ export async function askedRoles(ws: string): Promise<RoleKey[]> {
 // ---------------------------------------------------------------------------
 
 export type NeighbourAnswerResult =
-  | { ok: true; declined: false; claimId: string; delta: string; before: Scores | null; after: Scores }
+  | { ok: true; declined: false; claimId: string; delta: string; before: Scores | null; after: Scores; /** Set when the answer was limited as sensitive. */ limited?: string | null }
   | { ok: true; declined: true }
   | { ok: false; error: string };
 
@@ -973,8 +974,6 @@ export async function answerAsNeighbour(
   const keep = [...new Set([actor, pack.approverRole as RoleKey])];
   const start = defaultAnswerRoleSet(base, resp, check, await visibleClaims(ws, actor), keep);
   const roleSet = narrowAnswerRoleSet(start, opts.narrowRoles, keep);
-  // SENSITIVITY HOOK: the answer's role set is final here. The confidentiality classifier can
-  // narrow `roleSet` further (never widen it) before the segment and claim are stored.
 
   const masked = await maskAnswer(ws, text);
   const personId = (step.target_person as string | null) ?? null;
@@ -991,6 +990,9 @@ export async function answerAsNeighbour(
     { ts, sourceId: RECOVERY_SOURCE, workspaceId: ws },
   );
   segment.meta = { ...segment.meta, answeredAt, stepId: String(step.id) };
+  // Sensitive content typed into the answer is limited at insert (rules only; it can only narrow).
+  const sensitivity = await narrowTypedText(ws, segment.text, "answer", draft.roleSet);
+  draft.roleSet = sensitivity.roleSet;
   const id = makeClaimId(draft.entity, draft.attribute, draft.value, [segment.id]);
   const claim: Claim = {
     id, workspaceId: ws, entity: draft.entity, entityLabel: draft.entityLabel, attribute: draft.attribute,
@@ -1015,10 +1017,11 @@ export async function answerAsNeighbour(
       segment,
       claim,
       masked,
+      sensitivity,
       contactRoles: (pack.contactsRoles as RoleKey[]).filter((r) => claim.roleSet.includes(r)),
       event: {
         origin: "neighbour_answer", stepId: String(step.id), segmentId: segment.id, trust: "second_hand", roleSet: claim.roleSet,
-        narrowed: claim.roleSet.length < start.length,
+        narrowed: claim.roleSet.length < start.length, ...(sensitivity.roleSetOriginal ? { sensitivity: sensitivity.categories, stage: sensitivity.stage } : {}),
       },
       actor,
     });
@@ -1041,7 +1044,7 @@ export async function answerAsNeighbour(
   } catch (err) {
     console.error(`[recovery ${ws}] ladder refresh after an answer failed`, err);
   }
-  return { ok: true, declined: false, claimId: claim.id, delta, before: before?.scores ?? null, after: after.scores };
+  return { ok: true, declined: false, claimId: claim.id, delta, before: before?.scores ?? null, after: after.scores, limited: limitedNote(sensitivity) };
 }
 
 /** "I don't know": the step is closed, nothing is stored as evidence, and no score moves. */

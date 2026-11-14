@@ -17,8 +17,8 @@ import { callJson, modelAvailable } from "@/lib/model/client";
 import { getWorkspacePack, roleLabel, type ResolvedPack } from "@/lib/pack";
 import type { RoleKey, Segment, SensitivityCategory, SensitivityStage } from "@/lib/types";
 import {
-  CATEGORIES, CLASSIFIER_VERSION, classifyByRules, nameParts, narrowRoleSet, packSensitivity, reasonFor,
-  type SensitivityModelCall,
+  CATEGORIES, CLASSIFIER_VERSION, classifyByRules, nameParts, narrowForSensitivity, narrowRoleSet, packSensitivity, reasonFor,
+  type NarrowResult, type SensitivityModelCall,
 } from "./sensitivity";
 
 type Sql = ReturnType<typeof db>;
@@ -50,6 +50,39 @@ export async function knownNamesFor(ws: string): Promise<{ knownNames: string[];
     all.push(...names);
   }
   return { knownNames: nameParts(all), authorNames };
+}
+
+/**
+ * For text typed into the app after ingest (a leaver's answer, a neighbour's answer, a successor
+ * finding): the role set it may be stored with. Rules only (no model call on the save path): a
+ * strong hit limits it to the pack's roles for that category, a borderline one is held for the
+ * approver. Never wider than `roleSet`. Store the returned role set on the segment and its claim,
+ * and the sensitivity fields on the segment (segmentSensitivityFields).
+ */
+export async function narrowTypedText(
+  ws: string, text: string, kind: Segment["kind"], roleSet: readonly RoleKey[], sourceKind: Segment["sourceKind"] = "interview",
+): Promise<NarrowResult> {
+  const pack = await getWorkspacePack(ws);
+  const { knownNames } = await knownNamesFor(ws);
+  return narrowForSensitivity(text, kind, roleSet, packSensitivity(pack), knownNames, sourceKind);
+}
+
+/** The sensitivity columns of a new segment row, from a narrowTypedText result (or none). */
+export function segmentSensitivityFields(n: NarrowResult | null | undefined): {
+  sensitivity: string[]; stage: string | null; reason: string | null; roleSetOriginal: RoleKey[] | null; classifierVersion: number;
+} {
+  return {
+    sensitivity: n?.categories ?? [], stage: n?.stage ?? null, reason: n?.reason ?? null,
+    roleSetOriginal: n?.roleSetOriginal ?? null, classifierVersion: CLASSIFIER_VERSION,
+  };
+}
+
+/** One sentence for the person who typed it, when their text was limited; null otherwise. */
+export function limitedNote(n: NarrowResult | null | undefined): string | null {
+  if (!n?.roleSetOriginal) return null;
+  return n.stage === "held"
+    ? "It may hold sensitive content, so it is held for the approver to look at."
+    : "It holds sensitive content, so fewer roles can read it.";
 }
 
 // ---------------------------------------------------------------------------------------------
