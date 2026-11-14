@@ -1,12 +1,16 @@
 # Disclosures
 
-Team DRACONIX (CodersInPune) · Understudy · Knowledge Handover challenge, Round 2
+Team DRACONIX (CodersInPune) · Understudy · Knowledge Handover challenge, Round 3
 
 ## Build window
 
-All product code in this repository was written during the Round 2 build window. The first commit (`1001ead`, 11 Nov 2026, 00:11 IST) is the framework scaffold plus our plan and architecture contract; the history after it shows the work in small steps.
+**Round 3.** The window opened at 23:59 IST on Friday 13 November 2026. We wrote the plan, the specs and the decisions before it opened, as documents only, with no product code. They entered this repository as the first Round 3 commit, `dc1041b` (14 Nov 2026, 10:31 IST), which adds only `docs/round3/` and the licence file. The first product commit of Round 3 is `fda0542` (14 Nov 2026, 10:35 IST), after the window opened. The last commit before Round 3 is `05473dd` (11 Nov 2026, 14:40 IST), from the Round 2 window.
 
-The research, the product design and the plan come from our Round 1 submission and were done before the build window, as the rules allow. They are carried into [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/plan/2026-11-11-round2-build-plan.md](docs/plan/2026-11-11-round2-build-plan.md). Where the build differs from the Round 1 plan, the README section "Against the Round 1 plan" says what changed and why.
+You can check this with `git log --date=iso-strict --format="%h %ad %s"`.
+
+**Round 2.** All Round 2 product code was written during the Round 2 build window. The first commit (`1001ead`, 11 Nov 2026, 00:11 IST) is the framework scaffold plus our plan and architecture contract.
+
+**Before any window.** The research, the product design and the Round 1 plan were done before the build windows, as the rules allow. They are carried into [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/plan/2026-11-11-round2-build-plan.md](docs/plan/2026-11-11-round2-build-plan.md) and [docs/round3/](docs/round3/).
 
 ## Boilerplate
 
@@ -16,15 +20,17 @@ The app started from the standard `create-next-app` scaffold (Next.js, TypeScrip
 
 ## AI assistance
 
-We used AI coding tools, including Claude Code, to write and test much of the code and documentation, under our direction and review. We set the product rules, the architecture contract and the module boundaries, and we decided what to keep.
+AI coding tools, mainly Claude Code, wrote much of the code and the documentation, under our direction and review. We set the product rules, the architecture contract, the module boundaries and the specs. We decided what to build, what to keep and what to cut, and we reviewed the results.
 
-The product's own runtime model is Qwen3 (open weights): `qwen/qwen3-32b` through OpenRouter for the hosted demo, and `qwen3:8b` on Ollama for local use. It drafts claims, runs the support check and plays the stand-in successor. Code sets every label, role set, status, score, tier and approval. Handover text comes from fixed templates, not from the model.
+Every commit carries the team lead's git identity: the work was committed from his machine.
 
-The demo's precomputed extraction answers from `qwen/qwen3-32b` are committed in `data/demo/model_cache.json` so the demo replays the same claims.
+The product's own runtime model is Qwen3 (open weights): `qwen/qwen3-32b` through OpenRouter for the hosted demo, and `qwen3:8b` on Ollama for local use. It drafts claims, runs the support check, plays the stand-in successor, classifies borderline sensitive messages, proposes ranked options and acts as the judge in the reworded-fact probes. Code sets every label, role set, status, score, tier and approval. Handover text comes from fixed templates, not from the model.
+
+The stored model answers that both demos replay are committed in `data/demo/model_cache.json` and `data/lab/model_cache.json`. They were produced by `qwen/qwen3-32b`.
 
 ## Open-source libraries
 
-Licences below are read from each package's `package.json` in `node_modules`, at the versions in `pnpm-lock.yaml`.
+Licences below are read from each package's `package.json` in `node_modules`, at the versions `pnpm install` resolves from `pnpm-lock.yaml`.
 
 ### Runtime
 
@@ -33,43 +39,47 @@ Licences below are read from each package's `package.json` in `node_modules`, at
 | next | 16.4.6 | MIT | Web framework: pages, server actions, API routes |
 | react, react-dom | 19.3.0 | MIT | UI |
 | postgres | 4.1.0 | Unlicense | Postgres driver (porsager/postgres) |
-| zod | 4.6.7 | MIT | Validating model output, the setting pack and inputs |
+| zod | 4.6.7 | MIT | Validating model output, the setting packs and inputs |
 | papaparse | 5.7.0 | MIT | Task board CSV parsing |
 | gray-matter | 4.0.3 | MIT | Front matter in Markdown notes |
-| ical.js | 2.2.1 | MPL-2.0 | Calendar (.ics) parsing and expanding recurring events |
+| ical.js | 2.2.1 | MPL-2.0 | Calendar (.ics) parsing and recurring events |
 | clsx | 2.1.1 | MIT | Class name joining |
 
-The UI uses text symbols, not an icon library. Calendar recurrence is expanded by ical.js.
+The UI uses text symbols, not an icon library.
 
 ### Development and testing
 
 | Package | Version | Licence | Purpose |
 |---|---|---|---|
-| vitest | 5.1.0 | MIT | Unit, integration, permission and canary tests |
+| vitest | 5.1.0 | MIT | Unit, database, permission and leak tests |
 | tsx | 4.23.15 | MIT | Running TypeScript scripts (migrate, seed, eval) |
-| @playwright/test | 1.65.0 | Apache-2.0 | End-to-end runs on the live URL (status in TESTING.md) |
+| @playwright/test | 1.65.0 | Apache-2.0 | End-to-end tests in Chromium |
 | tailwindcss, @tailwindcss/turbopack | 4.3.3 | MIT | Styling |
 | eslint | 9.39.5 | MIT | Linting |
 | eslint-config-next | 16.4.6 | MIT | Next.js lint rules |
 | typescript | 5.9.3 | Apache-2.0 | Type checking |
+| @types/node | 20.19.43 | MIT | Types |
+| @types/react, @types/react-dom | 19.3.0 | MIT | Types |
+| @types/papaparse | 5.5.2 | MIT | Types |
 
-Type packages (`@types/node`, `@types/react`, `@types/react-dom`, `@types/papaparse`) are MIT, from DefinitelyTyped.
+Understudy itself is released under the MIT licence ([LICENSE](LICENSE)).
 
 ## Hosted services
 
 | Service | Used for |
 |---|---|
-| Vercel | Hosting the live app; functions pinned to region `icn1` |
+| Vercel | Hosting the live app; functions in region `icn1`; one daily cron for the cleanup |
 | Supabase | Production Postgres with row-level security, reached through the transaction pooler |
 | OpenRouter | OpenAI-compatible endpoint for `qwen/qwen3-32b` on the hosted demo |
-| GitHub | Code hosting; the public GitHub API when a visitor imports a public repo URL |
+| GitHub | Code hosting and CI (GitHub Actions); the public GitHub API when a visitor imports a public repository URL |
 
 Local development uses Docker (`postgres:16`) and, optionally, Ollama.
 
 ## Data
 
-- The demo data in `data/demo/` is synthetic. The robotics club, its members (including Priya) and every company and sponsor are fictional.
-- It contains deliberately planted FAKE secrets so masking can be shown: an AWS-style access key pair, a GitHub-style token and a password line. The masking tests in `tests/tether/mask.test.ts` add more fake values, including a Slack-style token. None of them is real or was ever valid.
-- Contact emails and phone numbers in the demo are made up.
+- All demo data in `data/demo/` (the robotics club) and `data/lab/` (the research group) is synthetic. The organisations, their members and every company, sponsor and facility are fictional.
+- The data contains deliberately planted FAKE secrets so masking can be shown: AWS-style access keys, GitHub-style tokens and password lines. The masking tests add more fake values. None of them is real or was ever valid.
+- Contact emails and phone numbers in the demos are made up.
 - Restricted demo sources carry `CANARY-XXXX` tokens for the leak check. They are markers, not data.
-- No real personal or company data was used to build or test the product. The upload screen warns visitors not to upload confidential material.
+- The club demo also holds planted sensitive messages (a medical excuse, a fee dispute, a complaint about a person) and reworded restricted facts, so the classifier and the probes have something to find. They describe fictional people.
+- No real personal or company data was used to build or test the product. The upload screen asks visitors not to upload confidential material.
