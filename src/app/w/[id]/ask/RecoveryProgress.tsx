@@ -35,7 +35,7 @@ export function RecoveryProgress() {
       <ol className="mt-1 grid gap-0.5">
         {RECOVERY_STEPS.map((label, i) => (
           <li key={label} className={clsx(i < current ? "text-ok" : i === current ? "text-ink" : "text-muted")}>
-            <span aria-hidden="true" className={clsx("mr-1.5 inline-block w-4 text-center", i === current && "animate-spin")}>
+            <span aria-hidden="true" className={clsx("mr-1.5 inline-block w-4 text-center", i === current && "animate-spin motion-reduce:animate-none")}>
               {i < current ? "✓" : i === current ? "◌" : "·"}
             </span>
             {label}

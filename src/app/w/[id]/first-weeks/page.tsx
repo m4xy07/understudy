@@ -152,6 +152,7 @@ async function FirstWeeks({ params }: { params: WsParams }) {
         ) : (
           <div className="table-wrap mt-3">
             <table className="data-table">
+              <caption className="sr-only">Findings recorded on open gaps, with their review status</caption>
               <thead>
                 <tr>
                   <th scope="col">Gap</th>
@@ -213,10 +214,14 @@ function FindingRow({ f, ws, canWithdraw }: { f: FindingView; ws: string; canWit
       <td className="text-sm">
         {when(f.recordedAt)}
         <div className="mt-1 flex flex-wrap items-center gap-2">
-          <Link className="text-attest underline" href={`/w/${ws}/source/${f.segmentId}?claim=${f.claimId}`}>Open evidence</Link>
+          <Link className="text-attest underline" href={`/w/${ws}/source/${f.segmentId}?claim=${f.claimId}`}>
+            Open evidence<span className="sr-only"> for {f.gap}</span>
+          </Link>
           {canWithdraw && f.status === "pending" && (
             <ActionForm action={withdrawFindingAction} hidden={{ ws, findingId: f.id }}>
-              <SubmitButton className="btn-quiet btn-sm" pendingText="Withdrawing…">Withdraw</SubmitButton>
+              <SubmitButton className="btn-quiet btn-sm" pendingText="Withdrawing…">
+                Withdraw<span className="sr-only"> finding for {f.gap}</span>
+              </SubmitButton>
             </ActionForm>
           )}
         </div>
