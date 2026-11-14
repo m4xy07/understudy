@@ -1,9 +1,9 @@
 "use client";
 // Tier C review: the evidence opens inline, and only after it was opened (and a reason of 10+
 // characters is written) can the approver decide. The server checks both again.
-import { useActionState, useId, useState } from "react";
+import { useId, useState } from "react";
 import clsx from "clsx";
-import { SubmitButton, type ActionState } from "@/components/ActionForm";
+import { SubmitButton, useSafeActionState, type ActionState } from "@/components/ActionForm";
 import { SegmentText } from "@/components/SegmentText";
 import { reviewClaimAction } from "./actions";
 
@@ -21,7 +21,7 @@ const MIN = 10;
 export function TierCReview({ ws, claimId, evidence }: { ws: string; claimId: string; evidence: EvidenceItem[] }) {
   const [opened, setOpened] = useState(false);
   const [note, setNote] = useState("");
-  const [state, formAction] = useActionState<ActionState, FormData>(reviewClaimAction, { ok: true, message: null });
+  const [state, formAction] = useSafeActionState<ActionState>(reviewClaimAction, { ok: true, message: null });
   const panelId = useId();
   const noteId = useId();
   const reasonOk = note.trim().length >= MIN;

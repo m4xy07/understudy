@@ -351,7 +351,8 @@ every recovery text a role can read, for the leak check.
   steps (import, extraction, review writes) run as the app user and are logged.
 - Workspaces: each visitor gets a private copy (`POST /api/workspaces` clones the demo pack or creates an
   empty one). The workspace UUID is in the URL; the current role is a cookie `us_role_<workspaceId>`.
-  No sign-up. Workspaces older than 7 days may be deleted.
+  No sign-up. A daily cleanup deletes demo copies older than 7 days and empty-start workspaces
+  idle for 14 days; a workspace with an approved snapshot is never deleted by it.
 
 ## 6. Code layout and ownership (parallel builders stay in their lane)
 

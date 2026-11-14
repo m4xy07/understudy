@@ -1,6 +1,6 @@
 "use client";
 // Upload files or a public GitHub URL into the workspace. Posts to /api/w/[id]/{upload,github}.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RoleKey } from "@/lib/types";
 
@@ -12,6 +12,11 @@ const KINDS: { key: string; label: string; accept: string; multiple: boolean; hi
   { key: "ics", label: "Calendar (.ics)", accept: ".ics,text/calendar", multiple: false, hint: "One calendar file." },
   { key: "github", label: "GitHub export (JSON + files)", accept: ".json,.md,.yml,.yaml,.txt", multiple: true, hint: "commits.json plus repository files. Or paste a public repo URL below." },
 ];
+
+// Same number as the server (UPLOAD_LIMIT_BYTES in src/lib/pipeline/ingest.ts): the live host
+// refuses a larger request before our code runs, so the form checks first and says why.
+const LIMIT_BYTES = Math.floor(4.5 * 1024 * 1024);
+const LIMIT_TEXT = "Upload is over 4.5 MB. Split it or trim it.";
 
 interface Result {
   ok: boolean;
@@ -35,27 +40,57 @@ export function UploadForm({ ws, roles }: { ws: string; roles: { key: RoleKey; l
   const [repoMsg, setRepoMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const k = KINDS.find((x) => x.key === kind)!;
 
+  // Refs, not state: a second submit in the same tick (double click, Enter twice) must see the first.
+  const sending = useRef(false);
+  const fetching = useRef(false);
+
   async function onUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (sending.current) return;
+    const formEl = e.currentTarget;
+    const body = new FormData(formEl);
+    const picked = body.getAll("files").filter((f): f is File => typeof f !== "string");
+    const total = picked.reduce((n, f) => n + f.size, 0);
+    if (!picked.length || picked.every((f) => !f.name)) {
+      setMsg({ ok: false, text: "Choose at least one file." });
+      return;
+    }
+    if (total === 0) {
+      setMsg({ ok: false, text: picked.length === 1 ? `"${picked[0].name}" is empty. Choose a file with content.` : "These files are all empty. Choose files with content." });
+      return;
+    }
+    if (total > LIMIT_BYTES) {
+      setMsg({ ok: false, text: `${LIMIT_TEXT} (This selection is ${(total / 1024 / 1024).toFixed(1)} MB.)` });
+      return;
+    }
+    sending.current = true;
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch(`/api/w/${ws}/upload`, { method: "POST", body: new FormData(e.currentTarget) });
-      const data = (await res.json().catch(() => ({ ok: false, error: `Upload failed (${res.status}).` }))) as Result;
-      setMsg(data.ok ? { ok: true, text: summary(data) } : { ok: false, text: data.error ?? "Upload failed." });
+      const res = await fetch(`/api/w/${ws}/upload`, { method: "POST", body });
+      const fallback = res.status === 413 ? LIMIT_TEXT : `Upload failed (the server answered ${res.status}). Nothing was saved; try again.`;
+      const data = (await res.json().catch(() => ({ ok: false, error: fallback }))) as Result;
+      setMsg(data.ok ? { ok: true, text: summary(data) } : { ok: false, text: data.error ?? fallback });
       if (data.ok) {
-        e.currentTarget?.reset();
+        formEl.reset();
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: "Upload failed: the server did not answer." });
+      setMsg({ ok: false, text: "Upload failed: the server did not answer. Check your connection and try again." });
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   }
 
   async function onRepo(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (fetching.current) return;
+    if (!repo.trim()) {
+      setRepoMsg({ ok: false, text: "Paste a public GitHub repository URL." });
+      return;
+    }
+    fetching.current = true;
     setRepoBusy(true);
     setRepoMsg(null);
     try {
@@ -64,12 +99,13 @@ export function UploadForm({ ws, roles }: { ws: string; roles: { key: RoleKey; l
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: repo }),
       });
-      const data = (await res.json().catch(() => ({ ok: false, error: `Import failed (${res.status}).` }))) as Result;
+      const data = (await res.json().catch(() => ({ ok: false, error: `Import failed (the server answered ${res.status}). Nothing was saved; try again.` }))) as Result;
       setRepoMsg(data.ok ? { ok: true, text: summary(data) } : { ok: false, text: data.error ?? "Import failed." });
       if (data.ok) router.refresh();
     } catch {
-      setRepoMsg({ ok: false, text: "Import failed: the server did not answer." });
+      setRepoMsg({ ok: false, text: "Import failed: the server did not answer. Check your connection and try again." });
     } finally {
+      fetching.current = false;
       setRepoBusy(false);
     }
   }
@@ -90,7 +126,7 @@ export function UploadForm({ ws, roles }: { ws: string; roles: { key: RoleKey; l
             </select>
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="font-medium">Files (5 MB max)</span>
+            <span className="font-medium">Files (4.5 MB max)</span>
             <input key={kind} name="files" type="file" required multiple={k.multiple} accept={k.accept} className="field py-1.5 text-sm" />
           </label>
         </div>
@@ -126,8 +162,9 @@ export function UploadForm({ ws, roles }: { ws: string; roles: { key: RoleKey; l
           <span className="font-medium">Repository URL</span>
           <input
             className="field"
-            type="url"
+            type="text"
             inputMode="url"
+            maxLength={300}
             placeholder="https://github.com/owner/repo"
             value={repo}
             onChange={(e) => setRepo(e.target.value)}

@@ -28,6 +28,7 @@ pnpm test:e2e       # Playwright, the judge path in Chromium (see "End-to-end su
 | `tests/lacuna/` | Lacuna | Inventory from the board, footprint and role template, with origins and part-of entities. Stand-in successor: code decides coverage and drops citations to claims that are missing, hidden or superseded; deterministic fallback. Scores B, C, K and their deltas. Gap ranking (weight × uncertainty × urgency), at most ten, never about restricted checks. Answers: only the leaver answers, "Leaver said" raises C not K, narrowing never widens. Continuation plan and release state. Integration on the demo pack with the planted claims. |
 | `tests/relay/` | Relay | Review tiers A, B, C; tier C needs evidence opened and a written reason; edits keep citations and are labelled. Canonical JSON and SHA-256 hash: stable across key order, changes when one statement changes, tampering detected, versions diff. Release rule and approval. Per-role compile in I-PASS order, stub text, Markdown export. Read-back parsers (dates to ISO, text, commands, contacts) and per-item verdicts. Canary scanning. Integration against the database. |
 | `tests/db/` | Foundation | RLS through `withRole`, append-only and immutable tables, the walking-skeleton pipeline end to end (ingest, run, answer, review, snapshot, per-role handover), and the pool regression. |
+| `tests/pipeline/` | Reliability | **The run lease:** five starts at the same moment make one run and four attach; the database refuses a second live run; a slice that died is continued once its lease expires, not before. **Resumable slices** (fake model endpoint, tiny time budget): a run pauses, continues, and stores the same drafts as a one-shot run, with every batch read live once; progress never goes down; a batch that always fails is tried three times, then named; the slice limit ends a run with a message; the per-workspace cap stops live calls and says so. **Repeats:** two saves of one answer store one; approving an approved claim is a no-op; three snapshot approvals at once make one version, a repeat makes none, a real change makes v2; one model re-check at a time. **Bad input:** empty, binary, wrong-shape and oversized uploads refused with a reason and no source left behind; plan dates must be real dates. **Cleanup:** an old demo copy is deleted with every child row; fresh, active, locked and approved workspaces stay; dry mode deletes nothing; the route answers 401 without the secret. |
 | `tests/model/` | Foundation | The model client in tests: no probe, no network, a fast typed failure on a cache miss. |
 
 ## Evaluation harness
@@ -110,6 +111,14 @@ pnpm test:e2e                                                   # baseURL http:/
 E2E_BASE_URL=https://understudy-lyart.vercel.app pnpm test:e2e  # against the live app
 ```
 
+`tests/e2e/reliability.spec.ts` does what a judge does to break things, and fails on any page error or 5xx answer:
+
+1. Unknown and malformed workspace ids, on every page and API route: a not-found page with a way back, JSON 404s.
+2. An empty workspace, every page, every role: an empty state that names the next step.
+3. Uploads: a zero-byte file, a file over 4.5 MB (both stopped in the browser), a PNG, a malformed CSV, malformed JSON, a malformed calendar (each refused in words, nothing stored); a good file with a double click on Upload (one request), then again (nothing new). Bad GitHub URLs.
+4. The pipeline started by a double click plus three more starts at once, with a refresh mid-run: one run.
+5. On the demo: a blank answer; one question answered from two tabs at the same moment (stored once); blank and over-long plan fields; the snapshot approved from two tabs at once, one with a double click (one version), then approved again with nothing changed (a note, no new version); back after an action; an acknowledgement pressed twice; two more pipeline starts after approval (the handover and the export still work).
+
 `playwright.config.ts`: Chromium only, one worker, one retry, a screenshot and a trace on failure (in `test-results/`), an HTML report in `playwright-report/`. The answer step allows two minutes because the live re-test calls the model. Vitest ignores `tests/e2e`.
 
 **Result (2026-11-11), against https://understudy-lyart.vercel.app:**
@@ -178,12 +187,15 @@ Run in a fresh private browser window on https://understudy-lyart.vercel.app, fo
 | Handover as New member | Fewer items, larger stub, no topic or value of restricted items | Pass (2026-11-11). No restricted values; stub "3 restricted items. Ask the approver (Club President)." Same items as the tech lead in this run, because every approved claim came from sources all roles see. |
 | Leak check grid | Every role and surface passes | Pass (2026-11-11). "All 30 checks pass" (5 roles × 6 surfaces). |
 | Download handover (Markdown) | File matches the role's view; no canary outside that role's visibility | Pass (2026-11-11). handover-tech_lead-v1.md (3 KB), no CANARY token. |
-| Start empty and upload a file | Upload accepted (5 MB max per file) or rejected with a reason; run works on the upload | Pass (2026-11-11). A 3-row task CSV was accepted (3 segments, 0 rejected); the run finished in about 7 s with 9 claims. |
+| Start empty and upload a file | Upload accepted (4.5 MB max per upload) or rejected with a reason; run works on the upload | Pass (2026-11-11). A 3-row task CSV was accepted (3 segments, 0 rejected); the run finished in about 7 s with 9 claims. |
 
 ## Known limits
 
-- **Your own uploads call the model live.** The demo replays precomputed model answers (23 of 23 extraction batches from the cache) and finishes in a few seconds. A run on files you upload has no cached answers, so it can take a few minutes; the run panel says so and updates by itself.
-- **The browser suite covers the judge path only.** It does not cover uploads, tier C review, the read-back form or the Markdown export; those are in the manual table above. Each run creates a demo workspace on the target site.
+- **Your own uploads call the model live.** The demo replays precomputed model answers (23 of 23 extraction batches from the cache) and finishes in a few seconds. A run on files you upload has no cached answers, so it can take a few minutes. A run that needs more than one function invocation is read in parts: the run panel shows how many model calls are finished and asks for the next part by itself. **This needs the Connect page (or any workspace page) open in a browser**; with every tab closed a paused run waits and continues when the workspace is opened again. There is no time-left estimate.
+- **Limits on uploads and model use.** One upload is at most 4.5 MB and 20,000 entries. Each workspace may make 400 live model calls a day (`MODEL_CALLS_PER_WORKSPACE_PER_DAY`), the whole deployment 4,000 (`MODEL_CALLS_PER_DAY`); past that, cached answers still replay and the run says how many calls were skipped.
+- **After an answer, the first score is the rule-based reading.** The model re-check runs in the background (a header pill says so) and can lower it a few seconds later. If two answers are saved close together, the "re-test after this answer" sentence of the earlier one keeps its rule-based reading; the scores themselves always come from the latest run.
+- **The browser suite covers the judge path and the abuse cases above.** It does not cover tier C review or the read-back values; those are in the manual table above. Each run creates workspaces on the target site.
+- **Invite links are not built.** Roles stay open (the role switcher); the cleanup rule already protects a workspace marked locked, but nothing in the app locks one yet.
 - **CI covers tests, build and the judge path only.** Lint, the type check and the evaluation gate are not CI jobs yet.
 - **Model quality is measured, not unit-tested.** The suites fake or disable the model, so they test the rules around it. Extraction quality comes from the evaluation harness. Extraction misses some planted facts and produces extra claims, and supersession and conflict detection miss some planted cases; [docs/EVALUATION.md](docs/EVALUATION.md) has the current numbers.
 - **Lacuna's integration numbers use the planted claims** (a perfect extractor), so they are not the numbers you get from the live pipeline.

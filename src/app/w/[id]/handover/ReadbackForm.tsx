@@ -1,10 +1,11 @@
 "use client";
 // Synthesis by receiver: the successor types the critical items; the server normalises them and
 // compares exactly with the approved snapshot, then (on request) records an acknowledgement.
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { useFormStatus } from "react-dom";
+import { useSafeActionState } from "@/components/ActionForm";
 import type { ReadbackVerdict } from "@/lib/types";
 import { readbackAction } from "./actions";
 
@@ -48,7 +49,7 @@ const VERDICT: Record<ReadbackVerdict["verdict"], { symbol: string; label: strin
 export function ReadbackForm({
   ws, fields, hidden, canAck, ackNote,
 }: { ws: string; fields: ReadbackField[]; hidden: number; canAck: boolean; ackNote: string | null }) {
-  const [state, formAction] = useActionState<ReadbackState, FormData>(readbackAction, {
+  const [state, formAction] = useSafeActionState<ReadbackState>(readbackAction, {
     ok: true, message: null, verdicts: null, acked: false,
   });
   const [dirty, setDirty] = useState(false);

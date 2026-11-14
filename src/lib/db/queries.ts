@@ -124,7 +124,10 @@ export async function listSnapshots(ws: string): Promise<Snapshot[]> {
 /** Latest pipeline run for the workspace, or null when none has started. */
 export async function getRunStatus(ws: string): Promise<RunStatus | null> {
   if (!isUuid(ws)) return null;
-  const rows = await db()`SELECT * FROM runs WHERE workspace_id = ${ws} ORDER BY started_at DESC LIMIT 1`;
+  const rows = await db()`
+    SELECT *, (status = 'paused' OR (status = 'running' AND (lease_until IS NULL OR lease_until < now()))) AS resumable
+    FROM runs WHERE workspace_id = ${ws}
+    ORDER BY (status IN ('running', 'paused')) DESC, started_at DESC LIMIT 1`;
   return rows[0] ? toRun(rows[0]) : null;
 }
 

@@ -9,6 +9,9 @@ import { roleOptions, type WsParams } from "@/lib/page";
 import { Stepper } from "@/components/Stepper";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { RunPill } from "@/components/RunPanel";
+import { leaseHeld } from "@/lib/pipeline/guard";
+import { REJUDGE_KEY } from "@/lib/pipeline/rejudge";
+import { touchWorkspace } from "@/lib/pipeline/cleanup";
 
 export default function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: WsParams }) {
   return (
@@ -42,7 +45,10 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
   const workspace = await getWorkspace(id);
   if (!workspace) notFound();
   const pack = await getWorkspacePack(id);
-  const [role, progress, run] = await Promise.all([getRole(id, pack), getProgress(id, pack), getRunStatus(id)]);
+  const [role, progress, run, background] = await Promise.all([
+    getRole(id, pack), getProgress(id, pack), getRunStatus(id), leaseHeld(id, REJUDGE_KEY).catch(() => false),
+  ]);
+  void touchWorkspace(id); // at most one write an hour: the cleanup keeps workspaces that are in use
   return (
     <header className="border-b border-rule bg-paper">
       <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-3 sm:px-8">
@@ -54,7 +60,7 @@ async function WorkspaceHeader({ params }: { params: WsParams }) {
             <span className="truncate text-sm text-muted" title={workspace.name}>
               {workspace.name}
             </span>
-            <RunPill ws={id} initial={run} />
+            <RunPill ws={id} initial={run} background={background} />
           </div>
           <RoleSwitcher ws={id} role={role} roles={roleOptions(pack)} />
         </div>

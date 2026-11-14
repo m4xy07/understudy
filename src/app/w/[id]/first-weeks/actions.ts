@@ -9,6 +9,9 @@ import { viewingRole } from "@/lib/session";
 import { getWorkspacePack, isRoleOf, roleLabel } from "@/lib/pack";
 import { FILE_MAX_BYTES, FINDING_ERRORS } from "@/lib/relay/core/finding";
 import { decideFinding, recordFinding, withdrawFinding } from "@/lib/relay/living";
+import { runWithModelContext } from "@/lib/model/client";
+import { exclusive, spendContext } from "@/lib/pipeline/guard";
+import { busyMessage, REPEAT_WAIT_MS } from "@/lib/pipeline/once";
 import type { ActionState } from "@/components/ActionForm";
 import type { RoleKey } from "@/lib/types";
 
@@ -20,6 +23,9 @@ async function workspaceFrom(form: FormData): Promise<string | null> {
   if (!isUuid(ws)) return null;
   return (await getWorkspace(ws)) ? ws : null;
 }
+
+/** The lease approveSnapshotOnce holds (src/lib/pipeline/once.ts). */
+const SNAPSHOT_KEY = "approve_snapshot";
 
 /** The successor records a finding. It waits for the approver; scores do not change. */
 export async function recordFindingAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -37,17 +43,24 @@ export async function recordFindingAction(_prev: ActionState, form: FormData): P
   const narrowRoles = form.get("narrow") === "1"
     ? form.getAll("roles").map(String).filter((r): r is RoleKey => isRoleOf(pack, r))
     : null;
-  const res = await recordFinding(ws, role, {
-    responsibilityId: String(form.get("responsibilityId") ?? ""),
-    checkKey: String(form.get("checkKey") ?? ""),
+  const responsibilityId = String(form.get("responsibilityId") ?? "");
+  const checkKey = String(form.get("checkKey") ?? "");
+  // One finding per gap at a time: the second of two clicks (or a second tab) waits for the first
+  // and is then answered by the gap's own state (a finding is already waiting).
+  const res = await exclusive(ws, `finding:${responsibilityId}:${checkKey}`, () => recordFinding(ws, role, {
+    responsibilityId,
+    checkKey,
     answer: String(form.get("answer") ?? ""),
     note: String(form.get("note") ?? ""),
     link: String(form.get("link") ?? ""),
     attachment,
     narrowRoles,
     example: form.get("example") === "1",
-  });
-  if (!res.ok) return fail(res.error);
+  }), { ok: false as const, error: busyMessage("This finding") }, 60_000, REPEAT_WAIT_MS);
+  if (!res.ok) {
+    refresh(); // a refused repeat still brings the page up to date
+    return fail(res.error);
+  }
   refresh();
   return done(`Saved as "Successor found". It is waiting for ${roleLabel(pack.approverRole, pack)} to review. Scores do not change until it is approved.`);
 }
@@ -55,7 +68,11 @@ export async function recordFindingAction(_prev: ActionState, form: FormData): P
 export async function withdrawFindingAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await withdrawFinding(ws, await viewingRole(ws), String(form.get("findingId") ?? ""));
+  const role = await viewingRole(ws);
+  const findingId = String(form.get("findingId") ?? "");
+  // Withdrawing and deciding the same finding never overlap (same lease as the decision).
+  const res = await exclusive(ws, `decide_finding:${findingId}`, () => withdrawFinding(ws, role, findingId),
+    { ok: false as const, error: busyMessage("This finding") }, 60_000, REPEAT_WAIT_MS);
   if (!res.ok) return fail(res.error);
   refresh();
   return done("Finding withdrawn.");
@@ -67,11 +84,24 @@ export async function decideFindingAction(_prev: ActionState, form: FormData): P
   if (!ws) return fail("Workspace not found.");
   const decision = String(form.get("decision") ?? "");
   if (decision !== "approved" && decision !== "rejected") return fail("Unknown decision.");
-  const res = await decideFinding(ws, await viewingRole(ws), String(form.get("findingId") ?? ""), decision, {
+  const role = await viewingRole(ws);
+  const findingId = String(form.get("findingId") ?? "");
+  const decide = () => runWithModelContext(spendContext(ws), () => decideFinding(ws, role, findingId, decision, {
     note: String(form.get("note") ?? ""),
     evidenceOpened: form.get("evidenceOpened") === "true",
-  });
-  if (!res.ok) return fail(res.error);
+  }));
+  const busy = { ok: false as const, error: busyMessage("This decision") };
+  // One decision per finding at a time, across tabs and server instances (the module also queues
+  // repeats inside one instance); the second waits for the first and gets what the first did.
+  // An approval can release the next snapshot, so it also holds the snapshot lease: it can never
+  // mint a version at the same moment as the Review page's "Approve snapshot".
+  const res = await exclusive(ws, `decide_finding:${findingId}`, () => (decision === "approved"
+    ? exclusive(ws, SNAPSHOT_KEY, decide, busy, 120_000, REPEAT_WAIT_MS)
+    : decide()), busy, 120_000, REPEAT_WAIT_MS);
+  if (!res.ok) {
+    refresh();
+    return fail(res.error);
+  }
   refresh();
   if (decision === "rejected") return done("Finding rejected. The gap stays open.");
   if (res.blocked) {

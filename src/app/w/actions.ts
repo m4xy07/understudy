@@ -7,8 +7,9 @@ import { getWorkspace } from "@/lib/db/queries";
 import { isUuid } from "@/lib/db/withRole";
 import { viewingRole, roleCookieName } from "@/lib/session";
 import { answerQuestion, buildQuestions, runTest, savePlanItem } from "@/lib/lacuna";
-import { approveSnapshot, bulkApprove, reviewClaim } from "@/lib/relay";
+import { bulkApprove, reviewClaim } from "@/lib/relay";
 import { getWorkspacePack, isRoleOf } from "@/lib/pack";
+import { approveSnapshotOnce, planProblem } from "@/lib/pipeline/once";
 import type { RoleKey } from "@/lib/types";
 
 export interface ActionState {
@@ -85,7 +86,8 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
   const owner = String(form.get("owner") ?? "").trim();
   const dueDate = String(form.get("dueDate") ?? "").trim();
   const riskNote = String(form.get("riskNote") ?? "").trim();
-  if (!owner || !dueDate || !riskNote) return fail("Owner, due date and risk note are all required.");
+  const bad = planProblem(owner, dueDate, riskNote);
+  if (bad) return fail(bad);
   const res = await savePlanItem(ws, {
     responsibilityId: String(form.get("responsibilityId") ?? ""),
     checkKey: String(form.get("checkKey") ?? ""),
@@ -99,9 +101,10 @@ export async function savePlanAction(_prev: ActionState, form: FormData): Promis
 export async function approveSnapshotAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ws = await workspaceFrom(form);
   if (!ws) return fail("Workspace not found.");
-  const res = await approveSnapshot(ws, await viewingRole(ws));
+  const res = await approveSnapshotOnce(ws, await viewingRole(ws));
   if (!res.ok) return fail(res.error);
   refresh();
+  if (res.unchanged) return done(`Snapshot v${res.unchanged.version} already covers exactly this state. No new version was created.`);
   const s = res.snapshot!;
   return done(`Snapshot v${s.version} approved. SHA-256 ${s.hash.slice(0, 16)}…`);
 }

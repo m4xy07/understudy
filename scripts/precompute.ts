@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/lib/db/client";
 import { createDemoWorkspace } from "@/lib/pipeline/ingest";
-import { executeRun, startRun } from "@/lib/pipeline/run";
+import { runToEnd, SCRIPT_RUN } from "@/lib/pipeline/run";
 import { getExtraction } from "@/lib/attest";
 import { evaluateWorkspace } from "@/lib/attest/evaluation";
 import { answerQuestion } from "@/lib/lacuna";
@@ -47,8 +47,7 @@ async function runOnce(label: string, allKeys: Set<string>) {
 
   const pipeRec = startRecording();
   const t0 = Date.now();
-  const { runId } = await startRun(ws);
-  const run = await executeRun(ws, runId);
+  const run = await runToEnd(ws, SCRIPT_RUN);
   const pipelineMs = Date.now() - t0;
   stopRecording();
 
