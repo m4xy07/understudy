@@ -16,7 +16,7 @@ pnpm test:e2e       # Playwright, the judge path in Chromium (see "End-to-end su
 - Tests read `.env.local` (through `scripts/load-env.ts`). `DATABASE_URL` must point at a migrated database; the Docker default from `.env.example` works.
 - Tests never call a live model. `vitest.config.mts` sets `MODEL_DISABLED=1` and `LACUNA_MODEL=off`: the model client answers from the cache or fails fast, and integration suites inject a fake model or run the deterministic successor. Results do not depend on the network.
 - Files run one at a time (`fileParallelism: false`) because the database suites share one Postgres.
-- At commit `e0c873e` the full run was 314 tests in about 11 seconds on a laptop. The count grows as suites are added.
+- The count grows as suites are added, so no number is kept here: `pnpm test` prints the totals (test files and tests) on its last two lines. After the Round 3 integration (recovery, confidentiality, living handover and the reliability fixes on one branch) the run was 64 test files, 868 tests passed and 1 skipped (the pooler check, which needs `POOLER_TEST_URL`), in under two minutes on a laptop with a local database.
 - Optional: set `POOLER_TEST_URL` to a Supabase transaction-pooler URL to also run the pooler regression check against the real pooler (see below).
 
 ## What the suites cover
@@ -136,6 +136,19 @@ $ E2E_BASE_URL=https://understudy-lyart.vercel.app npx playwright test --retries
 ```
 
 The same suite passed against a local production build (`pnpm build && pnpm start`) in 19.8 s. The whole path takes about 25 s on the live app because the demo replays cached model answers.
+
+### Round 3 integration run (2026-11-14)
+
+All five specs against a local production build (`pnpm build && pnpm start`) of the integration
+branch, live model for anything not in the cache (the single final precompute had not run yet):
+
+| Spec | Result |
+|---|---|
+| `judge-path.spec.ts` | passed (1.2 min) |
+| `lab-path.spec.ts` | passed (1.6 min) |
+| `reliability.spec.ts` (5 tests) | passed |
+| `living-handover.spec.ts` | passed (27 s) |
+| `recovery.spec.ts` | failed at its last panel check: with uncached stand-in prompts the live model read `R01 credential owner` as covered, so the neighbour the sample answers are written for was not asked about it, the spec typed its fallback answer, and that answer was not cited as Second-hand. Re-run after the final precompute. |
 
 ### Living handover (Round 3)
 

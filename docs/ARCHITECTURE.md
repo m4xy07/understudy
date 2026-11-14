@@ -449,7 +449,10 @@ src/lib/pipeline/           run orchestration across steps (foundation)
 src/app/                    landing + /w/[id]/{connect,claims,test,ask,review,handover,evaluation}
 src/components/             shared UI (foundation); step-specific components live next to their page
 db/migrations/              0001_core (foundation), 0002_tether, 0003_attest, 0004_lacuna, 0005_relay,
-                            0006_packs, 0008_confidentiality (segment sensitivity, head-version rule, flag visibility, probe_runs)
+                            0006_packs, 0007_recovery (the switch, recovery_steps, run segments),
+                            0008_confidentiality (segment sensitivity, head-version rule, flag visibility, probe_runs),
+                            0009_findings (findings, snapshot_changes), 0010_fixes (run and action leases, spend cap, cleanup),
+                            0011_claim_meta (claim_meta() as the union of 0008 and 0009)
 packs/club.json             setting pack (data builder)
 data/demo/                  synthetic robotics-club exports + ground_truth.json + model_cache.json (data builder)
 tests/                      vitest + playwright
