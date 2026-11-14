@@ -13,7 +13,7 @@ import { verifyDrafts } from "@/lib/attest/core/verify";
 import { attestPack } from "@/lib/attest";
 import {
   answerAsNeighbour, answerQuestion, askedRoles, buildInventory, buildLadder, buildQuestions, declineAsNeighbour, listLadder,
-  listQuestions, listTraces, questionsForRole, recoveryComparison, recoveryState, recoverySurfaces, runTest, setLeaverUnreachable,
+  listQuestions, listTraces, questionsForRole, recoveryComparison, recoveryState, recoverySurfaces, repliesByRole, runTest, setLeaverUnreachable,
 } from "@/lib/lacuna";
 import { traceToDraft } from "@/lib/lacuna/core/ladder";
 import { scanForCanaries } from "@/lib/relay/core/canary";
@@ -289,6 +289,10 @@ describe("T-DB-4 and T-DB-5 (D4, D5, D6): a neighbour answers", () => {
     const [step] = await stepRows(sql`AND id = ${stepId}`);
     expect(step).toMatchObject({ status: "answered", claim_id: claimId });
     expect(await audits("neighbour_answer")).toBe(1);
+    // the re-test sentence is kept with the step and shown again after a refresh
+    const [reply] = await repliesByRole(ws, SUCCESSOR);
+    expect(reply).toMatchObject({ status: "answered", scoreDelta: res.delta });
+    expect(reply.statement?.startsWith("Arjun Rao said (second-hand): Priya has it.")).toBe(true);
     // D5: a blocking check answered only Second-hand stays Partial; B does not fall, K does not rise
     const after = (await getLatestTestRun(ws, SUCCESSOR))!;
     const r = after.results.find((x) => x.responsibilityId === deploy().id && x.checkKey === "credential_owner")!;

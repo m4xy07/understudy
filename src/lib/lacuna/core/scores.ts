@@ -130,8 +130,9 @@ export function scoreDelta(
     }
     parts.push(`B ${b0} → ${b1}${why}`);
   }
-  parts.push(before.scores.c === after.scores.c ? `C ${pct(after.scores.c)}` : `C ${pct(before.scores.c)} → ${pct(after.scores.c)}`);
+  // Compare what is shown: a change that rounds to the same percentage reads as no change.
+  parts.push(pct(before.scores.c) === pct(after.scores.c) ? `C ${pct(after.scores.c)}` : `C ${pct(before.scores.c)} → ${pct(after.scores.c)}`);
   const k = (v: number | null) => (v === null ? "n/a" : pct(v));
-  parts.push(before.scores.k === after.scores.k ? `K ${k(after.scores.k)}` : `K ${k(before.scores.k)} → ${k(after.scores.k)}`);
+  parts.push(k(before.scores.k) === k(after.scores.k) ? `K ${k(after.scores.k)}` : `K ${k(before.scores.k)} → ${k(after.scores.k)}`);
   return parts.join(" · ");
 }

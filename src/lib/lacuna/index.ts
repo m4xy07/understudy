@@ -19,11 +19,11 @@ import { computeFootprint } from "@/lib/tether/footprint";
 import { maskAnswer, persistAnswer } from "./persist";
 import { callJson, modelAvailable } from "@/lib/model/client";
 import type {
-  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun,
+  CheckResult, Claim, Coverage, GapQuestion, Importance, PlanItem, Responsibility, RoleKey, Scores, TestRun, Trust,
 } from "@/lib/types";
 import { buildInventory as coreInventory } from "./core/inventory";
 import { checksByResp, checksFor, findCheck } from "./core/checks";
-import { RECORD_TRUST, gapKey, type LacunaCheck, type LacunaPack } from "./core/pack";
+import { RECORD_TRUST, gapKey, strongestTrust, type LacunaCheck, type LacunaPack } from "./core/pack";
 import { computeScores, scoreDelta } from "./core/scores";
 import {
   runStandin, STANDIN_JSON_SCHEMA, type ClaimMeta, type VisibleClaim,
@@ -277,7 +277,30 @@ export async function runTest(ws: string, role: RoleKey, opts: RunTestOptions = 
     }
   }
 
+  // The label of a result is the strongest trust among the claims it cites, not among every claim
+  // that could have satisfied the check. So a check the stand-in closes on a colleague's answer
+  // reads Second-hand even when a record on the same topic exists, and K does not count it.
+  const trustOf = new Map(usable.map((c) => [c.id, c.trust]));
+  results = results.map((r) => {
+    if (r.claimIds.length === 0 || (r.coverage !== "covered" && r.coverage !== "partial")) return r;
+    const cited = r.claimIds.map((id) => trustOf.get(id)).filter((t): t is Trust => !!t);
+    return cited.length > 0 ? { ...r, bestTrust: strongestTrust(cited) } : r;
+  });
+
   if (prev) {
+    // A re-test of one responsibility follows new evidence (an answer, a trace). New evidence cannot
+    // take away what the record already supported: a check keeps its earlier, better result as long
+    // as every claim it rested on is still live and visible. This also keeps the model's judgement
+    // of the unchanged checks from drifting when the prompt gains a claim.
+    const liveIds = new Set(usable.map((c) => c.id));
+    const before = new Map(prev.results.map((r) => [gapKey(r.responsibilityId, r.checkKey), r]));
+    const rank: Record<Coverage, number> = { covered: 3, partial: 2, conflicting: 1, missing: 0, restricted: 0 };
+    results = results.map((r) => {
+      const was = before.get(gapKey(r.responsibilityId, r.checkKey));
+      if (!was || rank[was.coverage] <= rank[r.coverage]) return r;
+      if (was.claimIds.length === 0 || !was.claimIds.every((id) => liveIds.has(id))) return r;
+      return was;
+    });
     // Keep the inventory order: fresh results for the judged responsibilities, the earlier ones for the rest.
     const judgedIds = new Set(judged.map((r) => r.id));
     results = allResps.flatMap((r) =>

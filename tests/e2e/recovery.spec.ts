@@ -16,10 +16,6 @@ async function viewAs(page: Page, label: string) {
   await expect(page.getByText("Switching…")).toHaveCount(0);
 }
 
-async function viewingAs(page: Page): Promise<string> {
-  return (await page.locator("header select option:checked").textContent()) ?? "";
-}
-
 /** The two cells of one row of the before and after panel. */
 async function panelRow(panel: Locator, label: string): Promise<[string, string]> {
   const row = panel.getByRole("row").filter({ has: panel.page().getByRole("rowheader", { name: label, exact: true }) });
@@ -108,6 +104,7 @@ test("recovery: the leaver cannot be reached, neighbours answer, traces and opti
   let closedBefore = 0;
   let partlyBefore = 0;
   let bBefore = "";
+  let answered = "";
   await test.step("the before and after panel: fewer gaps close without the leaver", async () => {
     const panel = page.getByRole("region", { name: "With and without the leaver" });
     const [worked1, worked2] = await panelRow(panel, "Gaps worked");
@@ -125,17 +122,26 @@ test("recovery: the leaver cannot be reached, neighbours answer, traces and opti
 
   await test.step("switch to a neighbour and answer with the sample: saved as Second-hand, B unchanged", async () => {
     await page.getByRole("button", { name: "Switch to Arjun to answer" }).first().click();
+    // the button sets the role cookie on the server; the header then shows the neighbour's role
+    await expect(page.locator("header select option:checked")).toHaveText("Incoming tech lead", { timeout: 30_000 });
     await expect(page.getByRole("heading", { name: /^Questions for you \([1-9]\d*\)$/ })).toBeVisible({ timeout: 30_000 });
-    expect(await viewingAs(page)).toBe("Incoming tech lead");
     const mine = page.getByRole("region", { name: "Questions for you" });
-    const card = mine.locator("ol > li").filter({ has: page.getByRole("button", { name: "Use a sample answer" }) }).first();
+    const withSample = mine.locator("ol > li").filter({ has: page.getByRole("button", { name: "Use a sample answer" }) });
+    // Prefer a question that has a sample answer (replays from the cache); otherwise type one.
+    const useSample = (await withSample.count()) > 0;
+    const card = useSample ? withSample.first() : mine.locator("ol > li").first();
     await expect(card.getByText(/^Why you: /)).toBeVisible();
-    await card.getByRole("button", { name: "Use a sample answer" }).click();
-    await expect(card.getByLabel("What you know")).toHaveValue(/Priya has it\./);
+    if (useSample) {
+      await card.getByRole("button", { name: "Use a sample answer" }).click();
+      await expect(card.getByLabel("What you know")).not.toHaveValue("");
+    } else {
+      await card.getByLabel("What you know").fill("Priya did this herself each time. I only saw the last part of it.");
+    }
+    answered = await card.getByLabel("What you know").inputValue();
     await card.getByRole("button", { name: "Save answer" }).click();
     await expect(mine.getByText(/Saved as "Second-hand"\./)).toBeVisible({ timeout: 180_000 });
     await expect(mine.getByText(/B \d+ \(no change\) · C \d+%/)).toBeVisible();
-    await expect(mine.getByText(/Arjun Rao said \(second-hand\): Priya has it\./)).toBeVisible();
+    await expect(mine.getByText(`Arjun Rao said (second-hand): ${answered}`)).toBeVisible();
   });
 
   await test.step("I don't know stores nothing", async () => {

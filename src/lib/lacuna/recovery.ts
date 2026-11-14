@@ -471,10 +471,10 @@ export async function buildLadder(ws: string, opts: BuildLadderOptions = {}): Pr
   // ---- rung 2 first: traces become claims, then the successor is re-tested for what they touch.
   // Commit sequences are read for the entities of gaps that a procedure can answer, and kept for
   // every entity that already has one (a rebuild must not retire a stored reading).
-  const keptCommitEntities = (await sql`
-    SELECT DISTINCT detail->>'entity' AS entity FROM recovery_steps
-    WHERE workspace_id = ${ws} AND responsibility_id = ${LIBRARY} AND detail->>'traceKind' = 'commit_sequence'`)
-    .map((r) => String(r.entity ?? "")).filter(Boolean);
+  const keptCommitEntities = (await sql`SELECT detail FROM recovery_steps WHERE workspace_id = ${ws} AND responsibility_id = ${LIBRARY}`)
+    .map((r) => (typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail ?? {}) as { traceKind?: string; entity?: string })
+    .filter((d) => d.traceKind === "commit_sequence" && d.entity)
+    .map((d) => String(d.entity));
   const commitEntities = [...new Set([
     ...gaps.filter((g) => g.check.attributes.includes("procedure")).flatMap((g) => g.resp.entities),
     ...keptCommitEntities,
@@ -1006,8 +1006,7 @@ export async function answerAsNeighbour(
   await sql.begin(async (tx) => {
     // The status change is the lock: a double submit finds the row already answered and stores nothing.
     const locked = await tx`
-      UPDATE recovery_steps SET status = 'answered', claim_id = ${claim.id}, updated_at = now(),
-        detail = detail || ${JSON.stringify({ answeredAt })}::jsonb
+      UPDATE recovery_steps SET status = 'answered', claim_id = ${claim.id}, updated_at = now()
       WHERE workspace_id = ${ws} AND id = ${String(step.id)} AND status = 'asked' RETURNING id`;
     if (locked.length === 0) return;
     won = true;
@@ -1032,7 +1031,9 @@ export async function answerAsNeighbour(
   const [after] = await Promise.all(pack.testRoles.map((role) => runTest(ws, role, { trigger, only: [resp.id] })));
   const checks = checksByResp(resps, lpack);
   const delta = before ? scoreDelta(before, after, checks) : `B ${after.scores.b} · C ${Math.round(after.scores.c * 100)}%`;
-  await sql`UPDATE recovery_steps SET detail = detail || ${JSON.stringify({ scoreDelta: delta })}::jsonb
+  // The re-test sentence is kept with the step, so the page can show it again after a refresh.
+  const priorDetail = (typeof step.detail === "string" ? JSON.parse(step.detail) : step.detail ?? {}) as Record<string, unknown>;
+  await sql`UPDATE recovery_steps SET detail = ${JSON.stringify({ ...priorDetail, answeredAt, scoreDelta: delta })}::jsonb
     WHERE workspace_id = ${ws} AND id = ${String(step.id)}`;
   // Rule-based options for the gaps are refreshed; model proposals are kept as they were.
   try {

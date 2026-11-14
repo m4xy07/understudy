@@ -36,6 +36,12 @@
       "checkKey": "how_to_do_it",
       "person": "Rohan Mehta",
       "text": "Priya messaged Mr. Pawar a day or two before and he let the team stay. I never saw a form for it."
+    },
+    {
+      "entity": "competition",
+      "checkKey": "options_considered",
+      "person": "Arjun Rao",
+      "text": "Two venues were on the table: Hall B at the Sports Complex and the Main Auditorium. Hall B won because the auditorium was already booked that week."
     }
   ],
   "declineSample": {
@@ -89,9 +95,22 @@
       "Rebuilt from RoboClub calendar (domain renewal, yearly, next 2026-12-02)",
       "Rebuilt from RoboClub calendar (three lab bookings, 7 and 11 weeks apart)"
     ],
+    "scoresOnPlantedClaims": [
+      { "when": "before the switch", "b": 7, "c": "68%", "k": "100%" },
+      { "when": "after the switch (traces stored)", "b": 7, "c": "70%", "k": "97%" },
+      { "when": "after Arjun's sample on firmware deploy, credential owner", "b": 7, "c": "72%", "k": "94%" },
+      { "when": "after Rohan's sample on drive team selection, owner", "b": 7, "c": "75%", "k": "91%" },
+      { "when": "after Rohan's sample on lab booking, next due date", "b": 7, "c": "77%", "k": "89%" },
+      { "when": "after Rohan's sample on late-night lab access, how to do it (weight 3, closes)", "b": 7, "c": "79%", "k": "86%" },
+      { "when": "after Rohan's sample on the sponsor's open commitments (unchanged for the tech lead)", "b": 7, "c": "79%", "k": "86%" }
+    ],
+    "panelOnPlantedClaims": {
+      "ifTheLeaverAnswered": { "worked": 9, "closed": 9, "b": 1, "c": "100%", "k": "81%" },
+      "withoutTheLeaver": { "worked": 9, "closed": 1, "partly": 5, "open": 3, "b": 7, "c": "79%", "k": "86%" }
+    },
     "notes": [
-      "With model extraction the gap list differs a little: firmware deploy 'How to verify' and domain 'How to do it' can be open gaps. Then the run history trace serves the first, and the Treasurer is skipped on the second (the procedure is only in #infra) while Arjun is asked.",
-      "Scores on the planted claims: before the switch B 7, C 68%, K 100%. After the switch (traces stored) B 7, C 70%, K 97%. After Arjun's sample answer B 7, C 72%, K 94%."
+      "With model extraction the gap list is different from the planted one and will change again with the extraction work, so the sample answers above cover more gaps than any one run asks. On the model run of 14 Nov the ten gaps were: late-night lab access next due date; drive team selection owner and deadline; entry fee next due date and cadence; lab booking next due date and consequence if missed; sponsor open commitments; competition options considered; drivetrain order who reviews it. Three samples applied (Rohan on drive team owner, lab booking date and sponsor commitments) and Arjun's sample on the competition options closes that gap.",
+      "The run history trace and the workflow trace always appear under Rebuilt procedures. They serve a gap only when firmware deploy 'How to verify' is open in the run."
     ]
   }
 }
