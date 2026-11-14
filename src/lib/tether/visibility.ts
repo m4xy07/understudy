@@ -193,7 +193,16 @@ export type VisibilityChange =
   | { action: "limit"; categories: SensitivityCategory[]; reason: string };
 
 export type VisibilityResult =
-  | { ok: true; version: number; runId: string | null; changed: boolean }
+  | {
+    ok: true; version: number; changed: boolean;
+    /** The run to execute, or null when there is nothing for the caller to execute. */
+    runId: string | null;
+    /**
+     * True when a run was already live: the caller must NOT execute. The change is applied by a
+     * full run that starts by itself when the live one ends (requestRerun).
+     */
+    queued: boolean;
+  }
   | { ok: false; error: string };
 
 export const MIN_REASON_CHARS = 10;
@@ -278,14 +287,31 @@ async function narrowDerived(sql: Sql, ws: string, segmentId: string, roleSet: r
   return ids;
 }
 
-async function startRerun(ws: string): Promise<string | null> {
+/**
+ * The re-run after a visibility change. `runId` is set only when the caller must execute it; when
+ * a run is already live nothing is executed here (a second slice on the same run would do its
+ * steps twice) and a full run is queued behind it instead.
+ */
+async function startRerun(ws: string): Promise<{ runId: string | null; queued: boolean }> {
   try {
-    const { startRun } = await import("@/lib/pipeline/run");
-    return (await startRun(ws)).runId;
+    const { requestRerun } = await import("@/lib/pipeline/run");
+    const started = await requestRerun(ws);
+    return { runId: started.alreadyRunning ? null : started.runId, queued: started.queued };
   } catch (err) {
     console.error(`[visibility ${ws}] could not start the re-run`, err);
-    return null;
+    return { runId: null, queued: false };
   }
+}
+
+/** What the approver is told. A change made while a run is working is applied by the run after it. */
+export function visibilityMessage(verb: "Widened" | "Limited", res: { changed: boolean; runId: string | null; queued: boolean }): string {
+  if (!res.changed) return `Already ${verb.toLowerCase()}.`;
+  if (res.queued) {
+    const now = verb === "Limited" ? " The message is already hidden from the roles you removed." : "";
+    return `${verb}.${now} A run is in progress, so the change applies at the next run, which starts by itself when this one ends.`;
+  }
+  if (!res.runId) return `${verb}. The re-run could not be started: press Run to apply the change.`;
+  return `${verb}. Re-running the steps that used this message.`;
 }
 
 function orderRoles(roles: readonly RoleKey[], pack: Pick<ResolvedPack, "roleOrder">): RoleKey[] {
@@ -320,7 +346,7 @@ export async function setSegmentVisibility(
     const target = orderRoles(wanted, pack);
     if (sameSet(target, head.roleSet)) {
       // A second click on the same form: the first one already did it.
-      if (head.sensitivityStage === "widened") return { ok: true, version: head.version, runId: null, changed: false };
+      if (head.sensitivityStage === "widened") return { ok: true, version: head.version, runId: null, queued: false, changed: false };
       return { ok: false, error: "Pick at least one more role to widen to." };
     }
     const inserted = await insertVersion(sql, ws, head, {
@@ -332,12 +358,12 @@ export async function setSegmentVisibility(
       note: reason,
       actor,
     });
-    if (!inserted) return { ok: true, version: head.version + 1, runId: null, changed: false };
+    if (!inserted) return { ok: true, version: head.version + 1, runId: null, queued: false, changed: false };
     await audit(ws, actor, "widen_segment", {
       segmentId, fromVersion: head.version, toVersion: head.version + 1,
       from: head.roleSet, to: target, categories: head.sensitivity ?? [], reason,
     });
-    return { ok: true, version: head.version + 1, runId: await startRerun(ws), changed: true };
+    return { ok: true, version: head.version + 1, ...(await startRerun(ws)), changed: true };
   }
 
   const categories = CATEGORIES.filter((c) => (change.categories ?? []).includes(c));
@@ -345,7 +371,7 @@ export async function setSegmentVisibility(
   const ps = packSensitivity(pack);
   const target = orderRoles(narrowRoleSet(head.roleSet, categories, ps), pack);
   if (sameSet(target, head.roleSet)) {
-    if (head.sensitivityStage === "manual") return { ok: true, version: head.version, runId: null, changed: false };
+    if (head.sensitivityStage === "manual") return { ok: true, version: head.version, runId: null, queued: false, changed: false };
     return { ok: false, error: "This message is already limited to those roles." };
   }
   const narrowed = await sql.begin(async (tx) => {
@@ -361,12 +387,12 @@ export async function setSegmentVisibility(
     if (!inserted) return null;
     return narrowDerived(tx as unknown as Sql, ws, segmentId, target);
   }) as string[] | null;
-  if (narrowed === null) return { ok: true, version: head.version + 1, runId: null, changed: false };
+  if (narrowed === null) return { ok: true, version: head.version + 1, runId: null, queued: false, changed: false };
   await audit(ws, actor, "limit_segment", {
     segmentId, fromVersion: head.version, toVersion: head.version + 1,
     from: head.roleSet, to: target, categories, reason, claims: narrowed.length,
   });
-  return { ok: true, version: head.version + 1, runId: await startRerun(ws), changed: true };
+  return { ok: true, version: head.version + 1, ...(await startRerun(ws)), changed: true };
 }
 
 // ---------------------------------------------------------------------------------------------
