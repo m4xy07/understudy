@@ -366,7 +366,8 @@ for (const seg of segments) {
     check(t && subset(seg.roleSet, t.roleSet), `canary: ${tok} in segment ${seg.id} (${seg.thread}) visible to [${seg.roleSet.join(", ")}]`);
   }
 }
-const SKIP_NON_SOURCE = ["ground_truth.json", "sources.json", "model_cache.json", "EVAL_NOTES.md"];
+// probes.json names the token of each fact it restates, like the answer key: it is not a source.
+const SKIP_NON_SOURCE = ["ground_truth.json", "sources.json", "model_cache.json", "probes.json", "EVAL_NOTES.md"];
 for (const f of walk(DATA)) {
   const name = rel(f);
   if (fileRoles.has(f) || SKIP_NON_SOURCE.some((x) => name.endsWith(x))) continue;
