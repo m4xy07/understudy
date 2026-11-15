@@ -140,6 +140,13 @@ cleanup. Cut from the end.
   themselves.
 - Contribution statements describe what each person did, including that AI coding tools
   wrote much of the code under the team's direction, as disclosed in Round 2.
+- What happened, recorded on 15 Nov 2026: the main Round 3 build, the three improvements
+  included, was committed from the team lead's machine with AI coding tools. The lead
+  roles named above are the plan, not a record of who built what.
+- Each teammate built one piece in their own module and sent it as a pull request from
+  their own GitHub account: Yash the research-group probe set (#1), Om the claim history
+  view (#2), Advait the accessibility pass (#3). The team lead reviewed and merged each
+  one and committed the review follow-ups separately.
 
 ## Open with the team lead
 

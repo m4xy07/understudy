@@ -288,16 +288,16 @@ docs/                    ARCHITECTURE, JUDGE_GUIDE, ROADMAP, EVALUATION, PROBE_R
 
 ## Team DRACONIX
 
-| Person | Module | Round 3 lead |
+| Person | Module | Committed in Round 3 |
 |---|---|---|
-| Aman Shaikh | Team lead; Tether: data and ingestion | Recovery |
-| Advait Dikshit | Lacuna: gaps and continuity | Living handover |
-| Om Manish Vibhute | Attest: evidence and verification | Trace verification, the research-group pack |
-| Yash Mahajan | Relay: handover and trust | Confidentiality, interface |
+| Aman Shaikh | Team lead; Tether: data and ingestion | The main build: the three improvements, the second setting, extraction, reliability and the fixes. Reviewed and merged the three pull requests. |
+| Advait Dikshit | Lacuna: gaps and continuity | The accessibility pass on Test, Ask and First weeks (pull request #3) |
+| Om Manish Vibhute | Attest: evidence and verification | The claim history view (pull request #2) |
+| Yash Mahajan | Relay: handover and trust | The reworded-fact probe set for the research group (pull request #1) |
 
-Late in Round 3, Om built the claim history view and Yash built the research-group probe set. Each came in as a pull request from their own GitHub account (#2 and #1). The rest of the Round 3 build was committed from the team lead's machine.
+The main Round 3 build was committed from the team lead's machine. Each teammate built one piece in their own module and sent it as a pull request from their own GitHub account. The team lead reviewed and merged each one, and committed follow-up fixes to #1 and #3 after review.
 
-AI coding tools wrote much of the code and documentation under our direction and review. [DISCLOSURES.md](DISCLOSURES.md) has the details.
+AI coding tools wrote much of the code and documentation under our direction and review, the three pull requests included. [DISCLOSURES.md](DISCLOSURES.md) has the details.
 
 ## Licence
 

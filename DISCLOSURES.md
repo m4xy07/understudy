@@ -31,6 +31,8 @@ Round 3 commits come from four GitHub accounts. You can check with `git log --da
 | `AdvaitDikshit` (Advait) | 7 commits on 14 Nov 2026, 17:59 to 21:36 IST: the accessibility pass on Test, Ask and First weeks. Merged as pull request #3. Like the other work, this pull request was built with an AI coding tool (Claude Code) under his direction; its description says so. |
 | `m4xy07` (Aman, team lead) | Every other Round 3 commit: the main build (the three improvements, the second setting, extraction, reliability, the fixes), the three merges and the review follow-ups to pull requests #1 and #3. This work was committed from his machine, written with AI coding tools under the team's direction. |
 
+AI coding tools were used for all of this work, the three pull requests included. Each pull request was built with an AI coding tool under its author's direction.
+
 Every Round 2 commit carries the team lead's git identity.
 
 The product's own runtime model is Qwen3 (open weights): `qwen/qwen3-32b` through OpenRouter for the hosted demo, and `qwen3:8b` on Ollama for local use. It drafts claims, runs the support check, plays the stand-in successor, classifies borderline sensitive messages, proposes ranked options and acts as the judge in the reworded-fact probes. Code sets every label, role set, status, score, tier and approval. Handover text comes from fixed templates, not from the model.
