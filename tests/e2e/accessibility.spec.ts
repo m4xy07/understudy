@@ -19,8 +19,19 @@ async function viewAs(page: Page, label: string) {
   await expect(page.getByText("Switching…")).toHaveCount(0);
 }
 
+/**
+ * Waits for running CSS transitions to end. A button fades its colours over 120 ms; axe read a
+ * colour half-way through the fade and reported a contrast failure that no one would ever see.
+ */
+async function transitionsDone(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(document.getAnimations().filter((x) => x instanceof CSSTransition).map((x) => x.finished.catch(() => undefined))),
+  );
+}
+
 /** Fails on serious or critical axe violations and prints each one with the element that broke it. */
 async function expectNoSeriousViolations(page: Page, where: string) {
+  await transitionsDone(page);
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   const report = bad.map((v) =>
@@ -60,6 +71,9 @@ async function viewAsByKeyboard(page: Page, typed: string, label: string) {
 }
 
 test.describe("accessibility of the successor's journey", () => {
+  // The tests share one page and one workspace and build on each other: after a failure the rest are skipped.
+  test.describe.configure({ mode: "serial" });
+
   let context: BrowserContext;
   let page: Page;
   let ws = "";
