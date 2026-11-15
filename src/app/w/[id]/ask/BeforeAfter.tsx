@@ -38,7 +38,8 @@ export function BeforeAfter({ comparison, leaver, approver }: { comparison: Reco
   return (
     <section className="card mb-5 p-4" aria-label="With and without the leaver">
       <h2 className="text-xl">With {leaver} and without</h2>
-      <div className="mt-3 overflow-x-auto">
+      {/* On a narrow screen the table scrolls sideways inside this box: it takes focus so the arrow keys can scroll it. */}
+      <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label={`Comparison table, with ${leaver} and without`}>
         <table className="w-full min-w-[34rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-rule text-left">

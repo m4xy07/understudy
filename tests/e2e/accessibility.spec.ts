@@ -1,6 +1,8 @@
 // Accessibility of the successor's journey: Test, Ask (normal, and with "cannot be reached" switched
 // on) and First weeks.
 //   1. axe scans every page in the states a person meets and fails on serious or critical violations.
+//      Ask with "cannot be reached" on is also scanned at 375 px wide, and First weeks is checked for
+//      sideways page scroll at 375 px once a finding is in the table.
 //   2. Two keyboard-only tests: answer a question, then record a finding, with Tab, Enter and Space.
 // Run against a local server (keep `pnpm dev` or `pnpm start` running):
 //   pnpm test:e2e accessibility
@@ -195,6 +197,15 @@ test.describe("accessibility of the successor's journey", () => {
     await page.getByRole("button", { name: /can't be reached$/ }).click();
     await expect(page.getByRole("heading", { name: /^Gaps being worked/ })).toBeVisible({ timeout: 180_000 });
     await expectNoSeriousViolations(page, "Ask, approver, recovery on");
+    // The same page at phone width: the comparison table scrolls sideways inside its own box.
+    const desktop = page.viewportSize()!;
+    await page.setViewportSize(PHONE);
+    const compare = page.getByRole("region", { name: /comparison table/i });
+    await expect(compare).toBeVisible();
+    await compare.focus();
+    await expect(compare).toBeFocused(); // a keyboard user can reach it and scroll it with the arrow keys
+    await expectNoSeriousViolations(page, "Ask, approver, recovery on, 375 px wide");
+    await page.setViewportSize(desktop);
     await viewAs(page, "Incoming tech lead");
     await expectNoSeriousViolations(page, "Ask, successor, recovery on");
     await viewAs(page, "Club President");
