@@ -96,11 +96,14 @@ export function ActionForm({
 }: { action: Action; hidden: Record<string, string>; children: React.ReactNode; className?: string; focusOnRemove?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const sent = useRef<FormData | null>(null);
+  const byKeyboard = useRef(false);
   useEffect(() => {
     if (!focusOnRemove) return;
     return () => {
       if (!sent.current) return; // never submitted: nothing to restore
-      document.getElementById(focusOnRemove)?.focus();
+      // After Enter or Space the page scrolls to the new focus, as before. After a click or a tap
+      // focus still moves (the next Tab starts from there) but the page stays where the person was.
+      document.getElementById(focusOnRemove)?.focus({ preventScroll: !byKeyboard.current });
     };
   }, [focusOnRemove]);
   const [state, formAction] = useSafeActionState<ActionState>(async (prev, form) => {
@@ -115,7 +118,16 @@ export function ActionForm({
     return () => clearTimeout(t);
   }, [state]);
   return (
-    <form ref={formRef} action={formAction} className={className}>
+    <form
+      ref={formRef}
+      action={formAction}
+      className={className}
+      // A submit always starts with a click on the submit button; one made by Enter or Space has no
+      // pointer behind it and reports detail 0 (so does Enter typed in a text field).
+      onClickCapture={(e) => {
+        if ((e.target as Element).closest?.('button[type="submit"], input[type="submit"], button:not([type])')) byKeyboard.current = e.detail === 0;
+      }}
+    >
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}

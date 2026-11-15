@@ -168,6 +168,25 @@ test.describe("accessibility of the successor's journey", () => {
     await expectNoSeriousViolations(page, "Ask, after an answer");
   });
 
+  test("mouse: saving an answer moves focus but does not jump the page to the top", async () => {
+    test.setTimeout(3 * 60_000);
+    await page.goto(`/w/${ws}/ask`);
+    await viewAs(page, "Priya (outgoing tech lead)");
+    const heading = page.locator("#open-questions-h");
+    const before = Number(/\((\d+)\)/.exec((await heading.textContent()) ?? "")![1]);
+    expect(before).toBeGreaterThan(1);
+    // The last open question, far enough down that the list heading is above the window.
+    const form = page.locator("form").filter({ has: page.getByLabel("Your answer") }).last();
+    await form.getByLabel("Your answer").fill("Arjun owns this from now on. The steps are in the club wiki and he has done them once with me.");
+    const save = form.getByRole("button", { name: "Save answer" });
+    await save.scrollIntoViewIfNeeded();
+    const top = () => heading.evaluate((el) => el.getBoundingClientRect().bottom);
+    expect(await top(), "the heading must be out of view before the click, or this test proves nothing").toBeLessThan(0);
+    await save.click();
+    await expect(page.getByRole("heading", { name: `Open questions (${before - 1})` })).toBeFocused({ timeout: 120_000 });
+    expect(await top(), "the page scrolled up to the heading after a mouse click").toBeLessThan(0);
+  });
+
   test("Ask page, recovery switched on, as the approver", async () => {
     test.setTimeout(5 * 60_000);
     await viewAs(page, "Club President");
