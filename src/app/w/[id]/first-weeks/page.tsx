@@ -150,7 +150,7 @@ async function FirstWeeks({ params }: { params: WsParams }) {
         {findings.length === 0 ? (
           <p className="mt-2 text-sm text-muted">No findings yet.</p>
         ) : (
-          <div className="table-wrap mt-3">
+          <div className="table-wrap relative mt-3">
             <table className="data-table">
               <caption className="sr-only">Findings recorded on open gaps, with their review status</caption>
               <thead>

@@ -29,6 +29,13 @@ async function transitionsDone(page: Page) {
   );
 }
 
+/** True when the page itself is wider than the window, so it scrolls sideways. */
+async function pageOverflow(page: Page): Promise<number> {
+  return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+}
+
+const PHONE = { width: 375, height: 812 };
+
 /** Fails on serious or critical axe violations and prints each one with the element that broke it. */
 async function expectNoSeriousViolations(page: Page, where: string) {
   await transitionsDone(page);
@@ -259,6 +266,13 @@ test.describe("accessibility of the successor's journey", () => {
     await expect(table.locator("caption")).toHaveCount(1);
     await expect(table.getByRole("columnheader")).toHaveCount(4);
     await expect(table.getByRole("link", { name: /^Open evidence for Late-night lab access/ })).toHaveCount(1);
+
+    // At phone width, with a finding in the table, the page itself must not scroll sideways.
+    const desktop = page.viewportSize()!;
+    await page.setViewportSize(PHONE);
+    await expect(table.getByRole("button", { name: /^Withdraw finding for Late-night lab access/ })).toBeVisible();
+    await expect.poll(() => pageOverflow(page), { message: "First weeks at 375 px: page is wider than the window (px)" }).toBeLessThanOrEqual(0);
+    await page.setViewportSize(desktop);
 
     await viewAs(page, "Club President");
     await expectNoSeriousViolations(page, "First weeks, approver");
