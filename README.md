@@ -222,7 +222,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-Our run on a fresh clone, with no model key: **9 passed in 3.2 minutes**. The first command downloads Chromium once.
+Our latest run (2026-11-15, production build, model switched off, no retries): **19 passed in about 3 minutes**. The first command downloads Chromium once.
 
 To run them against the live app instead, set `E2E_BASE_URL` first:
 

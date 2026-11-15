@@ -22,13 +22,14 @@ The app started from the standard `create-next-app` scaffold (Next.js, TypeScrip
 
 AI coding tools, mainly Claude Code, wrote much of the code and the documentation, under our direction and review. We set the product rules, the architecture contract, the module boundaries and the specs. We decided what to build, what to keep and what to cut, and we reviewed the results.
 
-Round 3 commits come from three GitHub accounts. You can check with `git log --date=iso --format="%h %an %ad %s"`.
+Round 3 commits come from four GitHub accounts. You can check with `git log --date=iso --format="%h %an %ad %s"`.
 
 | GitHub account | Round 3 commits |
 |---|---|
 | `Om072005` (Om) | 6 commits on 14 Nov 2026, 15:50 to 15:56 IST: the claim history view. Merged as pull request #2. |
 | `YashM2704` (Yash) | 7 commits on 14 Nov 2026, 15:57 to 16:15 IST: the reworded-fact probe set for the research group. Merged as pull request #1. These commits name Claude as co-author. |
-| `m4xy07` (Aman, team lead) | Every other Round 3 commit: the main build (the three improvements, the second setting, extraction, reliability, the fixes), both merges and the review follow-ups to pull request #1. This work was committed from his machine, written with AI coding tools under the team's direction. |
+| `AdvaitDikshit` (Advait) | 7 commits on 14 Nov 2026, 17:59 to 21:36 IST: the accessibility pass on Test, Ask and First weeks. Merged as pull request #3. Like the other work, this pull request was built with an AI coding tool (Claude Code) under his direction; its description says so. |
+| `m4xy07` (Aman, team lead) | Every other Round 3 commit: the main build (the three improvements, the second setting, extraction, reliability, the fixes), the three merges and the review follow-ups to pull requests #1 and #3. This work was committed from his machine, written with AI coding tools under the team's direction. |
 
 Every Round 2 commit carries the team lead's git identity.
 
@@ -62,6 +63,7 @@ The UI uses text symbols, not an icon library.
 | vitest | 5.1.0 | MIT | Unit, database, permission and leak tests |
 | tsx | 4.23.15 | MIT | Running TypeScript scripts (migrate, seed, eval) |
 | @playwright/test | 1.65.0 | Apache-2.0 | End-to-end tests in Chromium |
+| @axe-core/playwright | 4.14.0 | MPL-2.0 | Accessibility checks (axe) inside the end-to-end tests. Development only: not part of the deployed app. Needs Node 22.12 or later. |
 | tailwindcss, @tailwindcss/turbopack | 4.3.3 | MIT | Styling |
 | eslint | 9.39.5 | MIT | Linting |
 | eslint-config-next | 16.4.6 | MIT | Next.js lint rules |

@@ -9,7 +9,7 @@ From a fresh clone of `main`, following the README, with no model key (2026-11-1
 | Command | Result |
 |---|---|
 | `pnpm test` | 79 test files, 1029 tests passed, 1 skipped, 67 s. The skipped test needs a Supabase pooler URL (`POOLER_TEST_URL`). |
-| `pnpm test:e2e` against `pnpm dev` | 6 spec files, 18 tests passed, 7.6 min on a Windows laptop, no retry |
+| `pnpm test:e2e` against a production build (`pnpm build`, `pnpm start`, `MODEL_DISABLED=1`), on 2026-11-15 in the working repository | 6 spec files, 19 tests passed, about 3 min (2.7, 3.0 and 3.1 min) on a Windows laptop. Run three times in a row with `--retries=0`: 19 passed each time. The config allows one retry (`retries: 1`); these runs switched it off. |
 
 `pnpm test` prints the totals on its last lines, so these numbers are easy to check.
 
@@ -89,7 +89,7 @@ Six specs in `tests/e2e/`, Chromium, one worker. Each opens a fresh private copy
 | `lab-path.spec.ts` | The research-group demo: two cards on the landing page, the five lab roles, claims, evaluation, test, ask, review as the PI, handover, read-back with the lab's items, the stub for the PhD student, the leak check |
 | `recovery.spec.ts` | The approver switches recovery on; three rungs per gap; a skipped neighbour; rebuilt procedures with quoted steps; fewer gaps close without the leaver; a neighbour answers with the sample and it is saved as Second-hand with B unchanged; "I don't know" stores nothing; switching back |
 | `living-handover.spec.ts` | First weeks is empty before a snapshot; the successor records a finding with a link and a file; nothing moves while it waits; the leaver and the successor cannot approve; the approver approves; snapshot v2; "What changed in v2"; every role's handover on v2 |
-| `accessibility.spec.ts` (9 steps) | axe scans of Test, Ask (normal and with recovery on) and First weeks, failing on serious or critical violations; two keyboard-only tests (answer a question, record a finding). See [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) |
+| `accessibility.spec.ts` (10 tests, in order; after a failure the rest are skipped) | axe scans of Test, Ask (normal, with recovery on, and with recovery on at 375 px wide) and First weeks, failing on serious or critical violations; two keyboard-only tests (answer a question, record a finding); an answer saved with the mouse does not jump the page; First weeks does not scroll sideways at 375 px with a finding in the table. See [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) |
 | `reliability.spec.ts` (5 tests) | The abuse cases in section 4; fails on any page error or 5xx answer |
 
 ```bash
@@ -106,6 +106,15 @@ Results on 2026-11-14:
 |---|---|
 | `pnpm dev` on a fresh clone, no model key | 9 passed, 3.2 min |
 | Local production build with `MODEL_DISABLED=1`, freshly seeded database | 9 passed, 1.3 min |
+
+Results on 2026-11-15, after the accessibility spec was added (pull request #3 and its review follow-ups):
+
+| Target | Result |
+|---|---|
+| Local production build with `MODEL_DISABLED=1`, whole suite, `--retries=0`, three runs in a row | 19 passed each time (2.7, 3.0 and 3.1 min) |
+| The same build, `accessibility.spec.ts` alone, `--retries=0`, ten runs in a row | 10 passed in all ten runs |
+
+Before the follow-ups, the accessibility spec failed in 3 of 10 runs on a colour-contrast reading taken while a button was fading. The spec now waits for CSS transitions to end before each scan.
 
 ## 4. Abuse cases
 
