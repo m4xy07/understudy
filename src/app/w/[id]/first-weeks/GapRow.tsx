@@ -1,7 +1,7 @@
 "use client";
 // One open gap on First weeks: its plan, its state, and (for the successor) the finding form.
 // The server checks every rule again; this form only makes the right thing easy.
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import clsx from "clsx";
 import { SubmitButton, type ActionState } from "@/components/ActionForm";
 import { Chip } from "@/components/chips";
@@ -29,6 +29,21 @@ export function GapRow({
   const [example, setExample] = useState(false);
   const [state, formAction] = useActionState<ActionState, FormData>(recordFindingAction, { ok: true, message: null });
   const formId = useId();
+  // Focus: into the form when it opens, back to the button on Cancel, onto the message after a save.
+  const openButton = useRef<HTMLButtonElement>(null);
+  const formHeading = useRef<HTMLHeadingElement>(null);
+  const message = useRef<HTMLParagraphElement>(null);
+  const cancelled = useRef(false);
+  useEffect(() => {
+    if (open) formHeading.current?.focus();
+    else if (cancelled.current) {
+      cancelled.current = false;
+      openButton.current?.focus();
+    }
+  }, [open]);
+  useEffect(() => {
+    if (state.ok && state.message) message.current?.focus();
+  }, [state]);
   const p = row.plan;
   const chip = row.state === "closed"
     ? { symbol: "✓", label: `Closed in v${row.closedInVersion ?? ""}`.trim(), tone: "ok" as const }
@@ -61,8 +76,8 @@ export function GapRow({
       )}
 
       {row.canRecord && !open && (
-        <button type="button" className="btn btn-sm mt-3" aria-expanded={false} aria-controls={formId} onClick={() => setOpen(true)}>
-          Record a finding
+        <button ref={openButton} type="button" className="btn btn-sm mt-3" aria-expanded={false} aria-controls={formId} onClick={() => setOpen(true)}>
+          Record a finding<span className="sr-only"> for {row.responsibilityTitle}: {row.checkLabel}</span>
         </button>
       )}
 
@@ -74,7 +89,7 @@ export function GapRow({
           <input type="hidden" name="example" value={example ? "1" : "0"} />
           <input type="hidden" name="narrow" value="1" />
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-lg">What did you find?</h3>
+            <h3 ref={formHeading} tabIndex={-1} className="text-lg">What did you find?</h3>
             {row.example && (
               <button
                 type="button"
@@ -127,13 +142,13 @@ export function GapRow({
           </fieldset>
           <div className="flex flex-wrap items-center gap-2">
             <SubmitButton pendingText="Saving…">Save finding</SubmitButton>
-            <button type="button" className="btn btn-quiet" onClick={() => setOpen(false)}>Cancel</button>
+            <button type="button" className="btn btn-quiet" onClick={() => { cancelled.current = true; setOpen(false); }}>Cancel</button>
           </div>
         </form>
       )}
 
       {state.message && (
-        <p role={state.ok ? "status" : "alert"} className={clsx("mt-3 text-sm", state.ok ? "text-ok" : "text-bad")}>
+        <p ref={message} tabIndex={-1} role={state.ok ? "status" : "alert"} className={clsx("mt-3 text-sm", state.ok ? "text-ok" : "text-bad")}>
           <span aria-hidden="true">{state.ok ? "✓ " : "✕ "}</span>
           {state.message}
         </p>

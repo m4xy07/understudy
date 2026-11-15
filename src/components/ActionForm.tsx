@@ -86,11 +86,23 @@ export function restoreFields(form: HTMLFormElement, data: FormData): void {
   }
 }
 
+/**
+ * A form whose action succeeds often removes the form itself (an answered question leaves the open
+ * list). The focused button then disappears and keyboard focus falls back to the top of the page.
+ * `focusOnRemove` names an element (by id) that takes focus when this form is removed after a submit.
+ */
 export function ActionForm({
-  action, hidden, children, className,
-}: { action: Action; hidden: Record<string, string>; children: React.ReactNode; className?: string }) {
+  action, hidden, children, className, focusOnRemove,
+}: { action: Action; hidden: Record<string, string>; children: React.ReactNode; className?: string; focusOnRemove?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const sent = useRef<FormData | null>(null);
+  useEffect(() => {
+    if (!focusOnRemove) return;
+    return () => {
+      if (!sent.current) return; // never submitted: nothing to restore
+      document.getElementById(focusOnRemove)?.focus();
+    };
+  }, [focusOnRemove]);
   const [state, formAction] = useSafeActionState<ActionState>(async (prev, form) => {
     sent.current = form;
     return action(prev, form);

@@ -11,6 +11,7 @@ Team DRACONIX (CodersInPune) · Knowledge Handover challenge · Round 3
 - **Live app:** https://understudy-lyart.vercel.app (no sign-up)
 - **Click-by-click guide:** [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md)
 - **Run it yourself:** [Run it locally](#run-it-locally), about ten minutes from a fresh clone
+- **Accessibility:** [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) (what was checked on Test, Ask and First weeks, and what is not covered)
 - **Tests:** [TESTING.md](TESTING.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Disclosures:** [DISCLOSURES.md](DISCLOSURES.md)
 - **Evaluation:** [robotics club](docs/EVALUATION.md), [research group (the hold-out)](docs/EVALUATION.lab.md), probe results ([robotics club](docs/PROBE_RESULTS.md), [research group](docs/PROBE_RESULTS.lab.md))
 
